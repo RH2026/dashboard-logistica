@@ -13,27 +13,21 @@ st.set_page_config(
 st.title("📦 Dashboard de Envíos – Atención al Cliente")
 
 # --------------------------------------------------
-# CARGA DE DATOS DESDE CSV
+# CARGA DE DATOS
 # --------------------------------------------------
 @st.cache_data
 def cargar_datos():
     df = pd.read_csv("Matriz_Excel_Dashboard.csv")
 
-    # NORMALIZAR NOMBRES DE COLUMNAS
+    # Normalizar columnas
     df.columns = (
         df.columns
-        .str.strip()     # quita espacios invisibles
-        .str.upper()     # todo en mayúsculas
+        .str.strip()
+        .str.upper()
     )
 
-    # Convertir columnas de fecha si existen
-    columnas_fecha = [
-        "FECHA DE SALIDA",
-        "FECHA PROMESA",
-        "FECHA DE ENTREGA"
-    ]
-
-    for col in columnas_fecha:
+    # Convertir fechas si existen
+    for col in ["FECHA DE SALIDA", "FECHA PROMESA", "FECHA DE ENTREGA"]:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce")
 
@@ -42,92 +36,117 @@ def cargar_datos():
 df = cargar_datos()
 
 # --------------------------------------------------
-# SIDEBAR – FILTROS
+# DEBUG VISIBLE (CLAVE PARA QUE YA NO ADIVINEMOS)
+# --------------------------------------------------
+with st.expander("🧪 Columnas detectadas en el CSV"):
+    st.write(list(df.columns))
+
+# --------------------------------------------------
+# DETECCIÓN FLEXIBLE DE COLUMNAS
+# --------------------------------------------------
+def encontrar_columna(posibles):
+    for c in posibles:
+        if c in df.columns:
+            return c
+    return None
+
+COL_CLIENTE = encontrar_columna(["CLIENTE", "NOMBRE CLIENTE", "CLIENTES"])
+COL_ESTATUS_ENTREGA = encontrar_columna(["ESTATUS DE ENTREGA", "ESTATUS ENTREGA"])
+COL_ESTATUS_TIEMPO = encontrar_columna(["ESTATUS DE TIEMPO", "ESTATUS TIEMPO"])
+COL_FECHA_SALIDA = encontrar_columna(["FECHA DE SALIDA", "FECHA SALIDA"])
+
+# --------------------------------------------------
+# SIDEBAR – FILTROS (SOLO SI EXISTEN)
 # --------------------------------------------------
 st.sidebar.header("🔎 Filtros")
 
-cliente_sel = st.sidebar.multiselect(
-    "Cliente",
-    options=sorted(df["CLIENTE"].dropna().unique())
-)
-
-estatus_entrega_sel = st.sidebar.multiselect(
-    "Estatus de Entrega",
-    options=sorted(df["ESTATUS DE ENTREGA"].dropna().unique())
-)
-
-fecha_min = df["FECHA DE SALIDA"].min()
-fecha_max = df["FECHA DE SALIDA"].max()
-
-rango_fechas = st.sidebar.date_input(
-    "Rango de Fecha de Salida",
-    value=(fecha_min, fecha_max),
-    min_value=fecha_min,
-    max_value=fecha_max
-)
-
-# --------------------------------------------------
-# APLICAR FILTROS
-# --------------------------------------------------
 df_filtrado = df.copy()
 
-if cliente_sel:
-    df_filtrado = df_filtrado[df_filtrado["CLIENTE"].isin(cliente_sel)]
+if COL_CLIENTE:
+    clientes = sorted(df[COL_CLIENTE].dropna().unique())
+    cliente_sel = st.sidebar.multiselect("Cliente", clientes)
+    if cliente_sel:
+        df_filtrado = df_filtrado[df_filtrado[COL_CLIENTE].isin(cliente_sel)]
+else:
+    st.sidebar.info("Columna de cliente no detectada")
 
-if estatus_entrega_sel:
-    df_filtrado = df_filtrado[
-        df_filtrado["ESTATUS DE ENTREGA"].isin(estatus_entrega_sel)
-    ]
+if COL_ESTATUS_ENTREGA:
+    estatus = sorted(df[COL_ESTATUS_ENTREGA].dropna().unique())
+    estatus_sel = st.sidebar.multiselect("Estatus de Entrega", estatus)
+    if estatus_sel:
+        df_filtrado = df_filtrado[df_filtrado[COL_ESTATUS_ENTREGA].isin(estatus_sel)]
 
-if len(rango_fechas) == 2:
-    df_filtrado = df_filtrado[
-        (df_filtrado["FECHA DE SALIDA"] >= pd.to_datetime(rango_fechas[0])) &
-        (df_filtrado["FECHA DE SALIDA"] <= pd.to_datetime(rango_fechas[1]))
-    ]
+if COL_FECHA_SALIDA:
+    fecha_min = df[COL_FECHA_SALIDA].min()
+    fecha_max = df[COL_FECHA_SALIDA].max()
+
+    rango = st.sidebar.date_input(
+        "Rango de Fecha de Salida",
+        value=(fecha_min, fecha_max)
+    )
+
+    if len(rango) == 2:
+        df_filtrado = df_filtrado[
+            (df_filtrado[COL_FECHA_SALIDA] >= pd.to_datetime(rango[0])) &
+            (df_filtrado[COL_FECHA_SALIDA] <= pd.to_datetime(rango[1]))
+        ]
 
 # --------------------------------------------------
-# KPIs
+# KPIs (SEGUROS)
 # --------------------------------------------------
-col1, col2, col3, col4 = st.columns(4)
+c1, c2, c3, c4 = st.columns(4)
 
-total_envios = len(df_filtrado)
-entregados = len(df_filtrado[df_filtrado["ESTATUS DE ENTREGA"] == "ENTREGADO"])
-en_transito = len(df_filtrado[df_filtrado["ESTATUS DE ENTREGA"] == "EN TRÁNSITO"])
-retrasados = len(df_filtrado[df_filtrado["ESTATUS DE TIEMPO"] == "RETRASADO"])
+total = len(df_filtrado)
 
-col1.metric("📦 Total de Envíos", total_envios)
-col2.metric("✅ Entregados", entregados)
-col3.metric("🚚 En Tránsito", en_transito)
-col4.metric("⏰ Retrasados", retrasados)
+entregados = (
+    len(df_filtrado[df_filtrado[COL_ESTATUS_ENTREGA] == "ENTREGADO"])
+    if COL_ESTATUS_ENTREGA else 0
+)
+
+transito = (
+    len(df_filtrado[df_filtrado[COL_ESTATUS_ENTREGA] == "EN TRÁNSITO"])
+    if COL_ESTATUS_ENTREGA else 0
+)
+
+retrasados = (
+    len(df_filtrado[df_filtrado[COL_ESTATUS_TIEMPO] == "RETRASADO"])
+    if COL_ESTATUS_TIEMPO else 0
+)
+
+c1.metric("📦 Total", total)
+c2.metric("✅ Entregados", entregados)
+c3.metric("🚚 En tránsito", transito)
+c4.metric("⏰ Retrasados", retrasados)
 
 st.divider()
 
 # --------------------------------------------------
-# GRÁFICO – ESTATUS DE ENTREGA
+# GRÁFICO (SI EXISTE ESTATUS)
 # --------------------------------------------------
-st.subheader("📊 Estatus de Entrega")
+if COL_ESTATUS_ENTREGA:
+    st.subheader("📊 Estatus de Entrega")
 
-df_estatus = (
-    df_filtrado["ESTATUS DE ENTREGA"]
-    .value_counts()
-    .reset_index()
-    .rename(columns={"index": "Estatus", "ESTATUS DE ENTREGA": "Cantidad"})
-)
+    df_est = (
+        df_filtrado[COL_ESTATUS_ENTREGA]
+        .value_counts()
+        .reset_index()
+        .rename(columns={"index": "Estatus", COL_ESTATUS_ENTREGA: "Cantidad"})
+    )
 
-grafico_estatus = alt.Chart(df_estatus).mark_bar().encode(
-    x=alt.X("Estatus:N", title="Estatus"),
-    y=alt.Y("Cantidad:Q", title="Cantidad"),
-    tooltip=["Estatus", "Cantidad"]
-)
+    chart = alt.Chart(df_est).mark_bar().encode(
+        x="Estatus:N",
+        y="Cantidad:Q",
+        tooltip=["Estatus", "Cantidad"]
+    )
 
-st.altair_chart(grafico_estatus, use_container_width=True)
+    st.altair_chart(chart, use_container_width=True)
 
 st.divider()
 
 # --------------------------------------------------
-# TABLA DE DETALLE
+# TABLA FINAL
 # --------------------------------------------------
-st.subheader("📋 Detalle de Pedidos")
+st.subheader("📋 Detalle de Registros")
 
 st.dataframe(
     df_filtrado,
@@ -136,7 +155,7 @@ st.dataframe(
 )
 
 # --------------------------------------------------
-# PIE DE PÁGINA
+# FOOTER
 # --------------------------------------------------
 st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Dashboard de Atención al Cliente</div>",
