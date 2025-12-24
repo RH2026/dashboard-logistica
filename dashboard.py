@@ -13,10 +13,10 @@ st.set_page_config(
 st.title("📦 Dashboard de Envíos – Enero 2026")
 
 # ---------------------------
-# Cargar Excel (Cloud)
+# Cargar Excel (Cloud ready)
 # ---------------------------
 EXCEL_PATH = "Matriz_Excel_Dashboard.xlsx"
-df = pd.read_excel(EXCEL_PATH)
+df = pd.read_excel(EXCEL_PATH, engine="openpyxl")
 
 # ---------------------------
 # Conversión de fechas
@@ -28,7 +28,7 @@ df["Fecha de Entrega Real"] = pd.to_datetime(
 )
 
 # ---------------------------
-# Calcular Estatus automático
+# Calcular Estatus automáticamente
 # ---------------------------
 def calcular_estatus(row):
     if pd.notnull(row["Fecha de Entrega Real"]):
@@ -56,7 +56,7 @@ df["Días de Retraso"] = df["Días de Retraso"].apply(
 )
 
 # ---------------------------
-# Formato visual
+# Formatear fechas y costo
 # ---------------------------
 df["Fecha de Envío_str"] = df["Fecha de Envío"].dt.strftime("%Y-%m-%d")
 df["Promesa de Entrega_str"] = df["Promesa de Entrega"].dt.strftime("%Y-%m-%d")
@@ -70,7 +70,7 @@ df["Costo de la Guía"] = df["Costo de la Guía"].apply(
 )
 
 # ---------------------------
-# SIDEBAR – FILTROS
+# Sidebar - Filtros
 # ---------------------------
 st.sidebar.markdown(
     "<h2 style='color:#FF9800;'>Filtros</h2>",
@@ -122,15 +122,15 @@ fleteras_seleccionadas = st.sidebar.multiselect(
 )
 
 # ---------------------------
-# BOTÓN RESTABLECER (CORRECTO)
+# Botón Restablecer filtros
 # ---------------------------
 if st.sidebar.button("Restablecer filtros"):
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
+    for k in list(st.session_state.keys()):
+        del st.session_state[k]
     st.rerun()
 
 # ---------------------------
-# FILTRADO DE DATOS
+# Filtrado de datos
 # ---------------------------
 df_filtrado = df.copy()
 
@@ -161,45 +161,35 @@ if fleteras_seleccionadas:
 # ---------------------------
 col1, col2, col3, col4 = st.columns(4)
 
-col1.metric("Total Envíos", len(df_filtrado))
-col2.metric(
-    "Entregados",
-    len(df_filtrado[df_filtrado["Estatus_auto"] == "Entregado"])
-)
-col3.metric(
-    "En Tránsito",
-    len(df_filtrado[df_filtrado["Estatus_auto"] == "En Tránsito"])
-)
-col4.metric(
-    "Retrasados",
-    len(df_filtrado[df_filtrado["Estatus_auto"] == "Retrasado"])
-)
+col1.metric("Total Pedidos", len(df_filtrado))
+col2.metric("Entregados", len(df_filtrado[df_filtrado["Estatus_auto"] == "Entregado"]))
+col3.metric("En Tránsito", len(df_filtrado[df_filtrado["Estatus_auto"] == "En Tránsito"]))
+col4.metric("Retrasados", len(df_filtrado[df_filtrado["Estatus_auto"] == "Retrasado"]))
 
 st.divider()
 
 # ---------------------------
-# GRÁFICO POR ESTATUS
+# Gráficos
 # ---------------------------
-grafico_estatus = (
-    alt.Chart(df_filtrado)
-    .mark_bar()
-    .encode(
-        x=alt.X("Estatus_auto:N", title="Estatus"),
-        y=alt.Y("count()", title="Total"),
-        color="Estatus_auto:N"
-    )
+st.subheader("Resumen de Pedidos por Estatus")
+
+estatus_counts = df_filtrado["Estatus_auto"].value_counts().reset_index()
+estatus_counts.columns = ["Estatus", "Cantidad"]
+
+grafico_estatus = alt.Chart(estatus_counts).mark_bar(color="#4CAF50").encode(
+    x="Estatus",
+    y="Cantidad",
+    tooltip=["Estatus", "Cantidad"]
 )
 
 st.altair_chart(grafico_estatus, use_container_width=True)
 
-st.divider()
-
 # ---------------------------
-# TABLA FINAL
+# Tabla final
 # ---------------------------
-st.subheader("📋 Detalle de Envíos")
+st.subheader("📋 Tabla de Pedidos")
 
-columnas_tabla = [
+columnas_mostrar = [
     "No Cliente",
     "Número de Pedido",
     "Nombre del Cliente",
@@ -215,13 +205,13 @@ columnas_tabla = [
 ]
 
 st.dataframe(
-    df_filtrado[columnas_tabla],
+    df_filtrado[columnas_mostrar],
     use_container_width=True,
     hide_index=True
 )
 
 # ---------------------------
-# PIE DE PÁGINA
+# Pie de página
 # ---------------------------
 st.markdown(
     "<div style='text-align:center;color:gray;margin-top:20px;'>"
