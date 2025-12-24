@@ -19,7 +19,14 @@ st.title("📦 Dashboard de Envíos – Atención al Cliente")
 def cargar_datos():
     df = pd.read_csv("Matriz_Excel_Dashboard.csv")
 
-    # Convertir columnas de fecha
+    # NORMALIZAR NOMBRES DE COLUMNAS
+    df.columns = (
+        df.columns
+        .str.strip()     # quita espacios invisibles
+        .str.upper()     # todo en mayúsculas
+    )
+
+    # Convertir columnas de fecha si existen
     columnas_fecha = [
         "FECHA DE SALIDA",
         "FECHA PROMESA",
@@ -84,9 +91,9 @@ if len(rango_fechas) == 2:
 col1, col2, col3, col4 = st.columns(4)
 
 total_envios = len(df_filtrado)
-entregados = len(df_filtrado[df_filtrado["ESTATUS DE ENTREGA"] == "Entregado"])
-en_transito = len(df_filtrado[df_filtrado["ESTATUS DE ENTREGA"] == "En tránsito"])
-retrasados = len(df_filtrado[df_filtrado["ESTATUS DE TIEMPO"] == "Retrasado"])
+entregados = len(df_filtrado[df_filtrado["ESTATUS DE ENTREGA"] == "ENTREGADO"])
+en_transito = len(df_filtrado[df_filtrado["ESTATUS DE ENTREGA"] == "EN TRÁNSITO"])
+retrasados = len(df_filtrado[df_filtrado["ESTATUS DE TIEMPO"] == "RETRASADO"])
 
 col1.metric("📦 Total de Envíos", total_envios)
 col2.metric("✅ Entregados", entregados)
