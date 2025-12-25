@@ -193,7 +193,6 @@ c1.altair_chart(
     use_container_width=True
 )
 
-# KPI ENTREGADOS
 c2.markdown(
     "<div style='text-align:center; color:yellow; margin-bottom:6px;'>Entregados</div>",
     unsafe_allow_html=True
@@ -205,9 +204,10 @@ c2.altair_chart(
 )
 
 c2.markdown(
-    f"<div style='text-align:center; color:gray; margin-top:-10px;'>{porc_entregados:.1f}%</div>",
+    f"<div style='text-align:center; color:gray; margin-top:-18px;'>{porc_entregados:.1f}%</div>",
     unsafe_allow_html=True
 )
+
 
 # KPI EN TRÁNSITO
 c3.markdown(
@@ -221,9 +221,10 @@ c3.altair_chart(
 )
 
 c3.markdown(
-    f"<div style='text-align:center; color:gray; margin-top:-10px;'>{porc_transito:.1f}%</div>",
+    f"<div style='text-align:center; color:gray; margin-top:-18px;'>{porc_transito:.1f}%</div>",
     unsafe_allow_html=True
 )
+
 
 # KPI RETRASADOS
 c4.markdown(
@@ -237,11 +238,9 @@ c4.altair_chart(
 )
 
 c4.markdown(
-    f"<div style='text-align:center; color:gray; margin-top:-10px;'>{porc_retrasados:.1f}%</div>",
+    f"<div style='text-align:center; color:gray; margin-top:-18px;'>{porc_retrasados:.1f}%</div>",
     unsafe_allow_html=True
 )
-
-st.divider()
 # --------------------------------------------------
 # GRÁFICO DE ESTATUS – TITULO NARANJA
 # --------------------------------------------------
@@ -275,6 +274,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
