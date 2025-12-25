@@ -21,12 +21,19 @@ def cargar_datos():
 
     hoy = pd.Timestamp.today().normalize()
 
+    # --------------------------------------------------
     # LIMPIEZA DE FECHAS
+    # --------------------------------------------------
     for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
         if col in df.columns:
+            # Reemplaza los valores vacíos o textos tipo "None", "NULL", "N/A" por NaT
+            df[col] = df[col].replace(["", "None", "NULL", "N/A", "n/a"], pd.NaT)
+            # Convierte a datetime
             df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
 
+    # --------------------------------------------------
     # ESTATUS
+    # --------------------------------------------------
     def calcular_estatus(row):
         hoy = pd.Timestamp.today().normalize()
         fecha_real = row["FECHA DE ENTREGA REAL"]
@@ -40,10 +47,14 @@ def cargar_datos():
 
     df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
 
+    # --------------------------------------------------
     # DÍAS TRANSCURRIDOS
+    # --------------------------------------------------
     df["DIAS TRANSCURRIDOS"] = (df["FECHA DE ENTREGA REAL"].fillna(hoy) - df["FECHA DE ENVÍO"]).dt.days
 
+    # --------------------------------------------------
     # DÍAS DE RETRASO
+    # --------------------------------------------------
     def calcular_dias_retraso(row):
         hoy = pd.Timestamp.today().normalize()
         fecha_real = row["FECHA DE ENTREGA REAL"]
