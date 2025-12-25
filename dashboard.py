@@ -111,35 +111,63 @@ if "FECHA DE ENVÍO" in df.columns:
             (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(rango[1]))
         ]
 
+# ==================================================
+# 🎨 CAMBIA COLORES AQUÍ (AVANCE vs FALTANTE)
+# ==================================================
+COLOR_AVANCE_ENTREGADOS = "#4CAF50"   # Verde
+COLOR_AVANCE_TRANSITO   = "#FFC107"   # Amarillo
+COLOR_AVANCE_RETRASADOS = "#F44336"   # Rojo
+COLOR_FALTANTE          = "#3A3A3A"   # Gris (lo que falta)
+# ==================================================
+
+
 # --------------------------------------------------
-# FUNCIÓN MINI DONA
+# FUNCIÓN DONITA CON NÚMERO DENTRO
 # --------------------------------------------------
-def mini_donut(valor, total, color):
+def donut_con_numero(avance, total, color_avance, color_faltante):
     data = pd.DataFrame({
-        "tipo": ["valor", "resto"],
-        "cantidad": [valor, max(total - valor, 0)]
+        "segmento": ["avance", "faltante"],
+        "valor": [avance, max(total - avance, 0)]
     })
 
-    chart = alt.Chart(data).mark_arc(innerRadius=45).encode(
-        theta=alt.Theta("cantidad:Q"),
+    # Donita
+    donut = alt.Chart(data).mark_arc(innerRadius=50).encode(
+        theta=alt.Theta("valor:Q"),
         color=alt.Color(
-            "tipo:N",
-            scale=alt.Scale(range=[color, "#2E2E2E"]),
+            "segmento:N",
+            scale=alt.Scale(range=[color_avance, color_faltante]),
             legend=None
         )
-    ).properties(
-        width=130,
-        height=130
     )
 
-    return chart
+    # Texto central
+    texto = alt.Chart(
+        pd.DataFrame({
+            "texto": [f"{avance}"],
+            "x": [0],
+            "y": [0]
+        })
+    ).mark_text(
+        align="center",
+        baseline="middle",
+        fontSize=26,
+        fontWeight="bold",
+        color="white"
+    ).encode(
+        text="texto:N"
+    )
+
+    return (donut + texto).properties(
+        width=140,
+        height=140
+    )
 
 
 # --------------------------------------------------
-# USAMOS TU DATAFRAME REAL
+# DATAFRAME REAL
 # --------------------------------------------------
 df = cargar_datos()
-df_filtrado = df.copy()  # aquí luego puedes meter filtros
+df_filtrado = df.copy()
 
 
 # --------------------------------------------------
@@ -160,12 +188,12 @@ porc_transito = (en_transito / total * 100) if total > 0 else 0
 porc_retrasados = (retrasados / total * 100) if total > 0 else 0
 
 
-# KPI TOTAL (sin dona)
+# KPI TOTAL (SIN DONA)
 c1.markdown(
     f"""
     <div style='text-align:center; color:yellow;'>
         Total de pedidos<br>
-        <span style='color:white; font-size:32px;'>{total}</span>
+        <span style='color:white; font-size:34px;'>{total}</span>
     </div>
     """,
     unsafe_allow_html=True
@@ -174,47 +202,49 @@ c1.markdown(
 
 # KPI ENTREGADOS
 c2.markdown(
-    f"""
-    <div style='text-align:center; color:yellow;'>
-        Entregados<br>
-        <span style='color:white; font-size:28px;'>{entregados}</span>
-        <span style='color:gray;'>({porc_entregados:.1f}%)</span>
-    </div>
-    """,
+    f"<div style='text-align:center; color:yellow;'>Entregados</div>",
     unsafe_allow_html=True
 )
-c2.altair_chart(mini_donut(entregados, total, "#4CAF50"), use_container_width=True)
+c2.altair_chart(
+    donut_con_numero(entregados, total, COLOR_AVANCE_ENTREGADOS, COLOR_FALTANTE),
+    use_container_width=True
+)
+c2.markdown(
+    f"<div style='text-align:center; color:gray;'>{porc_entregados:.1f}%</div>",
+    unsafe_allow_html=True
+)
 
 
 # KPI EN TRÁNSITO
 c3.markdown(
-    f"""
-    <div style='text-align:center; color:yellow;'>
-        En tránsito<br>
-        <span style='color:white; font-size:28px;'>{en_transito}</span>
-        <span style='color:gray;'>({porc_transito:.1f}%)</span>
-    </div>
-    """,
+    f"<div style='text-align:center; color:yellow;'>En tránsito</div>",
     unsafe_allow_html=True
 )
-c3.altair_chart(mini_donut(en_transito, total, "#FFC107"), use_container_width=True)
+c3.altair_chart(
+    donut_con_numero(en_transito, total, COLOR_AVANCE_TRANSITO, COLOR_FALTANTE),
+    use_container_width=True
+)
+c3.markdown(
+    f"<div style='text-align:center; color:gray;'>{porc_transito:.1f}%</div>",
+    unsafe_allow_html=True
+)
 
 
 # KPI RETRASADOS
 c4.markdown(
-    f"""
-    <div style='text-align:center; color:yellow;'>
-        Retrasados<br>
-        <span style='color:white; font-size:28px;'>{retrasados}</span>
-        <span style='color:gray;'>({porc_retrasados:.1f}%)</span>
-    </div>
-    """,
+    f"<div style='text-align:center; color:yellow;'>Retrasados</div>",
     unsafe_allow_html=True
 )
-c4.altair_chart(mini_donut(retrasados, total, "#F44336"), use_container_width=True)
+c4.altair_chart(
+    donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE),
+    use_container_width=True
+)
+c4.markdown(
+    f"<div style='text-align:center; color:gray;'>{porc_retrasados:.1f}%</div>",
+    unsafe_allow_html=True
+)
 
 st.divider()
-
 # --------------------------------------------------
 # GRÁFICO DE ESTATUS – TITULO NARANJA
 # --------------------------------------------------
@@ -248,6 +278,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
