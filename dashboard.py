@@ -9,7 +9,7 @@ st.set_page_config(
     page_title="Control de Envíos – Enero 2026",
     layout="wide"
 )
-st.markdown("<h1 style='color:Ligthgray;'>Control de Envíos – Enero 2026</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='color:Yellow;'>Control de Envíos – Enero 2026</h1>", unsafe_allow_html=True)
 
 # --------------------------------------------------
 # CARGA DE DATOS
@@ -151,6 +151,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
