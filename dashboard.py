@@ -14,11 +14,12 @@ st.markdown(
     <div style='text-align:center;'>
         <div style='
             color:white;
-            font-size:32px;
+            font-size:56px;
             font-weight:700;
         '>
             Panel de Seguimiento y Control de Embarques
         </div>
+
         <div style='
             color:#CCCCCC;
             font-size:22px;
@@ -27,6 +28,14 @@ st.markdown(
         '>
             Logística – Enero 2026
         </div>
+
+        <hr style='
+            margin-top:20px;
+            border:0;
+            height:1px;
+            width:60%;
+            background:linear-gradient(to right, transparent, #888, transparent);
+        '>
     </div>
     """,
     unsafe_allow_html=True
@@ -172,6 +181,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
