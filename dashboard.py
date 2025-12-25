@@ -34,25 +34,27 @@ def cargar_datos():
     # --------------------------------------------------
     def calcular_estatus(row):
         hoy = pd.Timestamp.today().normalize()
-        valor_real = str(row["FECHA DE ENTREGA REAL"]).strip().lower()
-
-        # Caso "Transito"
-        if valor_real in ["transito", "tránsito"]:
-            return "EN TRANSITO"
-
-        # Fecha real válida
+        fecha_real_str = str(row["FECHA DE ENTREGA REAL"]).strip().lower()
+        promesa = pd.to_datetime(row["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
+        
+        # Si fecha real es válida → ENTREGADO
         fecha_real = pd.to_datetime(row["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
         if pd.notna(fecha_real):
             return "ENTREGADO"
-
+        
+        # Si dice transito
+        if fecha_real_str in ["transito", "tránsito"]:
+            if pd.notna(promesa) and promesa < hoy:
+                return "RETRASADO"
+            return "EN TRANSITO"
+        
         # Si no hay fecha real
-        promesa = pd.to_datetime(row["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
         if pd.notna(promesa):
-            if promesa >= hoy:
-                return "EN TIEMPO"      # aún dentro de la promesa
+            if promesa < hoy:
+                return "RETRASADO"
             else:
-                return "RETRASADO"      # ya superó la promesa
-
+                return "EN TIEMPO"
+        
         # Caso por defecto
         return "EN TRANSITO"
 
@@ -72,14 +74,19 @@ def cargar_datos():
     # --------------------------------------------------
     # DÍAS DE RETRASO
     # --------------------------------------------------
-    df["DIAS DE RETRASO"] = df.apply(
-        lambda row: max((row["FECHA DE ENTREGA REAL"] - row["PROMESA DE ENTREGA"]).days, 0)
-        if pd.notna(row["FECHA DE ENTREGA REAL"]) and pd.notna(row["PROMESA DE ENTREGA"]) and row["FECHA DE ENTREGA REAL"] > row["PROMESA DE ENTREGA"]
-        else max((hoy - row["PROMESA DE ENTREGA"]).days, 0)
-        if (pd.isna(row["FECHA DE ENTREGA REAL"]) or str(row["FECHA DE ENTREGA REAL"]).strip().lower() in ["transito", "tránsito"]) and pd.notna(row["PROMESA DE ENTREGA"]) and hoy > row["PROMESA DE ENTREGA"]
-        else 0,
-        axis=1
-    )
+    def calcular_dias_retraso(row):
+        hoy = pd.Timestamp.today().normalize()
+        promesa = row["PROMESA DE ENTREGA"]
+        fecha_real = row["FECHA DE ENTREGA REAL"]
+
+        if pd.notna(fecha_real) and pd.notna(promesa):
+            return max((fecha_real - promesa).days, 0)
+        elif (pd.isna(fecha_real) or str(fecha_real).strip().lower() in ["transito", "tránsito"]) and pd.notna(promesa):
+            return max((hoy - promesa).days, 0) if hoy > promesa else 0
+        else:
+            return 0
+
+    df["DIAS DE RETRASO"] = df.apply(calcular_dias_retraso, axis=1)
 
     return df
 
@@ -131,7 +138,7 @@ c1.metric("📦 Total", total)
 c2.metric("✅ Entregados", (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum())
 c3.metric("🚚 En tránsito", (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum())
 c4.metric("⏰ Retrasados", (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum())
-
+c5 = st.columns(1)
 st.divider()
 
 # --------------------------------------------------
