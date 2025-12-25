@@ -9,7 +9,7 @@ st.set_page_config(
     page_title="Control de Envíos – Enero 2026",
     layout="wide"
 )
-st.markdown("<h1 style='color:Yellow;'>Control de Envíos – Enero 2026</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='color:White;'>Control de Envíos – Enero 2026</h1>", unsafe_allow_html=True)
 
 # --------------------------------------------------
 # CARGA DE DATOS
@@ -112,10 +112,10 @@ porc_entregados = (entregados / total * 100) if total > 0 else 0
 porc_transito = (en_transito / total * 100) if total > 0 else 0
 porc_retrasados = (retrasados / total * 100) if total > 0 else 0
 
-c1.markdown(f"<div style='font-size:28px; color:white;'>Total de pedidos<br><span style='color:white;'>{total}</span></div>", unsafe_allow_html=True)
-c2.markdown(f"<div style='font-size:28px; color:lightgreen;'>Entregados<br><span style='color:white;'>{entregados}</span> <span style='color:gray;'>({porc_entregados:.1f}%)</span></div>", unsafe_allow_html=True)
-c3.markdown(f"<div style='font-size:28px; color:lightorange;'>En tránsito<br><span style='color:white;'>{en_transito}</span> <span style='color:gray;'>({porc_transito:.1f}%)</span></div>", unsafe_allow_html=True)
-c4.markdown(f"<div style='font-size:28px; color:white;'>Retrasados<br><span style='color:red;'>{retrasados}</span> <span style='color:gray;'>({porc_retrasados:.1f}%)</span></div>", unsafe_allow_html=True)
+c1.markdown(f"<div style='font-size:20px; color:yellow;'>Total de pedidos<br><span style='color:white;'>{total}</span></div>", unsafe_allow_html=True)
+c2.markdown(f"<div style='font-size:20px; color:yellow;'>Entregados<br><span style='color:white;'>{entregados}</span> <span style='color:gray;'>({porc_entregados:.1f}%)</span></div>", unsafe_allow_html=True)
+c3.markdown(f"<div style='font-size:20px; color:yellow;'>En tránsito<br><span style='color:white;'>{en_transito}</span> <span style='color:gray;'>({porc_transito:.1f}%)</span></div>", unsafe_allow_html=True)
+c4.markdown(f"<div style='font-size:20px; color:yellow;'>Retrasados<br><span style='color:white;'>{retrasados}</span> <span style='color:gray;'>({porc_retrasados:.1f}%)</span></div>", unsafe_allow_html=True)
 st.divider()
 
 # --------------------------------------------------
@@ -151,6 +151,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
