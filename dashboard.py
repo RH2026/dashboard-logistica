@@ -17,7 +17,10 @@ st.title("📦 Dashboard de Envíos – Atención al Cliente")
 # --------------------------------------------------
 @st.cache_data
 def cargar_datos():
-    df = pd.read_csv("Matriz_Excel_Dashboard.csv")
+    df = pd.read_csv(
+        "Matriz_Excel_Dashboard.csv",
+        encoding="utf-8"
+    )
 
     # Normalizar columnas
     df.columns = (
@@ -36,7 +39,7 @@ def cargar_datos():
 df = cargar_datos()
 
 # --------------------------------------------------
-# DEBUG VISIBLE (CLAVE PARA QUE YA NO ADIVINEMOS)
+# DEBUG VISIBLE
 # --------------------------------------------------
 with st.expander("🧪 Columnas detectadas en el CSV"):
     st.write(list(df.columns))
@@ -50,32 +53,40 @@ def encontrar_columna(posibles):
             return c
     return None
 
-COL_CLIENTE = encontrar_columna(["CLIENTE", "NOMBRE CLIENTE", "CLIENTES"])
+COL_NO_CLIENTE = encontrar_columna(["NO CLIENTE"])
 COL_ESTATUS_ENTREGA = encontrar_columna(["ESTATUS DE ENTREGA", "ESTATUS ENTREGA"])
 COL_ESTATUS_TIEMPO = encontrar_columna(["ESTATUS DE TIEMPO", "ESTATUS TIEMPO"])
 COL_FECHA_SALIDA = encontrar_columna(["FECHA DE SALIDA", "FECHA SALIDA"])
 
 # --------------------------------------------------
-# SIDEBAR – FILTROS (SOLO SI EXISTEN)
+# SIDEBAR – FILTROS
 # --------------------------------------------------
 st.sidebar.header("🔎 Filtros")
 
 df_filtrado = df.copy()
 
-if COL_CLIENTE:
-    clientes = sorted(df[COL_CLIENTE].dropna().unique())
-    cliente_sel = st.sidebar.multiselect("Cliente", clientes)
-    if cliente_sel:
-        df_filtrado = df_filtrado[df_filtrado[COL_CLIENTE].isin(cliente_sel)]
+# ---- Filtro NO CLIENTE (caja de búsqueda)
+if COL_NO_CLIENTE:
+    no_cliente_input = st.sidebar.text_input("Buscar No Cliente")
+    if no_cliente_input:
+        df_filtrado = df_filtrado[
+            df_filtrado[COL_NO_CLIENTE]
+            .astype(str)
+            .str.contains(no_cliente_input, case=False, na=False)
+        ]
 else:
-    st.sidebar.info("Columna de cliente no detectada")
+    st.sidebar.info("Columna 'NO CLIENTE' no detectada")
 
+# ---- Filtro Estatus de Entrega
 if COL_ESTATUS_ENTREGA:
     estatus = sorted(df[COL_ESTATUS_ENTREGA].dropna().unique())
     estatus_sel = st.sidebar.multiselect("Estatus de Entrega", estatus)
     if estatus_sel:
-        df_filtrado = df_filtrado[df_filtrado[COL_ESTATUS_ENTREGA].isin(estatus_sel)]
+        df_filtrado = df_filtrado[
+            df_filtrado[COL_ESTATUS_ENTREGA].isin(estatus_sel)
+        ]
 
+# ---- Filtro Fecha de Salida
 if COL_FECHA_SALIDA:
     fecha_min = df[COL_FECHA_SALIDA].min()
     fecha_max = df[COL_FECHA_SALIDA].max()
@@ -85,14 +96,14 @@ if COL_FECHA_SALIDA:
         value=(fecha_min, fecha_max)
     )
 
-    if len(rango) == 2:
+    if isinstance(rango, tuple) and len(rango) == 2:
         df_filtrado = df_filtrado[
             (df_filtrado[COL_FECHA_SALIDA] >= pd.to_datetime(rango[0])) &
             (df_filtrado[COL_FECHA_SALIDA] <= pd.to_datetime(rango[1]))
         ]
 
 # --------------------------------------------------
-# KPIs (SEGUROS)
+# KPIs
 # --------------------------------------------------
 c1, c2, c3, c4 = st.columns(4)
 
@@ -100,17 +111,17 @@ total = len(df_filtrado)
 
 entregados = (
     len(df_filtrado[df_filtrado[COL_ESTATUS_ENTREGA] == "ENTREGADO"])
-    if COL_ESTATUS_ENTREGA else 0
+    if COL_ESTATUS_ENTREGA and COL_ESTATUS_ENTREGA in df_filtrado.columns else 0
 )
 
 transito = (
     len(df_filtrado[df_filtrado[COL_ESTATUS_ENTREGA] == "EN TRÁNSITO"])
-    if COL_ESTATUS_ENTREGA else 0
+    if COL_ESTATUS_ENTREGA and COL_ESTATUS_ENTREGA in df_filtrado.columns else 0
 )
 
 retrasados = (
     len(df_filtrado[df_filtrado[COL_ESTATUS_TIEMPO] == "RETRASADO"])
-    if COL_ESTATUS_TIEMPO else 0
+    if COL_ESTATUS_TIEMPO and COL_ESTATUS_TIEMPO in df_filtrado.columns else 0
 )
 
 c1.metric("📦 Total", total)
@@ -121,16 +132,19 @@ c4.metric("⏰ Retrasados", retrasados)
 st.divider()
 
 # --------------------------------------------------
-# GRÁFICO (SI EXISTE ESTATUS)
+# GRÁFICO
 # --------------------------------------------------
-if COL_ESTATUS_ENTREGA:
+if COL_ESTATUS_ENTREGA and not df_filtrado.empty:
     st.subheader("📊 Estatus de Entrega")
 
     df_est = (
         df_filtrado[COL_ESTATUS_ENTREGA]
         .value_counts()
         .reset_index()
-        .rename(columns={"index": "Estatus", COL_ESTATUS_ENTREGA: "Cantidad"})
+        .rename(columns={
+            "index": "Estatus",
+            COL_ESTATUS_ENTREGA: "Cantidad"
+        })
     )
 
     chart = alt.Chart(df_est).mark_bar().encode(
