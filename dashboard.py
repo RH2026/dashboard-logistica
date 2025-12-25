@@ -195,15 +195,17 @@ c1.altair_chart(
 
 # KPI ENTREGADOS
 c2.markdown(
-    f"<div style='text-align:center; color:yellow;'>Entregados</div>",
+    "<div style='text-align:center; color:yellow; margin-bottom:6px;'>Entregados</div>",
     unsafe_allow_html=True
 )
+
 c2.altair_chart(
     donut_con_numero(entregados, total, COLOR_AVANCE_ENTREGADOS, COLOR_FALTANTE),
     use_container_width=True
 )
+
 c2.markdown(
-    f"<div style='text-align:center; color:gray;'>{porc_entregados:.1f}%</div>",
+    f"<div style='text-align:center; color:gray; margin-top:-10px;'>{porc_entregados:.1f}%</div>",
     unsafe_allow_html=True
 )
 
@@ -269,6 +271,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
