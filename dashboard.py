@@ -249,6 +249,60 @@ df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna
 st.dataframe(df_mostrar, use_container_width=True, height=520)
 
 # --------------------------------------------------
+# GRÁFICOS POR PAQUETERÍA – NUEVO BLOQUE
+# --------------------------------------------------
+st.markdown(
+    "<h2 style='color:white; text-align:center; margin:10px 0;'>Seguimiento por Paquetería</h2>",
+    unsafe_allow_html=True
+)
+
+g1, g2 = st.columns(2)
+
+# En tránsito por paquetería
+df_transito = (
+    df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"]
+    .groupby("FLETERA")
+    .size()
+    .reset_index(name="PEDIDOS")
+)
+
+graf_transito = alt.Chart(df_transito).mark_bar(
+    cornerRadiusTopLeft=6,
+    cornerRadiusTopRight=6
+).encode(
+    x=alt.X("FLETERA:N", title="Paquetería"),
+    y=alt.Y("PEDIDOS:Q", title="Pedidos en tránsito"),
+    tooltip=["FLETERA", "PEDIDOS"],
+    color=alt.value("#FFC107")  # Amarillo
+).properties(height=320)
+
+g1.markdown("<h4 style='color:yellow; text-align:center;'>En tránsito</h4>", unsafe_allow_html=True)
+g1.altair_chart(graf_transito, use_container_width=True)
+
+# Retrasados por paquetería
+df_retrasados = (
+    df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"]
+    .groupby("FLETERA")
+    .size()
+    .reset_index(name="PEDIDOS")
+)
+
+graf_retrasados = alt.Chart(df_retrasados).mark_bar(
+    cornerRadiusTopLeft=6,
+    cornerRadiusTopRight=6
+).encode(
+    x=alt.X("FLETERA:N", title="Paquetería"),
+    y=alt.Y("PEDIDOS:Q", title="Pedidos retrasados"),
+    tooltip=["FLETERA", "PEDIDOS"],
+    color=alt.value("#F44336")  # Rojo
+).properties(height=320)
+
+g2.markdown("<h4 style='color:#F44336; text-align:center;'>Retrasados</h4>", unsafe_allow_html=True)
+g2.altair_chart(graf_retrasados, use_container_width=True)
+
+st.divider()  # línea separadora antes de la tabla
+
+# --------------------------------------------------
 # GRÁFICO DE ESTATUS – TITULO NARANJA
 # --------------------------------------------------
 st.markdown("<h2 style='color:white;'>Estatus de Envíos</h2>", unsafe_allow_html=True)
@@ -271,6 +325,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
