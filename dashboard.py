@@ -6,10 +6,10 @@ import altair as alt
 # CONFIGURACIÓN DE PÁGINA
 # --------------------------------------------------
 st.set_page_config(
-    page_title="Dashboard de Envíos – Atención al Cliente",
+    page_title="Control de Envíos – Enero 2026",
     layout="wide"
 )
-st.markdown("<h1 style='color:Ligthgray;'>Dashboard de Envíos – Atención al Cliente</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='color:Ligthgray;'>Control de Envíos – Enero 2026</h1>", unsafe_allow_html=True)
 
 # --------------------------------------------------
 # CARGA DE DATOS
@@ -99,7 +99,7 @@ if "FECHA DE ENVÍO" in df.columns:
 # --------------------------------------------------
 # KPIS CON PORCENTAJES – TITULO NARANJA
 # --------------------------------------------------
-st.markdown("<h2 style='color:orange;'>Indicadores Clave</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='color:white;'>Indicadores Clave</h2>", unsafe_allow_html=True)
 
 c1, c2, c3, c4 = st.columns(4)
 total = len(df_filtrado)
@@ -121,7 +121,7 @@ st.divider()
 # --------------------------------------------------
 # GRÁFICO DE ESTATUS – TITULO NARANJA
 # --------------------------------------------------
-st.markdown("<h2 style='color:orange;'>Estatus de Envíos</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='color:white;'>Estatus de Envíos</h2>", unsafe_allow_html=True)
 df_est = df_filtrado["ESTATUS_CALCULADO"].value_counts().rename_axis("Estatus").reset_index(name="Cantidad")
 if not df_est.empty:
     chart = alt.Chart(df_est).mark_bar().encode(
@@ -137,7 +137,7 @@ st.divider()
 # --------------------------------------------------
 # TABLA FINAL – TITULO NARANJA
 # --------------------------------------------------
-st.markdown("<h2 style='color:orange;'>Detalle de Envíos</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='color:white;'>Detalle de Envíos</h2>", unsafe_allow_html=True)
 df_mostrar = df_filtrado.copy()
 df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y')
 df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna('')
@@ -148,9 +148,10 @@ st.dataframe(df_mostrar, use_container_width=True, height=520)
 # FOOTER
 # --------------------------------------------------
 st.markdown(
-    "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Dashboard de Atención al Cliente</div>",
+    "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
