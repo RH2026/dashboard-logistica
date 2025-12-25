@@ -9,7 +9,6 @@ st.set_page_config(
     page_title="Dashboard de Envíos – Atención al Cliente",
     layout="wide"
 )
-
 st.title("📦 Dashboard de Envíos – Atención al Cliente")
 
 # --------------------------------------------------
@@ -17,69 +16,46 @@ st.title("📦 Dashboard de Envíos – Atención al Cliente")
 # --------------------------------------------------
 @st.cache_data
 def cargar_datos():
-    df = pd.read_csv(
-        "Matriz_Excel_Dashboard.csv",
-        encoding="utf-8"
-    )
-
-    # Normalizar columnas
+    df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
     df.columns = df.columns.str.strip().str.upper()
 
     # Convertir fechas
-    for col in [
-        "FECHA DE ENVÍO",
-        "PROMESA DE ENTREGA",
-        "FECHA DE ENTREGA REAL"
-    ]:
+    for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
 
-    # --------------------------------------------------
-    # VARIABLES BASE
-    # --------------------------------------------------
     hoy = pd.Timestamp.today().normalize()
 
-    # --------------------------------------------------
-    # ESTATUS CALCULADO
-    # --------------------------------------------------
-    df["ESTATUS_CALCULADO"] = "EN TRANSITO"
-    df.loc[df["FECHA DE ENTREGA REAL"].notna(), "ESTATUS_CALCULADO"] = "ENTREGADO"
-    df.loc[
-        (df["FECHA DE ENTREGA REAL"].isna()) &
-        (df["PROMESA DE ENTREGA"].notna()) &
-        (df["PROMESA DE ENTREGA"] < hoy),
-        "ESTATUS_CALCULADO"
-    ] = "RETRASADO"
+    # Función para calcular estatus
+    def calcular_estatus(row):
+        if pd.notna(row["FECHA DE ENTREGA REAL"]):
+            return "ENTREGADO"
+        elif pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy:
+            return "RETRASADO"
+        else:
+            return "EN TRANSITO"
 
-    # --------------------------------------------------
-    # DÍAS TRANSCURRIDOS
-    # --------------------------------------------------
-    df["DIAS TRANSCURRIDOS"] = None
-    df.loc[
-        df["FECHA DE ENVÍO"].notna() & df["FECHA DE ENTREGA REAL"].notna(),
-        "DIAS TRANSCURRIDOS"
-    ] = (df["FECHA DE ENTREGA REAL"] - df["FECHA DE ENVÍO"]).dt.days
-    df.loc[
-        df["FECHA DE ENVÍO"].notna() & df["FECHA DE ENTREGA REAL"].isna(),
-        "DIAS TRANSCURRIDOS"
-    ] = (hoy - df["FECHA DE ENVÍO"]).dt.days
+    df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
 
-    # --------------------------------------------------
-    # DÍAS DE RETRASO
-    # --------------------------------------------------
-    df["DIAS DE RETRASO"] = 0
-    df.loc[
-        df["FECHA DE ENTREGA REAL"].notna() &
-        df["PROMESA DE ENTREGA"].notna() &
-        (df["FECHA DE ENTREGA REAL"] > df["PROMESA DE ENTREGA"]),
-        "DIAS DE RETRASO"
-    ] = (df["FECHA DE ENTREGA REAL"] - df["PROMESA DE ENTREGA"]).dt.days
-    df.loc[
-        df["FECHA DE ENTREGA REAL"].isna() &
-        df["PROMESA DE ENTREGA"].notna() &
-        (hoy > df["PROMESA DE ENTREGA"]),
-        "DIAS DE RETRASO"
-    ] = (hoy - df["PROMESA DE ENTREGA"]).dt.days
+    # Días transcurridos
+    df["DIAS TRANSCURRIDOS"] = df.apply(
+        lambda row: (row["FECHA DE ENTREGA REAL"] - row["FECHA DE ENVÍO"]).days
+        if pd.notna(row["FECHA DE ENTREGA REAL"]) else
+        (hoy - row["FECHA DE ENVÍO"]).days
+        if pd.notna(row["FECHA DE ENVÍO"]) else None,
+        axis=1
+    )
+
+    # Días de retraso
+    df["DIAS DE RETRASO"] = df.apply(
+        lambda row: max(
+            (row["FECHA DE ENTREGA REAL"] - row["PROMESA DE ENTREGA"]).days,
+            0
+        ) if pd.notna(row["FECHA DE ENTREGA REAL"]) and pd.notna(row["PROMESA DE ENTREGA"]) else
+        max((hoy - row["PROMESA DE ENTREGA"]).days, 0)
+        if pd.isna(row["FECHA DE ENTREGA REAL"]) and pd.notna(row["PROMESA DE ENTREGA"]) else 0,
+        axis=1
+    )
 
     return df
 
@@ -89,16 +65,13 @@ df = cargar_datos()
 # SIDEBAR – FILTROS
 # --------------------------------------------------
 st.sidebar.header("🔎 Filtros")
-
 df_filtrado = df.copy()
 
 # Filtro No Cliente
 if "NO CLIENTE" in df.columns:
     no_cliente = st.sidebar.text_input("Buscar No Cliente")
     if no_cliente:
-        df_filtrado = df_filtrado[
-            df_filtrado["NO CLIENTE"].astype(str).str.contains(no_cliente, case=False, na=False)
-        ]
+        df_filtrado = df_filtrado[df_filtrado["NO CLIENTE"].astype(str).str.contains(no_cliente, case=False, na=False)]
 
 # Filtro Estatus
 estatus_sel = st.sidebar.multiselect(
@@ -110,14 +83,8 @@ if estatus_sel:
 
 # Filtro Fecha de Envío
 if "FECHA DE ENVÍO" in df.columns:
-    fecha_min = df["FECHA DE ENVÍO"].min()
-    fecha_max = df["FECHA DE ENVÍO"].max()
-
-    rango = st.sidebar.date_input(
-        "Rango de Fecha de Envío",
-        value=(fecha_min, fecha_max)
-    )
-
+    fecha_min, fecha_max = df["FECHA DE ENVÍO"].min(), df["FECHA DE ENVÍO"].max()
+    rango = st.sidebar.date_input("Rango de Fecha de Envío", value=(fecha_min, fecha_max))
     if isinstance(rango, tuple):
         df_filtrado = df_filtrado[
             (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(rango[0])) &
@@ -128,16 +95,11 @@ if "FECHA DE ENVÍO" in df.columns:
 # KPIs
 # --------------------------------------------------
 c1, c2, c3, c4 = st.columns(4)
-
 total = len(df_filtrado)
-entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
-transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
-retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
-
 c1.metric("📦 Total", total)
-c2.metric("✅ Entregados", entregados)
-c3.metric("🚚 En tránsito", transito)
-c4.metric("⏰ Retrasados", retrasados)
+c2.metric("✅ Entregados", (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum())
+c3.metric("🚚 En tránsito", (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum())
+c4.metric("⏰ Retrasados", (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum())
 
 st.divider()
 
@@ -145,14 +107,7 @@ st.divider()
 # GRÁFICO DE ESTATUS
 # --------------------------------------------------
 st.subheader("📊 Estatus de Envíos")
-
-df_est = (
-    df_filtrado["ESTATUS_CALCULADO"]
-    .value_counts()
-    .rename_axis("Estatus")
-    .reset_index(name="Cantidad")
-)
-
+df_est = df_filtrado["ESTATUS_CALCULADO"].value_counts().rename_axis("Estatus").reset_index(name="Cantidad")
 if not df_est.empty:
     chart = alt.Chart(df_est).mark_bar().encode(
         x=alt.X("Estatus:N", title="Estatus"),
@@ -169,12 +124,7 @@ st.divider()
 # TABLA FINAL
 # --------------------------------------------------
 st.subheader("📋 Detalle de Envíos")
-
-st.dataframe(
-    df_filtrado,
-    use_container_width=True,
-    height=520
-)
+st.dataframe(df_filtrado, use_container_width=True, height=520)
 
 # --------------------------------------------------
 # FOOTER
