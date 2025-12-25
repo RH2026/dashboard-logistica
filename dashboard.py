@@ -303,16 +303,25 @@ g2.altair_chart(graf_retrasados, use_container_width=True)
 st.divider()  # línea separadora antes de la tabla
 
 # --------------------------------------------------
-# PEDIDOS ENTREGADOS CON RETRASO POR PAQUETERÍA
+# PEDIDOS ENTREGADOS CON RETRASO POR PAQUETERÍA (FECHA REAL)
 # --------------------------------------------------
 st.markdown(
     "<h2 style='color:white; text-align:center; margin:10px 0;'>Pedidos Entregados con Retraso por Paquetería</h2>",
     unsafe_allow_html=True
 )
 
+# Filtrar solo los pedidos que ya tienen fecha de entrega real
+df_entregados = df_filtrado[pd.notna(df_filtrado["FECHA DE ENTREGA REAL"])]
+
+# Filtrar los que llegaron con retraso (fecha real > fecha promesa)
+df_entregados_retraso = df_entregados[
+    (pd.notna(df_entregados["PROMESA DE ENTREGA"])) &
+    (df_entregados["FECHA DE ENTREGA REAL"] > df_entregados["PROMESA DE ENTREGA"])
+]
+
+# Agrupar por paquetería
 df_retraso_paquete = (
-    df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"]
-    .groupby("FLETERA")
+    df_entregados_retraso.groupby("FLETERA")
     .size()
     .reset_index(name="PEDIDOS_RETRASADOS")
 )
@@ -323,14 +332,14 @@ if not df_retraso_paquete.empty:
         cornerRadiusTopRight=6
     ).encode(
         x=alt.X("FLETERA:N", title="Paquetería"),
-        y=alt.Y("PEDIDOS_RETRASADOS:Q", title="Pedidos retrasados"),
+        y=alt.Y("PEDIDOS_RETRASADOS:Q", title="Pedidos entregados con retraso"),
         tooltip=["FLETERA", "PEDIDOS_RETRASADOS"],
         color=alt.value("#F44336")  # Rojo
     ).properties(height=320)
 
     st.altair_chart(graf_retraso_paquete, use_container_width=True)
 else:
-    st.info("No hay pedidos entregados con retraso para mostrar con los filtros actuales.")
+    st.info("No hay entregas con retraso para mostrar con los filtros actuales.")
 
 st.divider()  # línea separadora antes de la tabla
 
@@ -357,6 +366,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
