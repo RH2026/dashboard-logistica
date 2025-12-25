@@ -9,36 +9,23 @@ st.set_page_config(
     page_title="Control de Envíos – Enero 2026",
     layout="wide"
 )
+# TÍTULO Y SUBTÍTULO
 st.markdown(
     """
     <div style="text-align:center;">
-        <div style="
-            color:white;
-            font-size:56px;
-            font-weight:700;
-        ">
+        <div style="color:white; font-size:56px; font-weight:700;">
             Panel de Seguimiento y Control de Embarques
         </div>
-
-        <div style="
-            color:#CCCCCC;
-            font-size:22px;
-            margin-top:8px;
-            letter-spacing:1px;
-        ">
+        <div style="color:#CCCCCC; font-size:22px; margin-top:8px;">
             Logística – Enero 2026
         </div>
-
-        <div style="
-            margin:20px auto 0 auto;
-            height:1px;
-            width:60%;
-            background-color:#888;
-        "></div>
     </div>
     """,
     unsafe_allow_html=True
 )
+
+# LÍNEA SUTIL SEGURA
+st.divider()
 # --------------------------------------------------
 # CARGA DE DATOS
 # --------------------------------------------------
@@ -179,6 +166,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
