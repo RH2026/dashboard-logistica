@@ -143,7 +143,6 @@ def donut_con_numero(avance, total, color_avance, color_faltante):
         )
     )
 
-    # Número grande (avance)
     texto_numero = alt.Chart(
         pd.DataFrame({"texto": [f"{avance}"]})
     ).mark_text(
@@ -157,7 +156,6 @@ def donut_con_numero(avance, total, color_avance, color_faltante):
         text="texto:N"
     )
 
-    # Porcentaje pequeño debajo
     texto_porcentaje = alt.Chart(
         pd.DataFrame({"texto": [f"{porcentaje}%"]})
     ).mark_text(
@@ -292,6 +290,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
