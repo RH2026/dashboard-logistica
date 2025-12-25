@@ -158,13 +158,11 @@ def donut_con_numero(avance, total, color_avance, color_faltante):
         height=140
     )
 
-
 # --------------------------------------------------
 # DATAFRAME REAL
 # --------------------------------------------------
 df = cargar_datos()
 df_filtrado = df.copy()
-
 
 # --------------------------------------------------
 # KPIs CON DONITAS
@@ -195,7 +193,6 @@ c1.altair_chart(
     use_container_width=True
 )
 
-
 # KPI ENTREGADOS
 c2.markdown(
     f"<div style='text-align:center; color:yellow;'>Entregados</div>",
@@ -210,7 +207,6 @@ c2.markdown(
     unsafe_allow_html=True
 )
 
-
 # KPI EN TRÁNSITO
 c3.markdown(
     f"<div style='text-align:center; color:yellow;'>En tránsito</div>",
@@ -224,7 +220,6 @@ c3.markdown(
     f"<div style='text-align:center; color:gray;'>{porc_transito:.1f}%</div>",
     unsafe_allow_html=True
 )
-
 
 # KPI RETRASADOS
 c4.markdown(
@@ -274,6 +269,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
