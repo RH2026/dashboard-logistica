@@ -19,9 +19,12 @@ def cargar_datos():
     df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
     df.columns = df.columns.str.strip().str.upper()
 
-    # Convertir fechas y normalizar strings vacíos a NaT
+    # Limpiar columnas de fechas y convertir a datetime
     for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
         if col in df.columns:
+            # Reemplaza strings vacíos o solo espacios por NA
+            df[col] = df[col].replace(r'^\s*$', pd.NA, regex=True)
+            # Convertir a datetime
             df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
 
     hoy = pd.Timestamp.today().normalize()
