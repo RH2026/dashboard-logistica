@@ -241,6 +241,17 @@ c4.markdown(
     f"<div style='text-align:center; color:gray; margin-top:-18px;'>{porc_retrasados:.1f}%</div>",
     unsafe_allow_html=True
 )
+
+# --------------------------------------------------
+# TABLA FINAL – TITULO NARANJA
+# --------------------------------------------------
+st.markdown("<h2 style='color:white;'>Detalle de Envíos</h2>", unsafe_allow_html=True)
+df_mostrar = df_filtrado.copy()
+df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y')
+df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna('')
+
+st.dataframe(df_mostrar, use_container_width=True, height=520)
+
 # --------------------------------------------------
 # GRÁFICO DE ESTATUS – TITULO NARANJA
 # --------------------------------------------------
@@ -258,22 +269,13 @@ else:
 st.divider()
 
 # --------------------------------------------------
-# TABLA FINAL – TITULO NARANJA
-# --------------------------------------------------
-st.markdown("<h2 style='color:white;'>Detalle de Envíos</h2>", unsafe_allow_html=True)
-df_mostrar = df_filtrado.copy()
-df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y')
-df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna('')
-
-st.dataframe(df_mostrar, use_container_width=True, height=520)
-
-# --------------------------------------------------
 # FOOTER
 # --------------------------------------------------
 st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
