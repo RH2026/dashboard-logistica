@@ -21,9 +21,7 @@ def cargar_datos():
 
     hoy = pd.Timestamp.today().normalize()
 
-    # --------------------------------------------------
     # LIMPIEZA DE FECHAS
-    # --------------------------------------------------
     for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
         if col in df.columns:
             # Convierte todo texto vacío o "None", "NULL", "N/A" en NaT
@@ -31,9 +29,7 @@ def cargar_datos():
             # Convierte a datetime
             df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
 
-    # --------------------------------------------------
     # ESTATUS
-    # --------------------------------------------------
     def calcular_estatus(row):
         hoy = pd.Timestamp.today().normalize()
         fecha_real = row["FECHA DE ENTREGA REAL"]
@@ -47,14 +43,10 @@ def cargar_datos():
 
     df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
 
-    # --------------------------------------------------
     # DÍAS TRANSCURRIDOS
-    # --------------------------------------------------
     df["DIAS TRANSCURRIDOS"] = (df["FECHA DE ENTREGA REAL"].fillna(hoy) - df["FECHA DE ENVÍO"]).dt.days
 
-    # --------------------------------------------------
     # DÍAS DE RETRASO
-    # --------------------------------------------------
     def calcular_dias_retraso(row):
         hoy = pd.Timestamp.today().normalize()
         fecha_real = row["FECHA DE ENTREGA REAL"]
@@ -144,10 +136,15 @@ else:
 st.divider()
 
 # --------------------------------------------------
-# TABLA FINAL
+# TABLA FINAL – CON FECHAS BONITAS
 # --------------------------------------------------
 st.subheader("Detalle de Envíos")
-st.dataframe(df_filtrado, use_container_width=True, height=520)
+df_mostrar = df_filtrado.copy()
+# Formatea FECHA DE ENTREGA REAL
+df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y')
+df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna('')  # reemplaza NaT por vacío
+
+st.dataframe(df_mostrar, use_container_width=True, height=520)
 
 # --------------------------------------------------
 # FOOTER
