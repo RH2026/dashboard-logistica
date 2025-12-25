@@ -38,6 +38,53 @@ def cargar_datos():
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
 
+# --------------------------------------------------
+# CALCULO DE DIAS TRANSCURRIDOS
+# --------------------------------------------------
+df["DIAS TRANSCURRIDOS"] = None
+
+# Entregados
+df.loc[
+    df["FECHA DE ENTREGA REAL"].notna() & df["FECHA DE ENVÍO"].notna(),
+    "DIAS TRANSCURRIDOS"
+] = (
+    df["FECHA DE ENTREGA REAL"] - df["FECHA DE ENVÍO"]
+).dt.days
+
+# En tránsito
+df.loc[
+    df["FECHA DE ENTREGA REAL"].isna() & df["FECHA DE ENVÍO"].notna(),
+    "DIAS TRANSCURRIDOS"
+] = (
+    hoy - df["FECHA DE ENVÍO"]
+).dt.days
+
+
+# --------------------------------------------------
+# CALCULO DE DIAS DE RETRASO
+# --------------------------------------------------
+df["DIAS DE RETRASO"] = 0
+
+# Entregado con retraso
+df.loc[
+    df["FECHA DE ENTREGA REAL"].notna() &
+    df["PROMESA DE ENTREGA"].notna() &
+    (df["FECHA DE ENTREGA REAL"] > df["PROMESA DE ENTREGA"]),
+    "DIAS DE RETRASO"
+] = (
+    df["FECHA DE ENTREGA REAL"] - df["PROMESA DE ENTREGA"]
+).dt.days
+
+# No entregado y vencido
+df.loc[
+    df["FECHA DE ENTREGA REAL"].isna() &
+    df["PROMESA DE ENTREGA"].notna() &
+    (hoy > df["PROMESA DE ENTREGA"]),
+    "DIAS DE RETRASO"
+] = (
+    hoy - df["PROMESA DE ENTREGA"]
+).dt.days
+
     # --------------------------------------------------
     # CALCULO AUTOMATICO DE ESTATUS
     # --------------------------------------------------
