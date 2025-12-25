@@ -184,7 +184,7 @@ porc_retrasados = (retrasados / total * 100) if total > 0 else 0
 
 # KPI TOTAL (CON DONA AL 100%)
 c1.markdown(
-    "<div style='text-align:center; color:yellow;'>Total de pedidos</div>",
+    "<div style='text-align:center; color:yellow; margin-bottom:6px;'>Total de pedidos</div>",
     unsafe_allow_html=True
 )
 
@@ -211,29 +211,33 @@ c2.markdown(
 
 # KPI EN TRÁNSITO
 c3.markdown(
-    f"<div style='text-align:center; color:yellow;'>En tránsito</div>",
+    "<div style='text-align:center; color:yellow; margin-bottom:6px;'>En tránsito</div>",
     unsafe_allow_html=True
 )
+
 c3.altair_chart(
     donut_con_numero(en_transito, total, COLOR_AVANCE_TRANSITO, COLOR_FALTANTE),
     use_container_width=True
 )
+
 c3.markdown(
-    f"<div style='text-align:center; color:gray;'>{porc_transito:.1f}%</div>",
+    f"<div style='text-align:center; color:gray; margin-top:-10px;'>{porc_transito:.1f}%</div>",
     unsafe_allow_html=True
 )
 
 # KPI RETRASADOS
 c4.markdown(
-    f"<div style='text-align:center; color:yellow;'>Retrasados</div>",
+    "<div style='text-align:center; color:yellow; margin-bottom:6px;'>Retrasados</div>",
     unsafe_allow_html=True
 )
+
 c4.altair_chart(
     donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE),
     use_container_width=True
 )
+
 c4.markdown(
-    f"<div style='text-align:center; color:gray;'>{porc_retrasados:.1f}%</div>",
+    f"<div style='text-align:center; color:gray; margin-top:-10px;'>{porc_retrasados:.1f}%</div>",
     unsafe_allow_html=True
 )
 
@@ -271,6 +275,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
