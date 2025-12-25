@@ -139,22 +139,20 @@ st.subheader("📊 Estatus de Envíos")
 df_est = (
     df_filtrado["ESTATUS_CALCULADO"]
     .value_counts()
-    .reset_index()
-    .rename(columns={
-        "index": "Estatus",
-        "ESTATUS_CALCULADO": "Cantidad"
-    })
+    .rename_axis("Estatus")
+    .reset_index(name="Cantidad")
 )
 
-chart = alt.Chart(df_est).mark_bar().encode(
-    x="Estatus:N",
-    y="Cantidad:Q",
-    tooltip=["Estatus", "Cantidad"]
-)
+if not df_est.empty:
+    chart = alt.Chart(df_est).mark_bar().encode(
+        x=alt.X("Estatus:N", title="Estatus"),
+        y=alt.Y("Cantidad:Q", title="Cantidad"),
+        tooltip=["Estatus:N", "Cantidad:Q"]
+    )
 
-st.altair_chart(chart, use_container_width=True)
-
-st.divider()
+    st.altair_chart(chart, use_container_width=True)
+else:
+    st.info("No hay datos para mostrar con los filtros actuales.")
 
 # --------------------------------------------------
 # TABLA FINAL
@@ -174,3 +172,4 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Dashboard de Atención al Cliente</div>",
     unsafe_allow_html=True
 )
+
