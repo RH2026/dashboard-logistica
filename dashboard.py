@@ -9,7 +9,7 @@ st.set_page_config(
     page_title="Dashboard de Envíos – Atención al Cliente",
     layout="wide"
 )
-st.markdown("<h1 style='color:Gray;'>Dashboard de Envíos – Atención al Cliente</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='color:Ligthgray;'>Dashboard de Envíos – Atención al Cliente</h1>", unsafe_allow_html=True)
 
 # --------------------------------------------------
 # CARGA DE DATOS
@@ -151,6 +151,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Dashboard de Atención al Cliente</div>",
     unsafe_allow_html=True
 )
+
 
 
 
