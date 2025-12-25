@@ -238,7 +238,10 @@ c4.altair_chart(
 # --------------------------------------------------
 # TABLA FINAL – TITULO NARANJA
 # --------------------------------------------------
-st.markdown("<h2 style='color:white;'>Detalle de Envíos</h2>", unsafe_allow_html=True)
+st.markdown(
+    "<h2 style='color:white; text-align:center; margin:10px 0;'>Lista de Envios</h2>",
+    unsafe_allow_html=True
+)
 df_mostrar = df_filtrado.copy()
 df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y')
 df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna('')
@@ -268,6 +271,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
