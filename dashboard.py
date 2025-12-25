@@ -184,15 +184,15 @@ porc_transito = (en_transito / total * 100) if total > 0 else 0
 porc_retrasados = (retrasados / total * 100) if total > 0 else 0
 
 
-# KPI TOTAL (SIN DONA)
+# KPI TOTAL (CON DONA AL 100%)
 c1.markdown(
-    f"""
-    <div style='text-align:center; color:yellow;'>
-        Total de pedidos<br>
-        <span style='color:white; font-size:34px;'>{total}</span>
-    </div>
-    """,
+    "<div style='text-align:center; color:yellow;'>Total de pedidos</div>",
     unsafe_allow_html=True
+)
+
+c1.altair_chart(
+    donut_con_numero(total, total, "#FFD700", COLOR_FALTANTE),
+    use_container_width=True
 )
 
 
@@ -274,6 +274,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
