@@ -125,6 +125,8 @@ COLOR_FALTANTE          = "#3A3A3A"   # Gris (lo que falta)
 # FUNCIÓN DONITA CON NÚMERO DENTRO
 # --------------------------------------------------
 def donut_con_numero(avance, total, color_avance, color_faltante):
+    porcentaje = int((avance / total) * 100) if total > 0 else 0
+
     data = pd.DataFrame({
         "segmento": ["avance", "faltante"],
         "valor": [avance, max(total - avance, 0)]
@@ -141,19 +143,34 @@ def donut_con_numero(avance, total, color_avance, color_faltante):
         )
     )
 
-    texto = alt.Chart(
+    # Número grande (avance)
+    texto_numero = alt.Chart(
         pd.DataFrame({"texto": [f"{avance}"]})
     ).mark_text(
         align="center",
         baseline="middle",
         fontSize=26,
         fontWeight="bold",
+        dy=-8,
         color="white"
     ).encode(
         text="texto:N"
     )
 
-    return (donut + texto).properties(
+    # Porcentaje pequeño debajo
+    texto_porcentaje = alt.Chart(
+        pd.DataFrame({"texto": [f"{porcentaje}%"]})
+    ).mark_text(
+        align="center",
+        baseline="middle",
+        fontSize=14,
+        dy=16,
+        color="gray"
+    ).encode(
+        text="texto:N"
+    )
+
+    return (donut + texto_numero + texto_porcentaje).properties(
         width=140,
         height=140
     )
@@ -275,6 +292,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
