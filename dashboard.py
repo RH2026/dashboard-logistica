@@ -24,14 +24,14 @@ def cargar_datos():
     # Limpiar columnas de fechas y convertir a datetime
     for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
         if col in df.columns:
-            # Reemplazar strings vacíos o solo espacios por NaT
-            df[col] = df[col].replace(r'^\s*$', pd.NA, regex=True)
-            # Reemplazar valores típicos de no fecha
-            df[col] = df[col].replace(["N/A", "n/a", "NULL", "null"], pd.NA)
+            # Convertir todo a string y limpiar espacios
+            df[col] = df[col].astype(str).str.strip()
+            # Reemplazar valores inválidos por NaT
+            df[col] = df[col].replace(["", "None", "N/A", "n/a", "NULL", "null"], pd.NaT)
             # Convertir a datetime
             df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
 
-    # Función para calcular estatus
+    # Calcular estatus
     def calcular_estatus(row):
         if pd.notna(row["FECHA DE ENTREGA REAL"]):
             return "ENTREGADO"
