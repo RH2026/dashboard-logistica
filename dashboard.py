@@ -13,7 +13,7 @@ st.markdown(
     """
     <div style='
         color:white;
-        font-size:60px;
+        font-size:32px;
         font-weight:700;
         text-align:center;
     '>
@@ -163,6 +163,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
