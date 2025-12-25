@@ -99,10 +99,13 @@ if "FECHA DE ENVÍO" in df.columns:
         ]
 
 # --------------------------------------------------
-# KPIs CON PORCENTAJES – TEXTO NARANJA
+# TÍTULO KPIS
 # --------------------------------------------------
-st.markdown("<h2 style='color:orange;'>Indicadores Clave</h2>", unsafe_allow_html=True)  # Título grande en naranja
+st.markdown("<h1 style='color:orange;'>Indicadores Clave</h1>", unsafe_allow_html=True)  # título grande y naranja
 
+# --------------------------------------------------
+# KPIS
+# --------------------------------------------------
 c1, c2, c3, c4 = st.columns(4)
 total = len(df_filtrado)
 
@@ -155,5 +158,6 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Dashboard de Atención al Cliente</div>",
     unsafe_allow_html=True
 )
+
 
 
