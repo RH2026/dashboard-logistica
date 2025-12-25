@@ -22,25 +22,35 @@ def cargar_datos():
     hoy = pd.Timestamp.today().normalize()
 
     # --------------------------------------------------
-    # LIMPIEZA ROBUSTA DE FECHAS
+    # LIMPIEZA BÁSICA DE FECHAS
     # --------------------------------------------------
     for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
         if col in df.columns:
-            # Convertir todo a string y limpiar espacios
             df[col] = df[col].astype(str).str.strip()
-            # Reemplazar valores inválidos por NaT
-            df[col] = df[col].replace(["", "None", "N/A", "n/a", "NULL", "null", "nan"], pd.NaT)
-            # Conversión definitiva a datetime, cualquier fallo a NaT
-            df[col] = df[col].apply(lambda x: pd.to_datetime(x, dayfirst=True, errors='coerce'))
 
     # --------------------------------------------------
-    # CALCULO DE ESTATUS
+    # CALCULO DE ESTATUS DEFINITIVO
     # --------------------------------------------------
     def calcular_estatus(row):
-        if pd.notna(row["FECHA DE ENTREGA REAL"]):
-            return "ENTREGADO"
+        # Si la fecha de entrega real dice "Transito" (o variantes), marcar en tránsito
+        if str(row["FECHA DE ENTREGA REAL"]).strip().lower() in ["transito", "tránsito"]:
+            return "EN TRANSITO"
+        # Si hay fecha real válida, marcar entregado
+        elif pd.notna(row["FECHA DE ENTREGA REAL"]) and row["FECHA DE ENTREGA REAL"] not in ["", "None", "N/A", "NULL", "null"]:
+            # Intentar convertir a fecha
+            try:
+                fecha_real = pd.to_datetime(row["FECHA DE ENTREGA REAL"], dayfirst=True, errors='coerce')
+                if pd.notna(fecha_real):
+                    return "ENTREGADO"
+            except:
+                pass
+        # Si hay promesa pero ya pasó la fecha, retrasado; sino en tránsito
         elif pd.notna(row["PROMESA DE ENTREGA"]):
-            return "RETRASADO" if row["PROMESA DE ENTREGA"] < hoy else "EN TRANSITO"
+            try:
+                promesa = pd.to_datetime(row["PROMESA DE ENTREGA"], dayfirst=True, errors='coerce')
+                return "RETRASADO" if promesa < hoy else "EN TRANSITO"
+            except:
+                return "EN TRANSITO"
         else:
             return "EN TRANSITO"
 
@@ -50,10 +60,10 @@ def cargar_datos():
     # DÍAS TRANSCURRIDOS
     # --------------------------------------------------
     df["DIAS TRANSCURRIDOS"] = df.apply(
-        lambda row: (row["FECHA DE ENTREGA REAL"] - row["FECHA DE ENVÍO"]).days
-        if pd.notna(row["FECHA DE ENTREGA REAL"]) else
-        (hoy - row["FECHA DE ENVÍO"]).days
-        if pd.notna(row["FECHA DE ENVÍO"]) else None,
+        lambda row: (pd.to_datetime(row["FECHA DE ENTREGA REAL"], errors='coerce') - pd.to_datetime(row["FECHA DE ENVÍO"], errors='coerce')).days
+        if str(row["FECHA DE ENTREGA REAL"]).lower() not in ["transito", "tránsito"] and pd.notna(pd.to_datetime(row["FECHA DE ENTREGA REAL"], errors='coerce')) else
+        (hoy - pd.to_datetime(row["FECHA DE ENVÍO"], errors='coerce')).days
+        if pd.notna(pd.to_datetime(row["FECHA DE ENVÍO"], errors='coerce')) else None,
         axis=1
     )
 
@@ -62,11 +72,11 @@ def cargar_datos():
     # --------------------------------------------------
     df["DIAS DE RETRASO"] = df.apply(
         lambda row: max(
-            (row["FECHA DE ENTREGA REAL"] - row["PROMESA DE ENTREGA"]).days,
+            (pd.to_datetime(row["FECHA DE ENTREGA REAL"], errors='coerce') - pd.to_datetime(row["PROMESA DE ENTREGA"], errors='coerce')).days,
             0
-        ) if pd.notna(row["FECHA DE ENTREGA REAL"]) and pd.notna(row["PROMESA DE ENTREGA"]) and row["FECHA DE ENTREGA REAL"] > row["PROMESA DE ENTREGA"] else
-        max((hoy - row["PROMESA DE ENTREGA"]).days, 0)
-        if pd.isna(row["FECHA DE ENTREGA REAL"]) and pd.notna(row["PROMESA DE ENTREGA"]) and hoy > row["PROMESA DE ENTREGA"] else 0,
+        ) if pd.notna(pd.to_datetime(row["FECHA DE ENTREGA REAL"], errors='coerce')) and pd.notna(pd.to_datetime(row["PROMESA DE ENTREGA"], errors='coerce')) and pd.to_datetime(row["FECHA DE ENTREGA REAL"], errors='coerce') > pd.to_datetime(row["PROMESA DE ENTREGA"], errors='coerce') else
+        max((hoy - pd.to_datetime(row["PROMESA DE ENTREGA"], errors='coerce')).days, 0)
+        if str(row["FECHA DE ENTREGA REAL"]).strip().lower() in ["transito", "tránsito"] and pd.notna(pd.to_datetime(row["PROMESA DE ENTREGA"], errors='coerce')) and hoy > pd.to_datetime(row["PROMESA DE ENTREGA"], errors='coerce') else 0,
         axis=1
     )
 
