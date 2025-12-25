@@ -19,7 +19,7 @@ def cargar_datos():
     df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
     df.columns = df.columns.str.strip().str.upper()
 
-    # Convertir fechas
+    # Convertir fechas y normalizar strings vacíos a NaT
     for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
