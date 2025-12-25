@@ -26,7 +26,7 @@ def cargar_datos():
     # --------------------------------------------------
     for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
         if col in df.columns:
-            # Reemplaza los valores vacíos o textos tipo "None", "NULL", "N/A" por NaT
+            # Convierte todo texto vacío o "None", "NULL", "N/A" en NaT
             df[col] = df[col].replace(["", "None", "NULL", "N/A", "n/a"], pd.NaT)
             # Convierte a datetime
             df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
