@@ -252,7 +252,7 @@ st.dataframe(df_mostrar, use_container_width=True, height=520)
 # GRÁFICOS POR PAQUETERÍA – NUEVO BLOQUE
 # --------------------------------------------------
 st.markdown(
-    "<h2 style='color:white; text-align:center; margin:10px 0;'>Seguimiento por Paquetería</h2>",
+    "<h2 style='color:white; text-align:center; margin:10px 0;'>Pendientes por Paquetería</h2>",
     unsafe_allow_html=True
 )
 
@@ -325,6 +325,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
