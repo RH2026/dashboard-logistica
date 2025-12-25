@@ -22,41 +22,53 @@ def cargar_datos():
         encoding="utf-8"
     )
 
-    # Normalizar columnas
+    # Normalizar nombres de columnas
     df.columns = (
         df.columns
         .str.strip()
         .str.upper()
     )
 
-    # Convertir fechas si existen
-    for col in ["FECHA DE SALIDA", "FECHA PROMESA", "FECHA DE ENTREGA"]:
+    # Convertir fechas
+    for col in [
+        "FECHA DE ENVÍO",
+        "PROMESA DE ENTREGA",
+        "FECHA DE ENTREGA REAL"
+    ]:
         if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors="coerce")
+            df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
+
+    # --------------------------------------------------
+    # CALCULO AUTOMATICO DE ESTATUS
+    # --------------------------------------------------
+    hoy = pd.Timestamp.today().normalize()
+
+    df["ESTATUS_CALCULADO"] = "EN TRANSITO"
+
+    # ENTREGADO
+    df.loc[
+        df["FECHA DE ENTREGA REAL"].notna(),
+        "ESTATUS_CALCULADO"
+    ] = "ENTREGADO"
+
+    # RETRASADO
+    df.loc[
+        (df["FECHA DE ENTREGA REAL"].isna()) &
+        (df["PROMESA DE ENTREGA"].notna()) &
+        (df["PROMESA DE ENTREGA"] < hoy),
+        "ESTATUS_CALCULADO"
+    ] = "RETRASADO"
 
     return df
+
 
 df = cargar_datos()
 
 # --------------------------------------------------
-# DEBUG VISIBLE
+# DEBUG OPCIONAL
 # --------------------------------------------------
-with st.expander("🧪 Columnas detectadas en el CSV"):
+with st.expander("🧪 Columnas detectadas"):
     st.write(list(df.columns))
-
-# --------------------------------------------------
-# DETECCIÓN FLEXIBLE DE COLUMNAS
-# --------------------------------------------------
-def encontrar_columna(posibles):
-    for c in posibles:
-        if c in df.columns:
-            return c
-    return None
-
-COL_NO_CLIENTE = encontrar_columna(["NO CLIENTE"])
-COL_ESTATUS_ENTREGA = encontrar_columna(["ESTATUS DE ENTREGA", "ESTATUS ENTREGA"])
-COL_ESTATUS_TIEMPO = encontrar_columna(["ESTATUS DE TIEMPO", "ESTATUS TIEMPO"])
-COL_FECHA_SALIDA = encontrar_columna(["FECHA DE SALIDA", "FECHA SALIDA"])
 
 # --------------------------------------------------
 # SIDEBAR – FILTROS
@@ -65,41 +77,41 @@ st.sidebar.header("🔎 Filtros")
 
 df_filtrado = df.copy()
 
-# ---- Filtro NO CLIENTE (caja de búsqueda)
-if COL_NO_CLIENTE:
-    no_cliente_input = st.sidebar.text_input("Buscar No Cliente")
-    if no_cliente_input:
+# ---- Filtro No Cliente
+if "NO CLIENTE" in df.columns:
+    no_cliente = st.sidebar.text_input("Buscar No Cliente")
+    if no_cliente:
         df_filtrado = df_filtrado[
-            df_filtrado[COL_NO_CLIENTE]
+            df_filtrado["NO CLIENTE"]
             .astype(str)
-            .str.contains(no_cliente_input, case=False, na=False)
-        ]
-else:
-    st.sidebar.info("Columna 'NO CLIENTE' no detectada")
-
-# ---- Filtro Estatus de Entrega
-if COL_ESTATUS_ENTREGA:
-    estatus = sorted(df[COL_ESTATUS_ENTREGA].dropna().unique())
-    estatus_sel = st.sidebar.multiselect("Estatus de Entrega", estatus)
-    if estatus_sel:
-        df_filtrado = df_filtrado[
-            df_filtrado[COL_ESTATUS_ENTREGA].isin(estatus_sel)
+            .str.contains(no_cliente, case=False, na=False)
         ]
 
-# ---- Filtro Fecha de Salida
-if COL_FECHA_SALIDA:
-    fecha_min = df[COL_FECHA_SALIDA].min()
-    fecha_max = df[COL_FECHA_SALIDA].max()
+# ---- Filtro Estatus
+estatus_sel = st.sidebar.multiselect(
+    "Estatus de Envío",
+    options=sorted(df["ESTATUS_CALCULADO"].unique())
+)
+
+if estatus_sel:
+    df_filtrado = df_filtrado[
+        df_filtrado["ESTATUS_CALCULADO"].isin(estatus_sel)
+    ]
+
+# ---- Filtro Fecha de Envío
+if "FECHA DE ENVÍO" in df.columns:
+    fecha_min = df["FECHA DE ENVÍO"].min()
+    fecha_max = df["FECHA DE ENVÍO"].max()
 
     rango = st.sidebar.date_input(
-        "Rango de Fecha de Salida",
+        "Rango de Fecha de Envío",
         value=(fecha_min, fecha_max)
     )
 
-    if isinstance(rango, tuple) and len(rango) == 2:
+    if isinstance(rango, tuple):
         df_filtrado = df_filtrado[
-            (df_filtrado[COL_FECHA_SALIDA] >= pd.to_datetime(rango[0])) &
-            (df_filtrado[COL_FECHA_SALIDA] <= pd.to_datetime(rango[1]))
+            (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(rango[0])) &
+            (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(rango[1]))
         ]
 
 # --------------------------------------------------
@@ -108,21 +120,9 @@ if COL_FECHA_SALIDA:
 c1, c2, c3, c4 = st.columns(4)
 
 total = len(df_filtrado)
-
-entregados = (
-    len(df_filtrado[df_filtrado[COL_ESTATUS_ENTREGA] == "ENTREGADO"])
-    if COL_ESTATUS_ENTREGA and COL_ESTATUS_ENTREGA in df_filtrado.columns else 0
-)
-
-transito = (
-    len(df_filtrado[df_filtrado[COL_ESTATUS_ENTREGA] == "EN TRÁNSITO"])
-    if COL_ESTATUS_ENTREGA and COL_ESTATUS_ENTREGA in df_filtrado.columns else 0
-)
-
-retrasados = (
-    len(df_filtrado[df_filtrado[COL_ESTATUS_TIEMPO] == "RETRASADO"])
-    if COL_ESTATUS_TIEMPO and COL_ESTATUS_TIEMPO in df_filtrado.columns else 0
-)
+entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
+transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
+retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
 
 c1.metric("📦 Total", total)
 c2.metric("✅ Entregados", entregados)
@@ -132,40 +132,39 @@ c4.metric("⏰ Retrasados", retrasados)
 st.divider()
 
 # --------------------------------------------------
-# GRÁFICO
+# GRÁFICO DE ESTATUS
 # --------------------------------------------------
-if COL_ESTATUS_ENTREGA and not df_filtrado.empty:
-    st.subheader("📊 Estatus de Entrega")
+st.subheader("📊 Estatus de Envíos")
 
-    df_est = (
-        df_filtrado[COL_ESTATUS_ENTREGA]
-        .value_counts()
-        .reset_index()
-        .rename(columns={
-            "index": "Estatus",
-            COL_ESTATUS_ENTREGA: "Cantidad"
-        })
-    )
+df_est = (
+    df_filtrado["ESTATUS_CALCULADO"]
+    .value_counts()
+    .reset_index()
+    .rename(columns={
+        "index": "Estatus",
+        "ESTATUS_CALCULADO": "Cantidad"
+    })
+)
 
-    chart = alt.Chart(df_est).mark_bar().encode(
-        x="Estatus:N",
-        y="Cantidad:Q",
-        tooltip=["Estatus", "Cantidad"]
-    )
+chart = alt.Chart(df_est).mark_bar().encode(
+    x="Estatus:N",
+    y="Cantidad:Q",
+    tooltip=["Estatus", "Cantidad"]
+)
 
-    st.altair_chart(chart, use_container_width=True)
+st.altair_chart(chart, use_container_width=True)
 
 st.divider()
 
 # --------------------------------------------------
 # TABLA FINAL
 # --------------------------------------------------
-st.subheader("📋 Detalle de Registros")
+st.subheader("📋 Detalle de Envíos")
 
 st.dataframe(
     df_filtrado,
     use_container_width=True,
-    height=500
+    height=520
 )
 
 # --------------------------------------------------
