@@ -9,7 +9,7 @@ st.set_page_config(
     page_title="Dashboard de Envíos – Atención al Cliente",
     layout="wide"
 )
-st.title("Dashboard de Envíos – Atención al Cliente")
+st.markdown("<h1 style='color:orange;'>Dashboard de Envíos – Atención al Cliente</h1>", unsafe_allow_html=True)
 
 # --------------------------------------------------
 # CARGA DE DATOS
@@ -24,9 +24,7 @@ def cargar_datos():
     # LIMPIEZA DE FECHAS
     for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
         if col in df.columns:
-            # Convierte todo texto vacío o "None", "NULL", "N/A" en NaT
             df[col] = df[col].replace(["", "None", "NULL", "N/A", "n/a"], pd.NaT)
-            # Convierte a datetime
             df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
 
     # ESTATUS
@@ -99,13 +97,10 @@ if "FECHA DE ENVÍO" in df.columns:
         ]
 
 # --------------------------------------------------
-# TÍTULO KPIS
+# KPIS CON PORCENTAJES – TITULO NARANJA
 # --------------------------------------------------
-st.markdown("<h1 style='color:orange;'>Indicadores Clave</h1>", unsafe_allow_html=True)  # título grande y naranja
+st.markdown("<h2 style='color:orange;'>Indicadores Clave</h2>", unsafe_allow_html=True)
 
-# --------------------------------------------------
-# KPIS
-# --------------------------------------------------
 c1, c2, c3, c4 = st.columns(4)
 total = len(df_filtrado)
 
@@ -124,9 +119,9 @@ c4.metric("Retrasados", f"{retrasados} ({porc_retrasados:.1f}%)")
 st.divider()
 
 # --------------------------------------------------
-# GRÁFICO DE ESTATUS
+# GRÁFICO DE ESTATUS – TITULO NARANJA
 # --------------------------------------------------
-st.subheader("Estatus de Envíos")
+st.markdown("<h2 style='color:orange;'>Estatus de Envíos</h2>", unsafe_allow_html=True)
 df_est = df_filtrado["ESTATUS_CALCULADO"].value_counts().rename_axis("Estatus").reset_index(name="Cantidad")
 if not df_est.empty:
     chart = alt.Chart(df_est).mark_bar().encode(
@@ -137,17 +132,15 @@ if not df_est.empty:
     st.altair_chart(chart, use_container_width=True)
 else:
     st.info("No hay datos para mostrar con los filtros actuales.")
-
 st.divider()
 
 # --------------------------------------------------
-# TABLA FINAL – CON FECHAS BONITAS
+# TABLA FINAL – TITULO NARANJA
 # --------------------------------------------------
-st.subheader("Detalle de Envíos")
+st.markdown("<h2 style='color:orange;'>Detalle de Envíos</h2>", unsafe_allow_html=True)
 df_mostrar = df_filtrado.copy()
-# Formatea FECHA DE ENTREGA REAL
 df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y')
-df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna('')  # reemplaza NaT por vacío
+df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna('')
 
 st.dataframe(df_mostrar, use_container_width=True, height=520)
 
@@ -158,6 +151,3 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Dashboard de Atención al Cliente</div>",
     unsafe_allow_html=True
 )
-
-
-
