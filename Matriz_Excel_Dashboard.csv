@@ -6,18 +6,18 @@ C25455,232061,Cliente A,20/12/2025,Sanchez,G-001,250,23/12/2025,23/12/2025,Ciuda
 C25456,232062,Cliente B,21/12/2025,Exprezzo,G-002,300,29/12/2025,29/12/2025,Ciudad B,Express,5,Entrega puntual,Alta
 C25689,232063,Cliente C,22/12/2025,Potosinos,G-003,150,25/12/2025,25/12/2025,Ciudad C,Urgente,8,Paquete dañado,Alta
 C02545,232064,Cliente A,20/12/2025,One Paqueteria,G-001,250,23/12/2025,25/12/2025,Ciudad A,Normal,10,Sin incidencias,Media
-C32569,232065,Cliente B,21/12/2025,Castores,G-002,300,24/12/2025,Transito,Ciudad B,Express,5,Entrega puntual,Alta
+C32569,232065,Cliente B,21/12/2025,Castores,G-002,300,24/12/2025,,Ciudad B,Express,5,Entrega puntual,Alta
 C01256,232066,Cliente C,22/12/2025,Tres Guerras,G-003,150,25/12/2025,27/12/2025,Ciudad C,Urgente,8,Paquete dañado,Alta
 C02542,232067,Cliente A,20/12/2025,Tiny Pack,G-001,250,23/12/2025,25/12/2025,Ciudad A,Normal,10,Sin incidencias,Media
 C02256,232068,Cliente B,21/12/2025,Sanchez,G-002,300,29/12/2025,31/12/2025,Ciudad B,Express,5,Entrega puntual,Alta
 C25455,232069,Cliente C,22/12/2025,Exprezzo,G-003,150,25/12/2025,27/12/2025,Ciudad C,Urgente,8,Paquete dañado,Alta
-C25456,232070,Cliente A,20/12/2025,Potosinos,G-001,250,23/12/2025,Transito,Ciudad A,Normal,10,Sin incidencias,Media
+C25456,232070,Cliente A,20/12/2025,Potosinos,G-001,250,23/12/2025,,Ciudad A,Normal,10,Sin incidencias,Media
 C25689,232071,Cliente B,21/12/2025,One Paqueteria,G-002,300,24/12/2025,24/12/2025,Ciudad B,Express,5,Entrega puntual,Alta
 C02545,232072,Cliente C,22/12/2025,Castores,G-003,150,25/12/2025,25/12/2025,Ciudad C,Urgente,8,Paquete dañado,Alta
-C32569,232073,Cliente A,20/12/2025,Tres Guerras,G-001,250,31/12/2025,Transito,Ciudad A,Normal,10,Sin incidencias,Media
+C32569,232073,Cliente A,20/12/2025,Tres Guerras,G-001,250,31/12/2025,,Ciudad A,Normal,10,Sin incidencias,Media
 C01256,232074,Cliente B,21/12/2025,Tiny Pack,G-002,300,28/12/2025,30/12/2025,Ciudad B,Express,5,Entrega puntual,Alta
 C02542,232075,Cliente C,22/12/2025,Sanchez,G-003,150,25/12/2025,27/12/2025,Ciudad C,Urgente,8,Paquete dañado,Alta
-C02256,232076,Cliente A,20/12/2025,Exprezzo,G-001,250,23/12/2025,Transito,Ciudad A,Normal,10,Sin incidencias,Media
+C02256,232076,Cliente A,20/12/2025,Exprezzo,G-001,250,23/12/2025,,Ciudad A,Normal,10,Sin incidencias,Media
 C25455,232077,Cliente B,21/12/2025,Potosinos,G-002,300,24/12/2025,26/12/2025,Ciudad B,Express,5,Entrega puntual,Alta
 C25456,232078,Cliente C,22/12/2025,Castores,G-003,150,29/12/2025,31/12/2025,Ciudad C,Urgente,8,Paquete dañado,Alta
 C25689,232079,Cliente A,20/12/2025,Tres Guerras,G-001,250,23/12/2025,25/12/2025,Ciudad A,Normal,10,Sin incidencias,Media
