@@ -22,12 +22,8 @@ def cargar_datos():
         encoding="utf-8"
     )
 
-    # Normalizar nombres de columnas
-    df.columns = (
-        df.columns
-        .str.strip()
-        .str.upper()
-    )
+    # Normalizar columnas
+    df.columns = df.columns.str.strip().str.upper()
 
     # Convertir fechas
     for col in [
@@ -38,73 +34,71 @@ def cargar_datos():
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
 
-# --------------------------------------------------
-# CALCULO DE DIAS TRANSCURRIDOS
-# --------------------------------------------------
-df["DIAS TRANSCURRIDOS"] = None
-
-# Entregados
-df.loc[
-    df["FECHA DE ENTREGA REAL"].notna() & df["FECHA DE ENVÍO"].notna(),
-    "DIAS TRANSCURRIDOS"
-] = (
-    df["FECHA DE ENTREGA REAL"] - df["FECHA DE ENVÍO"]
-).dt.days
-
-# En tránsito
-df.loc[
-    df["FECHA DE ENTREGA REAL"].isna() & df["FECHA DE ENVÍO"].notna(),
-    "DIAS TRANSCURRIDOS"
-] = (
-    hoy - df["FECHA DE ENVÍO"]
-).dt.days
-
-
-# --------------------------------------------------
-# CALCULO DE DIAS DE RETRASO
-# --------------------------------------------------
-df["DIAS DE RETRASO"] = 0
-
-# Entregado con retraso
-df.loc[
-    df["FECHA DE ENTREGA REAL"].notna() &
-    df["PROMESA DE ENTREGA"].notna() &
-    (df["FECHA DE ENTREGA REAL"] > df["PROMESA DE ENTREGA"]),
-    "DIAS DE RETRASO"
-] = (
-    df["FECHA DE ENTREGA REAL"] - df["PROMESA DE ENTREGA"]
-).dt.days
-
-# No entregado y vencido
-df.loc[
-    df["FECHA DE ENTREGA REAL"].isna() &
-    df["PROMESA DE ENTREGA"].notna() &
-    (hoy > df["PROMESA DE ENTREGA"]),
-    "DIAS DE RETRASO"
-] = (
-    hoy - df["PROMESA DE ENTREGA"]
-).dt.days
-
     # --------------------------------------------------
-    # CALCULO AUTOMATICO DE ESTATUS
+    # VARIABLES BASE
     # --------------------------------------------------
     hoy = pd.Timestamp.today().normalize()
 
+    # --------------------------------------------------
+    # ESTATUS CALCULADO
+    # --------------------------------------------------
     df["ESTATUS_CALCULADO"] = "EN TRANSITO"
 
-    # ENTREGADO
     df.loc[
         df["FECHA DE ENTREGA REAL"].notna(),
         "ESTATUS_CALCULADO"
     ] = "ENTREGADO"
 
-    # RETRASADO
     df.loc[
         (df["FECHA DE ENTREGA REAL"].isna()) &
         (df["PROMESA DE ENTREGA"].notna()) &
         (df["PROMESA DE ENTREGA"] < hoy),
         "ESTATUS_CALCULADO"
     ] = "RETRASADO"
+
+    # --------------------------------------------------
+    # DÍAS TRANSCURRIDOS
+    # --------------------------------------------------
+    df["DIAS TRANSCURRIDOS"] = None
+
+    df.loc[
+        df["FECHA DE ENVÍO"].notna() &
+        df["FECHA DE ENTREGA REAL"].notna(),
+        "DIAS TRANSCURRIDOS"
+    ] = (
+        df["FECHA DE ENTREGA REAL"] - df["FECHA DE ENVÍO"]
+    ).dt.days
+
+    df.loc[
+        df["FECHA DE ENVÍO"].notna() &
+        df["FECHA DE ENTREGA REAL"].isna(),
+        "DIAS TRANSCURRIDOS"
+    ] = (
+        hoy - df["FECHA DE ENVÍO"]
+    ).dt.days
+
+    # --------------------------------------------------
+    # DÍAS DE RETRASO
+    # --------------------------------------------------
+    df["DIAS DE RETRASO"] = 0
+
+    df.loc[
+        df["FECHA DE ENTREGA REAL"].notna() &
+        df["PROMESA DE ENTREGA"].notna() &
+        (df["FECHA DE ENTREGA REAL"] > df["PROMESA DE ENTREGA"]),
+        "DIAS DE RETRASO"
+    ] = (
+        df["FECHA DE ENTREGA REAL"] - df["PROMESA DE ENTREGA"]
+    ).dt.days
+
+    df.loc[
+        df["FECHA DE ENTREGA REAL"].isna() &
+        df["PROMESA DE ENTREGA"].notna() &
+        (hoy > df["PROMESA DE ENTREGA"]),
+        "DIAS DE RETRASO"
+    ] = (
+        hoy - df["PROMESA DE ENTREGA"]
+    ).dt.days
 
     return df
 
@@ -118,7 +112,7 @@ st.sidebar.header("🔎 Filtros")
 
 df_filtrado = df.copy()
 
-# ---- Filtro No Cliente
+# Filtro No Cliente
 if "NO CLIENTE" in df.columns:
     no_cliente = st.sidebar.text_input("Buscar No Cliente")
     if no_cliente:
@@ -128,7 +122,7 @@ if "NO CLIENTE" in df.columns:
             .str.contains(no_cliente, case=False, na=False)
         ]
 
-# ---- Filtro Estatus
+# Filtro Estatus
 estatus_sel = st.sidebar.multiselect(
     "Estatus de Envío",
     options=sorted(df["ESTATUS_CALCULADO"].unique())
@@ -139,7 +133,7 @@ if estatus_sel:
         df_filtrado["ESTATUS_CALCULADO"].isin(estatus_sel)
     ]
 
-# ---- Filtro Fecha de Envío
+# Filtro Fecha de Envío
 if "FECHA DE ENVÍO" in df.columns:
     fecha_min = df["FECHA DE ENVÍO"].min()
     fecha_max = df["FECHA DE ENVÍO"].max()
@@ -194,6 +188,8 @@ if not df_est.empty:
     st.altair_chart(chart, use_container_width=True)
 else:
     st.info("No hay datos para mostrar con los filtros actuales.")
+
+st.divider()
 
 # --------------------------------------------------
 # TABLA FINAL
