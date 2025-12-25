@@ -21,17 +21,21 @@ def cargar_datos():
 
     hoy = pd.Timestamp.today().normalize()
 
-    # Limpiar columnas de fechas y convertir a datetime
+    # --------------------------------------------------
+    # LIMPIEZA ROBUSTA DE FECHAS
+    # --------------------------------------------------
     for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
         if col in df.columns:
             # Convertir todo a string y limpiar espacios
             df[col] = df[col].astype(str).str.strip()
             # Reemplazar valores inválidos por NaT
-            df[col] = df[col].replace(["", "None", "N/A", "n/a", "NULL", "null"], pd.NaT)
-            # Convertir a datetime
-            df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
+            df[col] = df[col].replace(["", "None", "N/A", "n/a", "NULL", "null", "nan"], pd.NaT)
+            # Conversión definitiva a datetime, cualquier fallo a NaT
+            df[col] = df[col].apply(lambda x: pd.to_datetime(x, dayfirst=True, errors='coerce'))
 
-    # Calcular estatus
+    # --------------------------------------------------
+    # CALCULO DE ESTATUS
+    # --------------------------------------------------
     def calcular_estatus(row):
         if pd.notna(row["FECHA DE ENTREGA REAL"]):
             return "ENTREGADO"
@@ -42,7 +46,9 @@ def cargar_datos():
 
     df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
 
-    # Días transcurridos
+    # --------------------------------------------------
+    # DÍAS TRANSCURRIDOS
+    # --------------------------------------------------
     df["DIAS TRANSCURRIDOS"] = df.apply(
         lambda row: (row["FECHA DE ENTREGA REAL"] - row["FECHA DE ENVÍO"]).days
         if pd.notna(row["FECHA DE ENTREGA REAL"]) else
@@ -51,7 +57,9 @@ def cargar_datos():
         axis=1
     )
 
-    # Días de retraso
+    # --------------------------------------------------
+    # DÍAS DE RETRASO
+    # --------------------------------------------------
     df["DIAS DE RETRASO"] = df.apply(
         lambda row: max(
             (row["FECHA DE ENTREGA REAL"] - row["PROMESA DE ENTREGA"]).days,
