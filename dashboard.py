@@ -21,21 +21,21 @@ def cargar_datos():
 
     hoy = pd.Timestamp.today().normalize()
 
-    # LIMPIEZA BÁSICA DE FECHAS
+    # LIMPIEZA DE FECHAS
     for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
 
-    # CALCULO DE ESTATUS
+    # ESTATUS
     def calcular_estatus(row):
         hoy = pd.Timestamp.today().normalize()
-        promesa = row["PROMESA DE ENTREGA"]
         fecha_real = row["FECHA DE ENTREGA REAL"]
-        
+        promesa = row["PROMESA DE ENTREGA"]
+
         if pd.notna(fecha_real):
             return "ENTREGADO"
-        if pd.notna(promesa):
-            return "RETRASADO" if promesa < hoy else "EN TIEMPO"
+        if pd.notna(promesa) and promesa < hoy:
+            return "RETRASADO"
         return "EN TRANSITO"
 
     df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
@@ -46,13 +46,13 @@ def cargar_datos():
     # DÍAS DE RETRASO
     def calcular_dias_retraso(row):
         hoy = pd.Timestamp.today().normalize()
-        promesa = row["PROMESA DE ENTREGA"]
         fecha_real = row["FECHA DE ENTREGA REAL"]
+        promesa = row["PROMESA DE ENTREGA"]
 
         if pd.notna(fecha_real) and pd.notna(promesa):
             return max((fecha_real - promesa).days, 0)
-        if pd.isna(fecha_real) and pd.notna(promesa):
-            return max((hoy - promesa).days, 0) if hoy > promesa else 0
+        if pd.isna(fecha_real) and pd.notna(promesa) and promesa < hoy:
+            return (hoy - promesa).days
         return 0
 
     df["DIAS DE RETRASO"] = df.apply(calcular_dias_retraso, axis=1)
@@ -98,24 +98,21 @@ if "FECHA DE ENVÍO" in df.columns:
 # --------------------------------------------------
 # KPIs CON PORCENTAJES
 # --------------------------------------------------
-c1, c2, c3, c4, c5 = st.columns(5)
+c1, c2, c3, c4 = st.columns(4)
 total = len(df_filtrado)
 
 entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
 en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
 retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
-en_tiempo = (df_filtrado["ESTATUS_CALCULADO"] == "EN TIEMPO").sum()
 
 porc_entregados = (entregados / total * 100) if total > 0 else 0
 porc_transito = (en_transito / total * 100) if total > 0 else 0
 porc_retrasados = (retrasados / total * 100) if total > 0 else 0
-porc_en_tiempo = (en_tiempo / total * 100) if total > 0 else 0
 
 c1.metric("Total", total)
 c2.metric("Entregados", f"{entregados} ({porc_entregados:.1f}%)")
 c3.metric("En tránsito", f"{en_transito} ({porc_transito:.1f}%)")
 c4.metric("Retrasados", f"{retrasados} ({porc_retrasados:.1f}%)")
-c5.metric("En tiempo", f"{en_tiempo} ({porc_en_tiempo:.1f}%)")
 st.divider()
 
 # --------------------------------------------------
