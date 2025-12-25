@@ -192,69 +192,44 @@ entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
 en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
 retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
 
-porc_entregados = (entregados / total * 100) if total > 0 else 0
-porc_transito = (en_transito / total * 100) if total > 0 else 0
-porc_retrasados = (retrasados / total * 100) if total > 0 else 0
-
-
-# KPI TOTAL (CON DONA AL 100%)
+# KPI TOTAL
 c1.markdown(
     "<div style='text-align:center; color:yellow; margin-bottom:6px;'>Total de pedidos</div>",
     unsafe_allow_html=True
 )
-
 c1.altair_chart(
     donut_con_numero(total, total, "#FFD700", COLOR_FALTANTE),
     use_container_width=True
 )
 
+# KPI ENTREGADOS
 c2.markdown(
     "<div style='text-align:center; color:yellow; margin-bottom:6px;'>Entregados</div>",
     unsafe_allow_html=True
 )
-
 c2.altair_chart(
     donut_con_numero(entregados, total, COLOR_AVANCE_ENTREGADOS, COLOR_FALTANTE),
     use_container_width=True
 )
-
-c2.markdown(
-    f"<div style='text-align:center; color:gray; margin-top:-18px;'>{porc_entregados:.1f}%</div>",
-    unsafe_allow_html=True
-)
-
 
 # KPI EN TRÁNSITO
 c3.markdown(
     "<div style='text-align:center; color:yellow; margin-bottom:6px;'>En tránsito</div>",
     unsafe_allow_html=True
 )
-
 c3.altair_chart(
     donut_con_numero(en_transito, total, COLOR_AVANCE_TRANSITO, COLOR_FALTANTE),
     use_container_width=True
 )
-
-c3.markdown(
-    f"<div style='text-align:center; color:gray; margin-top:-18px;'>{porc_transito:.1f}%</div>",
-    unsafe_allow_html=True
-)
-
 
 # KPI RETRASADOS
 c4.markdown(
     "<div style='text-align:center; color:yellow; margin-bottom:6px;'>Retrasados</div>",
     unsafe_allow_html=True
 )
-
 c4.altair_chart(
     donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE),
     use_container_width=True
-)
-
-c4.markdown(
-    f"<div style='text-align:center; color:gray; margin-top:-18px;'>{porc_retrasados:.1f}%</div>",
-    unsafe_allow_html=True
 )
 
 # --------------------------------------------------
@@ -290,6 +265,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
