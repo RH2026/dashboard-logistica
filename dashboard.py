@@ -30,8 +30,8 @@ def cargar_datos():
     def calcular_estatus(row):
         if pd.notna(row["FECHA DE ENTREGA REAL"]):
             return "ENTREGADO"
-        elif pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy:
-            return "RETRASADO"
+        elif pd.notna(row["PROMESA DE ENTREGA"]):
+            return "RETRASADO" if row["PROMESA DE ENTREGA"] < hoy else "EN TRANSITO"
         else:
             return "EN TRANSITO"
 
@@ -51,9 +51,9 @@ def cargar_datos():
         lambda row: max(
             (row["FECHA DE ENTREGA REAL"] - row["PROMESA DE ENTREGA"]).days,
             0
-        ) if pd.notna(row["FECHA DE ENTREGA REAL"]) and pd.notna(row["PROMESA DE ENTREGA"]) else
+        ) if pd.notna(row["FECHA DE ENTREGA REAL"]) and pd.notna(row["PROMESA DE ENTREGA"]) and row["FECHA DE ENTREGA REAL"] > row["PROMESA DE ENTREGA"] else
         max((hoy - row["PROMESA DE ENTREGA"]).days, 0)
-        if pd.isna(row["FECHA DE ENTREGA REAL"]) and pd.notna(row["PROMESA DE ENTREGA"]) else 0,
+        if pd.isna(row["FECHA DE ENTREGA REAL"]) and pd.notna(row["PROMESA DE ENTREGA"]) and hoy > row["PROMESA DE ENTREGA"] else 0,
         axis=1
     )
 
