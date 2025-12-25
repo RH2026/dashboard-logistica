@@ -101,6 +101,8 @@ if "FECHA DE ENVÍO" in df.columns:
 # --------------------------------------------------
 # KPIs CON PORCENTAJES
 # --------------------------------------------------
+st.subheader("Indicadores Clave")  # Título grande arriba de los KPIs
+
 c1, c2, c3, c4 = st.columns(4)
 total = len(df_filtrado)
 
@@ -112,7 +114,7 @@ porc_entregados = (entregados / total * 100) if total > 0 else 0
 porc_transito = (en_transito / total * 100) if total > 0 else 0
 porc_retrasados = (retrasados / total * 100) if total > 0 else 0
 
-c1.metric("Total", total)
+c1.metric("Total de pedidos", total)
 c2.metric("Entregados", f"{entregados} ({porc_entregados:.1f}%)")
 c3.metric("En tránsito", f"{en_transito} ({porc_transito:.1f}%)")
 c4.metric("Retrasados", f"{retrasados} ({porc_retrasados:.1f}%)")
@@ -153,3 +155,4 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Dashboard de Atención al Cliente</div>",
     unsafe_allow_html=True
 )
+
