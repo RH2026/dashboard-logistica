@@ -33,22 +33,26 @@ def cargar_datos():
     # CALCULO DE ESTATUS DEFINITIVO
     # --------------------------------------------------
     def calcular_estatus(row):
+        hoy = pd.Timestamp.today().normalize()
         valor_real = str(row["FECHA DE ENTREGA REAL"]).strip().lower()
-        
+
         # Caso "Transito"
         if valor_real in ["transito", "tránsito"]:
             return "EN TRANSITO"
-        
+
         # Fecha real válida
         fecha_real = pd.to_datetime(row["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
         if pd.notna(fecha_real):
             return "ENTREGADO"
-        
-        # Si hay promesa, decidir retrasado o en tránsito
+
+        # Si no hay fecha real
         promesa = pd.to_datetime(row["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
         if pd.notna(promesa):
-            return "RETRASADO" if promesa < hoy else "EN TRANSITO"
-        
+            if promesa >= hoy:
+                return "EN TIEMPO"      # aún dentro de la promesa
+            else:
+                return "RETRASADO"      # ya superó la promesa
+
         # Caso por defecto
         return "EN TRANSITO"
 
