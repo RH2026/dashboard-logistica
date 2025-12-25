@@ -242,87 +242,6 @@ c4.markdown(
     unsafe_allow_html=True
 )
 
-# ==================================================
-# KPI – VISTA AMPLIADA (BOTÓN)
-# ==================================================
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-st.markdown(
-    "<h2 style='color:white;'>Vista ampliada de indicadores</h2>",
-    unsafe_allow_html=True
-)
-
-if st.button("🔍 Ver KPIs en grande"):
-    st.markdown(
-        "<h3 style='color:gray; text-align:center;'>Indicadores Clave – Vista Ampliada</h3>",
-        unsafe_allow_html=True
-    )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    c1g, c2g, c3g, c4g = st.columns(4)
-
-    # -------------------------------
-    # KPI TOTAL
-    # -------------------------------
-    c1g.markdown(
-        "<div style='text-align:center; color:yellow; margin-bottom:6px;'>Total de pedidos</div>",
-        unsafe_allow_html=True
-    )
-    c1g.altair_chart(
-        donut_con_numero(total, total, "#FFD700", COLOR_FALTANTE),
-        use_container_width=True
-    )
-
-    # -------------------------------
-    # KPI ENTREGADOS
-    # -------------------------------
-    c2g.markdown(
-        "<div style='text-align:center; color:yellow; margin-bottom:6px;'>Entregados</div>",
-        unsafe_allow_html=True
-    )
-    c2g.altair_chart(
-        donut_con_numero(entregados, total, COLOR_AVANCE_ENTREGADOS, COLOR_FALTANTE),
-        use_container_width=True
-    )
-    c2g.markdown(
-        f"<div style='text-align:center; color:gray; margin-top:-18px;'>{porc_entregados:.1f}%</div>",
-        unsafe_allow_html=True
-    )
-
-    # -------------------------------
-    # KPI EN TRÁNSITO
-    # -------------------------------
-    c3g.markdown(
-        "<div style='text-align:center; color:yellow; margin-bottom:6px;'>En tránsito</div>",
-        unsafe_allow_html=True
-    )
-    c3g.altair_chart(
-        donut_con_numero(en_transito, total, COLOR_AVANCE_TRANSITO, COLOR_FALTANTE),
-        use_container_width=True
-    )
-    c3g.markdown(
-        f"<div style='text-align:center; color:gray; margin-top:-18px;'>{porc_transito:.1f}%</div>",
-        unsafe_allow_html=True
-    )
-
-    # -------------------------------
-    # KPI RETRASADOS
-    # -------------------------------
-    c4g.markdown(
-        "<div style='text-align:center; color:yellow; margin-bottom:6px;'>Retrasados</div>",
-        unsafe_allow_html=True
-    )
-    c4g.altair_chart(
-        donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE),
-        use_container_width=True
-    )
-    c4g.markdown(
-        f"<div style='text-align:center; color:gray; margin-top:-18px;'>{porc_retrasados:.1f}%</div>",
-        unsafe_allow_html=True
-    )
-
 # --------------------------------------------------
 # TABLA FINAL – TITULO NARANJA
 # --------------------------------------------------
@@ -356,6 +275,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
