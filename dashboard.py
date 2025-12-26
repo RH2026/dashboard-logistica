@@ -84,7 +84,7 @@ else:
     df_filtrado = df.copy()
 
 # -----------------------------
-# CAJA DE BÚSQUEDA POR PEDIDO
+# BUSQUEDA POR PEDIDO – TARJETAS
 # -----------------------------
 pedido_buscar = st.text_input(
     "Buscar por Número de Pedido",
@@ -98,63 +98,43 @@ if pedido_buscar.strip() != "":
         df_filtrado["NÚMERO DE PEDIDO"].astype(str).str.contains(pedido_buscar.strip(), case=False, na=False)
     ]
 
-    # Columnas importantes a mostrar
-    columnas_importantes = [
-        "NÚMERO DE PEDIDO",
-        "NO CLIENTE",
-        "NOMBRE DEL CLIENTE",
-        "DESTINO",
-        "FLETERA",
-        "CLASES DE ENTREGA",
-        "CANTIDAD DE CAJAS",
-        "FECHA DE ENVÍO",
-        "PROMESA DE ENTREGA",
-        "FECHA DE ENTREGA REAL",
-        "DIAS_TRANSCURRIDOS",
-        "DIAS_RETRASO"
-    ]
+    if not df_busqueda.empty:
+        for idx, row in df_busqueda.iterrows():
+            # Colores de estatus
+            color_retraso = "red" if row["DIAS_RETRASO"] > 0 else "white"
+            color_transcurrido = "yellow"
 
-    # Filtramos solo las columnas que existen realmente
-    columnas_existentes = [col for col in columnas_importantes if col in df_busqueda.columns]
-
-    df_mostrar_busqueda = df_busqueda[columnas_existentes].copy()
-
-    # Formato de fechas igual que la tabla principal
-    for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
-        if col in df_mostrar_busqueda.columns:
-            df_mostrar_busqueda[col] = pd.to_datetime(df_mostrar_busqueda[col], errors="coerce").dt.strftime('%d/%m/%Y').fillna('')
-
-    # Función para colorear días de retraso
-    def colorear_retraso(val):
-        color = 'red' if val > 0 else 'white'
-        return f'color: {color}'
-
-    # Aplicar estilo con fondo oscuro y bordes
-    estilo_tabla = df_mostrar_busqueda.style \
-        .applymap(colorear_retraso, subset=["DIAS_RETRASO"] if "DIAS_RETRASO" in df_mostrar_busqueda.columns else []) \
-        .set_properties(**{
-            'background-color': '#1A1E25',  # fondo oscuro un poco más claro que Streamlit
-            'color': 'white',
-            'border-color': 'gray',
-            'border-style': 'solid',
-            'border-width': '0.5px',
-            'text-align': 'center'
-        }) \
-        .set_table_styles([{
-            'selector': 'th',
-            'props': [
-                ('background-color', '#242830'),
-                ('color', 'yellow'),
-                ('font-size', '14px'),
-                ('text-align', 'center')
-            ]
-        }])
-
-    st.dataframe(
-        estilo_tabla,
-        use_container_width=True,
-        height=400
-    )
+            # Tarjeta individual
+            st.markdown(
+                f"""
+                <div style="
+                    background-color:#1f1f1f; 
+                    padding:15px; 
+                    margin-bottom:10px; 
+                    border-radius:10px;
+                    box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+                ">
+                    <div style="font-size:18px; font-weight:700; color:#FFD700; margin-bottom:5px;">
+                        Pedido: {row['NÚMERO DE PEDIDO']} – Cliente: {row['NOMBRE DEL CLIENTE']}
+                    </div>
+                    <div style="color:#CCCCCC; font-size:14px;">
+                        No Cliente: {row['NO CLIENTE']}<br>
+                        Destino: {row['DESTINO']}<br>
+                        Fletera: {row['FLETERA']}<br>
+                        Clase de Entrega: {row['CLASES DE ENTREGA']}<br>
+                        Cantidad de Cajas: {row['CANTIDAD DE CAJAS']}<br>
+                        Fecha de Envío: {row['FECHA DE ENVÍO'].strftime('%d/%m/%Y') if pd.notna(row['FECHA DE ENVÍO']) else ""}<br>
+                        Promesa de Entrega: {row['PROMESA DE ENTREGA'].strftime('%d/%m/%Y') if pd.notna(row['PROMESA DE ENTREGA']) else ""}<br>
+                        Fecha de Entrega Real: {row['FECHA DE ENTREGA REAL'].strftime('%d/%m/%Y') if pd.notna(row['FECHA DE ENTREGA REAL']) else ""}<br>
+                        <span style="color:{color_transcurrido};">Días Transcurridos: {row['DIAS_TRANSCURRIDOS']}</span><br>
+                        <span style="color:{color_retraso};">Días de Retraso: {row['DIAS_RETRASO']}</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+    else:
+        st.info("No se encontraron pedidos con ese número.")
 
 # --------------------------------------------------
 # KPIs
@@ -501,6 +481,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
