@@ -33,66 +33,51 @@ st.divider()
 def cargar_datos():
     df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
     df.columns = df.columns.str.strip().str.upper()
-
+    df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.strip()
+    df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors="coerce", dayfirst=True)
+    df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
+    df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
+    
     hoy = pd.Timestamp.today().normalize()
-
-    # LIMPIEZA DE FECHAS
-    for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
-        if col in df.columns:
-            df[col] = df[col].replace(["", "None", "NULL", "N/A", "n/a"], pd.NaT)
-            df[col] = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
-
-    # ESTATUS
+    
     def calcular_estatus(row):
-        hoy = pd.Timestamp.today().normalize()
-        fecha_real = row["FECHA DE ENTREGA REAL"]
-        promesa = row["PROMESA DE ENTREGA"]
-
-        if pd.notna(fecha_real):
+        if pd.notna(row["FECHA DE ENTREGA REAL"]):
             return "ENTREGADO"
-        if pd.notna(promesa) and promesa < hoy:
+        if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy:
             return "RETRASADO"
         return "EN TRANSITO"
-
+    
     df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
-
-    # DÍAS TRANSCURRIDOS
-    df["DIAS TRANSCURRIDOS"] = (df["FECHA DE ENTREGA REAL"].fillna(hoy) - df["FECHA DE ENVÍO"]).dt.days
-
-    # DÍAS DE RETRASO
-    def calcular_dias_retraso(row):
-        hoy = pd.Timestamp.today().normalize()
-        fecha_real = row["FECHA DE ENTREGA REAL"]
-        promesa = row["PROMESA DE ENTREGA"]
-
-        if pd.notna(fecha_real) and pd.notna(promesa):
-            return max((fecha_real - promesa).days, 0)
-        if pd.isna(fecha_real) and pd.notna(promesa) and promesa < hoy:
-            return (hoy - promesa).days
-        return 0
-
-    df["DIAS DE RETRASO"] = df.apply(calcular_dias_retraso, axis=1)
-
     return df
 
 df = cargar_datos()
 
 # --------------------------------------------------
-# SIDEBAR – FILTRO POR NÚMERO DE CLIENTE
+# SIDEBAR – FILTRO POR CLIENTE
 # --------------------------------------------------
 st.sidebar.header("Filtro por Cliente")
+numero_cliente = st.sidebar.text_input("Ingresa el No Cliente")
 
-# Convertimos la columna a string y quitamos espacios
-df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.strip()
-
-# Input para el usuario
-numero_cliente = st.sidebar.text_input("Ingresa el No Cliente para filtrar")
-
-# Filtrado del DataFrame
 if numero_cliente.strip() != "":
     df_filtrado = df[df["NO CLIENTE"].str.contains(numero_cliente.strip(), case=False, na=False)]
 else:
     df_filtrado = df.copy()
+
+# --------------------------------------------------
+# KPIs
+# --------------------------------------------------
+total = len(df_filtrado)
+entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
+en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
+retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
+
+st.write(f"Total de pedidos filtrados: {total}")
+st.write(f"Entregados: {entregados}, En tránsito: {en_transito}, Retrasados: {retrasados}")
+
+# --------------------------------------------------
+# TABLA
+# --------------------------------------------------
+st.dataframe(df_filtrado, use_container_width=True, height=500)
 
 # ==================================================
 # 🎨 CAMBIA COLORES AQUÍ (AVANCE vs FALTANTE)
@@ -367,6 +352,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
