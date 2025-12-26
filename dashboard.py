@@ -96,86 +96,61 @@ if pedido_buscar.strip() != "":
     # Filtrar solo por Número de Pedido
     df_busqueda = df_filtrado[
         df_filtrado["NÚMERO DE PEDIDO"].astype(str).str.contains(pedido_buscar.strip(), case=False, na=False)
-    ]
+    ].copy()
 
-    if not df_busqueda.empty:
-        st.markdown("<h3 style='color:white;'>Resultados de la búsqueda</h3>", unsafe_allow_html=True)
+    # Crear columnas de DIAS_TRANSCURRIDOS y DIAS_RETRASO si no existen
+    hoy = pd.Timestamp.today().normalize()
+    
+    df_busqueda["DIAS_TRANSCURRIDOS"] = (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["FECHA DE ENVÍO"]).dt.days
+    df_busqueda["DIAS_RETRASO"] = (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["PROMESA DE ENTREGA"]).dt.days
+    df_busqueda["DIAS_RETRASO"] = df_busqueda["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
 
-        # Crear tarjetas por cada fila
-        for index, row in df_busqueda.iterrows():
-            c1, c2, c3 = st.columns(3)
-
-            # --------- Tarjeta Cliente ---------
-            c1.markdown(
+    # Mostrar resultados en tarjetas (3 columnas)
+    for _, row in df_busqueda.iterrows():
+        c1, c2, c3 = st.columns(3)
+        
+        # Tarjeta 1: Información del Cliente
+        with c1:
+            st.markdown(
                 f"""
-                <div style="
-                    background-color:#1f1f1f;
-                    padding:15px; 
-                    border-radius:10px;
-                    box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-                    margin-bottom:10px;
-                ">
-                    <div style="font-size:16px; font-weight:700; color:#FFD700;">Cliente & Pedido</div>
-                    <div style="color:#CCCCCC; font-size:14px;">
-                        Pedido: {row['NÚMERO DE PEDIDO']}<br>
-                        Número de Guía: {row['NÚMERO DE GUÍA']}<br>
-                        Cliente: {row['NOMBRE DEL CLIENTE']}<br>
-                        No Cliente: {row['NO CLIENTE']}<br>
-                        Destino: {row['DESTINO']}<br>
-                        Fletera: {row['FLETERA']}<br>
-                        Clase de Entrega: {row['CLASES DE ENTREGA']}<br>
-                        Cantidad de Cajas: {row['CANTIDAD DE CAJAS']}
-                    </div>
+                <div style='background-color:#2a2a2a; padding:15px; border-radius:10px;'>
+                    <b>No Cliente:</b> {row['NO CLIENTE']}<br>
+                    <b>Nombre del Cliente:</b> {row['NOMBRE DEL CLIENTE']}<br>
+                    <b>Destino:</b> {row['DESTINO']}<br>
+                    <b>Número de Guía:</b> {row['NÚMERO DE GUÍA']}<br>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
-            # --------- Tarjeta Fechas ---------
-            c2.markdown(
+        # Tarjeta 2: Fechas
+        with c2:
+            st.markdown(
                 f"""
-                <div style="
-                    background-color:#1f1f1f;
-                    padding:15px; 
-                    border-radius:10px;
-                    box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-                    margin-bottom:10px;
-                ">
-                    <div style="font-size:16px; font-weight:700; color:#FFC107;">Fechas</div>
-                    <div style="color:#CCCCCC; font-size:14px;">
-                        Fecha de Envío: {row['FECHA DE ENVÍO'].strftime('%d/%m/%Y') if pd.notna(row['FECHA DE ENVÍO']) else ''}<br>
-                        Promesa de Entrega: {row['PROMESA DE ENTREGA'].strftime('%d/%m/%Y') if pd.notna(row['PROMESA DE ENTREGA']) else ''}<br>
-                        Fecha de Entrega Real: {row['FECHA DE ENTREGA REAL'].strftime('%d/%m/%Y') if pd.notna(row['FECHA DE ENTREGA REAL']) else ''}<br>
-                        Días Transcurridos: {row['DIAS_TRANSCURRIDOS']}<br>
-                        Días de Retraso: <span style="color:{'red' if row['DIAS_RETRASO'] > 0 else 'white'};">{row['DIAS_RETRASO']}</span>
-                    </div>
+                <div style='background-color:#2a2a2a; padding:15px; border-radius:10px;'>
+                    <b>Fecha de Envío:</b> {row['FECHA DE ENVÍO'].strftime('%d/%m/%Y')}<br>
+                    <b>Promesa de Entrega:</b> {row['PROMESA DE ENTREGA'].strftime('%d/%m/%Y')}<br>
+                    <b>Fecha de Entrega Real:</b> {row['FECHA DE ENTREGA REAL'].strftime('%d/%m/%Y') if pd.notna(row['FECHA DE ENTREGA REAL']) else ''}<br>
+                    <b>Días Transcurridos:</b> {row['DIAS_TRANSCURRIDOS']}<br>
+                    <b>Días de Retraso:</b> <span style='color:{"red" if row["DIAS_RETRASO"]>0 else "white"}'>{row["DIAS_RETRASO"]}</span>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
-            # --------- Tarjeta Estatus ---------
-            c3.markdown(
+        # Tarjeta 3: Estatus
+        with c3:
+            st.markdown(
                 f"""
-                <div style="
-                    background-color:#1f1f1f;
-                    padding:15px; 
-                    border-radius:10px;
-                    box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-                    margin-bottom:10px;
-                ">
-                    <div style="font-size:16px; font-weight:700; color:#4CAF50;">Estatus</div>
-                    <div style="color:#CCCCCC; font-size:14px;">
-                        Estado Calculado: {row['ESTATUS_CALCULADO']}<br>
-                    </div>
+                <div style='background-color:#2a2a2a; padding:15px; border-radius:10px;'>
+                    <b>Estatus Calculado:</b> {row['ESTATUS_CALCULADO']}<br>
+                    <b>Clases de Entrega:</b> {row['CLASES DE ENTREGA']}<br>
+                    <b>Cantidad de Cajas:</b> {row['CANTIDAD DE CAJAS']}
                 </div>
                 """,
                 unsafe_allow_html=True
             )
-
-            st.divider()  # línea separadora entre cada pedido
-    else:
-        st.info("No se encontraron resultados para este número de pedido.")
+        st.markdown("<br>", unsafe_allow_html=True)  # separación entre registros
 
 # --------------------------------------------------
 # KPIs
@@ -522,6 +497,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
