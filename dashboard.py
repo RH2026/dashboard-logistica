@@ -119,13 +119,39 @@ if pedido_buscar.strip() != "":
 
     df_mostrar_busqueda = df_busqueda[columnas_existentes].copy()
 
-    # Aplicar estilo a DIAS_RETRASO
+    # Formato de fechas igual que la tabla principal
+    for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
+        if col in df_mostrar_busqueda.columns:
+            df_mostrar_busqueda[col] = pd.to_datetime(df_mostrar_busqueda[col], errors="coerce").dt.strftime('%d/%m/%Y').fillna('')
+
+    # Función para colorear días de retraso
     def colorear_retraso(val):
         color = 'red' if val > 0 else 'white'
         return f'color: {color}'
 
+    # Aplicar estilo con fondo oscuro y bordes
+    estilo_tabla = df_mostrar_busqueda.style \
+        .applymap(colorear_retraso, subset=["DIAS_RETRASO"] if "DIAS_RETRASO" in df_mostrar_busqueda.columns else []) \
+        .set_properties(**{
+            'background-color': '#1A1E25',  # fondo oscuro un poco más claro que Streamlit
+            'color': 'white',
+            'border-color': 'gray',
+            'border-style': 'solid',
+            'border-width': '0.5px',
+            'text-align': 'center'
+        }) \
+        .set_table_styles([{
+            'selector': 'th',
+            'props': [
+                ('background-color', '#242830'),
+                ('color', 'yellow'),
+                ('font-size', '14px'),
+                ('text-align', 'center')
+            ]
+        }])
+
     st.dataframe(
-        df_mostrar_busqueda.style.applymap(colorear_retraso, subset=["DIAS_RETRASO"]) if "DIAS_RETRASO" in df_mostrar_busqueda.columns else df_mostrar_busqueda,
+        estilo_tabla,
         use_container_width=True,
         height=400
     )
@@ -475,6 +501,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
