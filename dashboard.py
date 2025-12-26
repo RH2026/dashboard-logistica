@@ -17,8 +17,8 @@ st.set_page_config(
 st.markdown(
     """
     <div style="text-align:center;">
-        <div style="color:white; font-size:32px; font-weight:700;">
-            Panel de Seguimiento y Control de Embarques
+        <div style="color:white; font-size:24px; font-weight:700;">
+            Control de Embarques
         </div>
         <div style="color:#CCCCCC; font-size:22px; margin-top:8px;">
             Logística – Enero 2026
@@ -160,7 +160,7 @@ def donut_con_numero(avance, total, color_avance, color_faltante):
 # KPIs CON DONITAS
 # --------------------------------------------------
 st.markdown(
-    "<h2 style='color:white; text-align:center; margin:10px 0;'>Indicadores Clave</h2>",
+    "<h2 style='color:white; text-align:center; margin:10px 0;'>Indicadores Clave</h4>",
     unsafe_allow_html=True
 )
 
@@ -216,7 +216,7 @@ c4.altair_chart(
 # TABLA FINAL – TITULO NARANJA + DIAS TRANSCURRIDOS Y RETRASO COLOREADOS
 # --------------------------------------------------
 st.markdown(
-    "<h2 style='color:white; text-align:center; margin:10px 0;'>Lista de Envios</h2>",
+    "<h2 style='color:white; text-align:center; margin:10px 0;'>Lista de Envios</h4>",
     unsafe_allow_html=True
 )
 
@@ -254,7 +254,7 @@ st.dataframe(
 # GRÁFICOS POR PAQUETERÍA – NUEVO BLOQUE
 # --------------------------------------------------
 st.markdown(
-    "<h2 style='color:white; text-align:center; margin:10px 0;'>Pendientes por Paquetería</h2>",
+    "<h2 style='color:white; text-align:center; margin:10px 0;'>Pendientes por Paquetería</h4>",
     unsafe_allow_html=True
 )
 
@@ -308,7 +308,7 @@ st.divider()  # línea separadora antes de la tabla
 # PEDIDOS ENTREGADOS CON RETRASO POR PAQUETERÍA (FECHA REAL)
 # --------------------------------------------------
 st.markdown(
-    "<h2 style='color:white; text-align:center; margin:10px 0;'>Pedidos Entregados con Retraso por Paquetería</h2>",
+    "<h2 style='color:white; text-align:center; margin:10px 0;'>Pedidos Entregados con Retraso por Paquetería</h4>",
     unsafe_allow_html=True
 )
 
@@ -348,7 +348,7 @@ st.divider()  # línea separadora antes de la tabla
 # --------------------------------------------------
 # GRÁFICO DE ESTATUS – TITULO NARANJA
 # --------------------------------------------------
-st.markdown("<h2 style='color:white;'>Estatus de Envíos</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='color:white;'>Estatus de Envíos</h4>", unsafe_allow_html=True)
 
 # Crear DataFrame base con las 3 categorías
 estatus_base = pd.DataFrame({
@@ -386,6 +386,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
