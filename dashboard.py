@@ -18,7 +18,7 @@ st.set_page_config(
 TIEMPO_MAX_INACTIVIDAD = 10 * 60  # 10 minutos
 
 # --------------------------------------------------
-# INICIALIZAR SESIÓN
+# INICIALIZAR SESIÓN (NO BORRAR)
 # --------------------------------------------------
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
@@ -26,13 +26,16 @@ if "logueado" not in st.session_state:
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time()
 
+if "usuario_actual" not in st.session_state:
+    st.session_state.usuario_actual = None
+
 # --------------------------------------------------
 # SECRETOS – MULTIUSUARIOS
 # --------------------------------------------------
-usuarios = st.secrets["usuarios"]  # diccionario
+usuarios = st.secrets["usuarios"]  # diccionario desde Secrets
 
 # --------------------------------------------------
-# AUTO LOGOUT POR INACTIVIDAD
+# AUTO LOGOUT POR INACTIVIDAD (SEGURO)
 # --------------------------------------------------
 if st.session_state.logueado:
     ahora = time.time()
@@ -41,8 +44,9 @@ if st.session_state.logueado:
         st.warning("Sesión cerrada por inactividad ⏱️")
         st.rerun()
 
-# Registrar actividad
-st.session_state.ultimo_movimiento = time.time()
+# Registrar actividad SOLO si está logueado
+if st.session_state.logueado:
+    st.session_state.ultimo_movimiento = time.time()
 
 # --------------------------------------------------
 # SIDEBAR – LOGIN / LOGOUT
@@ -59,7 +63,7 @@ if not st.session_state.logueado:
         clave = st.session_state.clave_input
 
         if usuario in usuarios and usuarios[usuario] == clave:
-            st.session_state.clear()
+            # ⚠️ NO limpiar antes de usar variables
             st.session_state.logueado = True
             st.session_state.usuario_actual = usuario
             st.session_state.ultimo_movimiento = time.time()
@@ -586,6 +590,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
