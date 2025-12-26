@@ -79,6 +79,30 @@ else:
         st.rerun()
 
 # --------------------------------------------------
+# 👋 SALUDO PERSONALIZADO (SOLO ESTO SE AGREGÓ)
+# --------------------------------------------------
+if st.session_state.logueado:
+
+    saludos = {
+        "Rigoberto": "Bienvenido",
+        "Cynthia": "Bienvenida",
+        "Brenda": "Bienvenida"
+    }
+
+    saludo = saludos.get(st.session_state.usuario_actual, "Bienvenid@")
+
+    st.markdown(
+        f"""
+        <div style="text-align:center; margin-top:10px;">
+            <div style="font-size:16px; color:#00FFAA;">
+                {saludo}, {st.session_state.usuario_actual} 💚
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# --------------------------------------------------
 # CONTENIDO PROTEGIDO
 # --------------------------------------------------
 if st.session_state.logueado:
@@ -590,6 +614,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
