@@ -13,23 +13,25 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
-# FONDO DE PANTALLA SOLO PARA LOGIN
+# FONDO DE PANTALLA SOLO PARA LOGIN (COMPATIBLE CLOUD)
 # --------------------------------------------------
 if not st.session_state.get("logueado", False):
+
+    img_base64 = get_base64_image("1.jpg")  # 👈 tu imagen aquí
+
     st.markdown(
-        """
+        f"""
         <style>
-        .stApp {
-            background-image: url("1.jpg");
+        .stApp {{
+            background-image: url("data:image/jpg;base64,{img_base64}");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-        }
+        }}
 
-        /* Fondo semitransparente para el sidebar */
-        section[data-testid="stSidebar"] {
+        section[data-testid="stSidebar"] {{
             background-color: rgba(0, 0, 0, 0.75);
-        }
+        }}
         </style>
         """,
         unsafe_allow_html=True
@@ -633,6 +635,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
