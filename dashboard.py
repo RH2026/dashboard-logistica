@@ -3,90 +3,89 @@ import pandas as pd
 import altair as alt
 
 # --------------------------------------------------
-# LOGIN – USUARIO Y CONTRASEÑA
+# LOGIN
 # --------------------------------------------------
 def login():
-    st.markdown(
-        "<h2 style='text-align:center; color:white;'>🔒 Ingreso al Dashboard</h2>",
-        unsafe_allow_html=True
-    )
-
-    usuario_input = st.text_input("Usuario", "")
-    password_input = st.text_input("Contraseña", "", type="password")
-    boton = st.button("Ingresar")
-
-    if boton:
-        usuario = st.secrets["login"]["usuario"]
-        contraseña = st.secrets["login"]["password"]
-
-        if usuario_input == usuario and password_input == contraseña:
+    st.title("🔒 Login")
+    
+    usuario = st.secrets["LOGIN"]["USUARIO"]
+    contraseña = st.secrets["LOGIN"]["CLAVE"]
+    
+    input_usuario = st.text_input("Usuario")
+    input_clave = st.text_input("Clave", type="password")
+    
+    if st.button("Entrar"):
+        if input_usuario == usuario and input_clave == contraseña:
             st.session_state["logueado"] = True
         else:
-            st.error("Usuario o contraseña incorrectos")
+            st.error("Usuario o clave incorrecta")
 
+# Inicializamos sesión
 if "logueado" not in st.session_state:
     st.session_state["logueado"] = False
 
+# Si no está logueado, mostrar login
 if not st.session_state["logueado"]:
     login()
-else:
-    # --------------------------------------------------
-    # CONFIGURACIÓN DE PÁGINA – INICIA SIDEBAR COLAPSADA
-    # --------------------------------------------------
-    st.set_page_config(
-        page_title="Control de Envíos – Enero 2026",
-        layout="wide",
-        initial_sidebar_state="collapsed"
-    )
+    st.stop()  # Esto detiene el resto del dashboard hasta que se loguee
 
-    # --------------------------------------------------
-    # TÍTULO Y SUBTÍTULO
-    # --------------------------------------------------
-    st.markdown(
-        """
-        <div style="text-align:center;">
-            <div style="color:white; font-size:24px; font-weight:700;">
-                Control de Embarques
-            </div>
-            <div style="color:#CCCCCC; font-size:22px; margin-top:8px;">
-                Logística – Enero 2026
-            </div>
+# --------------------------------------------------
+# AQUÍ EMPIEZA TU DASHBOARD PROTEGIDO
+# --------------------------------------------------
+
+# CONFIGURACIÓN DE PÁGINA – INICIA SIDEBAR COLAPSADA
+st.set_page_config(
+    page_title="Control de Envíos – Enero 2026",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# TÍTULO Y SUBTÍTULO
+st.markdown(
+    """
+    <div style="text-align:center;">
+        <div style="color:white; font-size:24px; font-weight:700;">
+            Control de Embarques
         </div>
-        """,
-        unsafe_allow_html=True
-    )
+        <div style="color:#CCCCCC; font-size:22px; margin-top:8px;">
+            Logística – Enero 2026
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-    st.divider()
+st.divider()
 
-    # --------------------------------------------------
-    # CARGA DE DATOS
-    # --------------------------------------------------
-    @st.cache_data
-    def cargar_datos():
-        df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
-        df.columns = df.columns.str.strip().str.upper()
-        df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.strip()
-        df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors="coerce", dayfirst=True)
-        df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
-        df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
+# --------------------------------------------------
+# CARGA DE DATOS
+# --------------------------------------------------
+@st.cache_data
+def cargar_datos():
+    df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
+    df.columns = df.columns.str.strip().str.upper()
+    df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.strip()
+    df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors="coerce", dayfirst=True)
+    df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
+    df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
+    
+    hoy = pd.Timestamp.today().normalize()
+    
+    def calcular_estatus(row):
+        if pd.notna(row["FECHA DE ENTREGA REAL"]):
+            return "ENTREGADO"
+        if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy:
+            return "RETRASADO"
+        return "EN TRANSITO"
+    
+    df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
+    return df
 
-        hoy = pd.Timestamp.today().normalize()
+df = cargar_datos()
 
-        def calcular_estatus(row):
-            if pd.notna(row["FECHA DE ENTREGA REAL"]):
-                return "ENTREGADO"
-            if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy:
-                return "RETRASADO"
-            return "EN TRANSITO"
-
-        df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
-        return df
-
-    df = cargar_datos()
-
-    # --------------------------------------------------
-    # SIDEBAR – FILTRO POR CLIENTE
-    # --------------------------------------------------
+# --------------------------------------------------
+# SIDEBAR – FILTRO POR CLIENTE (auto-filtrado)
+# --------------------------------------------------
     st.sidebar.header("Filtro por Cliente")
     
     # Inicializamos la variable de sesión si no existe
@@ -542,6 +541,7 @@ else:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
