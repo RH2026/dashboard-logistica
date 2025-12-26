@@ -96,9 +96,15 @@ if pedido_buscar.strip() != "":
     # Filtrar solo por Número de Pedido
     df_busqueda = df_filtrado[
         df_filtrado["NÚMERO DE PEDIDO"].astype(str).str.contains(pedido_buscar.strip(), case=False, na=False)
-    ]
+    ].copy()  # <-- importante copiar para no modificar df original
 
     if not df_busqueda.empty:
+        # Calcular DIAS_TRANSCURRIDOS y DIAS_RETRASO
+        hoy = pd.Timestamp.today().normalize()
+        df_busqueda["DIAS_TRANSCURRIDOS"] = (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["FECHA DE ENVÍO"]).dt.days
+        df_busqueda["DIAS_RETRASO"] = (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["PROMESA DE ENTREGA"]).dt.days
+        df_busqueda["DIAS_RETRASO"] = df_busqueda["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
+
         for idx, row in df_busqueda.iterrows():
             # Colores de estatus
             color_retraso = "red" if row["DIAS_RETRASO"] > 0 else "white"
@@ -481,6 +487,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
