@@ -3,14 +3,17 @@ import pandas as pd
 import altair as alt
 
 # --------------------------------------------------
-# CONFIGURACIÓN DE PÁGINA
+# CONFIGURACIÓN DE PÁGINA – INICIA SIDEBAR COLAPSADA
 # --------------------------------------------------
 st.set_page_config(
     page_title="Control de Envíos – Enero 2026",
     layout="wide",
-    initial_sidebar_state="collapsed"  # inicia colapsada
+    initial_sidebar_state="collapsed"  # 🟢 inicia colapsada
 )
+
+# --------------------------------------------------
 # TÍTULO Y SUBTÍTULO
+# --------------------------------------------------
 st.markdown(
     """
     <div style="text-align:center;">
@@ -358,6 +361,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
