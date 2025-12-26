@@ -93,24 +93,42 @@ pedido_buscar = st.text_input(
 )
 
 if pedido_buscar.strip() != "":
-    # Filtra solo por NÚMERO DE PEDIDO
+    # Filtrar solo por Número de Pedido
     df_busqueda = df_filtrado[
         df_filtrado["NÚMERO DE PEDIDO"].astype(str).str.contains(pedido_buscar.strip(), case=False, na=False)
     ]
 
-    # Lista de columnas que queremos mostrar
-    columnas_mostrar = [
-        "NÚMERO DE PEDIDO", "NO CLIENTE", "CLIENTE", "DESTINO",
-        "FLETERA", "CAJAS", "CLASE DE ENTREGA",
-        "FECHA DE SALIDA", "DIAS_COMPROMISO", "FECHA PROMESA",
-        "DIAS_TRANSCURRIDOS", "DIAS_RETRASO"
+    # Columnas importantes a mostrar
+    columnas_importantes = [
+        "NÚMERO DE PEDIDO",
+        "NO CLIENTE",
+        "NOMBRE DEL CLIENTE",
+        "DESTINO",
+        "FLETERA",
+        "CLASES DE ENTREGA",
+        "CANTIDAD DE CAJAS",
+        "FECHA DE ENVÍO",
+        "PROMESA DE ENTREGA",
+        "FECHA DE ENTREGA REAL",
+        "DIAS_TRANSCURRIDOS",
+        "DIAS_RETRASO"
     ]
 
     # Filtramos solo las columnas que existen realmente
-    columnas_existentes = [col for col in columnas_mostrar if col in df_busqueda.columns]
+    columnas_existentes = [col for col in columnas_importantes if col in df_busqueda.columns]
 
     df_mostrar_busqueda = df_busqueda[columnas_existentes].copy()
-    st.dataframe(df_mostrar_busqueda, use_container_width=True)
+
+    # Aplicar estilo a DIAS_RETRASO
+    def colorear_retraso(val):
+        color = 'red' if val > 0 else 'white'
+        return f'color: {color}'
+
+    st.dataframe(
+        df_mostrar_busqueda.style.applymap(colorear_retraso, subset=["DIAS_RETRASO"]) if "DIAS_RETRASO" in df_mostrar_busqueda.columns else df_mostrar_busqueda,
+        use_container_width=True,
+        height=400
+    )
 
 # --------------------------------------------------
 # KPIs
@@ -448,6 +466,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
