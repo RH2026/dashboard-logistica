@@ -114,7 +114,7 @@ if pedido_buscar.strip() != "":
             st.markdown(
                 f"""
                 <div style="
-                    background-color:#1f1f1f; 
+                    background-color:##1A1E25; 
                     padding:15px; 
                     margin-bottom:10px; 
                     border-radius:10px;
@@ -123,7 +123,7 @@ if pedido_buscar.strip() != "":
                     <div style="font-size:18px; font-weight:700; color:#FFD700; margin-bottom:5px;">
                         Pedido: {row['NÚMERO DE PEDIDO']} – Cliente: {row['NOMBRE DEL CLIENTE']}
                     </div>
-                    <div style="color:#CCCCCC; font-size:14px;">
+                    <div style="color:#CCCCCC; font-size:16px;">
                         No Cliente: {row['NO CLIENTE']}<br>
                         Destino: {row['DESTINO']}<br>
                         Fletera: {row['FLETERA']}<br>
@@ -487,6 +487,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
