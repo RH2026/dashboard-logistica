@@ -3,7 +3,7 @@ import pandas as pd
 import altair as alt
 
 # --------------------------------------------------
-# CONFIGURACIÓN DE PÁGINA – SIDEBAR INICIALMENTE COLAPSADA
+# CONFIGURACIÓN DE PÁGINA
 # --------------------------------------------------
 st.set_page_config(
     page_title="Control de Envíos – Enero 2026",
@@ -12,38 +12,69 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
-# LOGIN SEGURO
+# SESIÓN
 # --------------------------------------------------
-# Leer usuario y contraseña de Streamlit Cloud
+if "logueado" not in st.session_state:
+    st.session_state.logueado = False
+
+# --------------------------------------------------
+# SECRETOS
+# --------------------------------------------------
 usuario_guardado = st.secrets["usuario"]
 clave_guardada = st.secrets["password"]
 
-st.sidebar.header("Iniciar sesión")
-usuario_input = st.sidebar.text_input("Usuario")
-clave_input = st.sidebar.text_input("Contraseña", type="password")
+# --------------------------------------------------
+# SIDEBAR
+# --------------------------------------------------
+st.sidebar.title("🔐 Acceso")
 
-if st.sidebar.button("Ingresar"):
-    if usuario_input == usuario_guardado and clave_input == clave_guardada:
-        st.session_state["logueado"] = True
-    else:
-        st.error("Usuario o contraseña incorrectos")
+# ---------- LOGIN ----------
+if not st.session_state.logueado:
+    st.sidebar.text_input("Usuario", key="usuario_input")
+    st.sidebar.text_input("Contraseña", type="password", key="clave_input")
+
+    if st.sidebar.button("Ingresar"):
+        if (
+            st.session_state.usuario_input == usuario_guardado
+            and st.session_state.clave_input == clave_guardada
+        ):
+            st.session_state.logueado = True
+
+            # limpiar credenciales
+            st.session_state.usuario_input = ""
+            st.session_state.clave_input = ""
+
+            st.rerun()
+        else:
+            st.sidebar.error("Usuario o contraseña incorrectos")
+
+# ---------- LOGOUT ----------
+else:
+    st.sidebar.success("Sesión activa")
+
+    if st.sidebar.button("Cerrar sesión 🚪"):
+        st.session_state.clear()
+        st.rerun()
 
 # --------------------------------------------------
 # CONTENIDO PROTEGIDO
 # --------------------------------------------------
-if "logueado" in st.session_state and st.session_state["logueado"]:
+if st.session_state.logueado:
 
     # -----------------------------
-    # TÍTULO Y SUBTÍTULO
+    # BIENVENIDA
     # -----------------------------
     st.markdown(
         """
         <div style="text-align:center;">
-            <div style="color:white; font-size:24px; font-weight:700;">
+            <div style="font-size:26px; font-weight:700; color:white;">
                 Control de Embarques
             </div>
-            <div style="color:#CCCCCC; font-size:22px; margin-top:8px;">
+            <div style="font-size:20px; color:#CCCCCC; margin-top:6px;">
                 Logística – Enero 2026
+            </div>
+            <div style="font-size:16px; color:#00FFAA; margin-top:10px;">
+                Bienvenido, Rigoberto
             </div>
         </div>
         """,
@@ -59,20 +90,21 @@ if "logueado" in st.session_state and st.session_state["logueado"]:
     def cargar_datos():
         df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
         df.columns = df.columns.str.strip().str.upper()
+
         df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.strip()
         df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors="coerce", dayfirst=True)
         df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
         df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
-        
+
         hoy = pd.Timestamp.today().normalize()
-        
+
         def calcular_estatus(row):
             if pd.notna(row["FECHA DE ENTREGA REAL"]):
                 return "ENTREGADO"
             if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy:
                 return "RETRASADO"
             return "EN TRANSITO"
-        
+
         df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
         return df
 
@@ -536,6 +568,7 @@ if "logueado" in st.session_state and st.session_state["logueado"]:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
