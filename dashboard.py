@@ -109,7 +109,7 @@ if pedido_buscar.strip() != "":
     for _, row in df_busqueda.iterrows():
         c1, c2, c3 = st.columns(3)
         
-        # Tarjeta 1: Información del Cliente
+        # Tarjeta 1: Información del Cliente + Costo de la Guía
         with c1:
             st.markdown(
                 f"""
@@ -118,6 +118,7 @@ if pedido_buscar.strip() != "":
                     <b>Nombre del Cliente:</b> {row['NOMBRE DEL CLIENTE']}<br>
                     <b>Destino:</b> {row['DESTINO']}<br>
                     <b>Número de Guía:</b> {row['NÚMERO DE GUÍA']}<br>
+                    <b>Costo de la Guía:</b> {row['COSTO DE LA GUÍA']}
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -138,14 +139,17 @@ if pedido_buscar.strip() != "":
                 unsafe_allow_html=True
             )
 
-        # Tarjeta 3: Estatus
+        # Tarjeta 3: Estatus + Fletera, Prioridad y Comentarios
         with c3:
             st.markdown(
                 f"""
                 <div style='background-color:#2a2a2a; padding:15px; border-radius:10px;'>
                     <b>Estatus Calculado:</b> {row['ESTATUS_CALCULADO']}<br>
                     <b>Clases de Entrega:</b> {row['CLASES DE ENTREGA']}<br>
-                    <b>Cantidad de Cajas:</b> {row['CANTIDAD DE CAJAS']}
+                    <b>Cantidad de Cajas:</b> {row['CANTIDAD DE CAJAS']}<br>
+                    <b>Fletera:</b> {row['FLETERA']}<br>
+                    <b>Prioridad:</b> {row['PRIORIDAD']}<br>
+                    <b>Comentarios:</b> {row['COMENTARIOS']}
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -497,6 +501,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
