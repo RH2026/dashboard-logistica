@@ -84,6 +84,45 @@ else:
     df_filtrado = df.copy()
 
 # --------------------------------------------------
+# BUSQUEDA POR PEDIDO – NUEVO BLOQUE
+# --------------------------------------------------
+st.markdown(
+    "<h2 style='color:white; text-align:center; margin:10px 0;'>Buscar Pedido</h2>",
+    unsafe_allow_html=True
+)
+
+# Caja de búsqueda
+pedido_buscar = st.text_input(
+    "Ingresa número de pedido o factura",
+    value="",
+    placeholder="Ej: 12345"
+)
+
+if pedido_buscar.strip() != "":
+    # Filtrar por número de pedido o factura
+    df_busqueda = df_filtrado[
+        df_filtrado["FACTURA"].astype(str).str.contains(pedido_buscar.strip(), case=False, na=False)
+    ]
+    
+    if not df_busqueda.empty:
+        # Seleccionar solo los campos más importantes
+        df_mostrar_busqueda = df_busqueda[[
+            "FACTURA", "NO CLIENTE", "CLIENTE", "DESTINO",
+            "FLETERA", "FECHA DE ENVÍO", "PROMESA DE ENTREGA",
+            "FECHA DE ENTREGA REAL", "ESTATUS_CALCULADO",
+            "DIAS_TRANSCURRIDOS", "DIAS_RETRASO"
+        ]].copy()
+        
+        # Formato de fechas
+        df_mostrar_busqueda["FECHA DE ENTREGA REAL"] = df_mostrar_busqueda["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y')
+        df_mostrar_busqueda["FECHA DE ENTREGA REAL"] = df_mostrar_busqueda["FECHA DE ENTREGA REAL"].fillna('')
+        
+        # Mostrar tabla de resultados
+        st.dataframe(df_mostrar_busqueda, use_container_width=True, height=320)
+    else:
+        st.info("No se encontraron pedidos con ese número.")
+
+# --------------------------------------------------
 # KPIs
 # --------------------------------------------------
 total = len(df_filtrado)
@@ -419,6 +458,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
