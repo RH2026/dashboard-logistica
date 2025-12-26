@@ -113,7 +113,7 @@ if pedido_buscar.strip() != "":
         with c1:
             st.markdown(
                 f"""
-                <div style='background-color:#2a2a2a; padding:15px; border-radius:10px;'>
+                <div style='background-color:#0E1117; padding:15px; border-radius:10px;'>
                     <b>No Cliente:</b> {row['NO CLIENTE']}<br>
                     <b>Nombre del Cliente:</b> {row['NOMBRE DEL CLIENTE']}<br>
                     <b>Destino:</b> {row['DESTINO']}<br>
@@ -128,7 +128,7 @@ if pedido_buscar.strip() != "":
         with c2:
             st.markdown(
                 f"""
-                <div style='background-color:#2a2a2a; padding:15px; border-radius:10px;'>
+                <div style='background-color:#0E1117; padding:15px; border-radius:10px;'>
                     <b>Fecha de Envío:</b> {row['FECHA DE ENVÍO'].strftime('%d/%m/%Y')}<br>
                     <b>Promesa de Entrega:</b> {row['PROMESA DE ENTREGA'].strftime('%d/%m/%Y')}<br>
                     <b>Fecha de Entrega Real:</b> {row['FECHA DE ENTREGA REAL'].strftime('%d/%m/%Y') if pd.notna(row['FECHA DE ENTREGA REAL']) else ''}<br>
@@ -143,9 +143,8 @@ if pedido_buscar.strip() != "":
         with c3:
             st.markdown(
                 f"""
-                <div style='background-color:#2a2a2a; padding:15px; border-radius:10px;'>
+                <div style='background-color:#0E1117; padding:15px; border-radius:10px;'>
                     <b>Estatus Calculado:</b> {row['ESTATUS_CALCULADO']}<br>
-                    <b>Clases de Entrega:</b> {row['CLASES DE ENTREGA']}<br>
                     <b>Cantidad de Cajas:</b> {row['CANTIDAD DE CAJAS']}<br>
                     <b>Fletera:</b> {row['FLETERA']}<br>
                     <b>Prioridad:</b> {row['PRIORIDAD']}<br>
@@ -501,6 +500,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
