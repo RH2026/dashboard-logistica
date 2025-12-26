@@ -78,71 +78,42 @@ def cargar_datos():
 df = cargar_datos()
 
 # --------------------------------------------------
-# SIDEBAR – FILTROS REACTIVOS
+# SIDEBAR – FILTROS SIMPLES
 # --------------------------------------------------
 st.sidebar.header("Filtros")
 df_filtrado = df.copy()
 
-# -------------------------
-# Cliente
-# -------------------------
-if "no_cliente_input" not in st.session_state:
-    st.session_state.no_cliente_input = ""
+# Filtro No Cliente
+if "NO CLIENTE" in df.columns:
+    no_cliente = st.sidebar.text_input("Buscar No Cliente")
+    if no_cliente:
+        df_filtrado = df_filtrado[df_filtrado["NO CLIENTE"].astype(str).str.contains(no_cliente, case=False, na=False)]
 
-def filtrar_todo():
-    global df_filtrado
-    df_filtrado = df.copy()
-    
-    # Filtro Cliente
-    if st.session_state.no_cliente_input:
-        df_filtrado["NO CLIENTE"] = df_filtrado["NO CLIENTE"].astype(str).str.strip()
-        df_filtrado = df_filtrado[df_filtrado["NO CLIENTE"].str.contains(
-            st.session_state.no_cliente_input, case=False, na=False
-        )]
-    
-    # Filtro Estatus
-    if st.session_state.estatus_sel:
-        df_filtrado = df_filtrado[df_filtrado["ESTATUS_CALCULADO"].isin(st.session_state.estatus_sel)]
-    
-    # Filtro Fecha
-    if isinstance(st.session_state.rango_fecha, tuple) and len(st.session_state.rango_fecha) == 2:
-        df_filtrado = df_filtrado[
-            (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(st.session_state.rango_fecha[0])) &
-            (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(st.session_state.rango_fecha[1]))
-        ]
-
-# Input Cliente
-st.sidebar.text_input(
-    "Buscar No Cliente",
-    value=st.session_state.no_cliente_input,
-    key="no_cliente_input",
-    on_change=filtrar_todo
-)
-
-# Multiselect Estatus
-if "estatus_sel" not in st.session_state:
-    st.session_state.estatus_sel = []
-
-st.sidebar.multiselect(
+# Filtro Estatus
+estatus_sel = st.sidebar.multiselect(
     "Estatus de Envío",
-    options=sorted(df["ESTATUS_CALCULADO"].unique()),
-    key="estatus_sel",
-    default=st.session_state.estatus_sel,
-    on_change=filtrar_todo
+    options=sorted(df["ESTATUS_CALCULADO"].unique())
 )
+if estatus_sel:
+    df_filtrado = df_filtrado[df_filtrado["ESTATUS_CALCULADO"].isin(estatus_sel)]
 
-# Rango de Fecha
-if "rango_fecha" not in st.session_state:
+# Filtro Fecha de Envío
+if "FECHA DE ENVÍO" in df.columns:
     fechas_validas = df["FECHA DE ENVÍO"].dropna()
-    fecha_min, fecha_max = (fechas_validas.min(), fechas_validas.max()) if not fechas_validas.empty else (pd.Timestamp.today(), pd.Timestamp.today())
-    st.session_state.rango_fecha = (fecha_min.date(), fecha_max.date())
-
-st.sidebar.date_input(
-    "Rango de Fecha de Envío",
-    value=st.session_state.rango_fecha,
-    key="rango_fecha",
-    on_change=filtrar_todo
-)
+    if not fechas_validas.empty:
+        fecha_min, fecha_max = fechas_validas.min(), fechas_validas.max()
+    else:
+        fecha_min, fecha_max = pd.Timestamp.today(), pd.Timestamp.today()
+        
+    rango = st.sidebar.date_input(
+        "Rango de Fecha de Envío",
+        value=(fecha_min.date(), fecha_max.date())
+    )
+    if isinstance(rango, tuple) and len(rango) == 2:
+        df_filtrado = df_filtrado[
+            (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(rango[0])) &
+            (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(rango[1]))
+        ]
 
 # ==================================================
 # 🎨 CAMBIA COLORES AQUÍ (AVANCE vs FALTANTE)
@@ -417,6 +388,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
