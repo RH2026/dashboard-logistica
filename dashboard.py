@@ -12,24 +12,24 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
-# SESIÓN
+# INICIALIZAR SESIÓN
 # --------------------------------------------------
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
 
 # --------------------------------------------------
-# SECRETOS
+# SECRETOS (Streamlit Cloud)
 # --------------------------------------------------
 usuario_guardado = st.secrets["usuario"]
 clave_guardada = st.secrets["password"]
 
 # --------------------------------------------------
-# SIDEBAR
+# SIDEBAR – LOGIN / LOGOUT
 # --------------------------------------------------
 st.sidebar.title("🔐 Acceso")
 
-# ---------- LOGIN ----------
 if not st.session_state.logueado:
+
     st.sidebar.text_input("Usuario", key="usuario_input")
     st.sidebar.text_input("Contraseña", type="password", key="clave_input")
 
@@ -38,17 +38,13 @@ if not st.session_state.logueado:
             st.session_state.usuario_input == usuario_guardado
             and st.session_state.clave_input == clave_guardada
         ):
+            # 🔥 limpiar todo y marcar sesión activa
+            st.session_state.clear()
             st.session_state.logueado = True
-
-            # limpiar credenciales
-            st.session_state.usuario_input = ""
-            st.session_state.clave_input = ""
-
             st.rerun()
         else:
             st.sidebar.error("Usuario o contraseña incorrectos")
 
-# ---------- LOGOUT ----------
 else:
     st.sidebar.success("Sesión activa")
 
@@ -62,7 +58,7 @@ else:
 if st.session_state.logueado:
 
     # -----------------------------
-    # BIENVENIDA
+    # TÍTULO
     # -----------------------------
     st.markdown(
         """
@@ -568,6 +564,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
