@@ -119,9 +119,6 @@ if st.session_state.logueado:
             <div style="font-size:20px; color:#CCCCCC; margin-top:6px;">
                 Logística – Enero 2026
             </div>
-            <div style="font-size:16px; color:#00FFAA; margin-top:10px;">
-                Bienvenido, {st.session_state.usuario_actual}
-            </div>
         </div>
         """,
         unsafe_allow_html=True
@@ -614,6 +611,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
