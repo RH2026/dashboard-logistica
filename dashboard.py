@@ -2,6 +2,11 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 import time
+import base64   # 👈 aquí
+
+def get_base64_image(image_path):  # 👈 aquí
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
 
 # --------------------------------------------------
 # CONFIGURACIÓN DE PÁGINA
@@ -17,7 +22,7 @@ st.set_page_config(
 # --------------------------------------------------
 if not st.session_state.get("logueado", False):
 
-    img_base64 = get_base64_image("1.jpg")  # 👈 tu imagen aquí
+    img_base64 = get_base64_image("1.jpg")
 
     st.markdown(
         f"""
@@ -27,10 +32,6 @@ if not st.session_state.get("logueado", False):
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-        }}
-
-        section[data-testid="stSidebar"] {{
-            background-color: rgba(0, 0, 0, 0.75);
         }}
         </style>
         """,
@@ -635,6 +636,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
