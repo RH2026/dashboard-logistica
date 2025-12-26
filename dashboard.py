@@ -222,7 +222,13 @@ c4.altair_chart(
 # TABLA FINAL – TITULO NARANJA + DIAS TRANSCURRIDOS Y RETRASO COLOREADOS
 # --------------------------------------------------
 st.markdown(
-    "<h2 style='color:white; text-align:center; margin:10px 0;'>Lista de Envios</h4>",
+    """
+    <div style="text-align:center;">
+        <div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">
+            Lista de envios
+        </div>
+    </div>
+    """,
     unsafe_allow_html=True
 )
 
@@ -260,7 +266,13 @@ st.dataframe(
 # GRÁFICOS POR PAQUETERÍA – NUEVO BLOQUE
 # --------------------------------------------------
 st.markdown(
-    "<h2 style='color:white; text-align:center; margin:10px 0;'>Pendientes por Paquetería</h4>",
+    """
+    <div style="text-align:center;">
+        <div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">
+            Pendientes por Paqueteria
+        </div>
+    </div>
+    """,
     unsafe_allow_html=True
 )
 
@@ -407,6 +419,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
