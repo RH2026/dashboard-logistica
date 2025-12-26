@@ -213,7 +213,7 @@ c4.altair_chart(
 )
 
 # --------------------------------------------------
-# TABLA FINAL – TITULO NARANJA + DIAS TRANSCURRIDOS Y RETRASO
+# TABLA FINAL – TITULO NARANJA + DIAS TRANSCURRIDOS Y RETRASO COLOREADOS
 # --------------------------------------------------
 st.markdown(
     "<h2 style='color:white; text-align:center; margin:10px 0;'>Lista de Envios</h2>",
@@ -238,7 +238,17 @@ df_mostrar["DIAS_RETRASO"] = df_mostrar["DIAS_RETRASO"].apply(lambda x: x if x >
 df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y')
 df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna('')
 
-st.dataframe(df_mostrar, use_container_width=True, height=520)
+# Función para colorear días de retraso
+def colorear_retraso(val):
+    color = 'red' if val > 0 else 'white'
+    return f'color: {color}'
+
+# Aplicar estilo a la columna DIAS_RETRASO
+st.dataframe(
+    df_mostrar.style.applymap(colorear_retraso, subset=["DIAS_RETRASO"]),
+    use_container_width=True,
+    height=520
+)
 
 # --------------------------------------------------
 # GRÁFICOS POR PAQUETERÍA – NUEVO BLOQUE
@@ -376,6 +386,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
