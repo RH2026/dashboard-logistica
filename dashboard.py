@@ -87,7 +87,7 @@ else:
 # CAJA DE BÚSQUEDA POR PEDIDO – TARGETAS
 # -----------------------------
 pedido_buscar = st.text_input(
-    "Buscar por Número de Pedido",
+    "Buscar por Número de Factura",
     value="",
     help="Ingresa un número de pedido para mostrar solo esos registros"
 )
@@ -514,6 +514,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
