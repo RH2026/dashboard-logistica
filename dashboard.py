@@ -348,27 +348,33 @@ st.divider()  # línea separadora antes de la tabla
 # --------------------------------------------------
 st.markdown("<h2 style='color:white;'>Estatus de Envíos</h2>", unsafe_allow_html=True)
 
+# Crear DataFrame base con las 3 categorías
+estatus_base = pd.DataFrame({
+    "Estatus": ["ENTREGADO", "EN TRANSITO", "RETRASADO"]
+})
+
+# Contar los estatus en los datos filtrados
 df_est = df_filtrado["ESTATUS_CALCULADO"].value_counts().rename_axis("Estatus").reset_index(name="Cantidad")
 
-if not df_est.empty:
-    # Asignar colores según estatus igual que KPIs
-    df_est["Color"] = df_est["Estatus"].map({
-        "ENTREGADO": COLOR_AVANCE_ENTREGADOS,
-        "EN TRANSITO": COLOR_AVANCE_TRANSITO,
-        "RETRASADO": COLOR_AVANCE_RETRASADOS
-    }).fillna("#3A3A3A")  # gris para otros casos
+# Combinar con base para asegurar que todas las categorías estén
+df_est = estatus_base.merge(df_est, on="Estatus", how="left").fillna(0)
 
-    chart = alt.Chart(df_est).mark_bar().encode(
-        x=alt.X("Estatus:N", title="Estatus"),
-        y=alt.Y("Cantidad:Q", title="Cantidad"),
-        color=alt.Color("Color:N", scale=None, legend=None),  # usar colores del dataframe
-        tooltip=["Estatus:N", "Cantidad:Q"]
-    )
+# Asignar colores igual que las donitas
+df_est["Color"] = df_est["Estatus"].map({
+    "ENTREGADO": COLOR_AVANCE_ENTREGADOS,
+    "EN TRANSITO": COLOR_AVANCE_TRANSITO,
+    "RETRASADO": COLOR_AVANCE_RETRASADOS
+})
 
-    st.altair_chart(chart, use_container_width=True)
-else:
-    st.info("No hay datos para mostrar con los filtros actuales.")
+# Crear gráfico
+chart = alt.Chart(df_est).mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
+    x=alt.X("Estatus:N", title="Estatus"),
+    y=alt.Y("Cantidad:Q", title="Cantidad"),
+    color=alt.Color("Color:N", scale=None, legend=None),
+    tooltip=["Estatus:N", "Cantidad:Q"]
+)
 
+st.altair_chart(chart, use_container_width=True)
 st.divider()
 
 # --------------------------------------------------
@@ -378,6 +384,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
