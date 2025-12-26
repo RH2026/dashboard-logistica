@@ -121,7 +121,7 @@ if pedido_buscar.strip() != "":
         # Tarjeta 1 – Información del Cliente
         c1.markdown(
             f"""
-            <div style='background-color:#2b2b2b; padding:15px; border-radius:10px;'>
+            <div style='background-color:#1A1E25; padding:15px; border-radius:10px;'>
                 <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Información del Cliente</div>
                 <b>No Cliente:</b> {row['NO CLIENTE']}<br>
                 <b>Nombre del Cliente:</b> {row['NOMBRE DEL CLIENTE']}<br>
@@ -140,7 +140,7 @@ if pedido_buscar.strip() != "":
 
         c2.markdown(
             f"""
-            <div style='background-color:#2b2b2b; padding:15px; border-radius:10px;'>
+            <div style='background-color:#1A1E25; padding:15px; border-radius:10px;'>
                 <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Fechas y Seguimiento</div>
                 <b>Fecha de Envío:</b> {row['FECHA DE ENVÍO']}<br>
                 <b>Promesa de Entrega:</b> {row['PROMESA DE ENTREGA']}<br>
@@ -155,7 +155,7 @@ if pedido_buscar.strip() != "":
         # Tarjeta 3 – Estatus y observaciones
         c3.markdown(
             f"""
-            <div style='background-color:#2b2b2b; padding:15px; border-radius:10px;'>
+            <div style='background-color:#1A1E25; padding:15px; border-radius:10px;'>
                 <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Estatus y Observaciones</div>
                 <b>Estatus:</b> {row['ESTATUS_CALCULADO']}<br>
                 <b>Clase de Entrega:</b> {row['CLASES DE ENTREGA']}<br>                
@@ -514,6 +514,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
