@@ -53,13 +53,33 @@ def cargar_datos():
 df = cargar_datos()
 
 # --------------------------------------------------
-# SIDEBAR – FILTRO POR CLIENTE
+# SIDEBAR – FILTRO POR CLIENTE (auto-filtrado)
 # --------------------------------------------------
 st.sidebar.header("Filtro por Cliente")
-numero_cliente = st.sidebar.text_input("Ingresa el No Cliente")
 
-if numero_cliente.strip() != "":
-    df_filtrado = df[df["NO CLIENTE"].str.contains(numero_cliente.strip(), case=False, na=False)]
+# Creamos un placeholder para el valor
+numero_cliente = st.sidebar.text_input(
+    "Ingresa el No Cliente",
+    value="",
+    key="filtro_cliente",
+    help="Filtra automáticamente mientras escribes"
+)
+
+# Función que actualiza la tabla
+def actualizar_filtro():
+    st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente
+
+# Asociamos la función al input
+st.sidebar.text_input(
+    "Ingresa el No Cliente",
+    value="",
+    key="filtro_cliente",
+    on_change=actualizar_filtro
+)
+
+# Aplicamos el filtro
+if "filtro_cliente_actual" in st.session_state and st.session_state.filtro_cliente_actual.strip() != "":
+    df_filtrado = df[df["NO CLIENTE"].str.contains(st.session_state.filtro_cliente_actual.strip(), case=False, na=False)]
 else:
     df_filtrado = df.copy()
 
@@ -341,6 +361,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
