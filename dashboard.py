@@ -107,7 +107,7 @@ if pedido_buscar.strip() != "":
     if not df_busqueda.empty:
         # Seleccionar solo los campos más importantes
         df_mostrar_busqueda = df_busqueda[[
-            "FACTURA", "NO CLIENTE", "CLIENTE", "DESTINO",
+            "NÚMERO DE PEDIDO", "NO CLIENTE", "CLIENTE", "DESTINO",
             "FLETERA", "FECHA DE ENVÍO", "PROMESA DE ENTREGA",
             "FECHA DE ENTREGA REAL", "ESTATUS_CALCULADO",
             "DIAS_TRANSCURRIDOS", "DIAS_RETRASO"
@@ -458,6 +458,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
