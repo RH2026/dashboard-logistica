@@ -3,7 +3,7 @@ import pandas as pd
 import altair as alt
 import time
 import base64   # 👈 aquí
-from streamlit_autorefresh import st_autorefresh
+
 
 def get_base64_image(image_path):  # 👈 aquí
     with open(image_path, "rb") as img_file:
@@ -17,7 +17,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-st_autorefresh(interval=60 * 1000, key="auto_refresh")
 
 # --------------------------------------------------
 # FONDO DE PANTALLA SOLO PARA LOGIN (COMPATIBLE CLOUD)
@@ -635,6 +634,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
