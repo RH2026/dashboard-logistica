@@ -213,13 +213,28 @@ c4.altair_chart(
 )
 
 # --------------------------------------------------
-# TABLA FINAL – TITULO NARANJA
+# TABLA FINAL – TITULO NARANJA + DIAS TRANSCURRIDOS Y RETRASO
 # --------------------------------------------------
 st.markdown(
     "<h2 style='color:white; text-align:center; margin:10px 0;'>Lista de Envios</h2>",
     unsafe_allow_html=True
 )
+
+hoy = pd.Timestamp.today().normalize()
 df_mostrar = df_filtrado.copy()
+
+# Días transcurridos: desde fecha de envío hasta hoy o hasta entrega real
+df_mostrar["DIAS_TRANSCURRIDOS"] = (
+    (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy) - df_mostrar["FECHA DE ENVÍO"]).dt.days
+)
+
+# Días de retraso: solo si pasó la promesa de entrega
+df_mostrar["DIAS_RETRASO"] = (
+    (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy) - df_mostrar["PROMESA DE ENTREGA"]).dt.days
+)
+df_mostrar["DIAS_RETRASO"] = df_mostrar["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
+
+# Formato de fecha
 df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y')
 df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna('')
 
@@ -361,6 +376,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
