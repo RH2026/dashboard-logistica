@@ -2,9 +2,8 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
-
 # --------------------------------------------------
-# CONFIGURACIÓN DE PÁGINA – INICIA SIDEBAR COLAPSADA
+# CONFIGURACIÓN DE PÁGINA – SIDEBAR INICIALMENTE COLAPSADA
 # --------------------------------------------------
 st.set_page_config(
     page_title="Control de Envíos – Enero 2026",
@@ -16,15 +15,15 @@ st.set_page_config(
 # LOGIN SEGURO
 # --------------------------------------------------
 # Leer usuario y contraseña de Streamlit Cloud
-usuario = st.secrets["usuario"]
-password = st.secrets["password"]
+usuario_guardado = st.secrets["usuario"]
+clave_guardada = st.secrets["password"]
 
 st.sidebar.header("Iniciar sesión")
-usuario = st.sidebar.text_input("Usuario")
-clave = st.sidebar.text_input("Contraseña", type="password")
+usuario_input = st.sidebar.text_input("Usuario")
+clave_input = st.sidebar.text_input("Contraseña", type="password")
 
 if st.sidebar.button("Ingresar"):
-    if usuario == usuario_guardado and clave == clave_guardada:
+    if usuario_input == usuario_guardado and clave_input == clave_guardada:
         st.session_state["logueado"] = True
     else:
         st.error("Usuario o contraseña incorrectos")
@@ -33,7 +32,7 @@ if st.sidebar.button("Ingresar"):
 # CONTENIDO PROTEGIDO
 # --------------------------------------------------
 if "logueado" in st.session_state and st.session_state["logueado"]:
-    
+
     # -----------------------------
     # TÍTULO Y SUBTÍTULO
     # -----------------------------
@@ -80,7 +79,7 @@ if "logueado" in st.session_state and st.session_state["logueado"]:
     df = cargar_datos()
 
     # -----------------------------
-    # SIDEBAR – FILTRO POR CLIENTE (auto-filtrado)
+    # SIDEBAR – FILTRO POR CLIENTE
     # -----------------------------
     st.sidebar.header("Filtro por Cliente")
     
@@ -537,6 +536,7 @@ if "logueado" in st.session_state and st.session_state["logueado"]:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
