@@ -1,91 +1,87 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+from streamlit_secrets import secrets  # Para leer los secretos
 
 # --------------------------------------------------
-# LOGIN
-# --------------------------------------------------
-def login():
-    st.title("🔒 Login")
-    
-    usuario = st.secrets["LOGIN"]["USUARIO"]
-    contraseña = st.secrets["LOGIN"]["CLAVE"]
-    
-    input_usuario = st.text_input("Usuario")
-    input_clave = st.text_input("Clave", type="password")
-    
-    if st.button("Entrar"):
-        if input_usuario == usuario and input_clave == contraseña:
-            st.session_state["logueado"] = True
-        else:
-            st.error("Usuario o clave incorrecta")
-
-# Inicializamos sesión
-if "logueado" not in st.session_state:
-    st.session_state["logueado"] = False
-
-# Si no está logueado, mostrar login
-if not st.session_state["logueado"]:
-    login()
-    st.stop()  # Esto detiene el resto del dashboard hasta que se loguee
-
-# --------------------------------------------------
-# AQUÍ EMPIEZA TU DASHBOARD PROTEGIDO
-# --------------------------------------------------
-
 # CONFIGURACIÓN DE PÁGINA – INICIA SIDEBAR COLAPSADA
+# --------------------------------------------------
 st.set_page_config(
     page_title="Control de Envíos – Enero 2026",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# TÍTULO Y SUBTÍTULO
-st.markdown(
-    """
-    <div style="text-align:center;">
-        <div style="color:white; font-size:24px; font-weight:700;">
-            Control de Embarques
+# --------------------------------------------------
+# LOGIN SEGURO
+# --------------------------------------------------
+# Leer usuario y contraseña de Streamlit Cloud
+usuario_guardado = secrets["LOGIN"]["USUARIO"]
+clave_guardada = secrets["LOGIN"]["CLAVE"]
+
+st.sidebar.header("Iniciar sesión")
+usuario = st.sidebar.text_input("Usuario")
+clave = st.sidebar.text_input("Contraseña", type="password")
+
+if st.sidebar.button("Ingresar"):
+    if usuario == usuario_guardado and clave == clave_guardada:
+        st.session_state["logueado"] = True
+    else:
+        st.error("Usuario o contraseña incorrectos")
+
+# --------------------------------------------------
+# CONTENIDO PROTEGIDO
+# --------------------------------------------------
+if "logueado" in st.session_state and st.session_state["logueado"]:
+    
+    # -----------------------------
+    # TÍTULO Y SUBTÍTULO
+    # -----------------------------
+    st.markdown(
+        """
+        <div style="text-align:center;">
+            <div style="color:white; font-size:24px; font-weight:700;">
+                Control de Embarques
+            </div>
+            <div style="color:#CCCCCC; font-size:22px; margin-top:8px;">
+                Logística – Enero 2026
+            </div>
         </div>
-        <div style="color:#CCCCCC; font-size:22px; margin-top:8px;">
-            Logística – Enero 2026
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+        """,
+        unsafe_allow_html=True
+    )
 
-st.divider()
+    st.divider()
 
-# --------------------------------------------------
-# CARGA DE DATOS
-# --------------------------------------------------
-@st.cache_data
-def cargar_datos():
-    df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
-    df.columns = df.columns.str.strip().str.upper()
-    df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.strip()
-    df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors="coerce", dayfirst=True)
-    df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
-    df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
-    
-    hoy = pd.Timestamp.today().normalize()
-    
-    def calcular_estatus(row):
-        if pd.notna(row["FECHA DE ENTREGA REAL"]):
-            return "ENTREGADO"
-        if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy:
-            return "RETRASADO"
-        return "EN TRANSITO"
-    
-    df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
-    return df
+    # -----------------------------
+    # CARGA DE DATOS
+    # -----------------------------
+    @st.cache_data
+    def cargar_datos():
+        df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
+        df.columns = df.columns.str.strip().str.upper()
+        df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.strip()
+        df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors="coerce", dayfirst=True)
+        df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
+        df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
+        
+        hoy = pd.Timestamp.today().normalize()
+        
+        def calcular_estatus(row):
+            if pd.notna(row["FECHA DE ENTREGA REAL"]):
+                return "ENTREGADO"
+            if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy:
+                return "RETRASADO"
+            return "EN TRANSITO"
+        
+        df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
+        return df
 
-df = cargar_datos()
+    df = cargar_datos()
 
-# --------------------------------------------------
-# SIDEBAR – FILTRO POR CLIENTE (auto-filtrado)
-# --------------------------------------------------
+    # -----------------------------
+    # SIDEBAR – FILTRO POR CLIENTE (auto-filtrado)
+    # -----------------------------
     st.sidebar.header("Filtro por Cliente")
     
     # Inicializamos la variable de sesión si no existe
@@ -541,6 +537,7 @@ df = cargar_datos()
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
