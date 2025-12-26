@@ -7,7 +7,45 @@ import altair as alt
 # --------------------------------------------------
 st.set_page_config(
     page_title="Control de Envíos – Enero 2026",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"  # inicia colapsada
+)
+
+# ----------------------------
+# TRUCO CSS PARA HACER HOVER
+# ----------------------------
+st.markdown("""
+<style>
+/* Crear una zona delgada a la izquierda para el hover */
+.hover-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 100%;
+    z-index: 1000;
+}
+
+.hover-sidebar:hover ~ .css-1d391kg {
+    transform: translateX(0px) !important;
+    transition: transform 0.3s;
+}
+</style>
+<div class="hover-sidebar"></div>
+""", unsafe_allow_html=True)
+
+# ----------------------------
+# CONTENIDO PRINCIPAL
+# ----------------------------
+st.markdown(
+    """
+    <div style="text-align:center;">
+        <div style="color:white; font-size:32px; font-weight:700;">
+            Panel de Seguimiento y Control de Embarques
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 # TÍTULO Y SUBTÍTULO
 st.markdown(
@@ -357,6 +395,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
