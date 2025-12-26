@@ -302,7 +302,7 @@ def colorear_retraso(val):
 
 def zebra_filas(row):
     if row.name % 2 == 0:
-        return ['background-color: #000000; color: white;' for _ in row]
+        return ['background-color: #0E1117; color: white;' for _ in row]
     else:
         return ['background-color: #1f1f1f; color: white;' for _ in row]
 
@@ -475,6 +475,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
