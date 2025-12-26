@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+import time
 
 # --------------------------------------------------
 # CONFIGURACIÓN DE PÁGINA
@@ -12,16 +13,36 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
+# CONFIGURACIÓN AUTO LOGOUT
+# --------------------------------------------------
+TIEMPO_MAX_INACTIVIDAD = 10 * 60  # 10 minutos
+
+# --------------------------------------------------
 # INICIALIZAR SESIÓN
 # --------------------------------------------------
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
 
+if "ultimo_movimiento" not in st.session_state:
+    st.session_state.ultimo_movimiento = time.time()
+
 # --------------------------------------------------
-# SECRETOS (Streamlit Cloud)
+# SECRETOS – MULTIUSUARIOS
 # --------------------------------------------------
-usuario_guardado = st.secrets["usuario"]
-clave_guardada = st.secrets["password"]
+usuarios = st.secrets["usuarios"]  # diccionario
+
+# --------------------------------------------------
+# AUTO LOGOUT POR INACTIVIDAD
+# --------------------------------------------------
+if st.session_state.logueado:
+    ahora = time.time()
+    if ahora - st.session_state.ultimo_movimiento > TIEMPO_MAX_INACTIVIDAD:
+        st.session_state.clear()
+        st.warning("Sesión cerrada por inactividad ⏱️")
+        st.rerun()
+
+# Registrar actividad
+st.session_state.ultimo_movimiento = time.time()
 
 # --------------------------------------------------
 # SIDEBAR – LOGIN / LOGOUT
@@ -34,19 +55,20 @@ if not st.session_state.logueado:
     st.sidebar.text_input("Contraseña", type="password", key="clave_input")
 
     if st.sidebar.button("Ingresar"):
-        if (
-            st.session_state.usuario_input == usuario_guardado
-            and st.session_state.clave_input == clave_guardada
-        ):
-            # 🔥 limpiar todo y marcar sesión activa
+        usuario = st.session_state.usuario_input
+        clave = st.session_state.clave_input
+
+        if usuario in usuarios and usuarios[usuario] == clave:
             st.session_state.clear()
             st.session_state.logueado = True
+            st.session_state.usuario_actual = usuario
+            st.session_state.ultimo_movimiento = time.time()
             st.rerun()
         else:
             st.sidebar.error("Usuario o contraseña incorrectos")
 
 else:
-    st.sidebar.success("Sesión activa")
+    st.sidebar.success(f"Sesión activa: {st.session_state.usuario_actual}")
 
     if st.sidebar.button("Cerrar sesión 🚪"):
         st.session_state.clear()
@@ -61,7 +83,7 @@ if st.session_state.logueado:
     # TÍTULO
     # -----------------------------
     st.markdown(
-        """
+        f"""
         <div style="text-align:center;">
             <div style="font-size:26px; font-weight:700; color:white;">
                 Control de Embarques
@@ -70,7 +92,7 @@ if st.session_state.logueado:
                 Logística – Enero 2026
             </div>
             <div style="font-size:16px; color:#00FFAA; margin-top:10px;">
-                Bienvenido, Rigoberto
+                Bienvenido, {st.session_state.usuario_actual}
             </div>
         </div>
         """,
@@ -564,6 +586,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
