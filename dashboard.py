@@ -57,28 +57,24 @@ df = cargar_datos()
 # --------------------------------------------------
 st.sidebar.header("Filtro por Cliente")
 
-# Creamos un placeholder para el valor
-numero_cliente = st.sidebar.text_input(
-    "Ingresa el No Cliente",
-    value="",
-    key="filtro_cliente",
-    help="Filtra automáticamente mientras escribes"
-)
+# Inicializamos la variable de sesión si no existe
+if "filtro_cliente_actual" not in st.session_state:
+    st.session_state.filtro_cliente_actual = ""
 
-# Función que actualiza la tabla
+# Función que actualiza la variable de sesión
 def actualizar_filtro():
-    st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente
+    st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente_input
 
-# Asociamos la función al input
+# Creamos un solo text_input
 st.sidebar.text_input(
     "Ingresa el No Cliente",
-    value="",
-    key="filtro_cliente",
+    value=st.session_state.filtro_cliente_actual,
+    key="filtro_cliente_input",
     on_change=actualizar_filtro
 )
 
-# Aplicamos el filtro
-if "filtro_cliente_actual" in st.session_state and st.session_state.filtro_cliente_actual.strip() != "":
+# Aplicamos el filtro a df_filtrado
+if st.session_state.filtro_cliente_actual.strip() != "":
     df_filtrado = df[df["NO CLIENTE"].str.contains(st.session_state.filtro_cliente_actual.strip(), case=False, na=False)]
 else:
     df_filtrado = df.copy()
@@ -361,6 +357,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
