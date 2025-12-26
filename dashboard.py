@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
-from streamlit_secrets import secrets  # Para leer los secretos
+
 
 # --------------------------------------------------
 # CONFIGURACIÓN DE PÁGINA – INICIA SIDEBAR COLAPSADA
@@ -16,8 +16,8 @@ st.set_page_config(
 # LOGIN SEGURO
 # --------------------------------------------------
 # Leer usuario y contraseña de Streamlit Cloud
-usuario_guardado = secrets["LOGIN"]["USUARIO"]
-clave_guardada = secrets["LOGIN"]["CLAVE"]
+usuario = st.secrets["usuario"]
+password = st.secrets["password"]
 
 st.sidebar.header("Iniciar sesión")
 usuario = st.sidebar.text_input("Usuario")
@@ -537,6 +537,7 @@ if "logueado" in st.session_state and st.session_state["logueado"]:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
