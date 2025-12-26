@@ -95,13 +95,13 @@ st.markdown(
 pedido_buscar = st.text_input(
     "Ingresa número de pedido o factura",
     value="",
-    placeholder="Ej: 12345"
+    placeholder="Ej: 223050"
 )
 
 if pedido_buscar.strip() != "":
     # Filtrar por número de pedido o factura
     df_busqueda = df_filtrado[
-        df_filtrado["FACTURA"].astype(str).str.contains(pedido_buscar.strip(), case=False, na=False)
+        df_filtrado["NÚMERO DE PEDIDO"].astype(str).str.contains(pedido_buscar.strip(), case=False, na=False)
     ]
     
     if not df_busqueda.empty:
@@ -458,6 +458,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
