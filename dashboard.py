@@ -84,7 +84,7 @@ else:
     df_filtrado = df.copy()
 
 # -----------------------------
-# TARJETAS INDIVIDUALES POR PEDIDO
+# CAJA DE BÚSQUEDA POR PEDIDO – TARGETAS
 # -----------------------------
 pedido_buscar = st.text_input(
     "Buscar por Número de Pedido",
@@ -96,38 +96,51 @@ if pedido_buscar.strip() != "":
     # Filtrar solo por Número de Pedido
     df_busqueda = df_filtrado[
         df_filtrado["NÚMERO DE PEDIDO"].astype(str).str.contains(pedido_buscar.strip(), case=False, na=False)
-    ]
+    ].copy()
 
+    hoy = pd.Timestamp.today().normalize()
+
+    # Calcular días transcurridos y días de retraso
+    df_busqueda["DIAS_TRANSCURRIDOS"] = (
+        (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["FECHA DE ENVÍO"]).dt.days
+    )
+
+    df_busqueda["DIAS_RETRASO"] = (
+        (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["PROMESA DE ENTREGA"]).dt.days
+    )
+    df_busqueda["DIAS_RETRASO"] = df_busqueda["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
+
+    # Formato de fechas DD/MM/YYYY
+    for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
+        df_busqueda[col] = df_busqueda[col].dt.strftime('%d/%m/%Y')
+
+    # Mostrar las tarjetas usando df_busqueda
     for index, row in df_busqueda.iterrows():
         c1, c2, c3 = st.columns(3)
 
-        # ----------------------
         # Tarjeta 1 – Información del Cliente
-        # ----------------------
         c1.markdown(
             f"""
-            <div style='background-color:#1A1E25; padding:15px; border-radius:10px;'>
+            <div style='background-color:#2b2b2b; padding:15px; border-radius:10px;'>
                 <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Información del Cliente</div>
                 <b>No Cliente:</b> {row['NO CLIENTE']}<br>
                 <b>Nombre del Cliente:</b> {row['NOMBRE DEL CLIENTE']}<br>
                 <b>Número de Pedido:</b> {row['NÚMERO DE PEDIDO']}<br>
                 <b>Número de Guía:</b> {row['NÚMERO DE GUÍA']}<br>
-                <b>Costo de la Guía:</b> {row['COSTO DE LA GUÍA']}<br>
+                <b>Costo de la Guía:</b> {row.get('COSTO DE LA GUÍA', '')}<br>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        # ----------------------
         # Tarjeta 2 – Fechas y seguimiento
-        # ----------------------
-        dias_transcurridos = row.get("DIAS_TRANSCURRIDOS", "")
-        dias_retraso = row.get("DIAS_RETRASO", 0)
+        dias_transcurridos = row["DIAS_TRANSCURRIDOS"]
+        dias_retraso = row["DIAS_RETRASO"]
         color_retraso = "red" if dias_retraso > 0 else "white"
 
         c2.markdown(
             f"""
-            <div style='background-color:#1A1E25; padding:15px; border-radius:10px;'>
+            <div style='background-color:#2b2b2b; padding:15px; border-radius:10px;'>
                 <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Fechas y Seguimiento</div>
                 <b>Fecha de Envío:</b> {row['FECHA DE ENVÍO']}<br>
                 <b>Promesa de Entrega:</b> {row['PROMESA DE ENTREGA']}<br>
@@ -139,12 +152,10 @@ if pedido_buscar.strip() != "":
             unsafe_allow_html=True
         )
 
-        # ----------------------
         # Tarjeta 3 – Estatus y observaciones
-        # ----------------------
         c3.markdown(
             f"""
-            <div style='background-color:#1A1E25; padding:15px; border-radius:10px;'>
+            <div style='background-color:#2b2b2b; padding:15px; border-radius:10px;'>
                 <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Estatus y Observaciones</div>
                 <b>Estatus:</b> {row['ESTATUS_CALCULADO']}<br>
                 <b>Fletera:</b> {row['FLETERA']}<br>
@@ -155,7 +166,7 @@ if pedido_buscar.strip() != "":
             unsafe_allow_html=True
         )
 
-        st.markdown("<br>", unsafe_allow_html=True)  # espacio entre pedidos
+        st.markdown("<br>", unsafe_allow_html=True)
 
 # --------------------------------------------------
 # KPIs
@@ -502,6 +513,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
