@@ -125,7 +125,7 @@ if pedido_buscar.strip() != "":
                 <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Información del Cliente</div>
                 <b>No Cliente:</b> {row['NO CLIENTE']}<br>
                 <b>Nombre del Cliente:</b> {row['NOMBRE DEL CLIENTE']}<br>
-                <b>Número de Pedido:</b> {row['NÚMERO DE PEDIDO']}<br>
+                <b>Fletera:</b> {row['FLETERA']}<br>                
                 <b>Número de Guía:</b> {row['NÚMERO DE GUÍA']}<br>
                 <b>Costo de la Guía:</b> {row.get('COSTO DE LA GUÍA', '')}<br>
             </div>
@@ -158,9 +158,10 @@ if pedido_buscar.strip() != "":
             <div style='background-color:#2b2b2b; padding:15px; border-radius:10px;'>
                 <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Estatus y Observaciones</div>
                 <b>Estatus:</b> {row['ESTATUS_CALCULADO']}<br>
-                <b>Fletera:</b> {row['FLETERA']}<br>
+                <b>Estatus:</b> {row['CLASES DE ENTREGA']}<br>                
                 <b>Prioridad:</b> {row.get('PRIORIDAD', '')}<br>
                 <b>Comentarios:</b> {row.get('COMENTARIOS', '')}<br>
+                <b>Estatus:</b> {row['CANTIDAD DE CAJAS']}<br>                
             </div>
             """,
             unsafe_allow_html=True
@@ -513,6 +514,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
