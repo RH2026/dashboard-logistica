@@ -266,13 +266,13 @@ c4.altair_chart(
 )
 
 # --------------------------------------------------
-# TABLA FINAL – TITULO NARANJA + DIAS TRANSCURRIDOS Y RETRASO COLOREADOS
+# TABLA FINAL – DISEÑO MEJORADO
 # --------------------------------------------------
 st.markdown(
     """
     <div style="text-align:center;">
         <div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">
-            Lista de envios
+            Lista de envíos
         </div>
     </div>
     """,
@@ -282,12 +282,10 @@ st.markdown(
 hoy = pd.Timestamp.today().normalize()
 df_mostrar = df_filtrado.copy()
 
-# Días transcurridos: desde fecha de envío hasta hoy o hasta entrega real
+# Días transcurridos y retraso
 df_mostrar["DIAS_TRANSCURRIDOS"] = (
     (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy) - df_mostrar["FECHA DE ENVÍO"]).dt.days
 )
-
-# Días de retraso: solo si pasó la promesa de entrega
 df_mostrar["DIAS_RETRASO"] = (
     (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy) - df_mostrar["PROMESA DE ENTREGA"]).dt.days
 )
@@ -297,14 +295,25 @@ df_mostrar["DIAS_RETRASO"] = df_mostrar["DIAS_RETRASO"].apply(lambda x: x if x >
 df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y')
 df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna('')
 
-# Función para colorear días de retraso
+# Funciones de estilo
 def colorear_retraso(val):
-    color = 'red' if val > 0 else 'white'
-    return f'color: {color}'
+    color = '#ff4d4d' if val > 0 else 'white'  # rojo si hay retraso
+    return f'background-color: {color}; color: black; font-weight: bold;' if val > 0 else ''
 
-# Aplicar estilo a la columna DIAS_RETRASO
+def zebra_filas(row):
+    if row.name % 2 == 0:
+        return ['background-color: #1f1f1f; color: white;' for _ in row]
+    else:
+        return ['background-color: #2a2a2a; color: white;' for _ in row]
+
+def estilo_encabezado(df):
+    return [ 'background-color: orange; color: white; font-weight: bold; font-size:14px;' for _ in df.columns]
+
+# Aplicamos estilos combinados
 st.dataframe(
-    df_mostrar.style.applymap(colorear_retraso, subset=["DIAS_RETRASO"]),
+    df_mostrar.style.apply(zebra_filas, axis=1)
+                    .applymap(colorear_retraso, subset=["DIAS_RETRASO"])
+                    .set_table_styles([{'selector': 'th', 'props': [('background-color', 'orange'), ('color', 'white'), ('font-weight','bold')]}]),
     use_container_width=True,
     height=520
 )
@@ -466,6 +475,7 @@ st.markdown(
     "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
     unsafe_allow_html=True
 )
+
 
 
 
