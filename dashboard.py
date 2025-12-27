@@ -181,7 +181,7 @@ if st.session_state.logueado:
     # -----------------------------
     st.sidebar.header("Filtros")
     
-    # Filtro por cliente
+    # --- FILTRO POR CLIENTE (ya existente, lo mantenemos) ---
     if "filtro_cliente_actual" not in st.session_state:
         st.session_state.filtro_cliente_actual = ""
     
@@ -195,7 +195,7 @@ if st.session_state.logueado:
         on_change=actualizar_filtro
     )
     
-    # Filtro fecha de envío
+    # --- FILTRO FECHA DE ENVÍO ---
     fecha_min = df["FECHA DE ENVÍO"].min()
     fecha_max = df["FECHA DE ENVÍO"].max()
     
@@ -206,18 +206,18 @@ if st.session_state.logueado:
         max_value=fecha_max
     )
     
-    # Filtro fletera
+    # --- FILTRO FLETERA (solo para gráficos) ---
     fleteras_sel = st.sidebar.multiselect(
         "Fletera",
         options=sorted(df["FLETERA"].dropna().unique())
     )
     
     # -----------------------------
-    # APLICAR FILTROS A LA TABLA
+    # APLICAR FILTROS A DF
     # -----------------------------
     df_filtrado = df.copy()
     
-    # Cliente
+    # Cliente (ya funcionaba)
     if st.session_state.filtro_cliente_actual.strip() != "":
         df_filtrado = df_filtrado[
             df_filtrado["NO CLIENTE"].str.contains(
@@ -234,10 +234,10 @@ if st.session_state.logueado:
         ]
     
     # -----------------------------
-    # TABLA FILTRADA
-    # -----------------------------
-    st.subheader("📦 Tabla de envíos filtrada")
-    st.dataframe(df_filtrado, use_container_width=True, height=520)
+    # Aquí tu tabla existente usa df_filtrado
+    # Ejemplo:
+    df_mostrar = df_filtrado.copy()
+    # st.dataframe(df_mostrar.style ...)  <- tu bloque de tabla existente sigue igual
     
     # -----------------------------
     # GRÁFICOS DE ESTATUS POR FLETERA
@@ -245,7 +245,6 @@ if st.session_state.logueado:
     if fleteras_sel:
         df_graf = df_filtrado[df_filtrado["FLETERA"].isin(fleteras_sel)]
     
-        # Contar estatus por fletera
         graf_estatus = (
             df_graf.groupby(["FLETERA", "ESTATUS_CALCULADO"])
             .size()
@@ -708,6 +707,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
