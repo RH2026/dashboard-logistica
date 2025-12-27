@@ -291,8 +291,10 @@ if st.session_state.logueado:
     # -----------------------------
     # GRÁFICOS DE ESTATUS POR FLETERA EN 2 COLUMNAS
     # -----------------------------
-    if st.session_state.fleteras_sel:  # ahora seguro, nunca trona
-        df_graf = df_filtrado[df_filtrado["FLETERA"].isin(st.session_state.fleteras_sel)]
+    fleteras_sel = st.session_state.get("fleteras_sel", [])
+    
+    if fleteras_sel:  # ahora NUNCA dará AttributeError
+        df_graf = df_filtrado[df_filtrado["FLETERA"].isin(fleteras_sel)]
     
         graf_estatus = (
             df_graf.groupby(["FLETERA", "ESTATUS_CALCULADO"])
@@ -838,6 +840,7 @@ if st.session_state.fleteras_sel:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
