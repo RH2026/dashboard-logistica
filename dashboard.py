@@ -276,7 +276,10 @@ if st.session_state.logueado:
             .set_index("ESTATUS_NORMAL")
         )
         
-        st.subheader(f"📊 Estatus de pedidos - {fletera_sel}")
+        st.markdown(
+            f"<h4 style='font-size:16px;'>📊 Estatus de pedidos - {fletera_sel}</h4>",
+            unsafe_allow_html=True
+        )
         
         # Graficar con colores (st.bar_chart mantiene compatibilidad)
         st.bar_chart(graf_estatus["Total"])
@@ -731,6 +734,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
