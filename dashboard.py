@@ -239,15 +239,18 @@ if st.session_state.logueado:
     df_mostrar = df_filtrado.copy()
     # st.dataframe(df_mostrar.style ...)  <- tu bloque de tabla existente sigue igual
     
+    # Diccionario de colores por estatus
+    colores_estatus = {
+        "En Tiempo": "#4CAF50",    # verde
+        "Retraso": "#F44336",      # rojo
+        "En Tránsito": "#FF9800"   # naranja
+    }
+    
     # -----------------------------
     # GRÁFICOS DE ESTATUS POR FLETERA
     # -----------------------------
     if fleteras_sel:
         df_graf = df_filtrado[df_filtrado["FLETERA"].isin(fleteras_sel)].copy()
-    
-        # Asegurarse de que la columna ESTATUS_CALCULADO sea string
-        df_graf["ESTATUS_CALCULADO"] = df_graf["ESTATUS_CALCULADO"].astype(str)
-    
         graf_estatus = (
             df_graf.groupby(["FLETERA", "ESTATUS_CALCULADO"])
             .size()
@@ -258,21 +261,25 @@ if st.session_state.logueado:
     
         for fletera in graf_estatus["FLETERA"].unique():
             st.markdown(f"**{fletera}**")
-            data_fletera = graf_estatus[graf_estatus["FLETERA"] == fletera]
+            data_fletera = graf_estatus[graf_estatus["FLETERA"] == fletera].copy()
     
-            chart = alt.Chart(data_fletera).mark_bar().encode(
+            # Crear columna con el color correspondiente
+            data_fletera["Color"] = data_fletera["ESTATUS_CALCULADO"].map(colores_estatus)
+    
+            chart = alt.Chart(data_fletera).mark_bar(
+                cornerRadiusTopLeft=6,
+                cornerRadiusTopRight=6,
+                stroke="#333",          # borde oscuro
+                strokeWidth=1           # grosor del borde
+            ).encode(
                 x=alt.X("ESTATUS_CALCULADO:N", title="Estatus"),
                 y=alt.Y("Total:Q", title="Cantidad"),
-                color=alt.Color(
-                    "ESTATUS_CALCULADO:N",
-                    scale=alt.Scale(
-                        domain=["En Tiempo", "Retraso", "En Tránsito"],  # tus estatus exactos
-                        range=["green", "red", "orange"]  # colores deseados
-                    ),
-                    legend=alt.Legend(title="Estatus")
-                ),
+                color=alt.Color("Color:N", scale=None),  # colores fijos
                 tooltip=["ESTATUS_CALCULADO", "Total"]
-            ).properties(width=500)
+            ).properties(
+                width=500,
+                height=320
+            )
     
             st.altair_chart(chart, use_container_width=True)
     
@@ -726,6 +733,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
