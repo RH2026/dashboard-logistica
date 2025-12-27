@@ -181,7 +181,7 @@ if st.session_state.logueado:
     # -----------------------------
     st.sidebar.header("Filtros")
     
-    # --- Filtro de Cliente (ya lo tienes, lo mantenemos) ---
+    # --- FILTRO POR CLIENTE ---
     if "filtro_cliente_actual" not in st.session_state:
         st.session_state.filtro_cliente_actual = ""
     
@@ -195,7 +195,7 @@ if st.session_state.logueado:
         on_change=actualizar_filtro
     )
     
-    # --- Filtro Fecha de Envío (ya lo tienes) ---
+    # --- FILTRO FECHA DE ENVÍO ---
     fecha_min = df["FECHA DE ENVÍO"].min()
     fecha_max = df["FECHA DE ENVÍO"].max()
     rango_fechas = st.sidebar.date_input(
@@ -205,7 +205,7 @@ if st.session_state.logueado:
         max_value=fecha_max
     )
     
-    # --- Filtro FLETERA para gráficos ---
+    # --- FILTRO FLETERA (para gráficos) ---
     if "fleteras_sel" not in st.session_state:
         st.session_state.fleteras_sel = []
     
@@ -216,7 +216,34 @@ if st.session_state.logueado:
     )
     
     # -----------------------------
-    # GRÁFICOS DE ESTATUS POR FLETERA (2 columnas)
+    # APLICAR FILTROS A DF
+    # -----------------------------
+    df_filtrado = df.copy()
+    
+    # Cliente
+    if st.session_state.filtro_cliente_actual.strip() != "":
+        df_filtrado = df_filtrado[
+            df_filtrado["NO CLIENTE"].str.contains(
+                st.session_state.filtro_cliente_actual.strip(), case=False, na=False
+            )
+        ]
+    
+    # Fecha de envío
+    if len(rango_fechas) == 2:
+        fecha_inicio, fecha_fin = rango_fechas
+        df_filtrado = df_filtrado[
+            (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(fecha_inicio)) &
+            (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(fecha_fin))
+        ]
+    
+    # -----------------------------
+    # TABLA EXISTENTE (sin duplicar)
+    # -----------------------------
+    df_mostrar = df_filtrado.copy()
+    # st.dataframe(df_mostrar.style ...)  <- tu tabla existente sigue igual
+    
+    # -----------------------------
+    # GRÁFICOS DE ESTATUS POR FLETERA EN 2 COLUMNAS
     # -----------------------------
     import altair as alt
     
@@ -768,6 +795,7 @@ if fleteras_sel:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
