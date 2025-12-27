@@ -240,6 +240,7 @@ if st.session_state.logueado:
     # st.dataframe(df_mostrar.style ...)  <- tu bloque de tabla existente sigue igual
     
     # Diccionario de colores por estatus
+    # Diccionario de colores por estatus
     colores_estatus = {
         "En Tiempo": "#4CAF50",    # verde
         "Retraso": "#F44336",      # rojo
@@ -263,9 +264,6 @@ if st.session_state.logueado:
             st.markdown(f"**{fletera}**")
             data_fletera = graf_estatus[graf_estatus["FLETERA"] == fletera].copy()
     
-            # Crear columna con el color correspondiente
-            data_fletera["Color"] = data_fletera["ESTATUS_CALCULADO"].map(colores_estatus)
-    
             chart = alt.Chart(data_fletera).mark_bar(
                 cornerRadiusTopLeft=6,
                 cornerRadiusTopRight=6,
@@ -274,7 +272,14 @@ if st.session_state.logueado:
             ).encode(
                 x=alt.X("ESTATUS_CALCULADO:N", title="Estatus"),
                 y=alt.Y("Total:Q", title="Cantidad"),
-                color=alt.Color("Color:N", scale=None),  # colores fijos
+                color=alt.Color(
+                    "ESTATUS_CALCULADO:N",
+                    scale=alt.Scale(
+                        domain=list(colores_estatus.keys()),   # los nombres exactos de estatus
+                        range=list(colores_estatus.values())  # los colores HEX correspondientes
+                    ),
+                    legend=alt.Legend(title="Estatus")
+                ),
                 tooltip=["ESTATUS_CALCULADO", "Total"]
             ).properties(
                 width=500,
@@ -733,6 +738,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
