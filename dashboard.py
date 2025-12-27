@@ -177,14 +177,6 @@ if st.session_state.logueado:
     df = cargar_datos()
 
     # -----------------------------
-    # Seleccionar FLETERA
-    # -----------------------------
-    fletera_sel = st.sidebar.selectbox(
-        "Fletera",
-        options=["🚛 Elige una fletera"] + sorted(df["FLETERA"].dropna().unique()),  # opción por defecto más divertida
-        index=0
-    )
-    # -----------------------------
     # SIDEBAR – FILTROS
     # -----------------------------
     st.sidebar.header("Filtros")
@@ -216,7 +208,7 @@ if st.session_state.logueado:
     # --- FILTRO FLETERA (solo una para gráficos) ---
     fletera_sel = st.sidebar.selectbox(
         "Fletera",
-        options=[""] + sorted(df["FLETERA"].dropna().unique()),  # "" permite no seleccionar nada
+        options=["Prueba"] + sorted(df["FLETERA"].dropna().unique()),  # "" permite no seleccionar nada
         index=0
     )
     
