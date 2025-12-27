@@ -244,30 +244,41 @@ if st.session_state.logueado:
     # -----------------------------
     # Diccionario de colores por estatus
     colores_estatus = {
-        "En Tiempo": "#4CAF50",    # verde
-        "Retraso": "#F44336",      # rojo
-        "En Tránsito": "#FF9800"   # naranja
+        "EN TRANSITO": "#FF9800",  # naranja
+        "ENTREGADO": "#4CAF50",    # verde
+        "RETRASADO": "#F44336"      # rojo
+    }
+    
+    # Mapeo de posibles valores a estatus normalizados
+    mapa_estatus = {
+        "En Tiempo": "ENTREGADO",
+        "Entregado": "ENTREGADO",
+        "ENTREGADO": "ENTREGADO",
+        "En Tránsito": "EN TRANSITO",
+        "En tránsito": "EN TRANSITO",
+        "EN TRANSITO": "EN TRANSITO",
+        "Retraso": "RETRASADO",
+        "Retrasado": "RETRASADO",
+        "RETRASO": "RETRASADO"
     }
     
     if fletera_sel:  # Solo si selecciona una fletera
-        df_graf = df_filtrado[df_filtrado["FLETERA"] == fletera_sel]
-    
+        df_graf = df_filtrado[df_filtrado["FLETERA"] == fletera_sel].copy()
+        
+        # Normalizar los estatus
+        df_graf["ESTATUS_NORMAL"] = df_graf["ESTATUS_CALCULADO"].map(mapa_estatus)
+        
         graf_estatus = (
-            df_graf.groupby("ESTATUS_CALCULADO")
+            df_graf.groupby("ESTATUS_NORMAL")
             .size()
+            .reindex(colores_estatus.keys(), fill_value=0)  # asegura que siempre estén los 3 estatus
             .reset_index(name="Total")
-            .set_index("ESTATUS_CALCULADO")
+            .set_index("ESTATUS_NORMAL")
         )
-    
-        # Asegurarse de que todos los estatus tengan fila aunque sean 0
-        for estatus in colores_estatus.keys():
-            if estatus not in graf_estatus.index:
-                graf_estatus.loc[estatus] = 0
-        graf_estatus = graf_estatus.sort_index()  # ordenar por nombre de estatus
-    
+        
         st.subheader(f"📊 Estatus de pedidos - {fletera_sel}")
-    
-        # Graficar con colores
+        
+        # Graficar con colores (st.bar_chart mantiene compatibilidad)
         st.bar_chart(graf_estatus["Total"])
     
     # -----------------------------
@@ -720,6 +731,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
