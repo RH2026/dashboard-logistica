@@ -177,11 +177,11 @@ if st.session_state.logueado:
     df = cargar_datos()
 
     # -----------------------------
-    # SIDEBAR – FILTROS 
+    # SIDEBAR – FILTROS
     # -----------------------------
     st.sidebar.header("Filtros")
     
-    # ---------- FILTRO POR CLIENTE ----------
+    # Filtro por cliente
     if "filtro_cliente_actual" not in st.session_state:
         st.session_state.filtro_cliente_actual = ""
     
@@ -195,7 +195,7 @@ if st.session_state.logueado:
         on_change=actualizar_filtro
     )
     
-    # ---------- FILTRO FECHA DE ENVÍO ----------
+    # Filtro fecha de envío
     fecha_min = df["FECHA DE ENVÍO"].min()
     fecha_max = df["FECHA DE ENVÍO"].max()
     
@@ -206,17 +206,57 @@ if st.session_state.logueado:
         max_value=fecha_max
     )
     
-    # ---------- FILTRO ESTATUS DE TIEMPO ----------
-    estatus_tiempo_sel = st.sidebar.multiselect(
-        "Estatus de tiempo",
-        options=sorted(df["ESTATUS DE TIEMPO"].dropna().unique())
-    )
-    
-    # ---------- FILTRO FLETERA ----------
+    # Filtro fletera
     fleteras_sel = st.sidebar.multiselect(
         "Fletera",
         options=sorted(df["FLETERA"].dropna().unique())
     )
+    
+    # -----------------------------
+    # APLICAR FILTROS A LA TABLA
+    # -----------------------------
+    df_filtrado = df.copy()
+    
+    # Cliente
+    if st.session_state.filtro_cliente_actual.strip() != "":
+        df_filtrado = df_filtrado[
+            df_filtrado["NO CLIENTE"].str.contains(
+                st.session_state.filtro_cliente_actual.strip(), case=False, na=False
+            )
+        ]
+    
+    # Fecha de envío
+    if len(rango_fechas) == 2:
+        fecha_inicio, fecha_fin = rango_fechas
+        df_filtrado = df_filtrado[
+            (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(fecha_inicio)) &
+            (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(fecha_fin))
+        ]
+    
+    # -----------------------------
+    # TABLA FILTRADA
+    # -----------------------------
+    st.subheader("📦 Tabla de envíos filtrada")
+    st.dataframe(df_filtrado, use_container_width=True, height=520)
+    
+    # -----------------------------
+    # GRÁFICOS DE ESTATUS POR FLETERA
+    # -----------------------------
+    if fleteras_sel:
+        df_graf = df_filtrado[df_filtrado["FLETERA"].isin(fleteras_sel)]
+    
+        # Contar estatus por fletera
+        graf_estatus = (
+            df_graf.groupby(["FLETERA", "ESTATUS_CALCULADO"])
+            .size()
+            .reset_index(name="Total")
+        )
+    
+        st.subheader("📊 Estatus de pedidos por Fletera")
+        for fletera in graf_estatus["FLETERA"].unique():
+            st.markdown(f"**{fletera}**")
+            data_fletera = graf_estatus[graf_estatus["FLETERA"] == fletera].set_index("ESTATUS_CALCULADO")
+            st.bar_chart(data_fletera["Total"])
     
     # -----------------------------
     # CAJA DE BÚSQUEDA POR PEDIDO – TARGETAS
@@ -668,6 +708,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
