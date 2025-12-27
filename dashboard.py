@@ -177,126 +177,126 @@ if st.session_state.logueado:
     df = cargar_datos()
 
     # -----------------------------
-# INICIALIZAR VARIABLES EN SESSION_STATE
-# -----------------------------
-if "filtro_cliente_actual" not in st.session_state:
-    st.session_state.filtro_cliente_actual = ""
-
-if "fleteras_sel" not in st.session_state:
-    st.session_state.fleteras_sel = []
-
-# -----------------------------
-# SIDEBAR – FILTROS
-# -----------------------------
-st.sidebar.header("Filtros")
-
-# --- FILTRO POR CLIENTE ---
-def actualizar_filtro():
-    st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente_input
-
-st.sidebar.text_input(
-    "Ingresa el No Cliente",
-    value=st.session_state.filtro_cliente_actual,
-    key="filtro_cliente_input",
-    on_change=actualizar_filtro
-)
-
-# --- FILTRO FECHA DE ENVÍO ---
-fecha_min = df["FECHA DE ENVÍO"].min()
-fecha_max = df["FECHA DE ENVÍO"].max()
-
-rango_fechas = st.sidebar.date_input(
-    "Fecha de envío",
-    value=(fecha_min, fecha_max),
-    min_value=fecha_min,
-    max_value=fecha_max
-)
-
-# --- FILTRO FLETERA ---
-st.session_state.fleteras_sel = st.sidebar.multiselect(
-    "Fletera",
-    options=sorted(df["FLETERA"].dropna().unique()),
-    default=st.session_state.fleteras_sel
-)
-
-# -----------------------------
-# APLICAR FILTROS A DF
-# -----------------------------
-df_filtrado = df.copy()
-
-# Cliente
-if st.session_state.filtro_cliente_actual.strip() != "":
-    df_filtrado = df_filtrado[
-        df_filtrado["NO CLIENTE"].str.contains(
-            st.session_state.filtro_cliente_actual.strip(), case=False, na=False
-        )
-    ]
-
-# Fecha de envío
-if len(rango_fechas) == 2:
-    fecha_inicio, fecha_fin = rango_fechas
-    df_filtrado = df_filtrado[
-        (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(fecha_inicio)) &
-        (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(fecha_fin))
-    ]
-
-# -----------------------------
-# TABLA EXISTENTE (no se toca)
-# -----------------------------
-df_mostrar = df_filtrado.copy()
-# st.dataframe(df_mostrar.style ...)  <- tu tabla existente sigue igual
-
-# -----------------------------
-# GRÁFICOS DE ESTATUS POR FLETERA EN 2 COLUMNAS
-# -----------------------------
-import altair as alt
-
-if st.session_state.fleteras_sel:  # ✅ usa session_state
-    df_graf = df_filtrado[df_filtrado["FLETERA"].isin(st.session_state.fleteras_sel)]
-
-    graf_estatus = (
-        df_graf.groupby(["FLETERA", "ESTATUS_CALCULADO"])
-        .size()
-        .reset_index(name="Total")
+    # INICIALIZAR VARIABLES EN SESSION_STATE
+    # -----------------------------
+    if "filtro_cliente_actual" not in st.session_state:
+        st.session_state.filtro_cliente_actual = ""
+    
+    if "fleteras_sel" not in st.session_state:
+        st.session_state.fleteras_sel = []
+    
+    # -----------------------------
+    # SIDEBAR – FILTROS
+    # -----------------------------
+    st.sidebar.header("Filtros")
+    
+    # --- FILTRO POR CLIENTE ---
+    def actualizar_filtro():
+        st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente_input
+    
+    st.sidebar.text_input(
+        "Ingresa el No Cliente",
+        value=st.session_state.filtro_cliente_actual,
+        key="filtro_cliente_input",
+        on_change=actualizar_filtro
     )
-
-    st.subheader("📊 Estatus de pedidos por Fletera")
-
-    fleteras_list = graf_estatus["FLETERA"].unique()
-
-    color_map = {
-        'Pedidos enviados': '#FFA500',
-        'Entregados': '#00FF00',
-        'Retrasado': '#FF4D4D',
-        'En tránsito': '#1E90FF'
-    }
-
-    for i in range(0, len(fleteras_list), 2):
-        col1, col2 = st.columns(2)
-
-        def crear_chart(fletera_name):
-            data_f = graf_estatus[graf_estatus["FLETERA"] == fletera_name]
-            chart = alt.Chart(data_f).mark_bar().encode(
-                x=alt.X('ESTATUS_CALCULADO', sort=list(color_map.keys())),
-                y='Total',
-                color=alt.Color(
-                    'ESTATUS_CALCULADO',
-                    scale=alt.Scale(domain=list(color_map.keys()), range=list(color_map.values()))
-                ),
-                tooltip=['ESTATUS_CALCULADO', 'Total']
-            ).properties(width=400, height=300)
-            return chart
-
-        # Primer gráfico
-        fletera = fleteras_list[i]
-        col1.markdown(f"**{fletera}**")
-        col1.altair_chart(crear_chart(fletera), use_container_width=True)
-
-        # Segundo gráfico si existe
-        if i + 1 < len(fleteras_list):
-            fletera = fleteras_list[i + 1]
-            col2.markdown(f"**{fletera}**")
-            col2.altair_chart(crear_chart(fletera), use_container_width=True)
+    
+    # --- FILTRO FECHA DE ENVÍO ---
+    fecha_min = df["FECHA DE ENVÍO"].min()
+    fecha_max = df["FECHA DE ENVÍO"].max()
+    
+    rango_fechas = st.sidebar.date_input(
+        "Fecha de envío",
+        value=(fecha_min, fecha_max),
+        min_value=fecha_min,
+        max_value=fecha_max
+    )
+    
+    # --- FILTRO FLETERA ---
+    st.session_state.fleteras_sel = st.sidebar.multiselect(
+        "Fletera",
+        options=sorted(df["FLETERA"].dropna().unique()),
+        default=st.session_state.fleteras_sel
+    )
+    
+    # -----------------------------
+    # APLICAR FILTROS A DF
+    # -----------------------------
+    df_filtrado = df.copy()
+    
+    # Cliente
+    if st.session_state.filtro_cliente_actual.strip() != "":
+        df_filtrado = df_filtrado[
+            df_filtrado["NO CLIENTE"].str.contains(
+                st.session_state.filtro_cliente_actual.strip(), case=False, na=False
+            )
+        ]
+    
+    # Fecha de envío
+    if len(rango_fechas) == 2:
+        fecha_inicio, fecha_fin = rango_fechas
+        df_filtrado = df_filtrado[
+            (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(fecha_inicio)) &
+            (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(fecha_fin))
+        ]
+    
+    # -----------------------------
+    # TABLA EXISTENTE (no se toca)
+    # -----------------------------
+    df_mostrar = df_filtrado.copy()
+    # st.dataframe(df_mostrar.style ...)  <- tu tabla existente sigue igual
+    
+    # -----------------------------
+    # GRÁFICOS DE ESTATUS POR FLETERA EN 2 COLUMNAS
+    # -----------------------------
+    import altair as alt
+    
+    if st.session_state.fleteras_sel:  # ✅ usa session_state
+        df_graf = df_filtrado[df_filtrado["FLETERA"].isin(st.session_state.fleteras_sel)]
+    
+        graf_estatus = (
+            df_graf.groupby(["FLETERA", "ESTATUS_CALCULADO"])
+            .size()
+            .reset_index(name="Total")
+        )
+    
+        st.subheader("📊 Estatus de pedidos por Fletera")
+    
+        fleteras_list = graf_estatus["FLETERA"].unique()
+    
+        color_map = {
+            'Pedidos enviados': '#FFA500',
+            'Entregados': '#00FF00',
+            'Retrasado': '#FF4D4D',
+            'En tránsito': '#1E90FF'
+        }
+    
+        for i in range(0, len(fleteras_list), 2):
+            col1, col2 = st.columns(2)
+    
+            def crear_chart(fletera_name):
+                data_f = graf_estatus[graf_estatus["FLETERA"] == fletera_name]
+                chart = alt.Chart(data_f).mark_bar().encode(
+                    x=alt.X('ESTATUS_CALCULADO', sort=list(color_map.keys())),
+                    y='Total',
+                    color=alt.Color(
+                        'ESTATUS_CALCULADO',
+                        scale=alt.Scale(domain=list(color_map.keys()), range=list(color_map.values()))
+                    ),
+                    tooltip=['ESTATUS_CALCULADO', 'Total']
+                ).properties(width=400, height=300)
+                return chart
+    
+            # Primer gráfico
+            fletera = fleteras_list[i]
+            col1.markdown(f"**{fletera}**")
+            col1.altair_chart(crear_chart(fletera), use_container_width=True)
+    
+            # Segundo gráfico si existe
+            if i + 1 < len(fleteras_list):
+                fletera = fleteras_list[i + 1]
+                col2.markdown(f"**{fletera}**")
+                col2.altair_chart(crear_chart(fletera), use_container_width=True)
     
     # -----------------------------
     # CAJA DE BÚSQUEDA POR PEDIDO – TARGETAS
@@ -799,6 +799,7 @@ if st.session_state.fleteras_sel:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
