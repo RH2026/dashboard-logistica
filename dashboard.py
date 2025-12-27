@@ -150,88 +150,155 @@ if st.session_state.logueado:
     st.divider()
 
     # -----------------------------
-# CARGAR DATOS
-# -----------------------------
-df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
-
-# Convertir fechas
-df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"])
-df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"])
-df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"])
-
-# -----------------------------
-# INICIALIZAR VARIABLES EN SESSION_STATE
-# -----------------------------
-if "filtro_cliente_actual" not in st.session_state:
-    st.session_state.filtro_cliente_actual = ""
-
-if "fleteras_sel" not in st.session_state:
-    st.session_state.fleteras_sel = []
-
-# -----------------------------
-# SIDEBAR – FILTROS
-# -----------------------------
-st.sidebar.header("Filtros")
-
-# --- FILTRO POR CLIENTE ---
-def actualizar_filtro():
-    st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente_input
-
-st.sidebar.text_input(
-    "Ingresa el No Cliente",
-    value=st.session_state.filtro_cliente_actual,
-    key="filtro_cliente_input",
-    on_change=actualizar_filtro
+    # CARGAR DATOS
+    # -----------------------------
+    df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
+    
+    # Convertir fechas
+    df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"])
+    df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"])
+    df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"])
+    
+    # -----------------------------
+    # INICIALIZAR VARIABLES EN SESSION_STATE
+    # -----------------------------
+    if "filtro_cliente_actual" not in st.session_state:
+        st.session_state.filtro_cliente_actual = ""
+    
+    if "fleteras_sel" not in st.session_state:
+        st.session_state.fleteras_sel = []
+    
+    # -----------------------------
+    # SIDEBAR – FILTROS
+    # -----------------------------
+    st.sidebar.header("Filtros")
+    
+    # --- FILTRO POR CLIENTE ---
+    def actualizar_filtro():
+        st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente_input
+    
+    st.sidebar.text_input(
+        "Ingresa el No Cliente",
+        value=st.session_state.filtro_cliente_actual,
+        key="filtro_cliente_input",
+        on_change=actualizar_filtro
+    )
+    
+    # --- FILTRO FECHA DE ENVÍO ---
+    fecha_min = df["FECHA DE ENVÍO"].min()
+    fecha_max = df["FECHA DE ENVÍO"].max()
+    
+    rango_fechas = st.sidebar.date_input(
+        "Fecha de envío",
+        value=(fecha_min, fecha_max),
+        min_value=fecha_min,
+        max_value=fecha_max
+    )
+    
+    # --- FILTRO FLETERA (para gráficos) ---
+    st.session_state.fleteras_sel = st.sidebar.multiselect(
+        "Fletera",
+        options=sorted(df["FLETERA"].dropna().unique()),
+        default=st.session_state.fleteras_sel
+    )
+    
+    # -----------------------------
+    # APLICAR FILTROS A DF
+    # -----------------------------
+    df_filtrado = df.copy()
+    
+    # Cliente
+    if st.session_state.filtro_cliente_actual.strip() != "":
+        df_filtrado = df_filtrado[
+            df_filtrado["NO CLIENTE"].str.contains(
+                st.session_state.filtro_cliente_actual.strip(), case=False, na=False
+            )
+        ]
+    
+    # Fecha de envío
+    if len(rango_fechas) == 2:
+        fecha_inicio, fecha_fin = rango_fechas
+        df_filtrado = df_filtrado[
+            (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(fecha_inicio)) &
+            (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(fecha_fin))
+        ]
+    
+    # -----------------------------
+    # TABLA EXISTENTE (no se toca)
+    # -----------------------------
+    df_mostrar = df_filtrado.copy()
+    
+    st.markdown(
+        """
+        <div style="text-align:center;">
+            <div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">
+                Lista de envíos
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    hoy = pd.Timestamp.today().normalize()
+    df_mostrar = df_filtrado.copy()
+    
+    # Días transcurridos y retraso
+    df_mostrar["DIAS_TRANSCURRIDOS"] = (
+        (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy) - df_mostrar["FECHA DE ENVÍO"]).dt.days
+    )
+    df_mostrar["DIAS_RETRASO"] = (
+        (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy) - df_mostrar["PROMESA DE ENTREGA"]).dt.days
+    )
+    df_mostrar["DIAS_RETRASO"] = df_mostrar["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
+    
+    # Formato de fecha
+    df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y')
+    df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna('')
+    
+    # Funciones de estilo
+    def colorear_retraso(val):
+        color = '#ff4d4d' if val > 0 else 'white'  # rojo si hay retraso
+        return f'background-color: {color}; color: black; font-weight: bold;' if val > 0 else ''
+    
+    def zebra_filas(row):
+        if row.name % 2 == 0:
+            return ['background-color: #0E1117; color: white;' for _ in row]
+        else:
+            return ['background-color: #1A1E25; color: white;' for _ in row]
+    
+    def estilo_encabezado(df):
+        return [ 'background-color: orange; color: white; font-weight: bold; font-size:14px;' for _ in df.columns]
+    
+    # Aplicamos estilos combinados
+    st.dataframe(
+        df_mostrar.style.apply(zebra_filas, axis=1)
+                        .applymap(colorear_retraso, subset=["DIAS_RETRASO"])                        
+                        .set_table_styles([
+            {
+                'selector': 'td',
+                'props': [
+                    ('padding-top', '16px'),
+                    ('padding-bottom', '16px')
+                ]
+            },
+            {
+                'selector': 'th',
+                'props': [
+                    ('background-color', 'orange'),
+                    ('color', 'white'),
+                    ('font-weight','bold'),
+                    ('font-size','14px'),
+                    ('padding-top', '12px'),
+                    ('padding-bottom', '12px')
+                ]
+            }
+        ]),
+    use_container_width=True,
+    height=520
 )
+    # BLOQUE DE GRÁFICOS DE FLETERA (pegar aquí)
+import altair as alt
 
-# --- FILTRO FECHA DE ENVÍO ---
-fecha_min = df["FECHA DE ENVÍO"].min()
-fecha_max = df["FECHA DE ENVÍO"].max()
-
-rango_fechas = st.sidebar.date_input(
-    "Fecha de envío",
-    value=(fecha_min, fecha_max),
-    min_value=fecha_min,
-    max_value=fecha_max
-)
-
-# --- FILTRO FLETERA (para gráficos) ---
-st.session_state.fleteras_sel = st.sidebar.multiselect(
-    "Fletera",
-    options=sorted(df["FLETERA"].dropna().unique()),
-    default=st.session_state.fleteras_sel
-)
-
-# -----------------------------
-# APLICAR FILTROS A DF
-# -----------------------------
-df_filtrado = df.copy()
-
-# Cliente
-if st.session_state.filtro_cliente_actual.strip() != "":
-    df_filtrado = df_filtrado[
-        df_filtrado["NO CLIENTE"].str.contains(
-            st.session_state.filtro_cliente_actual.strip(), case=False, na=False
-        )
-    ]
-
-# Fecha de envío
-if len(rango_fechas) == 2:
-    fecha_inicio, fecha_fin = rango_fechas
-    df_filtrado = df_filtrado[
-        (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(fecha_inicio)) &
-        (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(fecha_fin))
-    ]
-
-# -----------------------------
-# TABLA EXISTENTE (no se toca)
-# -----------------------------
-df_mostrar = df_filtrado.copy()
-# st.dataframe(df_mostrar.style ...)  <- tu bloque de tabla existente aquí
-
-# -----------------------------
-# GRÁFICOS DE ESTATUS POR FLETERA EN 2 COLUMNAS
-# -----------------------------
 if st.session_state.fleteras_sel:
     df_graf = df_filtrado[df_filtrado["FLETERA"].isin(st.session_state.fleteras_sel)]
 
@@ -245,6 +312,7 @@ if st.session_state.fleteras_sel:
 
     fleteras_list = graf_estatus["FLETERA"].unique()
 
+    # Definir colores fijos por estatus
     color_map = {
         'Pedidos enviados': '#FFA500',
         'Entregados': '#00FF00',
@@ -265,19 +333,70 @@ if st.session_state.fleteras_sel:
                     scale=alt.Scale(domain=list(color_map.keys()), range=list(color_map.values()))
                 ),
                 tooltip=['ESTATUS_CALCULADO', 'Total']
-            ).properties(width=400, height=300)
+            ).properties(
+                width=400,
+                height=300
+            )
             return chart
 
-        # Primer gráfico
         fletera = fleteras_list[i]
         col1.markdown(f"**{fletera}**")
         col1.altair_chart(crear_chart(fletera), use_container_width=True)
 
-        # Segundo gráfico si existe
         if i + 1 < len(fleteras_list):
             fletera = fleteras_list[i + 1]
             col2.markdown(f"**{fletera}**")
             col2.altair_chart(crear_chart(fletera), use_container_width=True)
+    
+    # -----------------------------
+    # GRÁFICOS DE ESTATUS POR FLETERA EN 2 COLUMNAS
+    # -----------------------------
+    if st.session_state.fleteras_sel:
+        df_graf = df_filtrado[df_filtrado["FLETERA"].isin(st.session_state.fleteras_sel)]
+    
+        graf_estatus = (
+            df_graf.groupby(["FLETERA", "ESTATUS_CALCULADO"])
+            .size()
+            .reset_index(name="Total")
+        )
+    
+        st.subheader("📊 Estatus de pedidos por Fletera")
+    
+        fleteras_list = graf_estatus["FLETERA"].unique()
+    
+        color_map = {
+            'Pedidos enviados': '#FFA500',
+            'Entregados': '#00FF00',
+            'Retrasado': '#FF4D4D',
+            'En tránsito': '#1E90FF'
+        }
+    
+        for i in range(0, len(fleteras_list), 2):
+            col1, col2 = st.columns(2)
+    
+            def crear_chart(fletera_name):
+                data_f = graf_estatus[graf_estatus["FLETERA"] == fletera_name]
+                chart = alt.Chart(data_f).mark_bar().encode(
+                    x=alt.X('ESTATUS_CALCULADO', sort=list(color_map.keys())),
+                    y='Total',
+                    color=alt.Color(
+                        'ESTATUS_CALCULADO',
+                        scale=alt.Scale(domain=list(color_map.keys()), range=list(color_map.values()))
+                    ),
+                    tooltip=['ESTATUS_CALCULADO', 'Total']
+                ).properties(width=400, height=300)
+                return chart
+    
+            # Primer gráfico
+            fletera = fleteras_list[i]
+            col1.markdown(f"**{fletera}**")
+            col1.altair_chart(crear_chart(fletera), use_container_width=True)
+    
+            # Segundo gráfico si existe
+            if i + 1 < len(fleteras_list):
+                fletera = fleteras_list[i + 1]
+                col2.markdown(f"**{fletera}**")
+                col2.altair_chart(crear_chart(fletera), use_container_width=True)
     
     # -----------------------------
     # CAJA DE BÚSQUEDA POR PEDIDO – TARGETAS
@@ -780,6 +899,7 @@ if st.session_state.fleteras_sel:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
