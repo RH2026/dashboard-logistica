@@ -251,11 +251,23 @@ if st.session_state.logueado:
             .reset_index(name="Total")
         )
     
-        st.subheader("📊 Estatus de pedidos por Fletera")
+        st.subheader("Estatus de pedidos por Fletera")
         for fletera in graf_estatus["FLETERA"].unique():
             st.markdown(f"**{fletera}**")
-            data_fletera = graf_estatus[graf_estatus["FLETERA"] == fletera].set_index("ESTATUS_CALCULADO")
-            st.bar_chart(data_fletera["Total"])
+            data_fletera = graf_estatus[graf_estatus["FLETERA"] == fletera]
+    
+            # Gráfico con Altair y colores personalizados
+            chart = alt.Chart(data_fletera).mark_bar().encode(
+                x=alt.X("ESTATUS_CALCULADO", title="Estatus"),
+                y=alt.Y("Total", title="Cantidad"),
+                color=alt.Color("ESTATUS_CALCULADO", scale=alt.Scale(
+                    domain=["En Tiempo", "Retraso", "En Tránsito"],  # tus estatus
+                    range=["green", "red", "orange"]  # colores que quieras
+                )),
+                tooltip=["ESTATUS_CALCULADO", "Total"]
+            ).properties(width=600)
+    
+            st.altair_chart(chart, use_container_width=True)
     
     # -----------------------------
     # CAJA DE BÚSQUEDA POR PEDIDO – TARGETAS
@@ -707,6 +719,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
