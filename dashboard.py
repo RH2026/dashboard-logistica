@@ -150,7 +150,7 @@ if st.session_state.logueado:
     st.divider()
 
     # -----------------------------
-    # CARGAR DATOS
+    # CARGAR DATOS DE FORMA SEGURA
     # -----------------------------
     df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
     
@@ -158,13 +158,17 @@ if st.session_state.logueado:
     df.columns = df.columns.str.strip()
     df.columns = df.columns.str.upper()
     
-    # Convertir fechas
-    df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"])
-    df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"])
-    df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"])
+    # Convertir fechas de manera segura: valores inválidos se vuelven NaT
+    df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce')
+    df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors='coerce')
+    df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors='coerce')
+    
+    # Aviso si hay fechas inválidas
+    if df[["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]].isna().any().any():
+        st.warning("⚠️ Hay filas con fechas inválidas. Estas filas se ignorarán en los cálculos.")
     
     # -----------------------------
-    # INICIALIZAR VARIABLES EN SESSION_STATE
+    # INICIALIZAR SESSION_STATE
     # -----------------------------
     if "filtro_cliente_actual" not in st.session_state:
         st.session_state.filtro_cliente_actual = ""
@@ -211,7 +215,7 @@ if st.session_state.logueado:
     # -----------------------------
     df_filtrado = df.copy()
     
-    # Cliente
+    # Filtro por cliente
     if st.session_state.filtro_cliente_actual.strip() != "":
         df_filtrado = df_filtrado[
             df_filtrado["NO CLIENTE"].str.contains(
@@ -219,7 +223,7 @@ if st.session_state.logueado:
             )
         ]
     
-    # Fecha de envío
+    # Filtro por fecha de envío
     if len(rango_fechas) == 2:
         fecha_inicio, fecha_fin = rango_fechas
         df_filtrado = df_filtrado[
@@ -231,21 +235,9 @@ if st.session_state.logueado:
     # TABLA EXISTENTE
     # -----------------------------
     df_mostrar = df_filtrado.copy()
-    
-    st.markdown(
-        """
-        <div style="text-align:center;">
-            <div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">
-                Lista de envíos
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    
     hoy = pd.Timestamp.today().normalize()
     
-    # Días transcurridos y retraso
+    # Calcular días transcurridos y retraso
     df_mostrar["DIAS_TRANSCURRIDOS"] = (
         (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy) - df_mostrar["FECHA DE ENVÍO"]).dt.days
     )
@@ -269,30 +261,29 @@ if st.session_state.logueado:
         else:
             return ['background-color: #1A1E25; color: white;' for _ in row]
     
-    # Aplicamos estilos combinados
+    st.markdown(
+        """
+        <div style="text-align:center;">
+            <div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">
+                Lista de envíos
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
     st.dataframe(
         df_mostrar.style.apply(zebra_filas, axis=1)
-                        .applymap(colorear_retraso, subset=["DIAS_RETRASO"])                        
+                        .applymap(colorear_retraso, subset=["DIAS_RETRASO"])
                         .set_table_styles([
-            {
-                'selector': 'td',
-                'props': [
-                    ('padding-top', '16px'),
-                    ('padding-bottom', '16px')
-                ]
-            },
-            {
-                'selector': 'th',
-                'props': [
-                    ('background-color', 'orange'),
-                    ('color', 'white'),
-                    ('font-weight','bold'),
-                    ('font-size','14px'),
-                    ('padding-top', '12px'),
-                    ('padding-bottom', '12px')
-                ]
-            }
-        ]),
+                            {'selector': 'td', 'props': [('padding-top', '16px'), ('padding-bottom', '16px')]},
+                            {'selector': 'th', 'props': [('background-color', 'orange'),
+                                                        ('color', 'white'),
+                                                        ('font-weight','bold'),
+                                                        ('font-size','14px'),
+                                                        ('padding-top', '12px'),
+                                                        ('padding-bottom', '12px')]}
+                        ]),
         use_container_width=True,
         height=520
     )
@@ -300,7 +291,7 @@ if st.session_state.logueado:
     # -----------------------------
     # GRÁFICOS DE ESTATUS POR FLETERA EN 2 COLUMNAS
     # -----------------------------
-    if st.session_state.fleteras_sel:
+    if st.session_state.fleteras_sel:  # ahora seguro, nunca trona
         df_graf = df_filtrado[df_filtrado["FLETERA"].isin(st.session_state.fleteras_sel)]
     
         graf_estatus = (
@@ -313,7 +304,6 @@ if st.session_state.logueado:
     
         fleteras_list = graf_estatus["FLETERA"].unique()
     
-        # Colores fijos por estatus
         color_map = {
             'Pedidos enviados': '#FFA500',
             'Entregados': '#00FF00',
@@ -329,15 +319,11 @@ if st.session_state.logueado:
                 chart = alt.Chart(data_f).mark_bar().encode(
                     x=alt.X('ESTATUS_CALCULADO', sort=list(color_map.keys())),
                     y='Total',
-                    color=alt.Color(
-                        'ESTATUS_CALCULADO',
-                        scale=alt.Scale(domain=list(color_map.keys()), range=list(color_map.values()))
-                    ),
+                    color=alt.Color('ESTATUS_CALCULADO',
+                                    scale=alt.Scale(domain=list(color_map.keys()),
+                                                    range=list(color_map.values()))),
                     tooltip=['ESTATUS_CALCULADO', 'Total']
-                ).properties(
-                    width=400,
-                    height=300
-                )
+                ).properties(width=400, height=300)
                 return chart
     
             # Primer gráfico
@@ -852,6 +838,7 @@ if st.session_state.fleteras_sel:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
