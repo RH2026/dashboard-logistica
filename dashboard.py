@@ -181,7 +181,7 @@ if st.session_state.logueado:
     # -----------------------------
     st.sidebar.header("Filtros")
     
-    # --- FILTRO POR CLIENTE (ya existente, lo mantenemos) ---
+    # --- FILTRO POR CLIENTE ---
     if "filtro_cliente_actual" not in st.session_state:
         st.session_state.filtro_cliente_actual = ""
     
@@ -206,7 +206,8 @@ if st.session_state.logueado:
         max_value=fecha_max
     )
     
-    # --- FILTRO FLETERA (solo para gráficos) ---
+    # --- FILTRO FLETERA (para gráficos) ---
+    fleteras_sel = []  # inicializar por si no hay selección
     fleteras_sel = st.sidebar.multiselect(
         "Fletera",
         options=sorted(df["FLETERA"].dropna().unique())
@@ -217,7 +218,7 @@ if st.session_state.logueado:
     # -----------------------------
     df_filtrado = df.copy()
     
-    # Cliente (ya funcionaba)
+    # Cliente
     if st.session_state.filtro_cliente_actual.strip() != "":
         df_filtrado = df_filtrado[
             df_filtrado["NO CLIENTE"].str.contains(
@@ -234,14 +235,16 @@ if st.session_state.logueado:
         ]
     
     # -----------------------------
-    # Aquí tu tabla existente usa df_filtrado
-    # Ejemplo:
+    # Tabla existente (sin duplicar)
+    # -----------------------------
     df_mostrar = df_filtrado.copy()
-    # st.dataframe(df_mostrar.style ...)  <- tu bloque de tabla existente sigue igual
+    # st.dataframe(df_mostrar.style ...)  <- tu tabla existente sigue igual
     
     # -----------------------------
-    # GRÁFICOS DE ESTATUS POR FLETERA
+    # GRÁFICOS DE ESTATUS POR FLETERA EN 2 COLUMNAS
     # -----------------------------
+    import altair as alt
+    
     if fleteras_sel:
         df_graf = df_filtrado[df_filtrado["FLETERA"].isin(fleteras_sel)]
     
@@ -252,10 +255,43 @@ if st.session_state.logueado:
         )
     
         st.subheader("📊 Estatus de pedidos por Fletera")
-        for fletera in graf_estatus["FLETERA"].unique():
-            st.markdown(f"**{fletera}**")
-            data_fletera = graf_estatus[graf_estatus["FLETERA"] == fletera].set_index("ESTATUS_CALCULADO")
-            st.bar_chart(data_fletera["Total"])
+    
+        fleteras_list = graf_estatus["FLETERA"].unique()
+    
+        # Colores fijos por estatus
+        color_map = {
+            'Pedidos enviados': '#FFA500',
+            'Entregados': '#00FF00',
+            'Retrasado': '#FF4D4D',
+            'En tránsito': '#1E90FF'
+        }
+    
+        for i in range(0, len(fleteras_list), 2):
+            col1, col2 = st.columns(2)
+    
+            def crear_chart(fletera_name):
+                data_f = graf_estatus[graf_estatus["FLETERA"] == fletera_name]
+                chart = alt.Chart(data_f).mark_bar().encode(
+                    x=alt.X('ESTATUS_CALCULADO', sort=list(color_map.keys())),
+                    y='Total',
+                    color=alt.Color(
+                        'ESTATUS_CALCULADO',
+                        scale=alt.Scale(domain=list(color_map.keys()), range=list(color_map.values()))
+                    ),
+                    tooltip=['ESTATUS_CALCULADO', 'Total']
+                ).properties(width=400, height=300)
+                return chart
+    
+            # Primer gráfico
+            fletera = fleteras_list[i]
+            col1.markdown(f"**{fletera}**")
+            col1.altair_chart(crear_chart(fletera), use_container_width=True)
+    
+            # Segundo gráfico si existe
+            if i + 1 < len(fleteras_list):
+                fletera = fleteras_list[i + 1]
+                col2.markdown(f"**{fletera}**")
+                col2.altair_chart(crear_chart(fletera), use_container_width=True)
     
     # -----------------------------
     # CAJA DE BÚSQUEDA POR PEDIDO – TARGETAS
@@ -758,6 +794,7 @@ if fleteras_sel:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
