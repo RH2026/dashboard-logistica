@@ -181,7 +181,7 @@ if st.session_state.logueado:
     # -----------------------------
     st.sidebar.header("Filtros")
     
-    # --- FILTRO POR CLIENTE ---
+    # --- Filtro de Cliente (ya lo tienes, lo mantenemos) ---
     if "filtro_cliente_actual" not in st.session_state:
         st.session_state.filtro_cliente_actual = ""
     
@@ -195,10 +195,9 @@ if st.session_state.logueado:
         on_change=actualizar_filtro
     )
     
-    # --- FILTRO FECHA DE ENVÍO ---
+    # --- Filtro Fecha de Envío (ya lo tienes) ---
     fecha_min = df["FECHA DE ENVÍO"].min()
     fecha_max = df["FECHA DE ENVÍO"].max()
-    
     rango_fechas = st.sidebar.date_input(
         "Fecha de envío",
         value=(fecha_min, fecha_max),
@@ -206,47 +205,23 @@ if st.session_state.logueado:
         max_value=fecha_max
     )
     
-    # --- FILTRO FLETERA (para gráficos) ---
-    fleteras_sel = []  # inicializar por si no hay selección
-    fleteras_sel = st.sidebar.multiselect(
+    # --- Filtro FLETERA para gráficos ---
+    if "fleteras_sel" not in st.session_state:
+        st.session_state.fleteras_sel = []
+    
+    st.session_state.fleteras_sel = st.sidebar.multiselect(
         "Fletera",
-        options=sorted(df["FLETERA"].dropna().unique())
+        options=sorted(df["FLETERA"].dropna().unique()),
+        default=st.session_state.fleteras_sel
     )
     
     # -----------------------------
-    # APLICAR FILTROS A DF
-    # -----------------------------
-    df_filtrado = df.copy()
-    
-    # Cliente
-    if st.session_state.filtro_cliente_actual.strip() != "":
-        df_filtrado = df_filtrado[
-            df_filtrado["NO CLIENTE"].str.contains(
-                st.session_state.filtro_cliente_actual.strip(), case=False, na=False
-            )
-        ]
-    
-    # Fecha de envío
-    if len(rango_fechas) == 2:
-        fecha_inicio, fecha_fin = rango_fechas
-        df_filtrado = df_filtrado[
-            (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(fecha_inicio)) &
-            (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(fecha_fin))
-        ]
-    
-    # -----------------------------
-    # Tabla existente (sin duplicar)
-    # -----------------------------
-    df_mostrar = df_filtrado.copy()
-    # st.dataframe(df_mostrar.style ...)  <- tu tabla existente sigue igual
-    
-    # -----------------------------
-    # GRÁFICOS DE ESTATUS POR FLETERA EN 2 COLUMNAS
+    # GRÁFICOS DE ESTATUS POR FLETERA (2 columnas)
     # -----------------------------
     import altair as alt
     
-    if fleteras_sel:
-        df_graf = df_filtrado[df_filtrado["FLETERA"].isin(fleteras_sel)]
+    if st.session_state.fleteras_sel:
+        df_graf = df_filtrado[df_filtrado["FLETERA"].isin(st.session_state.fleteras_sel)]
     
         graf_estatus = (
             df_graf.groupby(["FLETERA", "ESTATUS_CALCULADO"])
@@ -258,7 +233,6 @@ if st.session_state.logueado:
     
         fleteras_list = graf_estatus["FLETERA"].unique()
     
-        # Colores fijos por estatus
         color_map = {
             'Pedidos enviados': '#FFA500',
             'Entregados': '#00FF00',
@@ -794,6 +768,7 @@ if fleteras_sel:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
