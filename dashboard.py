@@ -237,9 +237,79 @@ if st.session_state.logueado:
     # Aquí tu tabla existente usa df_filtrado
     # Ejemplo:
     df_mostrar = df_filtrado.copy()
-    # st.dataframe(df_mostrar.style ...)  <- tu bloque de tabla existente sigue igual
+    # --------------------------------------------------
+    # TABLA FINAL – DISEÑO MEJORADO
+    # --------------------------------------------------
+    st.markdown(
+        """
+        <div style="text-align:center;">
+            <div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">
+                Lista de envíos
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     
-    # Diccionario de colores por estatus
+    hoy = pd.Timestamp.today().normalize()
+    df_mostrar = df_filtrado.copy()
+    
+    # Días transcurridos y retraso
+    df_mostrar["DIAS_TRANSCURRIDOS"] = (
+        (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy) - df_mostrar["FECHA DE ENVÍO"]).dt.days
+    )
+    df_mostrar["DIAS_RETRASO"] = (
+        (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy) - df_mostrar["PROMESA DE ENTREGA"]).dt.days
+    )
+    df_mostrar["DIAS_RETRASO"] = df_mostrar["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
+    
+    # Formato de fecha
+    df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y')
+    df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna('')
+    
+    # Funciones de estilo
+    def colorear_retraso(val):
+        color = '#ff4d4d' if val > 0 else 'white'  # rojo si hay retraso
+        return f'background-color: {color}; color: black; font-weight: bold;' if val > 0 else ''
+    
+    def zebra_filas(row):
+        if row.name % 2 == 0:
+            return ['background-color: #0E1117; color: white;' for _ in row]
+        else:
+            return ['background-color: #1A1E25; color: white;' for _ in row]
+    
+    def estilo_encabezado(df):
+        return [ 'background-color: orange; color: white; font-weight: bold; font-size:14px;' for _ in df.columns]
+    
+    # Aplicamos estilos combinados
+    st.dataframe(
+        df_mostrar.style.apply(zebra_filas, axis=1)
+                        .applymap(colorear_retraso, subset=["DIAS_RETRASO"])                        
+                        .set_table_styles([
+            {
+                'selector': 'td',
+                'props': [
+                    ('padding-top', '16px'),
+                    ('padding-bottom', '16px')
+                ]
+            },
+            {
+                'selector': 'th',
+                'props': [
+                    ('background-color', 'orange'),
+                    ('color', 'white'),
+                    ('font-weight','bold'),
+                    ('font-size','14px'),
+                    ('padding-top', '12px'),
+                    ('padding-bottom', '12px')
+                ]
+            }
+        ]),
+    use_container_width=True,
+    height=520
+)
+    
+    # TABLA ARRIBA
     # Diccionario de colores por estatus
     colores_estatus = {
         "En Tiempo": "#4CAF50",    # verde
@@ -508,79 +578,7 @@ if st.session_state.logueado:
         donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE),
         use_container_width=True
     )
-    
-    # --------------------------------------------------
-    # TABLA FINAL – DISEÑO MEJORADO
-    # --------------------------------------------------
-    st.markdown(
-        """
-        <div style="text-align:center;">
-            <div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">
-                Lista de envíos
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    
-    hoy = pd.Timestamp.today().normalize()
-    df_mostrar = df_filtrado.copy()
-    
-    # Días transcurridos y retraso
-    df_mostrar["DIAS_TRANSCURRIDOS"] = (
-        (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy) - df_mostrar["FECHA DE ENVÍO"]).dt.days
-    )
-    df_mostrar["DIAS_RETRASO"] = (
-        (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy) - df_mostrar["PROMESA DE ENTREGA"]).dt.days
-    )
-    df_mostrar["DIAS_RETRASO"] = df_mostrar["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
-    
-    # Formato de fecha
-    df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y')
-    df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].fillna('')
-    
-    # Funciones de estilo
-    def colorear_retraso(val):
-        color = '#ff4d4d' if val > 0 else 'white'  # rojo si hay retraso
-        return f'background-color: {color}; color: black; font-weight: bold;' if val > 0 else ''
-    
-    def zebra_filas(row):
-        if row.name % 2 == 0:
-            return ['background-color: #0E1117; color: white;' for _ in row]
-        else:
-            return ['background-color: #1A1E25; color: white;' for _ in row]
-    
-    def estilo_encabezado(df):
-        return [ 'background-color: orange; color: white; font-weight: bold; font-size:14px;' for _ in df.columns]
-    
-    # Aplicamos estilos combinados
-    st.dataframe(
-        df_mostrar.style.apply(zebra_filas, axis=1)
-                        .applymap(colorear_retraso, subset=["DIAS_RETRASO"])                        
-                        .set_table_styles([
-            {
-                'selector': 'td',
-                'props': [
-                    ('padding-top', '16px'),
-                    ('padding-bottom', '16px')
-                ]
-            },
-            {
-                'selector': 'th',
-                'props': [
-                    ('background-color', 'orange'),
-                    ('color', 'white'),
-                    ('font-weight','bold'),
-                    ('font-size','14px'),
-                    ('padding-top', '12px'),
-                    ('padding-bottom', '12px')
-                ]
-            }
-        ]),
-    use_container_width=True,
-    height=520
-)
-    
+       
     # --------------------------------------------------
     # GRÁFICOS POR PAQUETERÍA – NUEVO BLOQUE
     # --------------------------------------------------
@@ -738,6 +736,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
