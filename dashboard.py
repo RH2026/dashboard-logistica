@@ -177,46 +177,46 @@ if st.session_state.logueado:
     df = cargar_datos()
 
     # -----------------------------
-# SIDEBAR – FILTROS
-# -----------------------------
-st.sidebar.header("Filtros")
-
-# ---------- FILTRO POR CLIENTE ----------
-if "filtro_cliente_actual" not in st.session_state:
-    st.session_state.filtro_cliente_actual = ""
-
-def actualizar_filtro():
-    st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente_input
-
-st.sidebar.text_input(
-    "Ingresa el No Cliente",
-    value=st.session_state.filtro_cliente_actual,
-    key="filtro_cliente_input",
-    on_change=actualizar_filtro
-)
-
-# ---------- FILTRO FECHA DE ENVÍO ----------
-fecha_min = df["FECHA DE ENVÍO"].min()
-fecha_max = df["FECHA DE ENVÍO"].max()
-
-rango_fechas = st.sidebar.date_input(
-    "Fecha de envío",
-    value=(fecha_min, fecha_max),
-    min_value=fecha_min,
-    max_value=fecha_max
-)
-
-# ---------- FILTRO ESTATUS DE TIEMPO ----------
-estatus_tiempo_sel = st.sidebar.multiselect(
-    "Estatus de tiempo",
-    options=sorted(df["ESTATUS DE TIEMPO"].dropna().unique())
-)
-
-# ---------- FILTRO FLETERA ----------
-fleteras_sel = st.sidebar.multiselect(
-    "Fletera",
-    options=sorted(df["FLETERA"].dropna().unique())
-)
+    # SIDEBAR – FILTROS 
+    # -----------------------------
+    st.sidebar.header("Filtros")
+    
+    # ---------- FILTRO POR CLIENTE ----------
+    if "filtro_cliente_actual" not in st.session_state:
+        st.session_state.filtro_cliente_actual = ""
+    
+    def actualizar_filtro():
+        st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente_input
+    
+    st.sidebar.text_input(
+        "Ingresa el No Cliente",
+        value=st.session_state.filtro_cliente_actual,
+        key="filtro_cliente_input",
+        on_change=actualizar_filtro
+    )
+    
+    # ---------- FILTRO FECHA DE ENVÍO ----------
+    fecha_min = df["FECHA DE ENVÍO"].min()
+    fecha_max = df["FECHA DE ENVÍO"].max()
+    
+    rango_fechas = st.sidebar.date_input(
+        "Fecha de envío",
+        value=(fecha_min, fecha_max),
+        min_value=fecha_min,
+        max_value=fecha_max
+    )
+    
+    # ---------- FILTRO ESTATUS DE TIEMPO ----------
+    estatus_tiempo_sel = st.sidebar.multiselect(
+        "Estatus de tiempo",
+        options=sorted(df["ESTATUS DE TIEMPO"].dropna().unique())
+    )
+    
+    # ---------- FILTRO FLETERA ----------
+    fleteras_sel = st.sidebar.multiselect(
+        "Fletera",
+        options=sorted(df["FLETERA"].dropna().unique())
+    )
     
     # -----------------------------
     # CAJA DE BÚSQUEDA POR PEDIDO – TARGETAS
@@ -668,6 +668,7 @@ fleteras_sel = st.sidebar.multiselect(
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
