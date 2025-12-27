@@ -549,6 +549,57 @@ if st.session_state.logueado:
     use_container_width=True,
     height=520
 )
+    # BLOQUE DE GRÁFICOS DE FLETERA (pegar aquí)
+import altair as alt
+
+if fleteras_sel:
+    df_graf = df_filtrado[df_filtrado["FLETERA"].isin(fleteras_sel)]
+
+    graf_estatus = (
+        df_graf.groupby(["FLETERA", "ESTATUS_CALCULADO"])
+        .size()
+        .reset_index(name="Total")
+    )
+
+    st.subheader("📊 Estatus de pedidos por Fletera")
+
+    fleteras_list = graf_estatus["FLETERA"].unique()
+
+    # Definir colores fijos por estatus
+    color_map = {
+        'Pedidos enviados': '#FFA500',
+        'Entregados': '#00FF00',
+        'Retrasado': '#FF4D4D',
+        'En tránsito': '#1E90FF'
+    }
+
+    for i in range(0, len(fleteras_list), 2):
+        col1, col2 = st.columns(2)
+
+        def crear_chart(fletera_name):
+            data_f = graf_estatus[graf_estatus["FLETERA"] == fletera_name]
+            chart = alt.Chart(data_f).mark_bar().encode(
+                x=alt.X('ESTATUS_CALCULADO', sort=list(color_map.keys())),
+                y='Total',
+                color=alt.Color(
+                    'ESTATUS_CALCULADO',
+                    scale=alt.Scale(domain=list(color_map.keys()), range=list(color_map.values()))
+                ),
+                tooltip=['ESTATUS_CALCULADO', 'Total']
+            ).properties(
+                width=400,
+                height=300
+            )
+            return chart
+
+        fletera = fleteras_list[i]
+        col1.markdown(f"**{fletera}**")
+        col1.altair_chart(crear_chart(fletera), use_container_width=True)
+
+        if i + 1 < len(fleteras_list):
+            fletera = fleteras_list[i + 1]
+            col2.markdown(f"**{fletera}**")
+            col2.altair_chart(crear_chart(fletera), use_container_width=True)
     
     # --------------------------------------------------
     # GRÁFICOS POR PAQUETERÍA – NUEVO BLOQUE
@@ -707,6 +758,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
