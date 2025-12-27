@@ -181,7 +181,7 @@ if st.session_state.logueado:
     # -----------------------------
     st.sidebar.header("Filtros")
     
-    # --- FILTRO POR CLIENTE (ya existente, lo mantenemos) ---
+    # --- FILTRO POR CLIENTE ---
     if "filtro_cliente_actual" not in st.session_state:
         st.session_state.filtro_cliente_actual = ""
     
@@ -206,8 +206,8 @@ if st.session_state.logueado:
         max_value=fecha_max
     )
     
-    # --- FILTRO FLETERA (solo para gráficos) ---
-    fleteras_sel = st.sidebar.multiselect(
+    # --- FILTRO FLETERA (solo una) ---
+    fletera_sel = st.sidebar.selectbox(
         "Fletera",
         options=sorted(df["FLETERA"].dropna().unique())
     )
@@ -217,7 +217,7 @@ if st.session_state.logueado:
     # -----------------------------
     df_filtrado = df.copy()
     
-    # Cliente (ya funcionaba)
+    # Filtrar por cliente
     if st.session_state.filtro_cliente_actual.strip() != "":
         df_filtrado = df_filtrado[
             df_filtrado["NO CLIENTE"].str.contains(
@@ -225,7 +225,7 @@ if st.session_state.logueado:
             )
         ]
     
-    # Fecha de envío
+    # Filtrar por rango de fechas
     if len(rango_fechas) == 2:
         fecha_inicio, fecha_fin = rango_fechas
         df_filtrado = df_filtrado[
@@ -234,28 +234,43 @@ if st.session_state.logueado:
         ]
     
     # -----------------------------
-    # Aquí tu tabla existente usa df_filtrado
-    # Ejemplo:
+    # MOSTRAR TABLA
+    # -----------------------------
     df_mostrar = df_filtrado.copy()
-    # st.dataframe(df_mostrar.style ...)  <- tu bloque de tabla existente sigue igual
+    # st.dataframe(df_mostrar.style ...)  <- tu bloque de tabla existente
     
     # -----------------------------
-    # GRÁFICOS DE ESTATUS POR FLETERA
+    # GRÁFICO DE ESTATUS POR FLETERA (solo una, con colores)
     # -----------------------------
-    if fleteras_sel:
-        df_graf = df_filtrado[df_filtrado["FLETERA"].isin(fleteras_sel)]
+    if fletera_sel:
+        df_graf = df_filtrado[df_filtrado["FLETERA"] == fletera_sel]
     
         graf_estatus = (
-            df_graf.groupby(["FLETERA", "ESTATUS_CALCULADO"])
+            df_graf.groupby("ESTATUS_CALCULADO")
             .size()
             .reset_index(name="Total")
         )
     
-        st.subheader("📊 Estatus de pedidos por Fletera")
-        for fletera in graf_estatus["FLETERA"].unique():
-            st.markdown(f"**{fletera}**")
-            data_fletera = graf_estatus[graf_estatus["FLETERA"] == fletera].set_index("ESTATUS_CALCULADO")
-            st.bar_chart(data_fletera["Total"])
+        st.subheader(f"📊 Estatus de pedidos – {fletera_sel}")
+    
+        # Diccionario de colores por estatus
+        colores_estatus = {
+            "En Tiempo": "#4CAF50",   # verde
+            "Retraso": "#F44336",     # rojo
+            "En Tránsito": "#FF9800"  # naranja
+        }
+    
+        # Crear gráfico Altair
+        chart = alt.Chart(graf_estatus).mark_bar().encode(
+            x=alt.X("ESTATUS_CALCULADO:N", title="Estatus"),
+            y=alt.Y("Total:Q", title="Cantidad de pedidos"),
+            color=alt.Color("ESTATUS_CALCULADO:N", scale=alt.Scale(domain=list(colores_estatus.keys()),
+                                                                  range=list(colores_estatus.values())),
+                            legend=None),
+            tooltip=["ESTATUS_CALCULADO", "Total"]
+        ).properties(width=600, height=400)
+    
+        st.altair_chart(chart, use_container_width=True)
     
     # -----------------------------
     # CAJA DE BÚSQUEDA POR PEDIDO – TARGETAS
@@ -707,6 +722,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
