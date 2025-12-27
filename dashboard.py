@@ -277,7 +277,7 @@ if st.session_state.logueado:
         )
         
         st.markdown(
-            f"<h5 style='font-size:24px;'>Estatus de pedidos - {fletera_sel}</h5>",
+            f"<h4 style='font-size:24px; text-align:center;'>Estatus de pedidos - {fletera_sel}</h4>",
             unsafe_allow_html=True
         )
         
@@ -734,6 +734,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
