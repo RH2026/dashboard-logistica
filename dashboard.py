@@ -154,7 +154,7 @@ if st.session_state.logueado:
     # -----------------------------
     df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
     
-    # Convertir fechas
+    # Convertir fechas (evitamos errores con errors='coerce')
     df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce')
     df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors='coerce')
     df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors='coerce')
@@ -165,7 +165,6 @@ if st.session_state.logueado:
     if "filtro_cliente_actual" not in st.session_state:
         st.session_state.filtro_cliente_actual = ""
     
-    # Inicializamos fleteras_sel aunque no haya interacción
     if "fleteras_sel" not in st.session_state:
         st.session_state.fleteras_sel = []
     
@@ -257,7 +256,7 @@ if st.session_state.logueado:
     
     # Funciones de estilo
     def colorear_retraso(val):
-        color = '#ff4d4d' if val > 0 else 'white'  # rojo si hay retraso
+        color = '#ff4d4d' if val > 0 else 'white'
         return f'background-color: {color}; color: black; font-weight: bold;' if val > 0 else ''
     
     def zebra_filas(row):
@@ -266,43 +265,40 @@ if st.session_state.logueado:
         else:
             return ['background-color: #1A1E25; color: white;' for _ in row]
     
-    def estilo_encabezado(df):
-        return [ 'background-color: orange; color: white; font-weight: bold; font-size:14px;' for _ in df.columns]
-    
-    # Aplicamos estilos combinados
+    # Aplicamos estilos
     st.dataframe(
         df_mostrar.style.apply(zebra_filas, axis=1)
                         .applymap(colorear_retraso, subset=["DIAS_RETRASO"])
                         .set_table_styles([
-            {
-                'selector': 'td',
-                'props': [
-                    ('padding-top', '16px'),
-                    ('padding-bottom', '16px')
-                ]
-            },
-            {
-                'selector': 'th',
-                'props': [
-                    ('background-color', 'orange'),
-                    ('color', 'white'),
-                    ('font-weight','bold'),
-                    ('font-size','14px'),
-                    ('padding-top', '12px'),
-                    ('padding-bottom', '12px')
-                ]
-            }
-        ]),
+                            {
+                                'selector': 'td',
+                                'props': [
+                                    ('padding-top', '16px'),
+                                    ('padding-bottom', '16px')
+                                ]
+                            },
+                            {
+                                'selector': 'th',
+                                'props': [
+                                    ('background-color', 'orange'),
+                                    ('color', 'white'),
+                                    ('font-weight','bold'),
+                                    ('font-size','14px'),
+                                    ('padding-top', '12px'),
+                                    ('padding-bottom', '12px')
+                                ]
+                            }
+                        ]),
         use_container_width=True,
         height=520
     )
     
     # -----------------------------
-    # BLOQUE DE GRÁFICOS DE FLETERA (corregido)
+    # GRÁFICOS DE ESTATUS POR FLETERA (definitivo y seguro)
     # -----------------------------
     fleteras_sel = st.session_state.get("fleteras_sel", [])
     
-    if fleteras_sel:
+    if len(fleteras_sel) > 0:
         df_graf = df_filtrado[df_filtrado["FLETERA"].isin(fleteras_sel)]
     
         graf_estatus = (
@@ -312,7 +308,6 @@ if st.session_state.logueado:
         )
     
         st.subheader("📊 Estatus de pedidos por Fletera")
-    
         fleteras_list = graf_estatus["FLETERA"].unique()
     
         color_map = {
@@ -849,6 +844,7 @@ if st.session_state.fleteras_sel:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
