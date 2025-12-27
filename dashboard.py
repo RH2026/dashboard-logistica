@@ -247,9 +247,12 @@ if st.session_state.logueado:
     # -----------------------------
     import altair as alt
     
+    # Solo si hay alguna fletera seleccionada
     if st.session_state.fleteras_sel:
+        # Filtramos solo las fleteras seleccionadas
         df_graf = df_filtrado[df_filtrado["FLETERA"].isin(st.session_state.fleteras_sel)]
     
+        # Agrupamos por fletera y estatus
         graf_estatus = (
             df_graf.groupby(["FLETERA", "ESTATUS_CALCULADO"])
             .size()
@@ -260,6 +263,7 @@ if st.session_state.logueado:
     
         fleteras_list = graf_estatus["FLETERA"].unique()
     
+        # Colores fijos por estatus
         color_map = {
             'Pedidos enviados': '#FFA500',
             'Entregados': '#00FF00',
@@ -267,6 +271,7 @@ if st.session_state.logueado:
             'En tránsito': '#1E90FF'
         }
     
+        # Creamos gráficos de dos en dos
         for i in range(0, len(fleteras_list), 2):
             col1, col2 = st.columns(2)
     
@@ -795,6 +800,7 @@ if fleteras_sel:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
