@@ -472,7 +472,7 @@ if st.session_state.logueado:
     st.dataframe(
         df_mostrar.style.apply(zebra_filas, axis=1)
                         .applymap(colorear_retraso, subset=["DIAS_RETRASO"])
-                        .set_properties(**{'height': '40px'})
+                        .set_properties(**{'height': '60px'})
                         .set_table_styles([{'selector': 'th', 'props': [('background-color', 'orange'), ('color', 'white'), ('font-weight','bold')]}]),
         use_container_width=True,
         height=520
@@ -635,6 +635,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
