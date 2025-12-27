@@ -207,7 +207,7 @@ if st.session_state.logueado:
     
     # --- FILTRO FLETERA (solo una para gráficos) ---
     fletera_sel = st.sidebar.selectbox(
-        "Fletera",
+        "Selecciona Fletera",
         options=[""] + sorted(df["FLETERA"].dropna().unique()),  # "" permite no seleccionar nada
         index=0
     )
@@ -734,6 +734,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
