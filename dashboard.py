@@ -243,7 +243,10 @@ if st.session_state.logueado:
     # GRÁFICOS DE ESTATUS POR FLETERA
     # -----------------------------
     if fleteras_sel:
-        df_graf = df_filtrado[df_filtrado["FLETERA"].isin(fleteras_sel)]
+        df_graf = df_filtrado[df_filtrado["FLETERA"].isin(fleteras_sel)].copy()
+    
+        # Asegurarse de que la columna ESTATUS_CALCULADO sea string
+        df_graf["ESTATUS_CALCULADO"] = df_graf["ESTATUS_CALCULADO"].astype(str)
     
         graf_estatus = (
             df_graf.groupby(["FLETERA", "ESTATUS_CALCULADO"])
@@ -260,10 +263,14 @@ if st.session_state.logueado:
             chart = alt.Chart(data_fletera).mark_bar().encode(
                 x=alt.X("ESTATUS_CALCULADO:N", title="Estatus"),
                 y=alt.Y("Total:Q", title="Cantidad"),
-                color=alt.Color("ESTATUS_CALCULADO:N", scale=alt.Scale(
-                    domain=["En Tiempo", "Retraso", "En Tránsito"],  # tus estatus
-                    range=["green", "red", "orange"]  # colores que quieras
-                )),
+                color=alt.Color(
+                    "ESTATUS_CALCULADO:N",
+                    scale=alt.Scale(
+                        domain=["En Tiempo", "Retraso", "En Tránsito"],  # tus estatus exactos
+                        range=["green", "red", "orange"]  # colores deseados
+                    ),
+                    legend=alt.Legend(title="Estatus")
+                ),
                 tooltip=["ESTATUS_CALCULADO", "Total"]
             ).properties(width=500)
     
@@ -719,6 +726,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
