@@ -594,8 +594,8 @@ if st.session_state.logueado:
     # BLOQUE DE GRÁFICOS DE FLETERA (pegar aquí)
 import altair as alt
 
-if fleteras_sel:
-    df_graf = df_filtrado[df_filtrado["FLETERA"].isin(fleteras_sel)]
+if st.session_state.fleteras_sel:
+    df_graf = df_filtrado[df_filtrado["FLETERA"].isin(st.session_state.fleteras_sel)]
 
     graf_estatus = (
         df_graf.groupby(["FLETERA", "ESTATUS_CALCULADO"])
@@ -800,6 +800,7 @@ if fleteras_sel:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
