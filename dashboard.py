@@ -377,15 +377,15 @@ if st.session_state.logueado:
                     </div>
                 """, unsafe_allow_html=True)
         
-                    st.markdown(f"""
-                        <div style='{estilo_card}'>
-                            <div style='color:yellow; font-weight:bold; text-align:center; margin-bottom:10px;'>Fechas y Seguimiento</div>
-                            <b>FECHA DE ENVÍO:</b> {f_envio}<br>
-                            <b>PROMESA ENTREGA:</b> {f_prom}<br>
-                            <b>FECHA DE ENTREGA REAL:</b> {f_real}<br><br>
-                            <b>DÍAS RETRASO:</b> <span style='color:{color_retraso}; font-weight:bold;'>{retraso}</span>
-                        </div>
-                    """, unsafe_allow_html=True)
+                st.markdown(f"""
+                    <div style='{estilo_card}'>
+                        <div style='color:yellow; font-weight:bold; text-align:center; margin-bottom:10px;'>Fechas y Seguimiento</div>
+                        <b>FECHA DE ENVÍO:</b> {f_envio}<br>
+                        <b>PROMESA ENTREGA:</b> {f_prom}<br>
+                        <b>FECHA DE ENTREGA REAL:</b> {f_real}<br><br>
+                        <b>DÍAS RETRASO:</b> <span style='color:{color_retraso}; font-weight:bold;'>{retraso}</span>
+                    </div>
+                """, unsafe_allow_html=True)
     
             with c3:
                 st.markdown(f"""
@@ -773,6 +773,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
