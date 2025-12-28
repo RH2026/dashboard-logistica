@@ -432,35 +432,41 @@ if st.session_state.logueado:
                 """, unsafe_allow_html=True)
     
             # --- 2. EL TIMELINE (Renderizado como HTML real, no texto) ---
-            # --- 1. LÓGICA DE VARIABLES (Basada en tu imagen) ---
-            entregado = pd.notna(row["FECHA DE ENTREGA REAL"])
-            f_entrega_real = row["FECHA DE ENTREGA REAL"]
-            f_promesa = row["FECHA PROMESA DE ENTREGA"]
+            # --- 1. LIMPIEZA PREVIA (Pon esto antes del bucle si es posible) ---
+            # df.columns = df.columns.str.strip() 
+            
+            # --- 2. LÓGICA DE VARIABLES (Con manejo de error de columna) ---
+            # Usamos .get() para evitar que el KeyError rompa la app si el nombre cambia ligeramente
+            f_entrega_real = row.get("FECHA DE ENTREGA REAL")
+            f_promesa = row.get("FECHA PROMESA DE ENTREGA")
+            # Si el nombre en tu Excel es "FECHA PROMESA", cambia el texto arriba.
+            
+            entregado = pd.notna(f_entrega_real)
             hoy = pd.Timestamp.now()
             
             # Formateo de fechas para mostrar
             f_real_txt = f_entrega_real.strftime('%d/%m/%Y') if entregado else ""
+            # Aseguramos que f_envio y f_prom vengan de las variables que ya tengas definidas
+            f_envio_txt = row.get("FECHA DE ENVIO", "S/D") 
+            f_prom_txt = f_promesa.strftime('%d/%m/%Y') if pd.notna(f_promesa) else "S/D"
             
-            if entregado:
-                # Casos 1 y 2
+            if entregado and pd.notna(f_promesa):
                 if f_entrega_real <= f_promesa:
-                    t_medio, c_medio = "ENTREGADA EN TIEMPO", "#22c55e" # Verde
+                    t_medio, c_medio = "ENTREGADA EN TIEMPO", "#22c55e"
                 else:
-                    t_medio, c_medio = "ENTREGADA CON RETRASO", "#ef4444" # Rojo
+                    t_medio, c_medio = "ENTREGADA CON RETRASO", "#ef4444"
                 t_fin, c_fin = "ENTREGADO", "#22c55e"
             else:
-                # Casos 3 y 4
-                if f_promesa > hoy:
-                    t_medio, c_medio = "RETRASO", "#f97316" # Naranja
+                if pd.notna(f_promesa) and f_promesa > hoy:
+                    t_medio, c_medio = "RETRASO", "#f97316"
                 else:
-                    t_medio, c_medio = "EN TRANSITO", "#3b82f6" # Azul
-                t_fin, c_fin = "EN ESPERA", "#374151" # Gris
+                    t_medio, c_medio = "EN TRANSITO", "#3b82f6"
+                t_fin, c_fin = "EN ESPERA", "#374151"
             
-            # --- 2. EL TIMELINE EN UNA SOLA LÍNEA ---
-            html_timeline = f'<div style="background:#111827;padding:25px;border-radius:12px;border:1px solid #374151;margin-top:15px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;width:100%;"><div style="position:absolute;top:10px;left:10%;right:10%;height:4px;background:#374151;z-index:0;"></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:20px;height:20px;border-radius:50%;background:#22c55e;margin:0 auto 10px auto;border:3px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">ENVIADO</div><div style="color:gray;font-size:10px;">{f_envio}</div></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:20px;height:20px;border-radius:50%;background:#6b7280;margin:0 auto 10px auto;border:3px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">FECHA ACTUAL</div><div style="color:gray;font-size:10px;">X</div></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:20px;height:20px;border-radius:50%;background:{c_medio};margin:0 auto 10px auto;border:3px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_medio}</div><div style="color:gray;font-size:10px;">{f_prom}</div></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:20px;height:20px;border-radius:50%;background:{c_fin};margin:0 auto 10px auto;border:3px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_fin}</div><div style="color:gray;font-size:10px;">{f_real_txt}</div></div></div></div>'
+            # --- 3. EL TIMELINE EN UNA SOLA LÍNEA ---
+            html_timeline = f'<div style="background:#111827;padding:25px;border-radius:12px;border:1px solid #374151;margin-top:15px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;width:100%;"><div style="position:absolute;top:10px;left:10%;right:10%;height:4px;background:#374151;z-index:0;"></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:20px;height:20px;border-radius:50%;background:#22c55e;margin:0 auto 10px auto;border:3px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">ENVIADO</div><div style="color:gray;font-size:10px;">{f_envio_txt}</div></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:20px;height:20px;border-radius:50%;background:#6b7280;margin:0 auto 10px auto;border:3px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">FECHA ACTUAL</div><div style="color:gray;font-size:10px;">X</div></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:20px;height:20px;border-radius:50%;background:{c_medio};margin:0 auto 10px auto;border:3px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_medio}</div><div style="color:gray;font-size:10px;">{f_prom_txt}</div></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:20px;height:20px;border-radius:50%;background:{c_fin};margin:0 auto 10px auto;border:3px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_fin}</div><div style="color:gray;font-size:10px;">{f_real_txt}</div></div></div></div>'
             
             st.markdown(html_timeline, unsafe_allow_html=True)
-            st.divider()
     
     # --------------------------------------------------
     # KPIs
@@ -826,6 +832,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
