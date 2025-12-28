@@ -397,56 +397,45 @@ if st.session_state.logueado:
         unsafe_allow_html=True
         )
         
-        # TIMELINE ESTILO AMAZON
-        # -----------------------------
+        # --- TIMELINE ESTILO AMAZON CORREGIDO ---
         fecha_envio = row["FECHA DE ENVÍO"]
         fecha_promesa = row["PROMESA DE ENTREGA"]
         fecha_entrega = row["FECHA DE ENTREGA REAL"]
-        
         entregado = pd.notna(fecha_entrega)
         
-        st.markdown(
-            f"""
-            <div style="background:#111827; padding:20px; border-radius:12px; margin-bottom:30px;">
-                <div style="text-align:center; color:yellow; font-size:18px; font-weight:bold; margin-bottom:15px;">
+        color_entrega = "#22c55e" if entregado else "#f97316"
+        texto_entrega = "Entregado" if entregado else "En espera"
+        val_entrega = fecha_entrega.strftime('%d/%m/%Y') if entregado else "Pendiente"
+
+        st.markdown(f"""
+            <div style="background:#111827; padding:25px; border-radius:12px; border: 1px solid #374151;">
+                <div style="text-align:center; color:yellow; font-size:18px; font-weight:bold; margin-bottom:25px;">
                     📦 Seguimiento del Pedido {row['NÚMERO DE PEDIDO']}
                 </div>
-            
-            <div style="display:flex; justify-content:space-between; align-items:center; position:relative;">
-                <div style="position:absolute; top:50%; left:10%; right:10%; height:4px; background:#374151;"></div>
-        
-                <div style="text-align:center;">
-                    <div style="width:18px; height:18px; border-radius:50%; background:#22c55e; margin:auto;"></div>
-                    <div style="color:white; font-size:12px;">Enviado</div>
-                    <div style="color:gray; font-size:11px;">
-                        {fecha_envio.strftime('%d/%m/%Y')}
+                
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; position:relative; width: 100%; padding: 0 20px;">
+                    <div style="position:absolute; top:9px; left:10%; right:10%; height:4px; background:#374151; z-index:0;"></div>
+                    
+                    <div style="text-align:center; z-index:1; width: 80px;">
+                        <div style="width:20px; height:20px; border-radius:50%; background:#22c55e; margin: 0 auto 8px auto; border: 3px solid #111827;"></div>
+                        <div style="color:white; font-size:12px; font-weight:bold;">Enviado</div>
+                        <div style="color:gray; font-size:11px;">{fecha_envio.strftime('%d/%m/%Y')}</div>
                     </div>
-                </div>
-        
-                <div style="text-align:center;">
-                    <div style="width:18px; height:18px; border-radius:50%; background:#22c55e; margin:auto;"></div>
-                    <div style="color:white; font-size:12px;">En tránsito</div>
-                    <div style="color:gray; font-size:11px;">
-                        Promesa: {fecha_promesa.strftime('%d/%m/%Y')}
+
+                    <div style="text-align:center; z-index:1; width: 80px;">
+                        <div style="width:20px; height:20px; border-radius:50%; background:#22c55e; margin: 0 auto 8px auto; border: 3px solid #111827;"></div>
+                        <div style="color:white; font-size:12px; font-weight:bold;">En tránsito</div>
+                        <div style="color:gray; font-size:11px;">Promesa: {fecha_promesa.strftime('%d/%m/%Y')}</div>
                     </div>
-                </div>
-        
-                <div style="text-align:center;">
-                    <div style="width:18px; height:18px; border-radius:50%;
-                        background:{'#22c55e' if entregado else '#f97316'}; margin:auto;">
-                    </div>
-                    <div style="color:white; font-size:12px;">
-                        {'Entregado' if entregado else 'En espera'}
-                    </div>
-                    <div style="color:gray; font-size:11px;">
-                        {fecha_entrega.strftime('%d/%m/%Y') if entregado else 'Pendiente'}
+
+                    <div style="text-align:center; z-index:1; width: 80px;">
+                        <div style="width:20px; height:20px; border-radius:50%; background:{color_entrega}; margin: 0 auto 8px auto; border: 3px solid #111827;"></div>
+                        <div style="color:white; font-size:12px; font-weight:bold;">{texto_entrega}</div>
+                        <div style="color:gray; font-size:11px;">{val_entrega}</div>
                     </div>
                 </div>
             </div>
-            </div>
-            """),
-            unsafe_allow_html=True
-            )
+            """, unsafe_allow_html=True)
     
     # --------------------------------------------------
     # KPIs
@@ -812,6 +801,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
