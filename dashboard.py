@@ -432,11 +432,12 @@ if st.session_state.logueado:
                 """, unsafe_allow_html=True)
     
             # --- 2. EL TIMELINE (Renderizado como HTML real, no texto) ---
-            # --- 1. EXTRACCIÓN Y CONVERSIÓN DE FECHAS ---
+            # --- 1. EXTRACCIÓN CON LOS NOMBRES EXACTOS DE TU TABLA ---
             f_envio_val = row.get("FECHA DE ENVÍO") or row.get("FECHA DE ENVIO")
-            f_promesa_val = row.get("PROMESA ENTREGA") or row.get("FECHA PROMESA DE ENTREGA")
-            f_real_val = row.get("ENTREGA REAL") or row.get("FECHA DE ENTREGA REAL")
+            f_promesa_val = row.get("PROMESA DE ENTREGA")  # Nombre exacto de tu última imagen
+            f_real_val = row.get("FECHA DE ENTREGA REAL") # Nombre exacto de tu última imagen
             
+            # Conversión segura a datetime
             f_envio_dt = pd.to_datetime(f_envio_val, errors='coerce')
             f_promesa_dt = pd.to_datetime(f_promesa_val, errors='coerce')
             f_real_dt = pd.to_datetime(f_real_val, errors='coerce')
@@ -448,25 +449,24 @@ if st.session_state.logueado:
             txt_f_promesa = f_promesa_dt.strftime('%d/%m/%Y') if pd.notna(f_promesa_dt) else "S/D"
             txt_f_real = f_real_dt.strftime('%d/%m/%Y') if pd.notna(f_real_dt) else ""
             
-            # --- 2. LÓGICA DE ESTADOS CORREGIDA ---
+            # --- 2. LÓGICA DE ESTADOS CORREGIDA (11/12 <= 11/12 es Verde) ---
             entregado = pd.notna(f_real_dt)
             
             if entregado:
-                t_fin, c_fin = "ENTREGADO", "#22c55e" # El último punto es verde
-                # LÓGICA DE RETRASO: Solo si la real es mayor a la promesa
+                t_fin, c_fin = "ENTREGADO", "#22c55e"
+                # Si la fecha real es menor o igual a la promesa, es VERDE (En Tiempo)
                 if pd.notna(f_promesa_dt) and f_real_dt <= f_promesa_dt:
-                    t_medio, c_medio = "ENTREGADA EN TIEMPO", "#22c55e" # Verde
+                    t_medio, c_medio = "ENTREGADA EN TIEMPO", "#22c55e"
                 else:
-                    t_medio, c_medio = "ENTREGADA CON RETRASO", "#ef4444" # Rojo
+                    t_medio, c_medio = "ENTREGADA CON RETRASO", "#ef4444"
             else:
-                t_fin, c_fin = "EN ESPERA", "#374151" # El último punto es gris
+                t_fin, c_fin = "EN ESPERA", "#374151"
                 if pd.notna(f_promesa_dt) and f_promesa_dt < hoy_dt:
-                    t_medio, c_medio = "RETRASO", "#f97316" # Naranja
+                    t_medio, c_medio = "RETRASO", "#f97316"
                 else:
-                    t_medio, c_medio = "EN TRÁNSITO", "#3b82f6" # Azul
-
-            # --- 3. HTML EN UNA SOLA LÍNEA ---
-            # --- 3. HTML EN UNA SOLA LÍNEA (MODIFICADO) ---
+                    t_medio, c_medio = "EN TRÁNSITO", "#3b82f6"
+            
+            # --- 3. HTML EN UNA SOLA LÍNEA (PUNTO 2 EN VERDE) ---
             html_timeline = f'<div style="background:#111827;padding:25px;border-radius:12px;border:1px solid #374151;margin-top:15px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;width:100%;"><div style="position:absolute;top:10px;left:10%;right:10%;height:4px;background:#374151;z-index:0;"></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:20px;height:20px;border-radius:50%;background:#22c55e;margin:0 auto 10px auto;border:3px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">ENVIADO</div><div style="color:gray;font-size:10px;">{txt_f_envio}</div></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:20px;height:20px;border-radius:50%;background:#22c55e;margin:0 auto 10px auto;border:3px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">FECHA ACTUAL</div><div style="color:gray;font-size:10px;">{txt_f_actual}</div></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:20px;height:20px;border-radius:50%;background:{c_medio};margin:0 auto 10px auto;border:3px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_medio}</div><div style="color:gray;font-size:10px;">{txt_f_promesa}</div></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:20px;height:20px;border-radius:50%;background:{c_fin};margin:0 auto 10px auto;border:3px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_fin}</div><div style="color:gray;font-size:10px;">{txt_f_real}</div></div></div></div>'
             
             st.markdown(html_timeline, unsafe_allow_html=True)
@@ -836,6 +836,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
