@@ -376,48 +376,48 @@ if st.session_state.logueado:
                     unsafe_allow_html=True
                 )
     
-                st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
     
-                # -----------------------------
-                # TIMELINE ESTILO AMAZON
-                # -----------------------------
-                entregado = row["FECHA DE ENTREGA REAL"] not in ["NaT", None, ""]
-    
-                st.markdown(
-                    f"""
-                    <div style="background:#111827; padding:20px; border-radius:12px; margin-bottom:30px;">
-                        <div style="text-align:center; color:yellow; font-size:18px; font-weight:bold; margin-bottom:15px;">
-                            📦 Seguimiento del Pedido {row['NÚMERO DE PEDIDO']}
+            # -----------------------------
+            # TIMELINE ESTILO AMAZON
+            # -----------------------------
+            entregado = row["FECHA DE ENTREGA REAL"] not in ["NaT", None, ""]
+
+            st.markdown(
+                f"""
+                <div style="background:#111827; padding:20px; border-radius:12px; margin-bottom:30px;">
+                    <div style="text-align:center; color:yellow; font-size:18px; font-weight:bold; margin-bottom:15px;">
+                        📦 Seguimiento del Pedido {row['NÚMERO DE PEDIDO']}
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; position:relative;">
+                        <div style="position:absolute; top:50%; left:10%; right:10%; height:4px; background:#374151;"></div>
+
+                        <div style="text-align:center;">
+                            <div style="width:18px; height:18px; border-radius:50%; background:#22c55e; margin:auto;"></div>
+                            <div style="color:white; font-size:12px;">Enviado</div>
+                            <div style="color:gray; font-size:11px;">{row['FECHA DE ENVÍO']}</div>
                         </div>
-    
-                        <div style="display:flex; justify-content:space-between; align-items:center; position:relative;">
-                            <div style="position:absolute; top:50%; left:10%; right:10%; height:4px; background:#374151;"></div>
-    
-                            <div style="text-align:center;">
-                                <div style="width:18px; height:18px; border-radius:50%; background:#22c55e; margin:auto;"></div>
-                                <div style="color:white; font-size:12px;">Enviado</div>
-                                <div style="color:gray; font-size:11px;">{row['FECHA DE ENVÍO']}</div>
-                            </div>
-    
-                            <div style="text-align:center;">
-                                <div style="width:18px; height:18px; border-radius:50%; background:#22c55e; margin:auto;"></div>
-                                <div style="color:white; font-size:12px;">En tránsito</div>
-                                <div style="color:gray; font-size:11px;">{row['PROMESA DE ENTREGA']}</div>
-                            </div>
-    
-                            <div style="text-align:center;">
-                                <div style="width:18px; height:18px; border-radius:50%; background:{'#22c55e' if entregado else '#f97316'}; margin:auto;"></div>
-                                <div style="color:white; font-size:12px;">{'Entregado' if entregado else 'En espera'}</div>
-                                <div style="color:gray; font-size:11px;">{row['FECHA DE ENTREGA REAL'] if entregado else 'Pendiente'}</div>
-                            </div>
+
+                        <div style="text-align:center;">
+                            <div style="width:18px; height:18px; border-radius:50%; background:#22c55e; margin:auto;"></div>
+                            <div style="color:white; font-size:12px;">En tránsito</div>
+                            <div style="color:gray; font-size:11px;">{row['PROMESA DE ENTREGA']}</div>
+                        </div>
+
+                        <div style="text-align:center;">
+                            <div style="width:18px; height:18px; border-radius:50%; background:{'#22c55e' if entregado else '#f97316'}; margin:auto;"></div>
+                            <div style="color:white; font-size:12px;">{'Entregado' if entregado else 'En espera'}</div>
+                            <div style="color:gray; font-size:11px;">{row['FECHA DE ENTREGA REAL'] if entregado else 'Pendiente'}</div>
                         </div>
                     </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-    
-        else:
-            st.warning("No se encontró ningún pedido con ese número.")
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    else:
+        st.warning("No se encontró ningún pedido con ese número.")
     
     # --------------------------------------------------
     # KPIs
@@ -783,6 +783,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
