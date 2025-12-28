@@ -359,17 +359,17 @@ if st.session_state.logueado:
             
     
             # --- 2. EL TIMELINE (TODO DENTRO DE UN SOLO MARKDOWN) ---
-            # Asegúrate de definir estas variables antes
+            # --- 2. EL TIMELINE (DENTRO DEL BUCLE FOR) ---
             entregado = pd.notna(row["FECHA DE ENTREGA REAL"])
+            color_fin = "#22c55e" if entregado else "#f97316"
+            texto_fin = "Entregado" if entregado else "En espera"
             f_envio = row['FECHA DE ENVÍO'].strftime('%d/%m/%Y') if pd.notna(row['FECHA DE ENVÍO']) else "---"
             f_prom = row['PROMESA DE ENTREGA'].strftime('%d/%m/%Y') if pd.notna(row['PROMESA DE ENTREGA']) else "---"
             fecha_fin = row["FECHA DE ENTREGA REAL"].strftime('%d/%m/%Y') if entregado else "Pendiente"
-            color_fin = "#22c55e" if entregado else "#f97316"
-            texto_fin = "Entregado" if entregado else "En espera"
             
-            # ESTA ES LA PARTE CLAVE: Todo debe ir en un solo st.markdown
+            # USAMOS ÚNICAMENTE st.markdown para el HTML
             st.markdown(f"""
-                <div style="background:#111827; padding:25px; border-radius:12px; border: 1px solid #374151; margin-top: 20px;">
+                <div style="background:#111827; padding:25px; border-radius:12px; border: 1px solid #374151; margin-top:10px;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; position:relative; width: 100%;">
                         
                         <div style="position:absolute; top:10px; left:10%; right:10%; height:4px; background:#374151; z-index:0;"></div>
@@ -393,7 +393,9 @@ if st.session_state.logueado:
                         </div>
                     </div>
                 </div>
-            """, unsafe_allow_html=True) # <--- ESTE PARÁMETRO ES OBLIGATORIO
+            """, unsafe_allow_html=True)
+            
+            st.divider() # Este sí puede ir solo para separar pedidos
     
     # --------------------------------------------------
     # KPIs
@@ -759,6 +761,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
