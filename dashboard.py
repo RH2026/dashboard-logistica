@@ -353,11 +353,16 @@ if st.session_state.logueado:
                 """, unsafe_allow_html=True)
     
             with c2:
+                # 1. Cálculos de fechas
                 f_envio = row['FECHA DE ENVÍO'].strftime('%d/%m/%Y') if pd.notna(row['FECHA DE ENVÍO']) else "---"
                 f_prom = row['PROMESA DE ENTREGA'].strftime('%d/%m/%Y') if pd.notna(row['PROMESA DE ENTREGA']) else "---"
                 f_real = row['FECHA DE ENTREGA REAL'].strftime('%d/%m/%Y') if pd.notna(row['FECHA DE ENTREGA REAL']) else "PENDIENTE"
                 
+                # 2. Cálculos de días (Asegúrate de que estas columnas existan en tu DF)
+                dias_trans = row.get('DIAS_TRANSCURRIDOS', 0)
                 retraso = row.get('DIAS_RETRASO', 0)
+                
+                # Color dinámico para el retraso
                 color_retraso = "red" if retraso > 0 else "white"
     
                 st.markdown(f"""
@@ -365,10 +370,22 @@ if st.session_state.logueado:
                         <div style='color:yellow; font-weight:bold; text-align:center; margin-bottom:10px;'>Fechas y Seguimiento</div>
                         <b>FECHA DE ENVÍO:</b> {f_envio}<br>
                         <b>PROMESA ENTREGA:</b> {f_prom}<br>
-                        <b>FECHA DE ENTREGA REAL:</b> {f_real}<br><br>
+                        <b>ENTREGA REAL:</b> {f_real}<br><br>
+                        
+                        <b>DÍAS TRANSCURRIDOS:</b> {dias_trans}<br>
                         <b>DÍAS RETRASO:</b> <span style='color:{color_retraso}; font-weight:bold;'>{retraso}</span>
                     </div>
                 """, unsafe_allow_html=True)
+        
+                    st.markdown(f"""
+                        <div style='{estilo_card}'>
+                            <div style='color:yellow; font-weight:bold; text-align:center; margin-bottom:10px;'>Fechas y Seguimiento</div>
+                            <b>FECHA DE ENVÍO:</b> {f_envio}<br>
+                            <b>PROMESA ENTREGA:</b> {f_prom}<br>
+                            <b>FECHA DE ENTREGA REAL:</b> {f_real}<br><br>
+                            <b>DÍAS RETRASO:</b> <span style='color:{color_retraso}; font-weight:bold;'>{retraso}</span>
+                        </div>
+                    """, unsafe_allow_html=True)
     
             with c3:
                 st.markdown(f"""
@@ -756,6 +773,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
