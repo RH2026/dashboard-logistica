@@ -356,8 +356,7 @@ if st.session_state.logueado:
                 # Tarjeta 2: Fechas y Tiempos (Aquí agregamos DÍAS TRANSCURRIDOS)
                 f_envio = row['FECHA DE ENVÍO'].strftime('%d/%m/%Y') if pd.notna(row['FECHA DE ENVÍO']) else "---"
                 f_prom = row['PROMESA DE ENTREGA'].strftime('%d/%m/%Y') if pd.notna(row['PROMESA DE ENTREGA']) else "---"
-                f_real = row['FECHA DE ENTREGA REAL'].strftime('%d/%m/%Y') if pd.notna(row['FECHA DE ENTREGA REAL']) else "PENDIENTE"
-                
+                f_real = row['FECHA DE ENTREGA REAL'].strftime('%d/%m/%Y') if pd.notna(row['FECHA DE ENTREGA REAL']) else "PENDIENTE"                
                 dias_trans = row.get('DIAS_TRANSCURRIDOS', 0)
                 retraso = row.get('DIAS_RETRASO', 0)
                 color_retraso = "red" if retraso > 0 else "white"
@@ -759,6 +758,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
