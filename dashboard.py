@@ -369,6 +369,68 @@ if st.session_state.logueado:
             )
     
             st.markdown("<br>", unsafe_allow_html=True)
+
+    # -----------------------------
+    # TIMELINE DE SEGUIMIENTO (ESTILO AMAZON)
+    # -----------------------------
+    
+    def estado_paso(fecha):
+        return "done" if pd.notna(fecha) else "pending"
+    
+    for index, row in df_busqueda.iterrows():
+    
+        estado_envio = "done"
+        estado_promesa = "done"
+        estado_entrega = estado_paso(pd.to_datetime(row["FECHA DE ENTREGA REAL"], errors="coerce"))
+    
+        st.markdown(
+            f"""
+            <div style="background:#111827; padding:20px; border-radius:12px; margin-bottom:20px;">
+                <div style="text-align:center; color:yellow; font-size:18px; font-weight:bold; margin-bottom:15px;">
+                    📦 Seguimiento del Pedido {row['NÚMERO DE PEDIDO']}
+                </div>
+    
+                <div style="display:flex; justify-content:space-between; align-items:center; position:relative;">
+    
+                    <!-- Línea -->
+                    <div style="position:absolute; top:50%; left:10%; right:10%; height:4px; background:#374151; z-index:0;"></div>
+    
+                    <!-- Paso 1 -->
+                    <div style="text-align:center; z-index:1;">
+                        <div style="width:20px; height:20px; border-radius:50%; background:#22c55e; margin:auto;"></div>
+                        <div style="color:white; font-size:12px; margin-top:6px;">Enviado</div>
+                        <div style="color:gray; font-size:11px;">{row['FECHA DE ENVÍO']}</div>
+                    </div>
+    
+                    <!-- Paso 2 -->
+                    <div style="text-align:center; z-index:1;">
+                        <div style="width:20px; height:20px; border-radius:50%; background:#22c55e; margin:auto;"></div>
+                        <div style="color:white; font-size:12px; margin-top:6px;">En tránsito</div>
+                        <div style="color:gray; font-size:11px;">Promesa: {row['PROMESA DE ENTREGA']}</div>
+                    </div>
+    
+                    <!-- Paso 3 -->
+                    <div style="text-align:center; z-index:1;">
+                        <div style="
+                            width:20px; 
+                            height:20px; 
+                            border-radius:50%; 
+                            background:{'#22c55e' if estado_entrega=='done' else '#f97316'};
+                            margin:auto;">
+                        </div>
+                        <div style="color:white; font-size:12px; margin-top:6px;">
+                            {'Entregado' if estado_entrega=='done' else 'En espera'}
+                        </div>
+                        <div style="color:gray; font-size:11px;">
+                            {row['FECHA DE ENTREGA REAL'] if estado_entrega=='done' else 'Pendiente'}
+                        </div>
+                    </div>
+    
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
     # --------------------------------------------------
     # KPIs
@@ -734,6 +796,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
