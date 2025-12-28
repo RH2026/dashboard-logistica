@@ -425,8 +425,8 @@ if st.session_state.logueado:
                     <div style='{estilo_card}'>
                         <div style='color:yellow; font-weight:bold; text-align:center; margin-bottom:10px;'>Observaciones</div>
                         <b>ESTATUS:</b> {row.get('ESTATUS_CALCULADO', 'N/A')}<br>
-                        <b>PRIORIDAD:</b> {row.get('PRIORIDAD', 'N/A')}<br><br>
-                        <b>COMENTARIOS:</b><br>
+                        <b>PRIORIDAD:</b> {row.get('PRIORIDAD', 'N/A')}<br>
+                        <b>COMENTARIOS:</b>
                         <small>{row.get('COMENTARIOS', 'Sin comentarios') if pd.notna(row.get('COMENTARIOS')) else 'Sin comentarios'}</small>
                     </div>
                 """, unsafe_allow_html=True)
@@ -836,6 +836,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
