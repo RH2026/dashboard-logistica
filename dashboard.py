@@ -10,6 +10,54 @@ def get_base64_image(image_path):  # 👈 aquí
         return base64.b64encode(img_file.read()).decode()
 
 # --------------------------------------------------
+# SPLASH SCREEN (ANTES DEL LOGIN)
+# --------------------------------------------------
+if "splash_visto" not in st.session_state:
+    st.session_state.splash_visto = False
+
+if not st.session_state.splash_visto:
+
+    st.markdown("""
+    <style>
+    .splash-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #0e1117;
+    }
+
+    .loader {
+        border: 6px solid #2a2a2a;
+        border-top: 6px solid #00FFAA;
+        border-radius: 50%;
+        width: 70px;
+        height: 70px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="splash-container">
+        <div class="loader"></div>
+        <div style="color:#aaa; font-size:14px;">
+            Iniciando sistema…
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    time.sleep(2)  # ⏳ duración del splash
+    st.session_state.splash_visto = True
+    st.rerun()
+# --------------------------------------------------
 # CONFIGURACIÓN DE PÁGINA
 # --------------------------------------------------
 st.set_page_config(
@@ -758,6 +806,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
