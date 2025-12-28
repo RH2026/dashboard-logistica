@@ -285,7 +285,7 @@ if st.session_state.logueado:
         st.bar_chart(graf_estatus["Total"])
     
     # -----------------------------
-    # CAJA DE BÚSQUEDA POR PEDIDO – TARGETAS
+    # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
     # -----------------------------
     pedido_buscar = st.text_input(
         "Buscar por Número de Factura",
@@ -294,143 +294,130 @@ if st.session_state.logueado:
     )
     
     if pedido_buscar.strip() != "":
+    
         # Filtrar solo por Número de Pedido
         df_busqueda = df_filtrado[
-            df_filtrado["NÚMERO DE PEDIDO"].astype(str).str.contains(pedido_buscar.strip(), case=False, na=False)
+            df_filtrado["NÚMERO DE PEDIDO"]
+            .astype(str)
+            .str.contains(pedido_buscar.strip(), case=False, na=False)
         ].copy()
     
-        hoy = pd.Timestamp.today().normalize()
+        if not df_busqueda.empty:
     
-        # Calcular días transcurridos y días de retraso
-        df_busqueda["DIAS_TRANSCURRIDOS"] = (
-            (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["FECHA DE ENVÍO"]).dt.days
-        )
+            hoy = pd.Timestamp.today().normalize()
     
-        df_busqueda["DIAS_RETRASO"] = (
-            (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["PROMESA DE ENTREGA"]).dt.days
-        )
-        df_busqueda["DIAS_RETRASO"] = df_busqueda["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
-    
-        # Formato de fechas DD/MM/YYYY
-        for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
-            df_busqueda[col] = df_busqueda[col].dt.strftime('%d/%m/%Y')
-    
-        # Mostrar las tarjetas usando df_busqueda
-        for index, row in df_busqueda.iterrows():
-            c1, c2, c3 = st.columns(3)
-    
-            # Tarjeta 1 – Información del Cliente
-            c1.markdown(
-                f"""
-                <div style='background-color:#1A1E25; padding:15px; border-radius:10px;'>
-                    <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Información del Cliente</div>
-                    <b>No Cliente:</b> {row['NO CLIENTE']}<br>
-                    <b>Nombre del Cliente:</b> {row['NOMBRE DEL CLIENTE']}<br>
-                    <b>Fletera:</b> {row['FLETERA']}<br>                
-                    <b>Número de Guía:</b> {row['NÚMERO DE GUÍA']}<br>
-                    <b>Costo de la Guía:</b> {row.get('COSTO DE LA GUÍA', '')}<br>
-                </div>
-                """,
-                unsafe_allow_html=True
+            # Calcular días transcurridos y días de retraso
+            df_busqueda["DIAS_TRANSCURRIDOS"] = (
+                (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["FECHA DE ENVÍO"]).dt.days
             )
     
-            # Tarjeta 2 – Fechas y seguimiento
-            dias_transcurridos = row["DIAS_TRANSCURRIDOS"]
-            dias_retraso = row["DIAS_RETRASO"]
-            color_retraso = "red" if dias_retraso > 0 else "white"
-    
-            c2.markdown(
-                f"""
-                <div style='background-color:#1A1E25; padding:15px; border-radius:10px;'>
-                    <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Fechas y Seguimiento</div>
-                    <b>Fecha de Envío:</b> {row['FECHA DE ENVÍO']}<br>
-                    <b>Promesa de Entrega:</b> {row['PROMESA DE ENTREGA']}<br>
-                    <b>Fecha de Entrega Real:</b> {row['FECHA DE ENTREGA REAL']}<br>
-                    <b>Días Transcurridos:</b> {dias_transcurridos}<br>
-                    <b>Días de Retraso:</b> <span style='color:{color_retraso};'>{dias_retraso}</span><br>
-                </div>
-                """,
-                unsafe_allow_html=True
+            df_busqueda["DIAS_RETRASO"] = (
+                (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["PROMESA DE ENTREGA"]).dt.days
             )
+            df_busqueda["DIAS_RETRASO"] = df_busqueda["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
     
-            # Tarjeta 3 – Estatus y observaciones
-            c3.markdown(
-                f"""
-                <div style='background-color:#1A1E25; padding:15px; border-radius:10px;'>
-                    <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Estatus y Observaciones</div>
-                    <b>Estatus:</b> {row['ESTATUS_CALCULADO']}<br>
-                    <b>Clase de Entrega:</b> {row['CLASES DE ENTREGA']}<br>                
-                    <b>Prioridad:</b> {row.get('PRIORIDAD', '')}<br>
-                    <b>Comentarios:</b> {row.get('COMENTARIOS', '')}<br>
-                    <b>Cantidad de Cajas:</b> {row['CANTIDAD DE CAJAS']}<br>                
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            # Formato de fechas DD/MM/YYYY
+            for col in ["FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL"]:
+                df_busqueda[col] = df_busqueda[col].dt.strftime('%d/%m/%Y')
     
-            st.markdown("<br>", unsafe_allow_html=True)
-
-    # -----------------------------
-    # TIMELINE DE SEGUIMIENTO (ESTILO AMAZON)
-    # -----------------------------
+            # -----------------------------
+            # TARJETAS (IGUALITAS A LAS TUYAS)
+            # -----------------------------
+            for index, row in df_busqueda.iterrows():
     
-    def estado_paso(fecha):
-        return "done" if pd.notna(fecha) else "pending"
+                c1, c2, c3 = st.columns(3)
     
-    for index, row in df_busqueda.iterrows():
-    
-        estado_envio = "done"
-        estado_promesa = "done"
-        estado_entrega = estado_paso(pd.to_datetime(row["FECHA DE ENTREGA REAL"], errors="coerce"))
-    
-        st.markdown(
-            f"""
-            <div style="background:#111827; padding:20px; border-radius:12px; margin-bottom:20px;">
-                <div style="text-align:center; color:yellow; font-size:18px; font-weight:bold; margin-bottom:15px;">
-                    📦 Seguimiento del Pedido {row['NÚMERO DE PEDIDO']}
-                </div>
-    
-                <div style="display:flex; justify-content:space-between; align-items:center; position:relative;">
-    
-                    <!-- Línea -->
-                    <div style="position:absolute; top:50%; left:10%; right:10%; height:4px; background:#374151; z-index:0;"></div>
-    
-                    <!-- Paso 1 -->
-                    <div style="text-align:center; z-index:1;">
-                        <div style="width:20px; height:20px; border-radius:50%; background:#22c55e; margin:auto;"></div>
-                        <div style="color:white; font-size:12px; margin-top:6px;">Enviado</div>
-                        <div style="color:gray; font-size:11px;">{row['FECHA DE ENVÍO']}</div>
+                # Tarjeta 1 – Información del Cliente
+                c1.markdown(
+                    f"""
+                    <div style='background-color:#1A1E25; padding:15px; border-radius:10px;'>
+                        <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Información del Cliente</div>
+                        <b>No Cliente:</b> {row['NO CLIENTE']}<br>
+                        <b>Nombre del Cliente:</b> {row['NOMBRE DEL CLIENTE']}<br>
+                        <b>Fletera:</b> {row['FLETERA']}<br>
+                        <b>Número de Guía:</b> {row['NÚMERO DE GUÍA']}<br>
+                        <b>Costo de la Guía:</b> {row.get('COSTO DE LA GUÍA', '')}<br>
                     </div>
+                    """,
+                    unsafe_allow_html=True
+                )
     
-                    <!-- Paso 2 -->
-                    <div style="text-align:center; z-index:1;">
-                        <div style="width:20px; height:20px; border-radius:50%; background:#22c55e; margin:auto;"></div>
-                        <div style="color:white; font-size:12px; margin-top:6px;">En tránsito</div>
-                        <div style="color:gray; font-size:11px;">Promesa: {row['PROMESA DE ENTREGA']}</div>
+                # Tarjeta 2 – Fechas y seguimiento
+                dias_transcurridos = row["DIAS_TRANSCURRIDOS"]
+                dias_retraso = row["DIAS_RETRASO"]
+                color_retraso = "red" if dias_retraso > 0 else "white"
+    
+                c2.markdown(
+                    f"""
+                    <div style='background-color:#1A1E25; padding:15px; border-radius:10px;'>
+                        <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Fechas y Seguimiento</div>
+                        <b>Fecha de Envío:</b> {row['FECHA DE ENVÍO']}<br>
+                        <b>Promesa de Entrega:</b> {row['PROMESA DE ENTREGA']}<br>
+                        <b>Fecha de Entrega Real:</b> {row['FECHA DE ENTREGA REAL']}<br>
+                        <b>Días Transcurridos:</b> {dias_transcurridos}<br>
+                        <b>Días de Retraso:</b> <span style='color:{color_retraso};'>{dias_retraso}</span><br>
                     </div>
+                    """,
+                    unsafe_allow_html=True
+                )
     
-                    <!-- Paso 3 -->
-                    <div style="text-align:center; z-index:1;">
-                        <div style="
-                            width:20px; 
-                            height:20px; 
-                            border-radius:50%; 
-                            background:{'#22c55e' if estado_entrega=='done' else '#f97316'};
-                            margin:auto;">
+                # Tarjeta 3 – Estatus y observaciones
+                c3.markdown(
+                    f"""
+                    <div style='background-color:#1A1E25; padding:15px; border-radius:10px;'>
+                        <div style='color:yellow; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;'>Estatus y Observaciones</div>
+                        <b>Estatus:</b> {row['ESTATUS_CALCULADO']}<br>
+                        <b>Clase de Entrega:</b> {row['CLASES DE ENTREGA']}<br>
+                        <b>Prioridad:</b> {row.get('PRIORIDAD', '')}<br>
+                        <b>Comentarios:</b> {row.get('COMENTARIOS', '')}<br>
+                        <b>Cantidad de Cajas:</b> {row['CANTIDAD DE CAJAS']}<br>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+    
+                st.markdown("<br>", unsafe_allow_html=True)
+    
+                # -----------------------------
+                # TIMELINE ESTILO AMAZON
+                # -----------------------------
+                entregado = row["FECHA DE ENTREGA REAL"] not in ["NaT", None, ""]
+    
+                st.markdown(
+                    f"""
+                    <div style="background:#111827; padding:20px; border-radius:12px; margin-bottom:30px;">
+                        <div style="text-align:center; color:yellow; font-size:18px; font-weight:bold; margin-bottom:15px;">
+                            📦 Seguimiento del Pedido {row['NÚMERO DE PEDIDO']}
                         </div>
-                        <div style="color:white; font-size:12px; margin-top:6px;">
-                            {'Entregado' if estado_entrega=='done' else 'En espera'}
-                        </div>
-                        <div style="color:gray; font-size:11px;">
-                            {row['FECHA DE ENTREGA REAL'] if estado_entrega=='done' else 'Pendiente'}
+    
+                        <div style="display:flex; justify-content:space-between; align-items:center; position:relative;">
+                            <div style="position:absolute; top:50%; left:10%; right:10%; height:4px; background:#374151;"></div>
+    
+                            <div style="text-align:center;">
+                                <div style="width:18px; height:18px; border-radius:50%; background:#22c55e; margin:auto;"></div>
+                                <div style="color:white; font-size:12px;">Enviado</div>
+                                <div style="color:gray; font-size:11px;">{row['FECHA DE ENVÍO']}</div>
+                            </div>
+    
+                            <div style="text-align:center;">
+                                <div style="width:18px; height:18px; border-radius:50%; background:#22c55e; margin:auto;"></div>
+                                <div style="color:white; font-size:12px;">En tránsito</div>
+                                <div style="color:gray; font-size:11px;">{row['PROMESA DE ENTREGA']}</div>
+                            </div>
+    
+                            <div style="text-align:center;">
+                                <div style="width:18px; height:18px; border-radius:50%; background:{'#22c55e' if entregado else '#f97316'}; margin:auto;"></div>
+                                <div style="color:white; font-size:12px;">{'Entregado' if entregado else 'En espera'}</div>
+                                <div style="color:gray; font-size:11px;">{row['FECHA DE ENTREGA REAL'] if entregado else 'Pendiente'}</div>
+                            </div>
                         </div>
                     </div>
+                    """,
+                    unsafe_allow_html=True
+                )
     
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        else:
+            st.warning("No se encontró ningún pedido con ese número.")
     
     # --------------------------------------------------
     # KPIs
@@ -796,6 +783,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
