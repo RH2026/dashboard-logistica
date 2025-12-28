@@ -333,15 +333,21 @@ if st.session_state.logueado:
             estilo_card = "background-color:#1A1E25; padding:15px; border-radius:10px; border: 1px solid #374151; min-height: 250px;"
     
             with c1:
-                # TARJETA 1: Información de Envío y Cliente
+                paqueteria = row.get('FLETERA', 'N/A')
+                costo = row.get('COSTO DE LA GUÍA', 0)
+                try:
+                    costo_fmt = f"${float(costo):,.2f}"
+                except:
+                    costo_fmt = f"${costo}"
+    
                 st.markdown(f"""
                     <div style='{estilo_card}'>
                         <div style='color:yellow; font-weight:bold; text-align:center; margin-bottom:10px;'>Información Cliente</div>
-                        <b>NO CLIENTE:</b> {row['No Cliente']}<br>
-                        <b>NOMBRE DEL CLIENTE:</b> {row['Nombre del Cliente']}<br>
-                        <b>DESTINO:</b> {row['Destino']}<br>
-                        <b>FLETERA:</b> {row['Fletera']}<br>
-                        <b>GUÍA:</b> {row['Número de Guía']}
+                        <b>No Cliente:</b> {row['NO CLIENTE']}<br>
+                        <b>Nombre:</b> {row['NOMBRE DEL CLIENTE']}<br>
+                        <b>Fletera:</b> {paqueteria}<br>
+                        <b>Guía:</b> {row['NÚMERO DE GUÍA']}<br>
+                        <b>Costo de la Guía:</b> {costo_fmt}
                     </div>
                 """, unsafe_allow_html=True)
     
@@ -753,6 +759,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
