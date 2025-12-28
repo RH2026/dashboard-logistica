@@ -397,7 +397,6 @@ if st.session_state.logueado:
         unsafe_allow_html=True
         )
         
-        # -----------------------------
         # TIMELINE ESTILO AMAZON
         # -----------------------------
         fecha_envio = row["FECHA DE ENVÍO"]
@@ -407,7 +406,7 @@ if st.session_state.logueado:
         entregado = pd.notna(fecha_entrega)
         
         st.markdown(
-        textwrap.dedent(f"""
+            textwrap.dedent(f"""
         <div style="background:#111827; padding:20px; border-radius:12px; margin-bottom:30px;">
             <div style="text-align:center; color:yellow; font-size:18px; font-weight:bold; margin-bottom:15px;">
                 📦 Seguimiento del Pedido {row['NÚMERO DE PEDIDO']}
@@ -446,7 +445,7 @@ if st.session_state.logueado:
             </div>
         </div>
         """),
-        unsafe_allow_html=True
+            unsafe_allow_html=True
         )
     
     # --------------------------------------------------
@@ -813,6 +812,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
