@@ -359,13 +359,17 @@ if st.session_state.logueado:
             st.write("") # Espaciador
     
             # --- 2. EL TIMELINE (TODO DENTRO DE UN SOLO MARKDOWN) ---
+            # Asegúrate de definir estas variables antes
             entregado = pd.notna(row["FECHA DE ENTREGA REAL"])
+            f_envio = row['FECHA DE ENVÍO'].strftime('%d/%m/%Y') if pd.notna(row['FECHA DE ENVÍO']) else "---"
+            f_prom = row['PROMESA DE ENTREGA'].strftime('%d/%m/%Y') if pd.notna(row['PROMESA DE ENTREGA']) else "---"
+            fecha_fin = row["FECHA DE ENTREGA REAL"].strftime('%d/%m/%Y') if entregado else "Pendiente"
             color_fin = "#22c55e" if entregado else "#f97316"
             texto_fin = "Entregado" if entregado else "En espera"
-            fecha_fin = row["FECHA DE ENTREGA REAL"].strftime('%d/%m/%Y') if entregado else "Pendiente"
-    
+            
+            # ESTA ES LA PARTE CLAVE: Todo debe ir en un solo st.markdown
             st.markdown(f"""
-                <div style="background:#111827; padding:25px; border-radius:12px; border: 1px solid #374151;">
+                <div style="background:#111827; padding:25px; border-radius:12px; border: 1px solid #374151; margin-top: 20px;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; position:relative; width: 100%;">
                         
                         <div style="position:absolute; top:10px; left:10%; right:10%; height:4px; background:#374151; z-index:0;"></div>
@@ -375,13 +379,13 @@ if st.session_state.logueado:
                             <div style="color:white; font-size:12px; font-weight:bold;">Enviado</div>
                             <div style="color:gray; font-size:11px;">{f_envio}</div>
                         </div>
-    
+            
                         <div style="text-align:center; z-index:1; width: 100px;">
                             <div style="width:20px; height:20px; border-radius:50%; background:#22c55e; margin: 0 auto 10px auto; border: 3px solid #111827;"></div>
                             <div style="color:white; font-size:12px; font-weight:bold;">En tránsito</div>
                             <div style="color:gray; font-size:11px;">Promesa: {f_prom}</div>
                         </div>
-    
+            
                         <div style="text-align:center; z-index:1; width: 100px;">
                             <div style="width:20px; height:20px; border-radius:50%; background:{color_fin}; margin: 0 auto 10px auto; border: 3px solid #111827;"></div>
                             <div style="color:white; font-size:12px; font-weight:bold;">{texto_fin}</div>
@@ -389,9 +393,7 @@ if st.session_state.logueado:
                         </div>
                     </div>
                 </div>
-            """, unsafe_allow_html=True)
-            
-            st.divider()
+            """, unsafe_allow_html=True) # <--- ESTE PARÁMETRO ES OBLIGATORIO
     
     # --------------------------------------------------
     # KPIs
@@ -757,6 +759,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
