@@ -3,7 +3,7 @@ import pandas as pd
 import altair as alt
 import time
 import base64   # 👈 aquí
-
+import textwrap
 
 def get_base64_image(image_path):  # 👈 aquí
     with open(image_path, "rb") as img_file:
@@ -407,7 +407,7 @@ if st.session_state.logueado:
         entregado = pd.notna(fecha_entrega)
         
         st.markdown(
-        f"""
+        textwrap.dedent(f"""
         <div style="background:#111827; padding:20px; border-radius:12px; margin-bottom:30px;">
             <div style="text-align:center; color:yellow; font-size:18px; font-weight:bold; margin-bottom:15px;">
                 📦 Seguimiento del Pedido {row['NÚMERO DE PEDIDO']}
@@ -445,7 +445,7 @@ if st.session_state.logueado:
                 </div>
             </div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True
         )
     
@@ -813,6 +813,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
