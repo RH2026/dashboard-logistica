@@ -210,34 +210,33 @@ else:
     # --- BLOQUE: ESTILO PERSONALIZADO PARA EL BOTÓN DE CIERRE ---
     st.markdown("""
         <style>
-        /* Buscamos el botón de la sidebar que contiene el texto específico */
-        /* Nota: Streamlit usa botones secundarios por defecto en la sidebar */
-        div[data-testid="stSidebar"] button[kind="secondary"] p:contains("Cerrar sesión") {
-            color: #ff4b4b !important;
-        }
-        
-        div[data-testid="stSidebar"] button:has(p:contains("Cerrar sesión")) {
+        /* Estilo para el contenedor personalizado del botón de salida */
+        div.logout-container button {
             background-color: transparent !important;
-            border: 1px solid rgba(255, 75, 75, 0.4) !important;
             color: #ff4b4b !important;
+            border: 1px solid rgba(255, 75, 75, 0.5) !important;
+            border-radius: 8px !important;
             transition: all 0.3s ease !important;
         }
 
         /* Efecto Hover */
-        div[data-testid="stSidebar"] button:has(p:contains("Cerrar sesión")):hover {
+        div.logout-container button:hover {
             background-color: rgba(255, 75, 75, 0.1) !important;
             border-color: #ff4b4b !important;
+            color: #ff0000 !important;
         }
         </style>
     """, unsafe_allow_html=True)
     
-    # Aplicamos 'use_container_width' para que sea idéntico al de Limpiar Filtros
-    # El texto debe coincidir EXACTAMENTE con el del CSS arriba ("Cerrar sesión")
-    if st.sidebar.button("Cerrar sesión", use_container_width=True):
-        st.session_state.clear()
-        st.rerun()
+    # Envolvemos el botón en un contenedor con la clase 'logout-container'
+    with st.sidebar.container():
+        st.markdown('<div class="logout-container">', unsafe_allow_html=True)
+        if st.sidebar.button("Cerrar sesión", use_container_width=True):
+            st.session_state.clear()
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    st.sidebar.markdown("---") # Separador visual para mayor orden
+    st.sidebar.markdown("---") # Separador visual
 
 # --------------------------------------------------
 # 👋 SALUDO PERSONALIZADO (SOLO ESTO SE AGREGÓ)
@@ -970,6 +969,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
