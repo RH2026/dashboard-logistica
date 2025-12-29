@@ -290,25 +290,23 @@ if st.session_state.logueado:
 
     df = cargar_datos()
 
-    # --------------------------------------------------
-    # SIDEBAR – FILTROS (BÚSQUEDA POR CLIENTE O GUÍA)
+    #---------------------------------------------------
+    # SIDEBAR – FILTROS (SIN ERRORES)
     # --------------------------------------------------
     st.sidebar.header("Filtros")
     
     # 1. FUNCIÓN PARA RESETEAR TODOS LOS VALORES
     def limpiar_filtros():
-        # Resetear texto de búsqueda (Cliente/Guía)
         st.session_state.filtro_cliente_actual = ""
         st.session_state.filtro_cliente_input = ""
         
-        # Resetear Fechas al rango completo original
+        # Resetear Fechas al rango original
         f_min_reset = df["FECHA DE ENVÍO"].min()
         f_max_reset = df["FECHA DE ENVÍO"].max()
         st.session_state["fecha_filtro"] = (f_min_reset, f_max_reset)
             
-        # Resetear Fletera al valor vacío
+        # Resetear Fletera
         st.session_state["fletera_filtro"] = ""
-        
         st.rerun()
     
     # 2. BOTÓN DE LIMPIEZA
@@ -325,22 +323,25 @@ if st.session_state.logueado:
         st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente_input
     
     st.sidebar.text_input(
-        "No. Cliente o Número de Guía", # Título actualizado para el usuario
+        "No. Cliente o Número de Guía",
         value=st.session_state.filtro_cliente_actual,
         key="filtro_cliente_input",
         on_change=actualizar_filtro
     )
     
-    # --- FILTRO FECHA DE ENVÍO ---
+    # --- FILTRO FECHA DE ENVÍO (SOLUCIÓN AL CUADRO AMARILLO) ---
     fecha_min_data = df["FECHA DE ENVÍO"].min()
     fecha_max_data = df["FECHA DE ENVÍO"].max()
     
+    # Inicializamos la key si no existe para evitar el conflicto con 'value'
+    if "fecha_filtro" not in st.session_state:
+        st.session_state["fecha_filtro"] = (fecha_min_data, fecha_max_data)
+
     rango_fechas = st.sidebar.date_input(
         "Fecha de envío",
-        value=(fecha_min_data, fecha_max_data),
         min_value=fecha_min_data,
         max_value=fecha_max_data,
-        key="fecha_filtro"
+        key="fecha_filtro" # Streamlit usa el valor del session_state automáticamente
     )
     
     # --- FILTRO FLETERA ---
@@ -352,18 +353,19 @@ if st.session_state.logueado:
     )
     
     # --------------------------------------------------
-    # APLICACIÓN DE FILTROS AL DATAFRAME
+    # APLICACIÓN DE FILTROS AL DATAFRAME (SOLUCIÓN KEYERROR)
     # --------------------------------------------------
     df_filtrado = df.copy()
     
-    # Filtrar Cliente O Guía (Búsqueda combinada)
     valor_buscado = st.session_state.filtro_cliente_actual.strip()
     if valor_buscado != "":
-        # Creamos dos filtros y usamos el símbolo '|' que significa 'O'
-        mask_cliente = df_filtrado["NO CLIENTE"].astype(str).str.contains(valor_buscado, case=False, na=False)
-        mask_guia = df_filtrado["GUÍA"].astype(str).str.contains(valor_buscado, case=False, na=False)
+        # Nombres de columnas exactos con acentos
+        col_cliente = "NO CLIENTE"
+        col_guia = "NÚMERO DE GUÍA" 
         
-        # Se queda con los registros que coincidan con cualquiera de los dos
+        mask_cliente = df_filtrado[col_cliente].astype(str).str.contains(valor_buscado, case=False, na=False)
+        mask_guia = df_filtrado[col_guia].astype(str).str.contains(valor_buscado, case=False, na=False)
+        
         df_filtrado = df_filtrado[mask_cliente | mask_guia]
     
     # Filtrar Fecha
@@ -958,6 +960,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
