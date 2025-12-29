@@ -839,7 +839,7 @@ if st.session_state.logueado:
 )
     
     # --------------------------------------------------
-    # GRÁFICOS POR PAQUETERÍA – CORREGIDO
+    # GRÁFICOS POR PAQUETERÍA – VERSIÓN FORZADA
     # --------------------------------------------------
     st.markdown(
         """
@@ -854,7 +854,11 @@ if st.session_state.logueado:
     
     g1, g2 = st.columns(2)
     
-    # --- 1. EN TRÁNSITO POR PAQUETERÍA ---
+    # --- CONFIGURACIÓN DE TEXTO (Para reutilizar) ---
+    # Puedes cambiar el 22 por un número más grande si aún lo ves pequeño
+    TAMANO_FUENTE = 22 
+    
+    # --- 1. EN TRÁNSITO ---
     df_transito = (
         df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"]
         .groupby("FLETERA")
@@ -862,35 +866,37 @@ if st.session_state.logueado:
         .reset_index(name="PEDIDOS")
     )
     
-    bars_transito = alt.Chart(df_transito).mark_bar(
-        cornerRadiusTopLeft=6,
-        cornerRadiusTopRight=6
-    ).encode(
-        x=alt.X("FLETERA:N", title="Paquetería"),
+    # Creamos la base
+    base_t = alt.Chart(df_transito).encode(
+        x=alt.X("FLETERA:N", title="Paquetería")
+    )
+    
+    # Barras
+    bars_t = base_t.mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
         y=alt.Y("PEDIDOS:Q", title="Pedidos en tránsito"),
-        tooltip=["FLETERA", "PEDIDOS"],
         color=alt.value("#FFC107")
     )
     
-    # Definimos el texto GRANDE antes de dibujar el primer gráfico
-    text_transito = bars_transito.mark_text(
+    # Texto (FORZADO)
+    text_t = base_t.mark_text(
         align='center',
         baseline='bottom',
-        dy=-10,
-        color='white',
-        fontSize=16,
-        fontWeight='bold'
+        dy=-12,  # Más espacio para que no choque
+        fontSize=TAMANO_FUENTE,
+        fontWeight='bold',
+        color='white'
     ).encode(
-        text='PEDIDOS:Q'
+        y=alt.Y("PEDIDOS:Q"),
+        text=alt.Text("PEDIDOS:Q")
     )
     
-    # Unimos barras + texto y enviamos a g1
-    graf_transito_final = (bars_transito + text_transito).properties(height=320)
+    graf_transito_final = (bars_t + text_t).properties(height=340)
+    
     g1.markdown("<h4 style='color:yellow; text-align:center;'>En tránsito</h4>", unsafe_allow_html=True)
     g1.altair_chart(graf_transito_final, use_container_width=True)
     
     
-    # --- 2. RETRASADOS POR PAQUETERÍA ---
+    # --- 2. RETRASADOS ---
     df_retrasados = (
         df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"]
         .groupby("FLETERA")
@@ -898,30 +904,29 @@ if st.session_state.logueado:
         .reset_index(name="PEDIDOS")
     )
     
-    bars_retrasados = alt.Chart(df_retrasados).mark_bar(
-        cornerRadiusTopLeft=6,
-        cornerRadiusTopRight=6
-    ).encode(
-        x=alt.X("FLETERA:N", title="Paquetería"),
+    base_r = alt.Chart(df_retrasados).encode(
+        x=alt.X("FLETERA:N", title="Paquetería")
+    )
+    
+    bars_r = base_r.mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
         y=alt.Y("PEDIDOS:Q", title="Pedidos retrasados"),
-        tooltip=["FLETERA", "PEDIDOS"],
         color=alt.value("#F44336")
     )
     
-    # Definimos el texto GRANDE para el segundo gráfico
-    text_retrasados = bars_retrasados.mark_text(
+    text_r = base_r.mark_text(
         align='center',
         baseline='bottom',
-        dy=-10,
-        color='white',
-        fontSize=14,
-        fontWeight='bold'
+        dy=-12,
+        fontSize=TAMANO_FUENTE,
+        fontWeight='bold',
+        color='white'
     ).encode(
-        text='PEDIDOS:Q'
+        y=alt.Y("PEDIDOS:Q"),
+        text=alt.Text("PEDIDOS:Q")
     )
     
-    # Unimos barras + texto y enviamos a g2
-    graf_retrasados_final = (bars_retrasados + text_retrasados).properties(height=320)
+    graf_retrasados_final = (bars_r + text_r).properties(height=340)
+    
     g2.markdown("<h4 style='color:#F44336; text-align:center;'>Retrasados</h4>", unsafe_allow_html=True)
     g2.altair_chart(graf_retrasados_final, use_container_width=True)
     
@@ -1024,6 +1029,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
