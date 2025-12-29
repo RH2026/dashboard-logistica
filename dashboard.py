@@ -45,7 +45,7 @@ if not st.session_state.splash_visto:
         flex-direction: column;
         justify-content: flex-start;
         align-items: center;
-        height: 100vh;
+        height: 70vh;
         padding-top: 160px;
         background-color: #0e1117;
     }
@@ -54,8 +54,8 @@ if not st.session_state.splash_visto:
         border: 6px solid #2a2a2a;
         border-top: 6px solid #00FFAA;
         border-radius: 50%;
-        width: 70px;
-        height: 70px;
+        width: 120px;
+        height: 120px;
         animation: spin 1s linear infinite;
         margin-bottom: 20px;
     }
@@ -995,6 +995,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
