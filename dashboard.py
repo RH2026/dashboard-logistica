@@ -294,19 +294,23 @@ if st.session_state.logueado:
     # SIDEBAR – FILTROS
     # -----------------------------
     st.sidebar.header("Filtros")
-
+    
     # 1. Función para resetear todos los valores
     def limpiar_filtros():
+        # Resetear texto de cliente
         st.session_state.filtro_cliente_actual = ""
         st.session_state.filtro_cliente_input = ""
-        # Usamos llaves para resetear componentes que no tienen session_state manual
+        
+        # Resetear Fecha de envío (eliminando la key para que tome el valor por defecto)
         if "fecha_filtro" in st.session_state:
             del st.session_state["fecha_filtro"]
-        if "fletera_filtro" in st.session_state:
-            del st.session_state["fletera_filtro"]
+            
+        # CORRECCIÓN PARA FLETERA: Asignar el valor vacío directamente a la key
+        st.session_state["fletera_filtro"] = ""
+        
         st.rerun()
     
-    # 2. Botón de limpieza (Lo ponemos arriba de los filtros para que sea visible)
+    # 2. Botón de limpieza
     if st.sidebar.button("Limpiar Filtros", use_container_width=True):
         limpiar_filtros()
     
@@ -330,7 +334,6 @@ if st.session_state.logueado:
     fecha_min = df["FECHA DE ENVÍO"].min()
     fecha_max = df["FECHA DE ENVÍO"].max()
     
-    # Agregamos 'key' para poder resetearlo
     rango_fechas = st.sidebar.date_input(
         "Fecha de envío",
         value=(fecha_min, fecha_max),
@@ -340,12 +343,11 @@ if st.session_state.logueado:
     )
     
     # --- FILTRO FLETERA ---
-    # Agregamos 'key' para poder resetearlo
     fletera_sel = st.sidebar.selectbox(
         "Selecciona Fletera",
         options=[""] + sorted(df["FLETERA"].dropna().unique()),
         index=0,
-        key="fletera_filtro"
+        key="fletera_filtro"  # Esta key es la que limpiamos en la función superior
     )
     
     # -----------------------------
@@ -928,6 +930,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
