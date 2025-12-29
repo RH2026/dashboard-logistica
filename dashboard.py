@@ -291,17 +291,14 @@ if st.session_state.logueado:
     df = cargar_datos()
 
     # --------------------------------------------------
-    # SIDEBAR – FILTROS (BLOQUE COMPLETO SIN ERRORES)
+    # SIDEBAR – FILTROS (BLOQUE COMPLETO - VERSIÓN FINAL)
     # --------------------------------------------------
     st.sidebar.header("Filtros")
     
-    # 1. FUNCIÓN DE LIMPIEZA (IDÉNTICA A LA TUYA)
     def limpiar_filtros():
         st.session_state.filtro_cliente_actual = ""
         st.session_state.filtro_cliente_input = ""
-        f_min_reset = df["FECHA DE ENVÍO"].min()
-        f_max_reset = df["FECHA DE ENVÍO"].max()
-        st.session_state["fecha_filtro"] = (f_min_reset, f_max_reset)
+        st.session_state["fecha_filtro"] = (df["FECHA DE ENVÍO"].min(), df["FECHA DE ENVÍO"].max())
         st.session_state["fletera_filtro"] = ""
         st.rerun()
     
@@ -310,7 +307,6 @@ if st.session_state.logueado:
     
     st.sidebar.markdown("---")
     
-    # --- BUSCADOR (CLIENTE O GUÍA) ---
     if "filtro_cliente_actual" not in st.session_state:
         st.session_state.filtro_cliente_actual = ""
     
@@ -324,21 +320,14 @@ if st.session_state.logueado:
         on_change=actualizar_filtro
     )
     
-    # --- CALENDARIO ---
-    fecha_min_data = df["FECHA DE ENVÍO"].min()
-    fecha_max_data = df["FECHA DE ENVÍO"].max()
-    
-    if "fecha_filtro" not in st.session_state:
-        st.session_state["fecha_filtro"] = (fecha_min_data, fecha_max_data)
-
+    # Rango de fechas
     rango_fechas = st.sidebar.date_input(
         "Fecha de envío",
-        min_value=fecha_min_data,
-        max_value=fecha_max_data,
+        min_value=df["FECHA DE ENVÍO"].min(),
+        max_value=df["FECHA DE ENVÍO"].max(),
         key="fecha_filtro"
     )
     
-    # --- SELECTOR DE FLETERA ---
     fletera_sel = st.sidebar.selectbox(
         "Selecciona Fletera",
         options=[""] + sorted(df["FLETERA"].dropna().unique()),
@@ -347,38 +336,31 @@ if st.session_state.logueado:
     )
     
     # --------------------------------------------------
-    # LÓGICA DE FILTRADO (SOLUCIÓN DEFINITIVA)
+    # APLICACIÓN DE FILTROS (ELIMINANDO RESTRICCIONES)
     # --------------------------------------------------
     df_filtrado = df.copy()
     
+    # 1. Filtro de Texto (Cliente o Guía) - Búsqueda Flexible
     valor_buscado = str(st.session_state.filtro_cliente_actual).strip().lower()
     
-    # PRIORIDAD: Si hay texto, filtramos y mostramos sin importar fechas
     if valor_buscado != "":
-        col_cliente = "NO CLIENTE"
-        col_guia = "NÚMERO DE GUÍA"
-        
-        mask_cliente = df_filtrado[col_cliente].astype(str).str.strip().str.lower().str.contains(valor_buscado, na=False)
-        mask_guia = df_filtrado[col_guia].astype(str).str.strip().str.lower().str.contains(valor_buscado, na=False)
+        # Convertimos las columnas a string, quitamos espacios y pasamos a minúsculas
+        # Usamos .contains para que encuentre el dato aunque haya basura en la celda
+        mask_cliente = df_filtrado["NO CLIENTE"].astype(str).str.lower().str.contains(valor_buscado, na=False)
+        mask_guia = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.lower().str.contains(valor_buscado, na=False)
         
         df_filtrado = df_filtrado[mask_cliente | mask_guia]
-        
+    
+    # 2. Filtro de Fechas (Solo se aplica si el buscador está vacío para no estorbar)
     else:
-        # SI EL BUSCADOR ESTÁ VACÍO, aplicamos filtros de Fecha y Fletera
         if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
             f_inicio, f_fin = rango_fechas
-            
-            # --- CORRECCIÓN DE ERROR DE COMPARACIÓN ---
-            # Convertimos la columna y los límites a objetos de tiempo de Pandas (Timestamp)
-            # Esto garantiza que ambos lados de la comparación sean iguales
-            col_fechas_dt = pd.to_datetime(df_filtrado["FECHA DE ENVÍO"], errors='coerce')
-            f_inicio_dt = pd.to_datetime(f_inicio)
-            f_fin_dt = pd.to_datetime(f_fin)
-            
-            df_filtrado = df_filtrado[(col_fechas_dt >= f_inicio_dt) & (col_fechas_dt <= f_fin_dt)]
+            # Aseguramos comparación entre tipos iguales
+            col_fecha = pd.to_datetime(df_filtrado["FECHA DE ENVÍO"]).dt.date
+            df_filtrado = df_filtrado[(col_fecha >= f_inicio) & (col_fecha <= f_fin)]
             
         if fletera_sel != "":
-            df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
+            df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str) == str(fletera_sel)]
     
     # -----------------------------
     # APLICAR FILTROS A DF
@@ -960,6 +942,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
