@@ -914,7 +914,7 @@ if st.session_state.logueado:
         baseline='bottom',
         dy=-10,
         color='white',
-        fontSize=16,
+        fontSize=14,
         fontWeight='bold'
     ).encode(
         text='PEDIDOS:Q'
@@ -1024,6 +1024,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
