@@ -207,8 +207,32 @@ if not st.session_state.logueado:
 else:
     st.sidebar.title("🔐 Sesión")
     
+    # --- BLOQUE: ESTILO PERSONALIZADO PARA EL BOTÓN DE CIERRE ---
+    st.markdown("""
+        <style>
+        /* Buscamos el botón de la sidebar que contiene el texto específico */
+        /* Nota: Streamlit usa botones secundarios por defecto en la sidebar */
+        div[data-testid="stSidebar"] button[kind="secondary"] p:contains("Cerrar sesión") {
+            color: #ff4b4b !important;
+        }
+        
+        div[data-testid="stSidebar"] button:has(p:contains("Cerrar sesión")) {
+            background-color: transparent !important;
+            border: 1px solid rgba(255, 75, 75, 0.4) !important;
+            color: #ff4b4b !important;
+            transition: all 0.3s ease !important;
+        }
+
+        /* Efecto Hover */
+        div[data-testid="stSidebar"] button:has(p:contains("Cerrar sesión")):hover {
+            background-color: rgba(255, 75, 75, 0.1) !important;
+            border-color: #ff4b4b !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
     
     # Aplicamos 'use_container_width' para que sea idéntico al de Limpiar Filtros
+    # El texto debe coincidir EXACTAMENTE con el del CSS arriba ("Cerrar sesión")
     if st.sidebar.button("Cerrar sesión", use_container_width=True):
         st.session_state.clear()
         st.rerun()
@@ -946,6 +970,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
