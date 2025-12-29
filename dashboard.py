@@ -291,37 +291,6 @@ if st.session_state.logueado:
     df = cargar_datos()
 
     # --------------------------------------------------
-    # BLOQUE: ESTILO Y BOTÓN DE CERRAR SESIÓN
-    # --------------------------------------------------
-    
-    # Inyectamos CSS para que este botón sea transparente con borde
-    st.markdown("""
-        <style>
-        /* Buscamos el botón dentro de nuestro div específico */
-        div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlock"] div.stButton > button {
-            border: 1px solid rgba(255, 75, 75, 0.4) !important; /* Borde rojo sutil */
-            background-color: transparent !important;           /* Fondo transparente */
-            color: #ff4b4b !important;                          /* Texto rojo */
-            transition: all 0.3s ease;
-        }
-        
-        /* Efecto cuando pasas el mouse */
-        div.stButton > button:hover {
-            background-color: rgba(255, 75, 75, 0.05) !important;
-            border-color: #ff4b4b !important;
-            box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-    st.sidebar.markdown("---") # Separador visual
-    
-    # El botón de cerrar sesión al final de la sidebar
-    if st.sidebar.button("🔒 Cerrar Sesión", use_container_width=True):
-        st.session_state.clear() # Borra la memoria de la sesión
-        st.rerun()               # Reinicia la app
-
-    # --------------------------------------------------
     # SIDEBAR – FILTROS (BLOQUE UNIFICADO Y CORREGIDO)
     # --------------------------------------------------
     st.sidebar.header("Filtros")
@@ -977,6 +946,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
