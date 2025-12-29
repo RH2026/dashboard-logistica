@@ -291,13 +291,13 @@ if st.session_state.logueado:
     df = cargar_datos()
 
     # --------------------------------------------------
-    # SIDEBAR – FILTROS (CÓDIGO COMPLETO CORREGIDO)
+    # SIDEBAR – FILTROS (BÚSQUEDA POR CLIENTE O GUÍA)
     # --------------------------------------------------
     st.sidebar.header("Filtros")
     
     # 1. FUNCIÓN PARA RESETEAR TODOS LOS VALORES
     def limpiar_filtros():
-        # Resetear texto de cliente
+        # Resetear texto de búsqueda (Cliente/Guía)
         st.session_state.filtro_cliente_actual = ""
         st.session_state.filtro_cliente_input = ""
         
@@ -306,10 +306,9 @@ if st.session_state.logueado:
         f_max_reset = df["FECHA DE ENVÍO"].max()
         st.session_state["fecha_filtro"] = (f_min_reset, f_max_reset)
             
-        # Resetear Fletera al valor vacío (index 0)
+        # Resetear Fletera al valor vacío
         st.session_state["fletera_filtro"] = ""
         
-        # Forzar actualización de la página
         st.rerun()
     
     # 2. BOTÓN DE LIMPIEZA
@@ -318,7 +317,7 @@ if st.session_state.logueado:
     
     st.sidebar.markdown("---")
     
-    # --- FILTRO POR CLIENTE ---
+    # --- FILTRO POR CLIENTE O GUÍA ---
     if "filtro_cliente_actual" not in st.session_state:
         st.session_state.filtro_cliente_actual = ""
     
@@ -326,7 +325,7 @@ if st.session_state.logueado:
         st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente_input
     
     st.sidebar.text_input(
-        "Ingresa el No Cliente",
+        "No. Cliente o Número de Guía", # Título actualizado para el usuario
         value=st.session_state.filtro_cliente_actual,
         key="filtro_cliente_input",
         on_change=actualizar_filtro
@@ -341,7 +340,7 @@ if st.session_state.logueado:
         value=(fecha_min_data, fecha_max_data),
         min_value=fecha_min_data,
         max_value=fecha_max_data,
-        key="fecha_filtro"  # Key vinculada a la función de limpieza
+        key="fecha_filtro"
     )
     
     # --- FILTRO FLETERA ---
@@ -349,7 +348,7 @@ if st.session_state.logueado:
         "Selecciona Fletera",
         options=[""] + sorted(df["FLETERA"].dropna().unique()),
         index=0,
-        key="fletera_filtro"  # Key vinculada a la función de limpieza
+        key="fletera_filtro"
     )
     
     # --------------------------------------------------
@@ -357,15 +356,17 @@ if st.session_state.logueado:
     # --------------------------------------------------
     df_filtrado = df.copy()
     
-    # Filtrar Cliente
-    if st.session_state.filtro_cliente_actual.strip() != "":
-        df_filtrado = df_filtrado[
-            df_filtrado["NO CLIENTE"].str.contains(
-                st.session_state.filtro_cliente_actual.strip(), case=False, na=False
-            )
-        ]
+    # Filtrar Cliente O Guía (Búsqueda combinada)
+    valor_buscado = st.session_state.filtro_cliente_actual.strip()
+    if valor_buscado != "":
+        # Creamos dos filtros y usamos el símbolo '|' que significa 'O'
+        mask_cliente = df_filtrado["NO CLIENTE"].astype(str).str.contains(valor_buscado, case=False, na=False)
+        mask_guia = df_filtrado["GUÍA"].astype(str).str.contains(valor_buscado, case=False, na=False)
+        
+        # Se queda con los registros que coincidan con cualquiera de los dos
+        df_filtrado = df_filtrado[mask_cliente | mask_guia]
     
-    # Filtrar Fecha (Validamos que el rango esté completo)
+    # Filtrar Fecha
     if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
         f_inicio, f_fin = rango_fechas
         df_filtrado = df_filtrado[
@@ -957,6 +958,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
