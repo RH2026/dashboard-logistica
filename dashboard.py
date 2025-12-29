@@ -291,7 +291,7 @@ if st.session_state.logueado:
     df = cargar_datos()
 
     # --------------------------------------------------
-    # SIDEBAR – FILTROS (VERSIÓN FINAL BLINDADA)
+    # SIDEBAR – FILTROS (BLOQUE UNIFICADO Y CORREGIDO)
     # --------------------------------------------------
     st.sidebar.header("Filtros")
     
@@ -325,7 +325,7 @@ if st.session_state.logueado:
         on_change=actualizar_filtro
     )
     
-    # --- CALENDARIO (CON VALIDACIÓN DE TIPO) ---
+    # --- CALENDARIO ---
     f_min_data = df["FECHA DE ENVÍO"].min()
     f_max_data = df["FECHA DE ENVÍO"].max()
     
@@ -348,29 +348,31 @@ if st.session_state.logueado:
     )
     
     # --------------------------------------------------
-    # APLICACIÓN DE FILTROS (SOLUCIÓN A TODOS LOS ERRORES)
+    # APLICACIÓN DE FILTROS (LÓGICA FINAL SIN REPETICIONES)
     # --------------------------------------------------
+    # Creamos la copia una sola vez
     df_filtrado = df.copy()
     
     valor_buscado = str(st.session_state.filtro_cliente_actual).strip().lower()
     
-    # PRIORIDAD 1: Si hay texto, filtramos y mostramos (IGNORA FECHAS)
+    # PRIORIDAD 1: Si el usuario escribió algo en el buscador
     if valor_buscado != "":
         col_cliente = "NO CLIENTE"
         col_guia = "NÚMERO DE GUÍA"
         
-        # Limpieza extrema: convertimos a texto, quitamos .0 y espacios
+        # Función para limpiar datos (quitar .0 de Excel y espacios)
         def limpiar_col(s):
             return s.astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
 
         mask_cliente = limpiar_col(df_filtrado[col_cliente]).str.contains(valor_buscado, na=False)
         mask_guia = limpiar_col(df_filtrado[col_guia]).str.contains(valor_buscado, na=False)
         
+        # Filtramos por texto (esto ignora fechas para que el dato aparezca sí o sí)
         df_filtrado = df_filtrado[mask_cliente | mask_guia]
         
-    # PRIORIDAD 2: Si no hay texto, aplicamos fechas y fletera
+    # PRIORIDAD 2: Si el buscador está vacío, aplicamos filtros normales
     else:
-        # VALIDACIÓN BLINDADA: Solo filtramos si hay exactamente 2 fechas (inicio y fin)
+        # Validación de fechas para evitar el TypeError: len()
         if isinstance(rango_fechas, (list, tuple)) and len(rango_fechas) == 2:
             f_inicio, f_fin = rango_fechas
             
@@ -381,30 +383,9 @@ if st.session_state.logueado:
             
             df_filtrado = df_filtrado[(col_fechas_dt >= f_ini_dt) & (col_fechas_dt <= f_fin_dt)]
             
-        # Filtro de fletera (solo si no hay búsqueda por texto)
+        # Filtro de fletera
         if fletera_sel != "":
             df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
-    
-    # -----------------------------
-    # APLICAR FILTROS A DF
-    # -----------------------------
-    df_filtrado = df.copy()
-    
-    # Cliente
-    if st.session_state.filtro_cliente_actual.strip() != "":
-        df_filtrado = df_filtrado[
-            df_filtrado["NO CLIENTE"].str.contains(
-                st.session_state.filtro_cliente_actual.strip(), case=False, na=False
-            )
-        ]
-    
-    # Fecha de envío
-    if len(rango_fechas) == 2:
-        fecha_inicio, fecha_fin = rango_fechas
-        df_filtrado = df_filtrado[
-            (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(fecha_inicio)) &
-            (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(fecha_fin))
-        ]
     
     # -----------------------------
     # Tabla existente
@@ -965,6 +946,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
