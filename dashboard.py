@@ -128,6 +128,7 @@ if st.session_state.logueado:
 if not st.session_state.logueado:
     st.markdown("""
         <style>
+        /* 1. CAJA DE LOGIN */
         .stForm {
             background-color: #1e293b;
             padding: 25px;
@@ -136,19 +137,39 @@ if not st.session_state.logueado:
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         
-        /* Estilo de los inputs reales */
-        div[data-testid="stTextInputRootElement"], .stForm input {
+        /* 2. UNIFICACIÓN TOTAL DE COLOR (INPUTS Y OJO) */
+        /* Seleccionamos absolutamente todo el interior del input */
+        div[data-testid="stTextInputRootElement"], 
+        div[data-testid="stTextInputRootElement"] *, 
+        .stForm input {
             background-color: #475569 !important;
             color: white !important;
+            border: none !important;
+            box-shadow: none !important;
         }
 
-        /* OCULTAR COMPLETAMENTE LOS BOTONES NATIVOS DE GOOGLE */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button,
+        /* 3. BORDE ÚNICO EXTERIOR */
+        div[data-testid="stTextInputRootElement"] {
+            border: 1px solid #64748b !important;
+            border-radius: 8px !important;
+        }
+
+        /* 4. ELIMINAR CUALQUIER RESIDUO DEL BOTÓN DEL OJO */
+        button[aria-label="Show password"], 
+        button[aria-label="Hide password"],
+        div[data-testid="stTextInputAdornment"] {
+            background-color: transparent !important;
+            background: transparent !important;
+            border: none !important;
+        }
+
+        /* 5. BLOQUEO VISUAL DE SUGERENCIAS DE GOOGLE */
+        input::-webkit-credentials-auto-fill-button,
         input::-webkit-contacts-auto-fill-button,
-        input::-webkit-credentials-auto-fill-button {
+        input::-internal-autofill-selected {
             display: none !important;
             visibility: hidden !important;
+            opacity: 0 !important;
             pointer-events: none !important;
         }
 
@@ -882,6 +903,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
