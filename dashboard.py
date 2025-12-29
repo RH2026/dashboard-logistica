@@ -290,8 +290,8 @@ if st.session_state.logueado:
 
     df = cargar_datos()
 
-    #---------------------------------------------------
-    # SIDEBAR – FILTROS (SIN ERRORES)
+    # --------------------------------------------------
+    # SIDEBAR – FILTROS (CORREGIDO Y OPTIMIZADO)
     # --------------------------------------------------
     st.sidebar.header("Filtros")
     
@@ -329,11 +329,10 @@ if st.session_state.logueado:
         on_change=actualizar_filtro
     )
     
-    # --- FILTRO FECHA DE ENVÍO (SOLUCIÓN AL CUADRO AMARILLO) ---
+    # --- FILTRO FECHA DE ENVÍO ---
     fecha_min_data = df["FECHA DE ENVÍO"].min()
     fecha_max_data = df["FECHA DE ENVÍO"].max()
     
-    # Inicializamos la key si no existe para evitar el conflicto con 'value'
     if "fecha_filtro" not in st.session_state:
         st.session_state["fecha_filtro"] = (fecha_min_data, fecha_max_data)
 
@@ -341,7 +340,7 @@ if st.session_state.logueado:
         "Fecha de envío",
         min_value=fecha_min_data,
         max_value=fecha_max_data,
-        key="fecha_filtro" # Streamlit usa el valor del session_state automáticamente
+        key="fecha_filtro"
     )
     
     # --- FILTRO FLETERA ---
@@ -353,30 +352,33 @@ if st.session_state.logueado:
     )
     
     # --------------------------------------------------
-    # APLICACIÓN DE FILTROS AL DATAFRAME (SOLUCIÓN KEYERROR)
+    # APLICACIÓN DE FILTROS AL DATAFRAME
     # --------------------------------------------------
     df_filtrado = df.copy()
     
     valor_buscado = st.session_state.filtro_cliente_actual.strip()
+    
+    # PRIORIDAD: Si hay algo en el buscador, filtramos por eso y omitimos fechas
     if valor_buscado != "":
-        # Nombres de columnas exactos con acentos
         col_cliente = "NO CLIENTE"
-        col_guia = "NÚMERO DE GUÍA" 
+        col_guia = "NÚMERO DE GUÍA"
         
-        mask_cliente = df_filtrado[col_cliente].astype(str).str.contains(valor_buscado, case=False, na=False)
-        mask_guia = df_filtrado[col_guia].astype(str).str.contains(valor_buscado, case=False, na=False)
+        # Limpiamos espacios en las columnas del dataframe para asegurar el match
+        mask_cliente = df_filtrado[col_cliente].astype(str).str.strip().str.contains(valor_buscado, case=False, na=False)
+        mask_guia = df_filtrado[col_guia].astype(str).str.strip().str.contains(valor_buscado, case=False, na=False)
         
         df_filtrado = df_filtrado[mask_cliente | mask_guia]
-    
-    # Filtrar Fecha
-    if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
-        f_inicio, f_fin = rango_fechas
-        df_filtrado = df_filtrado[
-            (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(f_inicio)) &
-            (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(f_fin))
-        ]
-    
-    # Filtrar Fletera
+        
+    else:
+        # SI EL BUSCADOR ESTÁ VACÍO, aplicamos el filtro de fechas normal
+        if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
+            f_inicio, f_fin = rango_fechas
+            df_filtrado = df_filtrado[
+                (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(f_inicio)) &
+                (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(f_fin))
+            ]
+
+    # El filtro de Fletera se aplica al final sobre lo que quede
     if fletera_sel != "":
         df_filtrado = df_filtrado[df_filtrado["FLETERA"] == fletera_sel]
     
@@ -960,6 +962,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
