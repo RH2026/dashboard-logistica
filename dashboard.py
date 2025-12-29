@@ -206,7 +206,7 @@ if not st.session_state.logueado:
 
 else:
     st.sidebar.title("🔐 Sesión")
-    st.sidebar.success(f"Usuario: {st.session_state.usuario_actual}")
+    
     
     # Aplicamos 'use_container_width' para que sea idéntico al de Limpiar Filtros
     if st.sidebar.button("Cerrar sesión", use_container_width=True):
@@ -928,6 +928,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
