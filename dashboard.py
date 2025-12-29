@@ -122,6 +122,9 @@ if st.session_state.logueado:
 # --------------------------------------------------
 # LOGIN CENTRAL COMPACTO
 # --------------------------------------------------
+# --------------------------------------------------
+# LOGIN CENTRAL CON INPUTS Y BOTÓN "OJO" UNIFICADOS
+# --------------------------------------------------
 if not st.session_state.logueado:
     st.markdown("""
         <style>
@@ -129,23 +132,32 @@ if not st.session_state.logueado:
             background-color: #1e293b;
             padding: 25px;
             border-radius: 15px;
-            border: 1px solid #334155;
+            border: 1px solid #334151;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         
-        /* INPUTS MÁS CLAROS */
+        /* 1. ESTILO PARA LOS INPUTS (USUARIO Y CLAVE) */
         .stForm input {
-            background-color: #475569 !important; /* Gris azulado claro */
+            background-color: #475569 !important;
             color: white !important;
             border: 1px solid #64748b !important;
             border-radius: 8px !important;
         }
 
-        /* Cambia el color del texto cuando se escribe */
-        .stForm input::placeholder {
-            color: #cbd5e1 !important;
+        /* 2. ESTILO PARA LA CAJA DEL BOTÓN "OJO" */
+        /* Buscamos el contenedor del botón de visibilidad */
+        [data-testid="stTextInput-AdornmentInner"] {
+            background-color: #475569 !important;
+            border-radius: 0 8px 8px 0 !important;
         }
         
+        /* Aseguramos que el botón dentro no tenga fondo propio */
+        [data-testid="stTextInput-AdornmentInner"] button {
+            background-color: transparent !important;
+            border: none !important;
+            color: white !important;
+        }
+
         .login-header {
             text-align: center;
             color: white;
@@ -880,6 +892,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
