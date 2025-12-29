@@ -136,30 +136,32 @@ if not st.session_state.logueado:
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         
-        /* 1. COLOR PARA AMBOS INPUTS */
+        /* 1. COLOR BASE PARA LOS INPUTS */
         .stForm input {
             background-color: #475569 !important;
             color: white !important;
             border: 1px solid #64748b !important;
         }
 
-        /* 2. FORZAR COLOR EN EL CONTENEDOR DEL OJO */
-        /* Esto selecciona el recuadro que rodea al icono */
+        /* 2. ELIMINAR EL RECUADRO DEL ICONO (OJO) */
+        /* Seleccionamos el contenedor interno del ojo para que sea transparente */
+        div[data-testid="stTextInputAdornment"] {
+            background-color: transparent !important;
+            border: none !important;
+        }
+
+        /* Seleccionamos el botón del ojo directamente */
+        div[data-testid="stTextInputAdornment"] button {
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        /* 3. UNIFICAR TODO EL CUADRO DE TEXTO (Raíz) */
         div[data-testid="stTextInputRootElement"] {
             background-color: #475569 !important;
             border: 1px solid #64748b !important;
             border-radius: 8px !important;
-        }
-
-        /* Quitamos el fondo blanco/gris que Streamlit pone por defecto al botón del ojo */
-        div[data-testid="stTextInputAdornment"] {
-            background-color: transparent !important;
-        }
-        
-        button[aria-label="Show password"] {
-            background-color: transparent !important;
-            border: none !important;
-            color: white !important;
         }
 
         .login-header {
@@ -896,6 +898,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
