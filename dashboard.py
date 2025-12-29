@@ -356,7 +356,7 @@ if st.session_state.logueado:
     # --------------------------------------------------
     df_filtrado = df.copy()
     
-    # Normalizamos el valor buscado (le quitamos espacios y lo pasamos a minúsculas)
+    # Normalizamos el valor buscado
     valor_buscado = str(st.session_state.filtro_cliente_actual).strip().lower()
     
     # PRIORIDAD: Si hay algo en el buscador, filtramos por eso y omitimos fechas
@@ -364,7 +364,6 @@ if st.session_state.logueado:
         col_cliente = "NO CLIENTE"
         col_guia = "NÚMERO DE GUÍA"
         
-        # Convertimos columnas a texto, quitamos espacios y pasamos a minúsculas para comparar
         mask_cliente = df_filtrado[col_cliente].astype(str).str.strip().str.lower().str.contains(valor_buscado, na=False)
         mask_guia = df_filtrado[col_guia].astype(str).str.strip().str.lower().str.contains(valor_buscado, na=False)
         
@@ -374,10 +373,15 @@ if st.session_state.logueado:
         # SI EL BUSCADOR ESTÁ VACÍO, aplicamos el filtro de fechas normal
         if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
             f_inicio, f_fin = rango_fechas
-            # Convertimos a datetime y extraemos solo la fecha (.dt.date) para comparar correctamente
+            
+            # --- CORRECCIÓN PARA TYPEERROR ---
+            # Convertimos a datetime, manejamos errores y extraemos solo la fecha (.dt.date)
+            fechas_serie = pd.to_datetime(df_filtrado["FECHA DE ENVÍO"], errors='coerce').dt.date
+            
+            # Filtramos comparando objetos del mismo tipo (date vs date)
             df_filtrado = df_filtrado[
-                (pd.to_datetime(df_filtrado["FECHA DE ENVÍO"]).dt.date >= f_inicio) &
-                (pd.to_datetime(df_filtrado["FECHA DE ENVÍO"]).dt.date <= f_fin)
+                (fechas_serie >= f_inicio) & 
+                (fechas_serie <= f_fin)
             ]
 
     # El filtro de Fletera se aplica siempre al final
@@ -964,6 +968,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
