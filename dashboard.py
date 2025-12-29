@@ -205,31 +205,37 @@ if not st.session_state.logueado:
     st.stop()
 
 else:
-    # Título limpio
-    st.sidebar.write(f"👤 **Usuario:** {st.session_state.usuario_actual}")
+    st.sidebar.title("🔐 Sesión")
     
-    # --- ESTILO FILTRADO POR TEXTO ---
-    # Este CSS solo afecta a botones que contienen el texto "Cerrar Sesión"
+    # 1. Definimos el estilo ANTES del botón, usando un selector de atributo para el 'key'
+    # Esto asegura que el CSS busque específicamente el botón con key='btn_logout'
     st.markdown("""
         <style>
-        /* Seleccionamos el botón de la sidebar por su texto interno */
-        button[data-testid="baseButton-secondary"]:has(div p:contains("Cerrar Sesión")) {
+        /* Buscamos el botón que tenga el atributo help o la estructura de la key btn_logout */
+        div[data-testid="stSidebar"] div.stButton button[key="btn_logout"] {
             background-color: transparent !important;
             color: #ff4b4b !important;
             border: 1px solid rgba(255, 75, 75, 0.5) !important;
-            transition: 0.3s;
+            transition: all 0.3s ease !important;
         }
 
-        /* Hover solo para ese botón */
-        button[data-testid="baseButton-secondary"]:has(div p:contains("Cerrar Sesión")):hover {
+        /* Si el selector anterior es muy estricto, usamos este que busca por el orden:
+           Asumiendo que Cerrar Sesión es el PRIMER botón que aparece en la sidebar */
+        div[data-testid="stSidebar"] .stButton:first-of-type button {
+            background-color: transparent !important;
+            color: #ff4b4b !important;
+            border: 1px solid rgba(255, 75, 75, 0.5) !important;
+        }
+        
+        div[data-testid="stSidebar"] .stButton:first-of-type button:hover {
             background-color: rgba(255, 75, 75, 0.1) !important;
             border-color: #ff4b4b !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # Botón con el nombre exacto para que el CSS lo encuentre
-    if st.sidebar.button("Cerrar Sesión", use_container_width=True):
+    # 2. El botón con su KEY única
+    if st.sidebar.button("Cerrar sesión", use_container_width=True, key="btn_logout"):
         st.session_state.clear()
         st.rerun()
 
@@ -966,6 +972,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
