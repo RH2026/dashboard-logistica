@@ -290,28 +290,30 @@ if st.session_state.logueado:
 
     df = cargar_datos()
 
-    # -----------------------------
-    # SIDEBAR – FILTROS
-    # -----------------------------
+    # --------------------------------------------------
+    # SIDEBAR – FILTROS (CÓDIGO COMPLETO CORREGIDO)
+    # --------------------------------------------------
     st.sidebar.header("Filtros")
     
-    # 1. Función para resetear todos los valores
+    # 1. FUNCIÓN PARA RESETEAR TODOS LOS VALORES
     def limpiar_filtros():
         # Resetear texto de cliente
         st.session_state.filtro_cliente_actual = ""
         st.session_state.filtro_cliente_input = ""
         
-        # Resetear Fecha de envío (eliminando la key para que tome el valor por defecto)
-        if "fecha_filtro" in st.session_state:
-            del st.session_state["fecha_filtro"]
+        # Resetear Fechas al rango completo original
+        f_min_reset = df["FECHA DE ENVÍO"].min()
+        f_max_reset = df["FECHA DE ENVÍO"].max()
+        st.session_state["fecha_filtro"] = (f_min_reset, f_max_reset)
             
-        # CORRECCIÓN PARA FLETERA: Asignar el valor vacío directamente a la key
+        # Resetear Fletera al valor vacío (index 0)
         st.session_state["fletera_filtro"] = ""
         
+        # Forzar actualización de la página
         st.rerun()
     
-    # 2. Botón de limpieza
-    if st.sidebar.button("Limpiar Filtros", use_container_width=True):
+    # 2. BOTÓN DE LIMPIEZA
+    if st.sidebar.button("Limpiar Filtros 🧹", use_container_width=True):
         limpiar_filtros()
     
     st.sidebar.markdown("---")
@@ -331,15 +333,15 @@ if st.session_state.logueado:
     )
     
     # --- FILTRO FECHA DE ENVÍO ---
-    fecha_min = df["FECHA DE ENVÍO"].min()
-    fecha_max = df["FECHA DE ENVÍO"].max()
+    fecha_min_data = df["FECHA DE ENVÍO"].min()
+    fecha_max_data = df["FECHA DE ENVÍO"].max()
     
     rango_fechas = st.sidebar.date_input(
         "Fecha de envío",
-        value=(fecha_min, fecha_max),
-        min_value=fecha_min,
-        max_value=fecha_max,
-        key="fecha_filtro"
+        value=(fecha_min_data, fecha_max_data),
+        min_value=fecha_min_data,
+        max_value=fecha_max_data,
+        key="fecha_filtro"  # Key vinculada a la función de limpieza
     )
     
     # --- FILTRO FLETERA ---
@@ -347,8 +349,33 @@ if st.session_state.logueado:
         "Selecciona Fletera",
         options=[""] + sorted(df["FLETERA"].dropna().unique()),
         index=0,
-        key="fletera_filtro"  # Esta key es la que limpiamos en la función superior
+        key="fletera_filtro"  # Key vinculada a la función de limpieza
     )
+    
+    # --------------------------------------------------
+    # APLICACIÓN DE FILTROS AL DATAFRAME
+    # --------------------------------------------------
+    df_filtrado = df.copy()
+    
+    # Filtrar Cliente
+    if st.session_state.filtro_cliente_actual.strip() != "":
+        df_filtrado = df_filtrado[
+            df_filtrado["NO CLIENTE"].str.contains(
+                st.session_state.filtro_cliente_actual.strip(), case=False, na=False
+            )
+        ]
+    
+    # Filtrar Fecha (Validamos que el rango esté completo)
+    if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
+        f_inicio, f_fin = rango_fechas
+        df_filtrado = df_filtrado[
+            (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(f_inicio)) &
+            (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(f_fin))
+        ]
+    
+    # Filtrar Fletera
+    if fletera_sel != "":
+        df_filtrado = df_filtrado[df_filtrado["FLETERA"] == fletera_sel]
     
     # -----------------------------
     # APLICAR FILTROS A DF
@@ -930,6 +957,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
