@@ -120,31 +120,37 @@ if st.session_state.logueado:
 
 
 # --------------------------------------------------
-# SIDEBAR – LOGIN / LOGOUT
+# LOGIN CENTRAL (REEMPLAZA TU SECCIÓN DE SIDEBAR)
 # --------------------------------------------------
-st.sidebar.title("🔐 Acceso")
-
 if not st.session_state.logueado:
+    # Creamos 3 columnas: [espacio, centro, espacio]
+    # La del centro (ratio 2) será nuestro formulario
+    col1, col2, col3 = st.columns([1, 2, 1])
 
-    st.sidebar.text_input("Usuario", key="usuario_input")
-    st.sidebar.text_input("Contraseña", type="password", key="clave_input")
+    with col2:
+        st.title("🔐 Acceso al Sistema")
+        
+        # Formulario de entrada
+        usuario_input = st.text_input("Usuario", key="usuario_input")
+        clave_input = st.text_input("Contraseña", type="password", key="clave_input")
 
-    if st.sidebar.button("Ingresar"):
-        usuario = st.session_state.usuario_input
-        clave = st.session_state.clave_input
-
-        if usuario in usuarios and usuarios[usuario] == clave:
-            # ⚠️ NO limpiar antes de usar variables
-            st.session_state.logueado = True
-            st.session_state.usuario_actual = usuario
-            st.session_state.ultimo_movimiento = time.time()
-            st.rerun()
-        else:
-            st.sidebar.error("Usuario o contraseña incorrectos")
+        if st.button("Ingresar", use_container_width=True):
+            if usuario_input in usuarios and usuarios[usuario_input] == clave_input:
+                st.session_state.logueado = True
+                st.session_state.usuario_actual = usuario_input
+                st.session_state.ultimo_movimiento = time.time()
+                st.rerun()
+            else:
+                st.error("Usuario o contraseña incorrectos")
+    
+    # Detenemos la ejecución aquí para que no se vea nada del dashboard si no está logueado
+    st.stop()
 
 else:
-    st.sidebar.success(f"Sesión activa: {st.session_state.usuario_actual}")
-
+    # Una vez logueado, solo dejamos el botón de salir en la sidebar para que no estorbe
+    st.sidebar.title("🔐 Sesión")
+    st.sidebar.success(f"Usuario: {st.session_state.usuario_actual}")
+    
     if st.sidebar.button("Cerrar sesión 🚪"):
         st.session_state.clear()
         st.rerun()
@@ -840,6 +846,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
