@@ -912,12 +912,26 @@ if st.session_state.logueado:
         color=alt.value("#F44336")
     )
     
-    # Capa de texto para los números
+    # --- Capa de texto para los números (En tránsito) ---
+    text_transito = bars_transito.mark_text(
+        align='center',
+        baseline='bottom',
+        dy=-10,          # Aumentamos el espacio hacia arriba para que quepa la letra grande
+        color='white',   # Color del texto
+        fontSize=18,     # <--- AQUÍ AJUSTAS EL TAMAÑO (puedes probar con 16, 18, 20...)
+        fontWeight='bold' # Opcional: para que se vea más robusto
+    ).encode(
+        text='PEDIDOS:Q'
+    )
+    
+    # --- Capa de texto para los números (Retrasados) ---
     text_retrasados = bars_retrasados.mark_text(
         align='center',
         baseline='bottom',
-        dy=-5,
-        color='white'
+        dy=-10,          # Aumentamos el espacio hacia arriba
+        color='white',
+        fontSize=18,     # <--- AQUÍ AJUSTAS EL TAMAÑO
+        fontWeight='bold'
     ).encode(
         text='PEDIDOS:Q'
     )
@@ -1026,6 +1040,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
