@@ -123,7 +123,6 @@ if st.session_state.logueado:
 # LOGIN CENTRAL COMPACTO
 # --------------------------------------------------
 if not st.session_state.logueado:
-    # 1. CSS ajustado para que la caja no se estire
     st.markdown("""
         <style>
         .stForm {
@@ -133,7 +132,20 @@ if not st.session_state.logueado:
             border: 1px solid #334155;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        /* Esto centra el título y reduce espacios */
+        
+        /* INPUTS MÁS CLAROS */
+        .stForm input {
+            background-color: #475569 !important; /* Gris azulado claro */
+            color: white !important;
+            border: 1px solid #64748b !important;
+            border-radius: 8px !important;
+        }
+
+        /* Cambia el color del texto cuando se escribe */
+        .stForm input::placeholder {
+            color: #cbd5e1 !important;
+        }
+        
         .login-header {
             text-align: center;
             color: white;
@@ -868,6 +880,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
