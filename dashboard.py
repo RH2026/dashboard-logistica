@@ -291,16 +291,17 @@ if st.session_state.logueado:
     df = cargar_datos()
 
     # --------------------------------------------------
-    # SIDEBAR – FILTROS (CORREGIDO Y OPTIMIZADO)
+    # SIDEBAR – FILTROS (BLOQUE COMPLETO CORREGIDO)
     # --------------------------------------------------
     st.sidebar.header("Filtros")
     
     # 1. FUNCIÓN PARA RESETEAR TODOS LOS VALORES
     def limpiar_filtros():
+        # Resetear texto de búsqueda
         st.session_state.filtro_cliente_actual = ""
         st.session_state.filtro_cliente_input = ""
         
-        # Resetear Fechas al rango original
+        # Resetear Fechas al rango original del dataframe
         f_min_reset = df["FECHA DE ENVÍO"].min()
         f_max_reset = df["FECHA DE ENVÍO"].max()
         st.session_state["fecha_filtro"] = (f_min_reset, f_max_reset)
@@ -329,13 +330,14 @@ if st.session_state.logueado:
         on_change=actualizar_filtro
     )
     
-    # --- FILTRO FECHA DE ENVÍO ---
+    # --- FILTRO FECHA DE ENVÍO (SIN ADVERTENCIA AMARILLA) ---
     fecha_min_data = df["FECHA DE ENVÍO"].min()
     fecha_max_data = df["FECHA DE ENVÍO"].max()
     
+    # Inicializamos la fecha en el session_state si no existe
     if "fecha_filtro" not in st.session_state:
         st.session_state["fecha_filtro"] = (fecha_min_data, fecha_max_data)
-
+    
     rango_fechas = st.sidebar.date_input(
         "Fecha de envío",
         min_value=fecha_min_data,
@@ -352,18 +354,19 @@ if st.session_state.logueado:
     )
     
     # --------------------------------------------------
-    # APLICACIÓN DE FILTROS AL DATAFRAME (VERSIÓN INFALIBLE)
+    # APLICACIÓN DE FILTROS AL DATAFRAME (LÓGICA FINAL)
     # --------------------------------------------------
     df_filtrado = df.copy()
     
-    # Normalizamos el valor buscado
+    # Normalizamos el valor buscado (limpio y en minúsculas)
     valor_buscado = str(st.session_state.filtro_cliente_actual).strip().lower()
     
-    # PRIORIDAD: Si hay algo en el buscador, filtramos por eso y omitimos fechas
+    # PRIORIDAD: Si hay texto en el buscador, filtramos por eso y omitimos el rango de fechas
     if valor_buscado != "":
         col_cliente = "NO CLIENTE"
         col_guia = "NÚMERO DE GUÍA"
         
+        # Creamos máscaras buscando en ambas columnas (convertidas a texto y minúsculas)
         mask_cliente = df_filtrado[col_cliente].astype(str).str.strip().str.lower().str.contains(valor_buscado, na=False)
         mask_guia = df_filtrado[col_guia].astype(str).str.strip().str.lower().str.contains(valor_buscado, na=False)
         
@@ -374,18 +377,20 @@ if st.session_state.logueado:
         if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
             f_inicio, f_fin = rango_fechas
             
-            # --- CORRECCIÓN PARA TYPEERROR ---
-            # Convertimos a datetime, manejamos errores y extraemos solo la fecha (.dt.date)
-            fechas_serie = pd.to_datetime(df_filtrado["FECHA DE ENVÍO"], errors='coerce').dt.date
+            # CONVERSIÓN SEGURA PARA EVITAR TYPEERROR
+            # Convertimos todo a Datetime de Pandas para que la comparación sea del mismo tipo
+            col_fechas_dt = pd.to_datetime(df_filtrado["FECHA DE ENVÍO"], errors='coerce')
+            f_inicio_dt = pd.to_datetime(f_inicio)
+            f_fin_dt = pd.to_datetime(f_fin)
             
-            # Filtramos comparando objetos del mismo tipo (date vs date)
             df_filtrado = df_filtrado[
-                (fechas_serie >= f_inicio) & 
-                (fechas_serie <= f_fin)
+                (col_fechas_dt >= f_inicio_dt) & 
+                (col_fechas_dt <= f_fin_dt)
             ]
-
-    # El filtro de Fletera se aplica siempre al final
+    
+    # Filtro de Fletera (siempre se aplica sobre el resultado anterior)
     if fletera_sel != "":
+        # Limpiamos espacios también en la columna fletera por seguridad
         df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
     
     # -----------------------------
@@ -968,6 +973,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
