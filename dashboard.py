@@ -839,7 +839,7 @@ if st.session_state.logueado:
 )
     
     # --------------------------------------------------
-    # GRÁFICOS POR PAQUETERÍA – NUEVO BLOQUE
+    # GRÁFICOS POR PAQUETERÍA – MODIFICADO CON ETIQUETAS
     # --------------------------------------------------
     st.markdown(
         """
@@ -854,7 +854,7 @@ if st.session_state.logueado:
     
     g1, g2 = st.columns(2)
     
-    # En tránsito por paquetería
+    # --- 1. En tránsito por paquetería ---
     df_transito = (
         df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"]
         .groupby("FLETERA")
@@ -862,20 +862,36 @@ if st.session_state.logueado:
         .reset_index(name="PEDIDOS")
     )
     
-    graf_transito = alt.Chart(df_transito).mark_bar(
+    base_transito = alt.Chart(df_transito).encode(
+        x=alt.X("FLETERA:N", title="Paquetería")
+    )
+    
+    bars_transito = base_transito.mark_bar(
         cornerRadiusTopLeft=6,
         cornerRadiusTopRight=6
     ).encode(
-        x=alt.X("FLETERA:N", title="Paquetería"),
         y=alt.Y("PEDIDOS:Q", title="Pedidos en tránsito"),
         tooltip=["FLETERA", "PEDIDOS"],
-        color=alt.value("#FFC107")  # Amarillo
-    ).properties(height=320)
+        color=alt.value("#FFC107")
+    )
+    
+    # Capa de texto para los números
+    text_transito = bars_transito.mark_text(
+        align='center',
+        baseline='bottom',
+        dy=-5,  # Desplazamiento hacia arriba para que no toque la barra
+        color='white'
+    ).encode(
+        text='PEDIDOS:Q'
+    )
+    
+    graf_transito_final = (bars_transito + text_transito).properties(height=320)
     
     g1.markdown("<h4 style='color:yellow; text-align:center;'>En tránsito</h4>", unsafe_allow_html=True)
-    g1.altair_chart(graf_transito, use_container_width=True)
+    g1.altair_chart(graf_transito_final, use_container_width=True)
     
-    # Retrasados por paquetería
+    
+    # --- 2. Retrasados por paquetería ---
     df_retrasados = (
         df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"]
         .groupby("FLETERA")
@@ -883,20 +899,35 @@ if st.session_state.logueado:
         .reset_index(name="PEDIDOS")
     )
     
-    graf_retrasados = alt.Chart(df_retrasados).mark_bar(
+    base_retrasados = alt.Chart(df_retrasados).encode(
+        x=alt.X("FLETERA:N", title="Paquetería")
+    )
+    
+    bars_retrasados = base_retrasados.mark_bar(
         cornerRadiusTopLeft=6,
         cornerRadiusTopRight=6
     ).encode(
-        x=alt.X("FLETERA:N", title="Paquetería"),
         y=alt.Y("PEDIDOS:Q", title="Pedidos retrasados"),
         tooltip=["FLETERA", "PEDIDOS"],
-        color=alt.value("#F44336")  # Rojo
-    ).properties(height=320)
+        color=alt.value("#F44336")
+    )
+    
+    # Capa de texto para los números
+    text_retrasados = bars_retrasados.mark_text(
+        align='center',
+        baseline='bottom',
+        dy=-5,
+        color='white'
+    ).encode(
+        text='PEDIDOS:Q'
+    )
+    
+    graf_retrasados_final = (bars_retrasados + text_retrasados).properties(height=320)
     
     g2.markdown("<h4 style='color:#F44336; text-align:center;'>Retrasados</h4>", unsafe_allow_html=True)
-    g2.altair_chart(graf_retrasados, use_container_width=True)
+    g2.altair_chart(graf_retrasados_final, use_container_width=True)
     
-    st.divider()  # línea separadora antes de la tabla
+    st.divider()
     
     # --------------------------------------------------
     # PEDIDOS ENTREGADOS CON RETRASO POR PAQUETERÍA (FECHA REAL)
@@ -995,6 +1026,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
