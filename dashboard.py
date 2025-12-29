@@ -291,8 +291,25 @@ if st.session_state.logueado:
     # SIDEBAR – FILTROS
     # -----------------------------
     st.sidebar.header("Filtros")
+
+    # 1. Función para resetear todos los valores
+    def limpiar_filtros():
+        st.session_state.filtro_cliente_actual = ""
+        st.session_state.filtro_cliente_input = ""
+        # Usamos llaves para resetear componentes que no tienen session_state manual
+        if "fecha_filtro" in st.session_state:
+            del st.session_state["fecha_filtro"]
+        if "fletera_filtro" in st.session_state:
+            del st.session_state["fletera_filtro"]
+        st.rerun()
     
-    # --- FILTRO POR CLIENTE (ya existente) ---
+    # 2. Botón de limpieza (Lo ponemos arriba de los filtros para que sea visible)
+    if st.sidebar.button("Limpiar Filtros 🧹", use_container_width=True):
+        limpiar_filtros()
+    
+    st.sidebar.markdown("---")
+    
+    # --- FILTRO POR CLIENTE ---
     if "filtro_cliente_actual" not in st.session_state:
         st.session_state.filtro_cliente_actual = ""
     
@@ -309,18 +326,23 @@ if st.session_state.logueado:
     # --- FILTRO FECHA DE ENVÍO ---
     fecha_min = df["FECHA DE ENVÍO"].min()
     fecha_max = df["FECHA DE ENVÍO"].max()
+    
+    # Agregamos 'key' para poder resetearlo
     rango_fechas = st.sidebar.date_input(
         "Fecha de envío",
         value=(fecha_min, fecha_max),
         min_value=fecha_min,
-        max_value=fecha_max
+        max_value=fecha_max,
+        key="fecha_filtro"
     )
     
-    # --- FILTRO FLETERA (solo una para gráficos) ---
+    # --- FILTRO FLETERA ---
+    # Agregamos 'key' para poder resetearlo
     fletera_sel = st.sidebar.selectbox(
         "Selecciona Fletera",
-        options=[""] + sorted(df["FLETERA"].dropna().unique()),  # "" permite no seleccionar nada
-        index=0
+        options=[""] + sorted(df["FLETERA"].dropna().unique()),
+        index=0,
+        key="fletera_filtro"
     )
     
     # -----------------------------
@@ -903,6 +925,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
