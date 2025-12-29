@@ -33,7 +33,7 @@ if "usuario_actual" not in st.session_state:
 if not st.session_state.splash_visto:
 
     texto_splash = (
-        "Cerrando sesión…"
+        "Bye, cerrando sistema…"
         if st.session_state.motivo_splash == "logout"
         else "Inicializando módulos logísticos…"
     )
@@ -995,6 +995,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
