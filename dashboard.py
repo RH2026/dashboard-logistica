@@ -291,11 +291,11 @@ if st.session_state.logueado:
     df = cargar_datos()
 
     # --------------------------------------------------
-    # SIDEBAR – FILTROS (MANTENIENDO TODO LO QUE FUNCIONA)
+    # SIDEBAR – FILTROS (BLOQUE COMPLETO SIN ERRORES)
     # --------------------------------------------------
     st.sidebar.header("Filtros")
     
-    # 1. FUNCIÓN DE LIMPIEZA (SE MANTIENE IGUAL)
+    # 1. FUNCIÓN DE LIMPIEZA (IDÉNTICA A LA TUYA)
     def limpiar_filtros():
         st.session_state.filtro_cliente_actual = ""
         st.session_state.filtro_cliente_input = ""
@@ -324,7 +324,7 @@ if st.session_state.logueado:
         on_change=actualizar_filtro
     )
     
-    # --- CALENDARIO (SE MANTIENE SIN AVISO AMARILLO) ---
+    # --- CALENDARIO ---
     fecha_min_data = df["FECHA DE ENVÍO"].min()
     fecha_max_data = df["FECHA DE ENVÍO"].max()
     
@@ -338,7 +338,7 @@ if st.session_state.logueado:
         key="fecha_filtro"
     )
     
-    # --- SELECTOR DE FLETERA (SE MANTIENE IGUAL) ---
+    # --- SELECTOR DE FLETERA ---
     fletera_sel = st.sidebar.selectbox(
         "Selecciona Fletera",
         options=[""] + sorted(df["FLETERA"].dropna().unique()),
@@ -347,14 +347,13 @@ if st.session_state.logueado:
     )
     
     # --------------------------------------------------
-    # LÓGICA DE FILTRADO (AQUÍ ESTÁ LA CORRECCIÓN)
+    # LÓGICA DE FILTRADO (SOLUCIÓN DEFINITIVA)
     # --------------------------------------------------
     df_filtrado = df.copy()
     
     valor_buscado = str(st.session_state.filtro_cliente_actual).strip().lower()
     
-    # Si el usuario escribió algo en el buscador, filtramos solo por eso
-    # Esto evita que el calendario o la fletera oculten el resultado
+    # PRIORIDAD: Si hay texto, filtramos y mostramos sin importar fechas
     if valor_buscado != "":
         col_cliente = "NO CLIENTE"
         col_guia = "NÚMERO DE GUÍA"
@@ -365,11 +364,18 @@ if st.session_state.logueado:
         df_filtrado = df_filtrado[mask_cliente | mask_guia]
         
     else:
-        # SI EL BUSCADOR ESTÁ VACÍO, aplicamos los demás filtros normalmente
+        # SI EL BUSCADOR ESTÁ VACÍO, aplicamos filtros de Fecha y Fletera
         if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
             f_inicio, f_fin = rango_fechas
-            col_fechas_dt = pd.to_datetime(df_filtrado["FECHA DE ENVÍO"], errors='coerce').dt.date
-            df_filtrado = df_filtrado[(col_fechas_dt >= f_inicio) & (col_fechas_dt <= f_fin)]
+            
+            # --- CORRECCIÓN DE ERROR DE COMPARACIÓN ---
+            # Convertimos la columna y los límites a objetos de tiempo de Pandas (Timestamp)
+            # Esto garantiza que ambos lados de la comparación sean iguales
+            col_fechas_dt = pd.to_datetime(df_filtrado["FECHA DE ENVÍO"], errors='coerce')
+            f_inicio_dt = pd.to_datetime(f_inicio)
+            f_fin_dt = pd.to_datetime(f_fin)
+            
+            df_filtrado = df_filtrado[(col_fechas_dt >= f_inicio_dt) & (col_fechas_dt <= f_fin_dt)]
             
         if fletera_sel != "":
             df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
@@ -954,6 +960,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
