@@ -136,23 +136,27 @@ if not st.session_state.logueado:
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         
-        /* 1. ESTILO PARA LOS INPUTS (USUARIO Y CLAVE) */
+        /* 1. COLOR PARA AMBOS INPUTS */
         .stForm input {
             background-color: #475569 !important;
             color: white !important;
             border: 1px solid #64748b !important;
+        }
+
+        /* 2. FORZAR COLOR EN EL CONTENEDOR DEL OJO */
+        /* Esto selecciona el recuadro que rodea al icono */
+        div[data-testid="stTextInputRootElement"] {
+            background-color: #475569 !important;
+            border: 1px solid #64748b !important;
             border-radius: 8px !important;
         }
 
-        /* 2. ESTILO PARA LA CAJA DEL BOTÓN "OJO" */
-        /* Buscamos el contenedor del botón de visibilidad */
-        [data-testid="stTextInput-AdornmentInner"] {
-            background-color: #475569 !important;
-            border-radius: 0 8px 8px 0 !important;
+        /* Quitamos el fondo blanco/gris que Streamlit pone por defecto al botón del ojo */
+        div[data-testid="stTextInputAdornment"] {
+            background-color: transparent !important;
         }
         
-        /* Aseguramos que el botón dentro no tenga fondo propio */
-        [data-testid="stTextInput-AdornmentInner"] button {
+        button[aria-label="Show password"] {
             background-color: transparent !important;
             border: none !important;
             color: white !important;
@@ -892,6 +896,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
