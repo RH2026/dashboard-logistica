@@ -128,6 +128,7 @@ if st.session_state.logueado:
 if not st.session_state.logueado:
     st.markdown("""
         <style>
+        /* 1. CONTENEDOR PRINCIPAL DEL LOGIN */
         .stForm {
             background-color: #1e293b;
             padding: 25px;
@@ -136,32 +137,37 @@ if not st.session_state.logueado:
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         
-        /* 1. COLOR BASE PARA LOS INPUTS */
+        /* 2. UNIFICACIÓN TOTAL DE COLORES EN INPUTS */
+        /* Forzamos el color de fondo en todos los niveles del input y sus adornos (ojo) */
+        div[data-testid="stTextInputRootElement"], 
+        div[data-testid="stTextInputRootElement"] > div,
+        div[data-testid="stTextInputAdornment"],
         .stForm input {
             background-color: #475569 !important;
             color: white !important;
+            border: none !important; /* Quitamos bordes internos */
+        }
+
+        /* 3. BORDE EXTERIOR ÚNICO PARA LA CAJA */
+        div[data-testid="stTextInputRootElement"] {
             border: 1px solid #64748b !important;
+            border-radius: 8px !important;
         }
 
-        /* 2. ELIMINAR EL RECUADRO DEL ICONO (OJO) */
-        /* Seleccionamos el contenedor interno del ojo para que sea transparente */
-        div[data-testid="stTextInputAdornment"] {
-            background-color: transparent !important;
-            border: none !important;
-        }
-
-        /* Seleccionamos el botón del ojo directamente */
-        div[data-testid="stTextInputAdornment"] button {
+        /* 4. LIMPIEZA TOTAL DEL BOTÓN DEL OJO */
+        button[aria-label="Show password"], 
+        button[aria-label="Hide password"] {
             background-color: transparent !important;
             border: none !important;
             box-shadow: none !important;
+            color: white !important;
         }
-
-        /* 3. UNIFICAR TODO EL CUADRO DE TEXTO (Raíz) */
-        div[data-testid="stTextInputRootElement"] {
-            background-color: #475569 !important;
-            border: 1px solid #64748b !important;
-            border-radius: 8px !important;
+        
+        /* Elimina el cambio de color al pasar el mouse sobre el ojo */
+        button[aria-label="Show password"]:hover, 
+        button[aria-label="Hide password"]:hover {
+            background-color: transparent !important;
+            color: #cbd5e1 !important;
         }
 
         .login-header {
@@ -898,6 +904,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
