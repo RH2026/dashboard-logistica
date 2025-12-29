@@ -10,21 +10,43 @@ def get_base64_image(image_path):  # 👈 aquí
         return base64.b64encode(img_file.read()).decode()
 
 # --------------------------------------------------
-# SPLASH SCREEN (ANTES DEL LOGIN)
+# ESTADOS INICIALES
 # --------------------------------------------------
 if "splash_visto" not in st.session_state:
     st.session_state.splash_visto = False
 
+if "motivo_splash" not in st.session_state:
+    st.session_state.motivo_splash = "inicio"
+
+if "logueado" not in st.session_state:
+    st.session_state.logueado = False
+
+if "ultimo_movimiento" not in st.session_state:
+    st.session_state.ultimo_movimiento = time.time()
+
+if "usuario_actual" not in st.session_state:
+    st.session_state.usuario_actual = None
+
+# --------------------------------------------------
+# SPLASH SCREEN (ANTES DE TODO)
+# --------------------------------------------------
 if not st.session_state.splash_visto:
+
+    texto_splash = (
+        "Cerrando sesión…"
+        if st.session_state.motivo_splash == "logout"
+        else "Inicializando módulos logísticos…"
+    )
 
     st.markdown("""
     <style>
     .splash-container {
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
-        height: 70vh;
+        height: 100vh;
+        padding-top: 160px;
         background-color: #0e1117;
     }
 
@@ -32,8 +54,8 @@ if not st.session_state.splash_visto:
         border: 6px solid #2a2a2a;
         border-top: 6px solid #00FFAA;
         border-radius: 50%;
-        width: 120px;
-        height: 120px;
+        width: 70px;
+        height: 70px;
         animation: spin 1s linear infinite;
         margin-bottom: 20px;
     }
@@ -45,17 +67,18 @@ if not st.session_state.splash_visto:
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
+    st.markdown(f"""
     <div class="splash-container">
         <div class="loader"></div>
-        <div style="color:#aaa; font-size:18px;">
-            Bienvenido, Inicializando módulos logísticos……
+        <div style="color:#aaa; font-size:14px;">
+            {texto_splash}
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    time.sleep(2)  # ⏳ duración del splash
+    time.sleep(2)
     st.session_state.splash_visto = True
+    st.session_state.motivo_splash = "inicio"
     st.rerun()
 # --------------------------------------------------
 # CONFIGURACIÓN DE PÁGINA
@@ -234,12 +257,12 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-    # 2. El botón con su KEY única
+    # 2. Botón cerrar sesión (con motivo de splash)
     if st.sidebar.button("Cerrar sesión", use_container_width=True, key="btn_logout"):
-        st.session_state.clear()
+        st.session_state.motivo_splash = "logout"
+        st.session_state.splash_visto = False
+        st.session_state.logueado = False
         st.rerun()
-
-    st.sidebar.markdown("---")
 
 # --------------------------------------------------
 # 👋 SALUDO PERSONALIZADO (SOLO ESTO SE AGREGÓ)
@@ -972,6 +995,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
