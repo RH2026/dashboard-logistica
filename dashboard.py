@@ -120,17 +120,32 @@ if st.session_state.logueado:
 
 
 # --------------------------------------------------
-# LOGIN CENTRAL (REEMPLAZA TU SECCIÓN DE SIDEBAR)
+# LOGIN CENTRAL PERSONALIZADO
 # --------------------------------------------------
 if not st.session_state.logueado:
-    # Creamos 3 columnas: [espacio, centro, espacio]
-    # La del centro (ratio 2) será nuestro formulario
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # 1. CSS para personalizar la caja (Color de fondo y bordes)
+    st.markdown("""
+        <style>
+        [data-testid="stVerticalBlock"] > div:has(div.login-box) {
+            background-color: #1e293b;
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #334155;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # 2. Columnas para centrar y reducir el tamaño (Caja más angosta)
+    # Usamos [1.5, 1, 1.5] para que la columna central sea pequeña
+    col1, col2, col3 = st.columns([1.5, 1, 1.5])
 
     with col2:
-        st.title("🔐 Acceso al Sistema")
+        # Usamos un div con clase login-box para que el CSS arriba lo identifique
+        st.markdown('<div class="login-box">', unsafe_allow_html=True)
         
-        # Formulario de entrada
+        st.markdown('<h2 style="text-align:center; color:white; font-size:22px;">🔐 Acceso</h2>', unsafe_allow_html=True)
+        
         usuario_input = st.text_input("Usuario", key="usuario_input")
         clave_input = st.text_input("Contraseña", type="password", key="clave_input")
 
@@ -141,13 +156,14 @@ if not st.session_state.logueado:
                 st.session_state.ultimo_movimiento = time.time()
                 st.rerun()
             else:
-                st.error("Usuario o contraseña incorrectos")
+                st.error("Error de acceso")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    # Detenemos la ejecución aquí para que no se vea nada del dashboard si no está logueado
     st.stop()
 
 else:
-    # Una vez logueado, solo dejamos el botón de salir en la sidebar para que no estorbe
+    # Sidebar una vez logueado
     st.sidebar.title("🔐 Sesión")
     st.sidebar.success(f"Usuario: {st.session_state.usuario_actual}")
     
@@ -846,6 +862,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
