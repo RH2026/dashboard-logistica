@@ -120,53 +120,59 @@ if st.session_state.logueado:
 
 
 # --------------------------------------------------
-# LOGIN CENTRAL PERSONALIZADO
+# LOGIN CENTRAL COMPACTO
 # --------------------------------------------------
 if not st.session_state.logueado:
-    # 1. CSS para personalizar la caja (Color de fondo y bordes)
+    # 1. CSS ajustado para que la caja no se estire
     st.markdown("""
         <style>
-        [data-testid="stVerticalBlock"] > div:has(div.login-box) {
+        .stForm {
             background-color: #1e293b;
-            padding: 30px;
+            padding: 25px;
             border-radius: 15px;
             border: 1px solid #334155;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        /* Esto centra el título y reduce espacios */
+        .login-header {
+            text-align: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # 2. Columnas para centrar y reducir el tamaño (Caja más angosta)
-    # Usamos [1.5, 1, 1.5] para que la columna central sea pequeña
-    col1, col2, col3 = st.columns([1.5, 1, 1.5])
+    # 2. Columnas para centrar. El [1, 1, 1] hace que la caja sea de 1/3 del ancho
+    col1, col2, col3 = st.columns([1, 1, 1])
 
     with col2:
-        # Usamos un div con clase login-box para que el CSS arriba lo identifique
-        st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        
-        st.markdown('<h2 style="text-align:center; color:white; font-size:22px;">🔐 Acceso</h2>', unsafe_allow_html=True)
-        
-        usuario_input = st.text_input("Usuario", key="usuario_input")
-        clave_input = st.text_input("Contraseña", type="password", key="clave_input")
+        # Usamos st.form para agrupar los elementos en un cuadro visual
+        with st.form("login_form"):
+            st.markdown('<div class="login-header">🔐 Acceso</div>', unsafe_allow_html=True)
+            
+            u_input = st.text_input("Usuario")
+            c_input = st.text_input("Contraseña", type="password")
+            
+            # Botón dentro del formulario
+            submit = st.form_submit_button("Ingresar", use_container_width=True)
 
-        if st.button("Ingresar", use_container_width=True):
-            if usuario_input in usuarios and usuarios[usuario_input] == clave_input:
-                st.session_state.logueado = True
-                st.session_state.usuario_actual = usuario_input
-                st.session_state.ultimo_movimiento = time.time()
-                st.rerun()
-            else:
-                st.error("Error de acceso")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+            if submit:
+                if u_input in usuarios and usuarios[u_input] == c_input:
+                    st.session_state.logueado = True
+                    st.session_state.usuario_actual = u_input
+                    st.session_state.ultimo_movimiento = time.time()
+                    st.rerun()
+                else:
+                    st.error("Usuario o contraseña incorrectos")
     
     st.stop()
 
 else:
-    # Sidebar una vez logueado
+    # Sidebar normal cuando ya estás dentro
     st.sidebar.title("🔐 Sesión")
     st.sidebar.success(f"Usuario: {st.session_state.usuario_actual}")
-    
     if st.sidebar.button("Cerrar sesión 🚪"):
         st.session_state.clear()
         st.rerun()
@@ -862,6 +868,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
