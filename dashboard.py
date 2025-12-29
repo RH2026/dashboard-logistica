@@ -205,7 +205,7 @@ if not st.session_state.logueado:
     st.stop()
 
 else:
-    st.sidebar.title("🔐 Sesión")
+    st.sidebar.title("🔐 Sesión Activa")
     
     # 1. Definimos el estilo ANTES del botón, usando un selector de atributo para el 'key'
     # Esto asegura que el CSS busque específicamente el botón con key='btn_logout'
@@ -972,6 +972,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
