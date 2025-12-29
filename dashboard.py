@@ -374,7 +374,7 @@ if st.session_state.logueado:
     # -----------------------------
     if not df_busqueda.empty:
         for index, row in df_busqueda.iterrows():
-            st.markdown(f"### 📦 Pedido: {row['NÚMERO DE PEDIDO']}")
+            st.markdown(f"### Estatus de Factura: {row['NÚMERO DE PEDIDO']}")
             
              # --- 1. EXTRACCIÓN CON LOS NOMBRES EXACTOS DE TU TABLA ---
             f_envio_val = row.get("FECHA DE ENVÍO") or row.get("FECHA DE ENVIO")
@@ -840,6 +840,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
