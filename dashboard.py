@@ -839,7 +839,7 @@ if st.session_state.logueado:
 )
     
     # --------------------------------------------------
-    # GRÁFICOS POR PAQUETERÍA – VERSIÓN FORZADA
+    # GRÁFICOS POR PAQUETERÍA – SOLUCIÓN FINAL
     # --------------------------------------------------
     st.markdown(
         """
@@ -853,10 +853,7 @@ if st.session_state.logueado:
     )
     
     g1, g2 = st.columns(2)
-    
-    # --- CONFIGURACIÓN DE TEXTO (Para reutilizar) ---
-    # Puedes cambiar el 22 por un número más grande si aún lo ves pequeño
-    TAMANO_FUENTE = 22 
+    TAMANO_FUENTE = 20  # Ajuste de tamaño
     
     # --- 1. EN TRÁNSITO ---
     df_transito = (
@@ -866,34 +863,28 @@ if st.session_state.logueado:
         .reset_index(name="PEDIDOS")
     )
     
-    # Creamos la base
+    # Calculamos un límite superior dinámico (Máximo + 20%)
+    max_t = df_transito["PEDIDOS"].max() * 1.2 if not df_transito.empty else 10
+    
     base_t = alt.Chart(df_transito).encode(
         x=alt.X("FLETERA:N", title="Paquetería")
     )
     
-    # Barras
     bars_t = base_t.mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
-        y=alt.Y("PEDIDOS:Q", title="Pedidos en tránsito"),
+        y=alt.Y("PEDIDOS:Q", title="Pedidos en tránsito", scale=alt.Scale(domain=[0, max_t])),
         color=alt.value("#FFC107")
     )
     
-    # Texto (FORZADO)
     text_t = base_t.mark_text(
-        align='center',
-        baseline='bottom',
-        dy=-12,  # Más espacio para que no choque
-        fontSize=TAMANO_FUENTE,
-        fontWeight='bold',
-        color='white'
+        align='center', baseline='bottom', dy=-10,
+        fontSize=TAMANO_FUENTE, fontWeight='bold', color='white'
     ).encode(
         y=alt.Y("PEDIDOS:Q"),
         text=alt.Text("PEDIDOS:Q")
     )
     
-    graf_transito_final = (bars_t + text_t).properties(height=340)
-    
     g1.markdown("<h4 style='color:yellow; text-align:center;'>En tránsito</h4>", unsafe_allow_html=True)
-    g1.altair_chart(graf_transito_final, use_container_width=True)
+    g1.altair_chart((bars_t + text_t).properties(height=320), use_container_width=True)
     
     
     # --- 2. RETRASADOS ---
@@ -904,31 +895,28 @@ if st.session_state.logueado:
         .reset_index(name="PEDIDOS")
     )
     
+    # Calculamos un límite superior dinámico (Máximo + 20%)
+    max_r = df_retrasados["PEDIDOS"].max() * 1.2 if not df_retrasados.empty else 10
+    
     base_r = alt.Chart(df_retrasados).encode(
         x=alt.X("FLETERA:N", title="Paquetería")
     )
     
     bars_r = base_r.mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
-        y=alt.Y("PEDIDOS:Q", title="Pedidos retrasados"),
+        y=alt.Y("PEDIDOS:Q", title="Pedidos retrasados", scale=alt.Scale(domain=[0, max_r])),
         color=alt.value("#F44336")
     )
     
     text_r = base_r.mark_text(
-        align='center',
-        baseline='bottom',
-        dy=-12,
-        fontSize=TAMANO_FUENTE,
-        fontWeight='bold',
-        color='white'
+        align='center', baseline='bottom', dy=-10,
+        fontSize=TAMANO_FUENTE, fontWeight='bold', color='white'
     ).encode(
         y=alt.Y("PEDIDOS:Q"),
         text=alt.Text("PEDIDOS:Q")
     )
     
-    graf_retrasados_final = (bars_r + text_r).properties(height=340)
-    
     g2.markdown("<h4 style='color:#F44336; text-align:center;'>Retrasados</h4>", unsafe_allow_html=True)
-    g2.altair_chart(graf_retrasados_final, use_container_width=True)
+    g2.altair_chart((bars_r + text_r).properties(height=320), use_container_width=True)
     
     st.divider()
     
@@ -1029,6 +1017,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
