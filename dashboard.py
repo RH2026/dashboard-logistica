@@ -843,7 +843,7 @@ if st.session_state.logueado:
     # --------------------------------------------------
     
     # === CONFIGURACIÓN VISUAL (Ajusta aquí el tamaño) ===
-    TAMANO_FUENTE = 22  # Tamaño de los números sobre las barras
+    TAMANO_FUENTE = 16  # Tamaño de los números sobre las barras
     ESPACIADO_DY = -12  # Espacio entre la barra y el número (más negativo = más arriba)
     MARGEN_SUPERIOR = 1.3  # Factor de espacio extra en el eje Y (1.3 = 30% de "aire")
     # ===================================================
@@ -1043,6 +1043,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
