@@ -207,36 +207,34 @@ if not st.session_state.logueado:
 else:
     st.sidebar.title("🔐 Sesión")
     
-    # --- BLOQUE: ESTILO PERSONALIZADO PARA EL BOTÓN DE CIERRE ---
+    # --- BLOQUE: ESTILO POR KEY (ID) ---
     st.markdown("""
         <style>
-        /* Estilo para el contenedor personalizado del botón de salida */
-        div.logout-container button {
+        /* Buscamos el botón específico por su posición en la sidebar */
+        /* Forzamos transparencia y borde rojo */
+        [data-testid="stSidebar"] div.stButton button {
             background-color: transparent !important;
             color: #ff4b4b !important;
-            border: 1px solid rgba(255, 75, 75, 0.5) !important;
-            border-radius: 8px !important;
-            transition: all 0.3s ease !important;
+            border: 1px solid #ff4b4b !important;
+            opacity: 0.8;
         }
-
-        /* Efecto Hover */
-        div.logout-container button:hover {
+        
+        /* Hover: que se ponga más intenso al pasar el mouse */
+        [data-testid="stSidebar"] div.stButton button:hover {
             background-color: rgba(255, 75, 75, 0.1) !important;
-            border-color: #ff4b4b !important;
-            color: #ff0000 !important;
+            opacity: 1;
+            border: 1px solid #ff0000 !important;
         }
         </style>
     """, unsafe_allow_html=True)
     
-    # Envolvemos el botón en un contenedor con la clase 'logout-container'
-    with st.sidebar.container():
-        st.markdown('<div class="logout-container">', unsafe_allow_html=True)
-        if st.sidebar.button("Cerrar sesión", use_container_width=True):
-            st.session_state.clear()
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Es vital que este sea el ÚNICO botón en la parte superior de la sidebar 
+    # para que el selector CSS no afecte a los filtros de abajo.
+    if st.sidebar.button("Cerrar sesión", use_container_width=True, key="btn_logout"):
+        st.session_state.clear()
+        st.rerun()
 
-    st.sidebar.markdown("---") # Separador visual
+    st.sidebar.markdown("---")
 
 # --------------------------------------------------
 # 👋 SALUDO PERSONALIZADO (SOLO ESTO SE AGREGÓ)
@@ -969,6 +967,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
