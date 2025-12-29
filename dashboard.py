@@ -205,32 +205,31 @@ if not st.session_state.logueado:
     st.stop()
 
 else:
-    st.sidebar.title("🔐 Sesión")
+    # Título limpio
+    st.sidebar.write(f"👤 **Usuario:** {st.session_state.usuario_actual}")
     
-    # --- BLOQUE: ESTILO POR KEY (ID) ---
+    # --- ESTILO FILTRADO POR TEXTO ---
+    # Este CSS solo afecta a botones que contienen el texto "Cerrar Sesión"
     st.markdown("""
         <style>
-        /* Buscamos el botón específico por su posición en la sidebar */
-        /* Forzamos transparencia y borde rojo */
-        [data-testid="stSidebar"] div.stButton button {
+        /* Seleccionamos el botón de la sidebar por su texto interno */
+        button[data-testid="baseButton-secondary"]:has(div p:contains("Cerrar Sesión")) {
             background-color: transparent !important;
             color: #ff4b4b !important;
-            border: 1px solid #ff4b4b !important;
-            opacity: 0.8;
+            border: 1px solid rgba(255, 75, 75, 0.5) !important;
+            transition: 0.3s;
         }
-        
-        /* Hover: que se ponga más intenso al pasar el mouse */
-        [data-testid="stSidebar"] div.stButton button:hover {
+
+        /* Hover solo para ese botón */
+        button[data-testid="baseButton-secondary"]:has(div p:contains("Cerrar Sesión")):hover {
             background-color: rgba(255, 75, 75, 0.1) !important;
-            opacity: 1;
-            border: 1px solid #ff0000 !important;
+            border-color: #ff4b4b !important;
         }
         </style>
     """, unsafe_allow_html=True)
-    
-    # Es vital que este sea el ÚNICO botón en la parte superior de la sidebar 
-    # para que el selector CSS no afecte a los filtros de abajo.
-    if st.sidebar.button("Cerrar sesión", use_container_width=True, key="btn_logout"):
+
+    # Botón con el nombre exacto para que el CSS lo encuentre
+    if st.sidebar.button("Cerrar Sesión", use_container_width=True):
         st.session_state.clear()
         st.rerun()
 
@@ -967,6 +966,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
