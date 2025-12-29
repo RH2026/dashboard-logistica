@@ -136,46 +136,24 @@ if not st.session_state.logueado:
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         
-        /* UNIFICACIÓN DE INPUTS Y OJO */
-        div[data-testid="stTextInputRootElement"], 
-        div[data-testid="stTextInputRootElement"] > div,
-        div[data-testid="stTextInputAdornment"],
-        .stForm input {
+        /* Estilo de los inputs reales */
+        div[data-testid="stTextInputRootElement"], .stForm input {
             background-color: #475569 !important;
             color: white !important;
-            border: none !important;
         }
 
-        div[data-testid="stTextInputRootElement"] {
-            border: 1px solid #64748b !important;
-            border-radius: 8px !important;
-        }
-
-        button[aria-label="Show password"], 
-        button[aria-label="Hide password"] {
-            background-color: transparent !important;
-            border: none !important;
-            color: white !important;
-        }
-
-        /* PARCHE PARA EVITAR SUGERENCIAS DE GOOGLE 
-           Intentamos ocultar los iconos de autocompletado nativos del navegador
-        */
-        input::-webkit-contacts-auto-fill-button, 
+        /* OCULTAR COMPLETAMENTE LOS BOTONES NATIVOS DE GOOGLE */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button,
+        input::-webkit-contacts-auto-fill-button,
         input::-webkit-credentials-auto-fill-button {
-            visibility: hidden;
             display: none !important;
-            pointer-events: none;
-            position: absolute; 
-            right: 0;
+            visibility: hidden !important;
+            pointer-events: none !important;
         }
 
         .login-header {
-            text-align: center;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 20px;
+            text-align: center; color: white; font-size: 24px; font-weight: bold; margin-bottom: 20px;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -904,6 +882,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
