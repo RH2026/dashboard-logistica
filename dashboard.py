@@ -209,7 +209,7 @@ else:
     st.sidebar.success(f"Usuario: {st.session_state.usuario_actual}")
     
     # Aplicamos 'use_container_width' para que sea idéntico al de Limpiar Filtros
-    if st.sidebar.button("Cerrar sesión 🚪", use_container_width=True):
+    if st.sidebar.button("Cerrar sesión", use_container_width=True):
         st.session_state.clear()
         st.rerun()
 
@@ -307,7 +307,7 @@ if st.session_state.logueado:
         st.rerun()
     
     # 2. Botón de limpieza (Lo ponemos arriba de los filtros para que sea visible)
-    if st.sidebar.button("Limpiar Filtros 🧹", use_container_width=True):
+    if st.sidebar.button("Limpiar Filtros", use_container_width=True):
         limpiar_filtros()
     
     st.sidebar.markdown("---")
@@ -928,6 +928,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
