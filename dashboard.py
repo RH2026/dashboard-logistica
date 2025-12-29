@@ -924,7 +924,7 @@ if st.session_state.logueado:
     
     graf_retrasados_final = (bars_retrasados + text_retrasados).properties(height=320)
     
-    g2.markdown("<h4 style='color:#F44336; text-align:center;'>Retrasados</h4>", unsafe_allow_html=True)
+    g2.markdown("<h3 style='color:#F44336; text-align:center;'>Retrasados</h3>", unsafe_allow_html=True)
     g2.altair_chart(graf_retrasados_final, use_container_width=True)
     
     st.divider()
@@ -1026,6 +1026,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
