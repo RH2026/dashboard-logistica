@@ -242,37 +242,50 @@ if st.session_state.pagina == "principal":
         key="fletera_filtro"
     )
     # --------------------------------------------------
-    # APLICACIÓN DE FILTROS (Lógica para que aparezcan los datos)
+    # APLICACIÓN DE FILTROS (CORREGIDO Y REFORZADO)
     # --------------------------------------------------
     df_filtrado = df.copy()
+    
+    # 1. Limpiamos el valor buscado para evitar errores de espacios
     valor_buscado = str(st.session_state.filtro_cliente_actual).strip().lower()
 
-    # Si hay algo escrito en el buscador, filtramos por eso
+    # PRIORIDAD 1: Si el usuario escribió algo en el buscador
     if valor_buscado != "":
-        mask_cliente = df_filtrado["NO CLIENTE"].astype(str).str.contains(valor_buscado, na=False)
-        mask_guia = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.contains(valor_buscado, na=False)
+        # Convertimos las columnas a texto y quitamos el .0 que pone Excel a veces
+        col_cliente_txt = df_filtrado["NO CLIENTE"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
+        col_guia_txt = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
+        
+        # Creamos la máscara de búsqueda
+        mask_cliente = col_cliente_txt.str.contains(valor_buscado, na=False)
+        mask_guia = col_guia_txt.str.contains(valor_buscado, na=False)
+        
+        # Filtramos (Si coincide con cliente O con guía)
         df_filtrado = df_filtrado[mask_cliente | mask_guia]
         
-    # Si no hay búsqueda, usamos fechas y fletera
+    # PRIORIDAD 2: Si el buscador está vacío, aplicamos fechas y fletera
     else:
+        # Validación de fechas
         if isinstance(rango_fechas, (list, tuple)) and len(rango_fechas) == 2:
             f_inicio, f_fin = rango_fechas
-            df_filtrado = df_filtrado[(df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(f_inicio)) & 
-                                      (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(f_fin))]
+            f_ini_dt = pd.to_datetime(f_inicio)
+            f_fin_dt = pd.to_datetime(f_fin)
+            
+            df_filtrado = df_filtrado[
+                (df_filtrado["FECHA DE ENVÍO"] >= f_ini_dt) & 
+                (df_filtrado["FECHA DE ENVÍO"] <= f_fin_dt)
+            ]
         
+        # Filtro de fletera
         if fletera_sel != "":
-            df_filtrado = df_filtrado[df_filtrado["FLETERA"] == fletera_sel]
+            df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
 
-    # --------------------------------------------------
-    # INDICADORES GENERALES (LOS CÍRCULOS DE COLORES)
-    # --------------------------------------------------
-    st.markdown("<h2 style='text-align:center;'>Indicadores Generales</h2>", unsafe_allow_html=True)
-    
-    # Aquí calculamos los números para tus donitas
-    total = len(df_filtrado)
-    entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
-    en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
-    retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
+        # --------------------------------------------------
+        # ACTUALIZACIÓN DE MÉTRICAS (Para que los círculos cambien)
+        # --------------------------------------------------
+        total = len(df_filtrado)
+        entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
+        en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
+        retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
 
     # --------------------------------------------------
     # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
@@ -513,6 +526,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
