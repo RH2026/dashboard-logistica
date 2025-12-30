@@ -31,7 +31,7 @@ if "ultimo_movimiento" not in st.session_state:
 # 3. SPLASH SCREEN (CORREGIDO PARA LOGOUT)
 # --------------------------------------------------
 # Usamos .get para que si la sesión está vacía no marque error
-# --- BLOQUE DE SPLASH SCREEN: RUTA LOGÍSTICA CURVA ---
+# --- BLOQUE DE SPLASH SCREEN: RUTA LOGÍSTICA CON PUNTOS PULSANTES ---
 if not st.session_state.get('splash_visto', False):
     placeholder = st.empty()
     
@@ -56,57 +56,65 @@ if not st.session_state.get('splash_visto', False):
             margin-bottom: 40px;
         }
 
-        /* Los Puntos (Almacenes) */
+        /* Los Puntos (Almacenes) con efecto de pulsación */
         .point {
             position: absolute;
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             background-color: #00FFAA;
             border-radius: 50%;
             box-shadow: 0 0 15px #00FFAA;
+            z-index: 2;
         }
+
+        /* El efecto de onda que sale de los puntos */
+        .point::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #00FFAA;
+            border-radius: 50%;
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 0.7; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+
         .point.origin { bottom: 10px; left: 10px; }
         .point.destination { top: 10px; right: 10px; }
 
-        /* La Ruta (Curva) */
-        .route-path {
-            position: absolute;
-            width: 280px;
-            height: 130px;
-            bottom: 16px;
-            left: 16px;
-            border: 2px dashed rgba(0, 255, 170, 0.2);
-            border-color: transparent #00FFAA transparent transparent;
-            border-radius: 0 100% 0 0; /* Esto crea la curva */
-            transform: rotate(-10deg);
-        }
-
-        /* El Camión / Paquete (El viajero) */
+        /* El Paquete viajero (delivery-node) */
         .delivery-node {
             position: absolute;
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             background: #fff;
             border-radius: 50%;
             box-shadow: 0 0 20px 5px #00FFAA;
-            offset-path: path('M 10 140 Q 150 140 290 10'); /* La ruta matemática del punto */
+            /* Esta es la trayectoria curva */
+            offset-path: path('M 15 135 Q 150 135 285 15'); 
             animation: travel 2s infinite ease-in-out;
+            z-index: 3;
         }
 
         @keyframes travel {
             0% { offset-distance: 0%; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
+            15% { opacity: 1; }
+            85% { opacity: 1; }
             100% { offset-distance: 100%; opacity: 0; }
         }
 
         .loading-text {
             color: #00FFAA;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             font-size: 14px;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
+            text-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
         }
         </style>
         """, unsafe_allow_html=True)
@@ -122,9 +130,9 @@ if not st.session_state.get('splash_visto', False):
             </div>
         ''', unsafe_allow_html=True)
         
-        time.sleep(2.5) # Un poco más de tiempo para apreciar el viaje
+        time.sleep(2.5)
 
-    # Lógica de estados
+    # Lógica de salida/reinicio
     if st.session_state.get('motivo_splash') == "logout":
         st.session_state.clear()
         st.session_state['autenticado'] = False
@@ -876,6 +884,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
