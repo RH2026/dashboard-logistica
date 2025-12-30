@@ -577,34 +577,34 @@ if st.session_state.pagina == "principal":
 
     import datetime
 
-        if not df_prom.empty:
-            # 1. Obtener la fecha actual para el encabezado
-            fecha_actual = datetime.date.today().strftime('%d/%m/%Y')
-            
-            # 2. Identificar a la peor fletera en tiempo (Días)
-            peor_fletera_dias = df_prom.sort_values(by="PROMEDIO", ascending=False).iloc[0]
-            nombre_peor_dias = peor_fletera_dias["FLETERA"]
-            valor_peor_dias = peor_fletera_dias["PROMEDIO"]
+    if not df_prom.empty:
+        # 1. Obtener la fecha actual para el encabezado
+        fecha_actual = datetime.date.today().strftime('%d/%m/%Y')
+        
+        # 2. Identificar a la peor fletera en tiempo (Días)
+        peor_fletera_dias = df_prom.sort_values(by="PROMEDIO", ascending=False).iloc[0]
+        nombre_peor_dias = peor_fletera_dias["FLETERA"]
+        valor_peor_dias = peor_fletera_dias["PROMEDIO"]
 
-            # 3. Identificar a la fletera con más volumen de fallos (Cantidad)
-            # Usamos el conteo que calculamos para el gráfico de barras rojas
-            if not df_conteo.empty:
-                peor_volumen = df_conteo.sort_values(by="PEDIDOS", ascending=False).iloc[0]
-                nombre_volumen = peor_volumen["FLETERA"]
-                cantidad_fallos = peor_volumen["PEDIDOS"]
+        # 3. Identificar a la fletera con más volumen de fallos (Cantidad)
+        # Usamos el conteo que calculamos para el gráfico de barras rojas
+        if not df_conteo.empty:
+            peor_volumen = df_conteo.sort_values(by="PEDIDOS", ascending=False).iloc[0]
+            nombre_volumen = peor_volumen["FLETERA"]
+            cantidad_fallos = peor_volumen["PEDIDOS"]
 
-                # 4. Mostrar la nota que cambia según los datos
-                if valor_peor_dias > 0:
-                    st.error(f"""
-                        🔍 **Diagnóstico Logístico al {fecha_actual}:** El mayor impacto en la espera del cliente lo tiene **{nombre_peor_dias}** con un retraso promedio de **{valor_peor_dias:.1f} días**.  
-                        En cuanto a frecuencia, **{nombre_volumen}** es quien más incidencias acumula con **{cantidad_fallos} pedidos** entregados fuera de tiempo.
-                    """)
-                else:
-                    st.success(f"✨ **Reporte al {fecha_actual}:** ¡Excelente desempeño! Todas las fleteras están operando dentro de los tiempos prometidos.")
-            
-            # Nota fija de apoyo visual
-            st.info("💡 **Guía rápida:** Barras <span style='color:#2ECC71; font-weight:bold;'>Verdes</span> = Buen servicio | Barras <span style='color:#F39C12; font-weight:bold;'>Naranjas</span> = Retraso promedio.", unsafe_allow_html=True)
-    
+            # 4. Mostrar la nota que cambia según los datos
+            if valor_peor_dias > 0:
+                st.error(f"""
+                    🔍 **Diagnóstico Logístico al {fecha_actual}:** El mayor impacto en la espera del cliente lo tiene **{nombre_peor_dias}** con un retraso promedio de **{valor_peor_dias:.1f} días**.  
+                    En cuanto a frecuencia, **{nombre_volumen}** es quien más incidencias acumula con **{cantidad_fallos} pedidos** entregados fuera de tiempo.
+                """)
+            else:
+                st.success(f"✨ **Reporte al {fecha_actual}:** ¡Excelente desempeño! Todas las fleteras están operando dentro de los tiempos prometidos.")
+        
+        # Nota fija de apoyo visual
+        st.info("💡 **Guía rápida:** Barras <span style='color:#2ECC71; font-weight:bold;'>Verdes</span> = Buen servicio | Barras <span style='color:#F39C12; font-weight:bold;'>Naranjas</span> = Retraso promedio.", unsafe_allow_html=True)
+
     # --------------------------------------------------
     # RANKING DE CALIDAD: MEJOR A PEOR FLETERA (MENOS FALLOS A MÁS)
     # --------------------------------------------------
@@ -828,6 +828,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
