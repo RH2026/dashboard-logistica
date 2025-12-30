@@ -704,7 +704,7 @@ if st.session_state.pagina == "principal":
     # --------------------------------------------------
     # TABLA SCORECARD: CALIFICACIÓN DE FLETERAS
     # --------------------------------------------------
-    st.markdown("<h3 style='text-align:center; color:white;'>🏆 Scorecard de Desempeño Logístico</h3>", unsafe_allow_html=True)
+    st.markdown("<h5 style='text-align:center; color:white;'>🏆 Scorecard de Desempeño Logístico</h5>", unsafe_allow_html=True)
 
     # 1. Agrupamos métricas clave por fletera
     # Calculamos total de pedidos, cuántos tarde y el promedio de días
@@ -790,6 +790,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
