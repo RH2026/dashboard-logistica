@@ -40,7 +40,7 @@ if not st.session_state.get('splash_visto', False):
 
     # Renderizado del CSS y HTML del Splash
     # --------------------------------------------------
-    # 3. SPLASH SCREEN (DISEÑO NEÓN + POSICIÓN AJUSTADA)
+    # 3. SPLASH SCREEN (DISEÑO PULSO DE RADAR)
     # --------------------------------------------------
     st.markdown("""
     <style>
@@ -58,28 +58,34 @@ if not st.session_state.get('splash_visto', False):
         z-index: 9999;
     }
 
+    /* ANIMACIÓN DE PULSO */
     .loader { 
-        /* Diseño de Anillo de Neón */
-        border: 4px solid rgba(0, 255, 170, 0.1); 
-        border-top: 4px solid #00FFAA; 
-        border-radius: 50%; 
-        width: 100px; 
-        height: 100px; 
+        width: 80px;
+        height: 80px;
+        background-color: #00FFAA;
+        border-radius: 50%;
         
-        /* Efecto de resplandor */
-        box-shadow: 0 0 15px rgba(0, 255, 170, 0.2);
-        
-        /* Animación con aceleración fluida */
-        animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; 
-        
-        /* Ajuste de altura: lo sube un poco respecto al centro */
+        /* Ajuste de altura psicológico */
         margin-top: -12vh; 
-        margin-bottom: 25px; 
+        margin-bottom: 30px;
+        
+        /* La animación de pulso dura 1.5s para que sea suave */
+        animation: pulse 1.5s ease-out infinite;
+        box-shadow: 0 0 20px rgba(0, 255, 170, 0.4);
     }
 
-    @keyframes spin { 
-        0% { transform: rotate(0deg); } 
-        100% { transform: rotate(360deg); } 
+    @keyframes pulse {
+        0% { 
+            transform: scale(0.1); 
+            opacity: 1; 
+        }
+        70% { 
+            opacity: 0.5; 
+        }
+        100% { 
+            transform: scale(1.8); 
+            opacity: 0; 
+        }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -87,7 +93,7 @@ if not st.session_state.get('splash_visto', False):
     st.markdown(f'''
         <div class="splash-container">
             <div class="loader"></div>
-            <div style="color:#aaa; font-size:14px; font-family:sans-serif; letter-spacing: 1px;">
+            <div style="color:#aaa; font-size:15px; font-family:sans-serif; letter-spacing: 2px; font-weight: 300;">
                 {texto_splash.upper()}
             </div>
         </div>
@@ -850,6 +856,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
