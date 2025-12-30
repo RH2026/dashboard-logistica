@@ -31,32 +31,33 @@ if "ultimo_movimiento" not in st.session_state:
 # 3. SPLASH SCREEN (CORREGIDO PARA LOGOUT)
 # --------------------------------------------------
 # Usamos .get para que si la sesión está vacía no marque error
-# --- BLOQUE DE SPLASH SCREEN ADAPTADO ---
+# --- BLOQUE DE SPLASH SCREEN CORREGIDO ---
 if not st.session_state.get('splash_visto', False):
-    # Usamos un placeholder para "borrar" los gráficos de fondo y evitar parpadeos
     placeholder = st.empty()
     
+    # 1. SOLUCIÓN AL NameError: Definir la variable antes de usarla
+    if st.session_state.get('motivo_splash') == "logout":
+        texto_splash = "Cerrando sistema de forma segura..."
+    else:
+        texto_splash = "Inicializando módulos logísticos..."
+
     with placeholder.container():
-        # Renderizado del CSS y HTML del Splash (Diseño Impresionante Cyber-Grid)
+        # Renderizado del CSS y HTML del Splash
         st.markdown("""
         <style>
         .splash-container { 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
             height: 100vh; background-color: #05070a; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
-            /* Cuadrícula de fondo */
             background-image: 
                 linear-gradient(rgba(0, 255, 170, 0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0, 255, 170, 0.03) 1px, transparent 1px);
             background-size: 30px 30px;
         }
-
         .loader-box { position: relative; width: 150px; height: 150px; margin-top: -12vh; margin-bottom: 40px; }
-
         .loader-ring {
             position: absolute; width: 100%; height: 100%; border: 2px solid transparent;
             border-top: 2px solid #00FFAA; border-radius: 50%; animation: rotate 2s linear infinite;
         }
-
         .loader-core {
             position: absolute; top: 25%; left: 25%; width: 50%; height: 50%;
             background: rgba(0, 255, 170, 0.1); border: 1px solid #00FFAA;
@@ -64,16 +65,13 @@ if not st.session_state.get('splash_visto', False):
             animation: pulse-core 1.5s ease-in-out infinite;
             box-shadow: 0 0 20px rgba(0, 255, 170, 0.5);
         }
-
         .scanner-line {
             position: absolute; width: 100%; height: 2px; background: #00FFAA;
             box-shadow: 0 0 15px #00FFAA; animation: scan-move 3s ease-in-out infinite;
         }
-
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes pulse-core { 0%, 100% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 1; } }
         @keyframes scan-move { 0%, 100% { top: 0%; opacity: 0; } 10%, 90% { opacity: 1; } 50% { top: 100%; } }
-        
         .loading-text {
             color: #00FFAA; font-family: 'Courier New', monospace; font-size: 16px;
             text-transform: uppercase; letter-spacing: 5px; text-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
@@ -94,10 +92,9 @@ if not st.session_state.get('splash_visto', False):
             </div>
         ''', unsafe_allow_html=True)
         
-        # Pausamos para que la animación se vea antes de cambiar de página
         time.sleep(2)
     
-    # --- LÓGICA DE SALIDA O REINICIO (Mantenemos tu lógica intacta) ---
+    # Lógica de salida o reinicio
     if st.session_state.get('motivo_splash') == "logout":
         st.session_state.clear()
         st.session_state['autenticado'] = False
@@ -107,7 +104,6 @@ if not st.session_state.get('splash_visto', False):
         st.session_state['splash_visto'] = True
         st.session_state['motivo_splash'] = "inicio"
     
-    # Limpiamos el placeholder y reiniciamos
     placeholder.empty()
     st.rerun()
 
@@ -850,6 +846,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
