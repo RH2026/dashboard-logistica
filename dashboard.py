@@ -499,40 +499,45 @@ if st.session_state.pagina == "principal":
         g2.altair_chart(chart_r, use_container_width=True)
 
     # --------------------------------------------------
-    # GRÁFICO: CONTEO DE PEDIDOS ENTREGADOS CON RETRASO
+    # GRÁFICO: CONTEO DE PEDIDOS ENTREGADOS CON RETRASO (COLOR ROJO)
     # --------------------------------------------------
     st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:30px 0 10px 0;">Pedidos Entregados con Retraso por Fletera</div></div>""", unsafe_allow_html=True)
 
-    # 1. Filtramos: Solo los entregados donde la fecha real fue mayor a la promesa
+    # 1. Filtramos: Solo los entregados donde la fecha real fue después de la promesa
     df_conteo_tarde = df_filtrado[
         (df_filtrado["FECHA DE ENTREGA REAL"].notna()) & 
         (df_filtrado["FECHA DE ENTREGA REAL"] > df_filtrado["PROMESA DE ENTREGA"])
     ].copy()
 
-    # 2. Agrupamos por Fletera y contamos cuántas filas (pedidos) hay
+    # 2. Agrupamos por Fletera y contamos pedidos
     df_resumen_conteo = df_conteo_tarde.groupby("FLETERA").size().reset_index(name="CANTIDAD_PEDIDOS")
 
     if not df_resumen_conteo.empty:
-        # 3. Gráfica de barras (Conteo de pedidos)
+        # 3. Gráfica de barras con Color Rojo
         chart_conteo = alt.Chart(df_resumen_conteo).mark_bar(
-            color="##FF0000", # Azul para diferenciarlo del de días
-            cornerRadiusTopLeft=6, 
-            cornerRadiusTopRight=6
+            color="#FF0000",  # ROJO PURO
+            cornerRadiusTopLeft=8, 
+            cornerRadiusTopRight=8
         ).encode(
-            x=alt.X("FLETERA:N", title="Paquetería", sort='-y'),
+            x=alt.X("FLETERA:N", title="Paquetería", sort='-y', axis=alt.Axis(labelAngle=0)),
             y=alt.Y("CANTIDAD_PEDIDOS:Q", title="Número de Pedidos"),
             tooltip=["FLETERA", "CANTIDAD_PEDIDOS"]
-        ).properties(height=350)
+        ).properties(height=400)
 
         # 4. Etiqueta con el número de pedidos sobre la barra
         text_conteo = chart_conteo.mark_text(
-            align='center', baseline='bottom', dy=-10, fontSize=16, fontWeight='bold', color='white'
+            align='center', 
+            baseline='bottom', 
+            dy=-10, 
+            fontSize=18, 
+            fontWeight='bold', 
+            color='white'
         ).encode(text=alt.Text("CANTIDAD_PEDIDOS:Q"))
 
         st.altair_chart((chart_conteo + text_conteo), use_container_width=True)
-        st.caption("Este gráfico cuenta cuántas facturas/guías se entregaron después de la fecha comprometida.")
+        st.caption("Gráfico basado en la diferencia entre Fecha Real y Fecha Promesa.")
     else:
-        st.info("✅ No hay registros de pedidos entregados tarde en esta selección.")
+        st.success("✅ No hay registros de pedidos entregados tarde.")
     
     # --------------------------------------------------
     # FINAL DE PÁGINA Y BOTÓN A KPIs
@@ -572,6 +577,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
