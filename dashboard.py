@@ -5,71 +5,12 @@ import time
 import base64   # 👈 aquí
 import textwrap
 
-# 1. CONFIGURACIÓN (Línea 1 - Iniciamos colapsado para ayudar al CSS)
-st.set_page_config(
-    page_title="Control de Envíos – Enero 2026",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
-# 2. INICIALIZACIÓN DE ESTADOS
-if "logueado" not in st.session_state:
-    st.session_state.logueado = False
-if "splash_visto" not in st.session_state:
-    st.session_state.splash_visto = False
-
-# 3. EL BLOQUEADOR (Solo se inyecta si NO estamos logueados)
-if not st.session_state.logueado:
-    st.markdown("""
-        <style>
-            /* Bloqueo total de sidebar y controles */
-            [data-testid="stSidebar"], 
-            [data-testid="stSidebarCollapsedControl"],
-            .stSidebarNav {
-                display: none !important;
-                width: 0px !important;
-            }
-            /* Elimina el margen para que el login no se mueva */
-            .stMain { margin-left: 0px !important; }
-        </style>
-    """, unsafe_allow_html=True)
-
-# 4. LÓGICA DE FLUJO (Splash -> Login -> Dashboard)
-if not st.session_state.splash_visto:
-    # --- PANTALLA DE SPLASH ---
-    placeholder = st.empty()
-    with placeholder.container():
-        st.markdown("""
-            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:70vh;">
-                <div style="border:6px solid #2a2a2a; border-top:6px solid #00FFAA; border-radius:50%; width:80px; height:80px; animation:spin 1s linear infinite;"></div>
-                <p style="color:#aaa; margin-top:20px; font-family:sans-serif;">Cargando Jypesa OpsDash...</p>
-            </div>
-            <style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
-        """, unsafe_allow_html=True)
-        time.sleep(2)
-    st.session_state.splash_visto = True
-    st.rerun()
-
-elif not st.session_state.logueado:
-    # --- PANTALLA DE LOGIN ---
-    # (Aquí pones tu código de fondo de imagen y la caja azulada)
-    col1, col2, col3 = st.columns([1, 1.5, 1])
-    with col2:
-        st.write("#") # Espacio
-        with st.form("login_form"):
-            st.markdown("<h2 style='text-align:center;'>🔐 Acceso</h2>", unsafe_allow_html=True)
-            u = st.text_input("Usuario")
-            p = st.text_input("Contraseña", type="password")
-            if st.form_submit_button("Ingresar", use_container_width=True):
-                # Validación con tus Secrets
-                if u in st.secrets["usuarios"] and st.secrets["usuarios"][u] == p:
-                    st.session_state.logueado = True
-                    st.rerun()
-                else:
-                    st.error("Credenciales incorrectas")
+def get_base64_image(image_path):  # 👈 aquí
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
 
 # --------------------------------------------------
-# 2. ESTADOS INICIALES DE SESIÓN
+# ESTADOS INICIALES
 # --------------------------------------------------
 if "splash_visto" not in st.session_state:
     st.session_state.splash_visto = False
@@ -87,38 +28,10 @@ if "usuario_actual" not in st.session_state:
     st.session_state.usuario_actual = None
 
 # --------------------------------------------------
-# 3. CSS DE EMERGENCIA ANTIPARPADEO
-# --------------------------------------------------
-if not st.session_state.logueado:
-    st.markdown("""
-        <style>
-            section[data-testid="stSidebar"] {
-                display: none !important;
-                width: 0px !important;
-            }
-            [data-testid="stSidebarCollapsedControl"] {
-                display: none !important;
-            }
-            .stMain {
-                margin-left: 0px !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
-# --------------------------------------------------
-# 4. FUNCIONES AUXILIARES
-# --------------------------------------------------
-def get_base64_image(image_path):
-    try:
-        with open(image_path, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode()
-    except Exception:
-        return ""
-
-# --------------------------------------------------
-# 5. SPLASH SCREEN (INICIO Y SALIDA)
+# SPLASH SCREEN (ANTES DE TODO)
 # --------------------------------------------------
 if not st.session_state.splash_visto:
+
     texto_splash = (
         "Bye, cerrando sistema…"
         if st.session_state.motivo_splash == "logout"
@@ -136,6 +49,7 @@ if not st.session_state.splash_visto:
         padding-top: 160px;
         background-color: #0e1117;
     }
+
     .loader {
         border: 6px solid #2a2a2a;
         border-top: 6px solid #00FFAA;
@@ -145,6 +59,7 @@ if not st.session_state.splash_visto:
         animation: spin 1s linear infinite;
         margin-bottom: 20px;
     }
+
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -155,7 +70,7 @@ if not st.session_state.splash_visto:
     st.markdown(f"""
     <div class="splash-container">
         <div class="loader"></div>
-        <div style="color:#aaa; font-size:14px; font-family: sans-serif;">
+        <div style="color:#aaa; font-size:14px;">
             {texto_splash}
         </div>
     </div>
@@ -165,42 +80,78 @@ if not st.session_state.splash_visto:
     st.session_state.splash_visto = True
     st.session_state.motivo_splash = "inicio"
     st.rerun()
+# --------------------------------------------------
+# CONFIGURACIÓN DE PÁGINA
+# --------------------------------------------------
+st.set_page_config(
+    page_title="Control de Envíos – Enero 2026",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 # --------------------------------------------------
-# 6. LÓGICA DE AUTO LOGOUT
+# FONDO DE PANTALLA SOLO PARA LOGIN (COMPATIBLE CLOUD)
+# --------------------------------------------------
+if not st.session_state.get("logueado", False):
+
+    img_base64 = get_base64_image("1.jpg")
+
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/jpg;base64,{img_base64}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+# --------------------------------------------------
+# CONFIGURACIÓN AUTO LOGOUT
 # --------------------------------------------------
 TIEMPO_MAX_INACTIVIDAD = 10 * 60  # 10 minutos
 
+# --------------------------------------------------
+# INICIALIZAR SESIÓN (NO BORRAR)
+# --------------------------------------------------
+if "logueado" not in st.session_state:
+    st.session_state.logueado = False
+
+if "ultimo_movimiento" not in st.session_state:
+    st.session_state.ultimo_movimiento = time.time()
+
+if "usuario_actual" not in st.session_state:
+    st.session_state.usuario_actual = None
+
+# --------------------------------------------------
+# SECRETOS – MULTIUSUARIOS
+# --------------------------------------------------
+usuarios = st.secrets["usuarios"]  # diccionario desde Secrets
+
+# --------------------------------------------------
+# AUTO LOGOUT POR INACTIVIDAD (SEGURO)
+# --------------------------------------------------
 if st.session_state.logueado:
     ahora = time.time()
     if ahora - st.session_state.ultimo_movimiento > TIEMPO_MAX_INACTIVIDAD:
-        st.session_state.logueado = False
-        st.session_state.splash_visto = False
-        st.session_state.motivo_splash = "logout"
-        st.session_state.usuario_actual = None
+        st.session_state.clear()
+        st.warning("Sesión cerrada por inactividad ⏱️")
         st.rerun()
 
+
 # --------------------------------------------------
-# 7. INTERFAZ DE LOGIN (SI NO ESTÁ LOGUEADO)
+# LOGIN CENTRAL COMPACTO
+# --------------------------------------------------
+# --------------------------------------------------
+# LOGIN CENTRAL CON INPUTS Y BOTÓN "OJO" UNIFICADOS
 # --------------------------------------------------
 if not st.session_state.logueado:
-    # Imagen de fondo
-    img_base64 = get_base64_image("1.jpg")
-    if img_base64:
-        st.markdown(f"""
-            <style>
-            .stApp {{
-                background-image: url("data:image/jpg;base64,{img_base64}");
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-            }}
-            </style>
-            """, unsafe_allow_html=True)
-
-    # Estilos de la Caja de Login
     st.markdown("""
         <style>
+        /* 1. CAJA DE LOGIN */
         .stForm {
             background-color: #1e293b;
             padding: 25px;
@@ -208,37 +159,64 @@ if not st.session_state.logueado:
             border: 1px solid #334151;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
+        
+        /* 2. UNIFICACIÓN TOTAL DE COLOR (INPUTS Y OJO) */
+        /* Seleccionamos absolutamente todo el interior del input */
         div[data-testid="stTextInputRootElement"], 
         div[data-testid="stTextInputRootElement"] *, 
         .stForm input {
             background-color: #475569 !important;
             color: white !important;
             border: none !important;
+            box-shadow: none !important;
         }
+
+        /* 3. BORDE ÚNICO EXTERIOR */
         div[data-testid="stTextInputRootElement"] {
             border: 1px solid #64748b !important;
             border-radius: 8px !important;
         }
+
+        /* 4. ELIMINAR CUALQUIER RESIDUO DEL BOTÓN DEL OJO */
         button[aria-label="Show password"], 
-        button[aria-label="Hide password"] {
+        button[aria-label="Hide password"],
+        div[data-testid="stTextInputAdornment"] {
             background-color: transparent !important;
+            background: transparent !important;
+            border: none !important;
         }
+
+        /* 5. BLOQUEO VISUAL DE SUGERENCIAS DE GOOGLE */
+        input::-webkit-credentials-auto-fill-button,
+        input::-webkit-contacts-auto-fill-button,
+        input::-internal-autofill-selected {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
         .login-header {
             text-align: center; color: white; font-size: 24px; font-weight: bold; margin-bottom: 20px;
         }
         </style>
     """, unsafe_allow_html=True)
 
+    # 2. Columnas para centrar. El [1, 1, 1] hace que la caja sea de 1/3 del ancho
     col1, col2, col3 = st.columns([1, 1, 1])
+
     with col2:
+        # Usamos st.form para agrupar los elementos en un cuadro visual
         with st.form("login_form"):
             st.markdown('<div class="login-header">🔐 Acceso</div>', unsafe_allow_html=True)
+            
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
+            
+            # Botón dentro del formulario
             submit = st.form_submit_button("Ingresar", use_container_width=True)
 
             if submit:
-                usuarios = st.secrets["usuarios"]
                 if u_input in usuarios and usuarios[u_input] == c_input:
                     st.session_state.logueado = True
                     st.session_state.usuario_actual = u_input
@@ -246,43 +224,46 @@ if not st.session_state.logueado:
                     st.rerun()
                 else:
                     st.error("Usuario o contraseña incorrectos")
+    
     st.stop()
 
-# --------------------------------------------------
-# 8. DASHBOARD PRINCIPAL (DESPUÉS DEL LOGIN)
-# --------------------------------------------------
 else:
-    # Actualizar último movimiento al cargar cualquier parte del dashboard
-    st.session_state.ultimo_movimiento = time.time()
-
-    # Barra Lateral
-    st.sidebar.title(f"👤 {st.session_state.usuario_actual}")
-    st.sidebar.markdown("---")
+    st.sidebar.title("🔐 Sesión Activa")
     
-    # Estilo del botón Logout
+    # 1. Definimos el estilo ANTES del botón, usando un selector de atributo para el 'key'
+    # Esto asegura que el CSS busque específicamente el botón con key='btn_logout'
     st.markdown("""
         <style>
-        div[data-testid="stSidebar"] .stButton button {
+        /* Buscamos el botón que tenga el atributo help o la estructura de la key btn_logout */
+        div[data-testid="stSidebar"] div.stButton button[key="btn_logout"] {
+            background-color: transparent !important;
+            color: #ff4b4b !important;
+            border: 1px solid rgba(255, 75, 75, 0.5) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        /* Si el selector anterior es muy estricto, usamos este que busca por el orden:
+           Asumiendo que Cerrar Sesión es el PRIMER botón que aparece en la sidebar */
+        div[data-testid="stSidebar"] .stButton:first-of-type button {
             background-color: transparent !important;
             color: #ff4b4b !important;
             border: 1px solid rgba(255, 75, 75, 0.5) !important;
         }
-        div[data-testid="stSidebar"] .stButton button:hover {
+        
+        div[data-testid="stSidebar"] .stButton:first-of-type button:hover {
             background-color: rgba(255, 75, 75, 0.1) !important;
             border-color: #ff4b4b !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
+    # 2. Botón cerrar sesión (con motivo de splash)
     if st.sidebar.button("Cerrar sesión", use_container_width=True, key="btn_logout"):
         st.session_state.motivo_splash = "logout"
         st.session_state.splash_visto = False
         st.session_state.logueado = False
         st.rerun()
 
-    # --- AQUÍ EMPIEZA TU CONTENIDO DE DASHBOARD ---
-    st.title("🚚 Jypesa OpsDash 2026")
-    st.info("Bienvenido al sistema. Selecciona una página en el menú superior para ver los KPIs.")
 # --------------------------------------------------
 # 👋 SALUDO PERSONALIZADO (SOLO ESTO SE AGREGÓ)
 # --------------------------------------------------
@@ -858,16 +839,8 @@ if st.session_state.logueado:
 )
     
     # --------------------------------------------------
-    # GRÁFICOS POR PAQUETERÍA – CONTROL TOTAL DE TAMAÑO
+    # GRÁFICOS POR PAQUETERÍA – NUEVO BLOQUE
     # --------------------------------------------------
-    
-    # ==========================================
-    # 👇 AJUSTA ESTOS VALORES A TU GUSTO 👇
-    # ==========================================
-    TAMANO_TEXTO = 14   # Cambia este número para el tamaño de la fuente
-    ESPACIADO_DY = -15   # Si haces el texto más grande, pon un número más negativo (ej. -20)
-    # ==========================================
-    
     st.markdown(
         """
         <div style="text-align:center;">
@@ -881,71 +854,53 @@ if st.session_state.logueado:
     
     g1, g2 = st.columns(2)
     
-    # --- 1. EN TRÁNSITO ---
+    # En tránsito por paquetería
     df_transito = (
         df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"]
-        .groupby("FLETERA").size().reset_index(name="PEDIDOS")
+        .groupby("FLETERA")
+        .size()
+        .reset_index(name="PEDIDOS")
     )
     
-    # El factor 1.5 asegura que siempre haya espacio arriba para el número
-    max_t = max(df_transito["PEDIDOS"].max() * 1.5, 5) if not df_transito.empty else 10
-    
-    chart_t = alt.Chart(df_transito).encode(x=alt.X("FLETERA:N", title="Paquetería"))
-    
-    bars_t = chart_t.mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
-        y=alt.Y("PEDIDOS:Q", title="Pedidos", scale=alt.Scale(domain=[0, max_t])),
-        color=alt.value("#FFC107")
-    )
-    
-    text_t = chart_t.mark_text(
-        align='center', baseline='bottom', dy=ESPACIADO_DY,
-        fontSize=TAMANO_TEXTO, fontWeight='bold', color='white'
+    graf_transito = alt.Chart(df_transito).mark_bar(
+        cornerRadiusTopLeft=6,
+        cornerRadiusTopRight=6
     ).encode(
-        y=alt.Y("PEDIDOS:Q"),
-        text=alt.Text("PEDIDOS:Q")
-    )
+        x=alt.X("FLETERA:N", title="Paquetería"),
+        y=alt.Y("PEDIDOS:Q", title="Pedidos en tránsito"),
+        tooltip=["FLETERA", "PEDIDOS"],
+        color=alt.value("#FFC107")  # Amarillo
+    ).properties(height=320)
     
     g1.markdown("<h4 style='color:yellow; text-align:center;'>En tránsito</h4>", unsafe_allow_html=True)
-    g1.altair_chart((bars_t + text_t).properties(height=320), use_container_width=True)
+    g1.altair_chart(graf_transito, use_container_width=True)
     
-    
-    # --- 2. RETRASADOS ---
+    # Retrasados por paquetería
     df_retrasados = (
         df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"]
-        .groupby("FLETERA").size().reset_index(name="PEDIDOS")
+        .groupby("FLETERA")
+        .size()
+        .reset_index(name="PEDIDOS")
     )
     
-    max_r = max(df_retrasados["PEDIDOS"].max() * 1.5, 5) if not df_retrasados.empty else 10
-    
-    chart_r = alt.Chart(df_retrasados).encode(x=alt.X("FLETERA:N", title="Paquetería"))
-    
-    bars_r = chart_r.mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
-        y=alt.Y("PEDIDOS:Q", title="Pedidos", scale=alt.Scale(domain=[0, max_r])),
-        color=alt.value("#F44336")
-    )
-    
-    text_r = chart_r.mark_text(
-        align='center', baseline='bottom', dy=ESPACIADO_DY,
-        fontSize=TAMANO_TEXTO, fontWeight='bold', color='white'
+    graf_retrasados = alt.Chart(df_retrasados).mark_bar(
+        cornerRadiusTopLeft=6,
+        cornerRadiusTopRight=6
     ).encode(
-        y=alt.Y("PEDIDOS:Q"),
-        text=alt.Text("PEDIDOS:Q")
-    )
+        x=alt.X("FLETERA:N", title="Paquetería"),
+        y=alt.Y("PEDIDOS:Q", title="Pedidos retrasados"),
+        tooltip=["FLETERA", "PEDIDOS"],
+        color=alt.value("#F44336")  # Rojo
+    ).properties(height=320)
     
     g2.markdown("<h4 style='color:#F44336; text-align:center;'>Retrasados</h4>", unsafe_allow_html=True)
-    g2.altair_chart((bars_r + text_r).properties(height=320), use_container_width=True)
+    g2.altair_chart(graf_retrasados, use_container_width=True)
     
-    st.divider()
+    st.divider()  # línea separadora antes de la tabla
     
-    # -----------------------------------------------------
+    # --------------------------------------------------
     # PEDIDOS ENTREGADOS CON RETRASO POR PAQUETERÍA (FECHA REAL)
     # --------------------------------------------------
-    
-    # === AJUSTES DE DISEÑO ===
-    TAMANO_TEXTO_RETRASO = 14  # Ajusta este número a tu gusto
-    ESPACIADO_RETRASO = -15    # Ajusta si el texto queda muy pegado a la barra
-    # =========================
-    
     st.markdown(
         """
         <div style="text-align:center;">
@@ -974,57 +929,25 @@ if st.session_state.logueado:
     )
     
     if not df_retraso_paquete.empty:
-        # Calculamos el techo dinámico (30% extra) para que no se corte el número
-        max_val = df_retraso_paquete["PEDIDOS_RETRASADOS"].max() * 1.3
-        
-        # Creamos la base del gráfico
-        base_retraso = alt.Chart(df_retraso_paquete).encode(
-            x=alt.X("FLETERA:N", title="Paquetería")
-        )
-        
-        # Capa de barras
-        bars_retraso = base_retraso.mark_bar(
+        graf_retraso_paquete = alt.Chart(df_retraso_paquete).mark_bar(
             cornerRadiusTopLeft=6,
             cornerRadiusTopRight=6
         ).encode(
-            y=alt.Y("PEDIDOS_RETRASADOS:Q", 
-                    title="Pedidos entregados con retraso", 
-                    scale=alt.Scale(domain=[0, max_val])),
+            x=alt.X("FLETERA:N", title="Paquetería"),
+            y=alt.Y("PEDIDOS_RETRASADOS:Q", title="Pedidos entregados con retraso"),
             tooltip=["FLETERA", "PEDIDOS_RETRASADOS"],
             color=alt.value("#F44336")  # Rojo
-        )
-        
-        # Capa de texto (Los números grandes)
-        text_retraso = base_retraso.mark_text(
-            align='center',
-            baseline='bottom',
-            dy=ESPACIADO_RETRASO,
-            fontSize=TAMANO_TEXTO_RETRASO,
-            fontWeight='bold',
-            color='white'
-        ).encode(
-            y=alt.Y("PEDIDOS_RETRASADOS:Q"),
-            text=alt.Text("PEDIDOS_RETRASADOS:Q")
-        )
-        
-        # Combinamos ambas capas
-        graf_final = (bars_retraso + text_retraso).properties(height=320)
+        ).properties(height=320)
     
-        st.altair_chart(graf_final, use_container_width=True)
+        st.altair_chart(graf_retraso_paquete, use_container_width=True)
     else:
         st.info("No hay entregas con retraso para mostrar con los filtros actuales.")
     
-    st.divider()
+    st.divider()  # línea separadora antes de la tabla
     
     # --------------------------------------------------
-    # GRÁFICO DE ESTATUS – CON NÚMEROS GRANDES
+    # GRÁFICO DE ESTATUS – TITULO NARANJA
     # --------------------------------------------------
-    
-    # === AJUSTES DE DISEÑO (Cámbialos a tu gusto) ===
-    TAMANO_TEXTO_EST = 14  # Tamaño de los números
-    ESPACIADO_EST = -15    # Espacio hacia arriba
-    # ===============================================
-    
     st.markdown(
         """
         <div style="text-align:center;">
@@ -1054,86 +977,24 @@ if st.session_state.logueado:
         "RETRASADO": COLOR_AVANCE_RETRASADOS
     })
     
-    # Cálculo dinámico del techo del gráfico (30% extra para que quepa el número)
-    max_est = max(df_est["Cantidad"].max() * 1.3, 5)
-    
-    # Crear gráfico con capas
-    base_est = alt.Chart(df_est).encode(
-        x=alt.X("Estatus:N", title="Estatus", sort=["ENTREGADO", "EN TRANSITO", "RETRASADO"])
-    )
-    
-    # Capa de barras
-    bars_est = base_est.mark_bar(
-        cornerRadiusTopLeft=6, 
-        cornerRadiusTopRight=6
-    ).encode(
-        y=alt.Y("Cantidad:Q", title="Cantidad", scale=alt.Scale(domain=[0, max_est])),
-        color=alt.Color("Color:N", scale=None), # Mantiene tus colores originales
+    # Crear gráfico
+    chart = alt.Chart(df_est).mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
+        x=alt.X("Estatus:N", title="Estatus"),
+        y=alt.Y("Cantidad:Q", title="Cantidad"),
+        color=alt.Color("Color:N", scale=None, legend=None),
         tooltip=["Estatus:N", "Cantidad:Q"]
     )
     
-    # Capa de texto (Números grandes)
-    text_est = base_est.mark_text(
-        align='center',
-        baseline='bottom',
-        dy=ESPACIADO_EST,
-        fontSize=TAMANO_TEXTO_EST,
-        fontWeight='bold',
-        color='white'
-    ).encode(
-        y=alt.Y("Cantidad:Q"),
-        text=alt.Text("Cantidad:Q")
-    )
-    
-    # Combinar capas y mostrar
-    st.altair_chart((bars_est + text_est).properties(height=350), use_container_width=True)
-    
+    st.altair_chart(chart, use_container_width=True)
     st.divider()
     
     # --------------------------------------------------
     # FOOTER
     # --------------------------------------------------
-
     st.markdown(
-        """
-        <div style="text-align:center; color: #888888; font-size: 12px; padding: 10px;">
-            📦 0% de paquetes dañados emocionalmente durante la creación de este reporte.<br>
-            © 2026 - Tu Dashboard de Operaciones | Design by Rigobertto Hernandez
-        </div>
-        """, 
+        "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
-        )
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    )
 
 
 
