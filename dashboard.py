@@ -99,31 +99,55 @@ if not st.session_state.splash_visto:
 elif not st.session_state.logueado:
     # --- PANTALLA DE LOGIN CON FORMATO RECUPERADO ---
     
-    # 1. Inyectamos el CSS para que el ojito se vea parejo
+    # 1. Inyectamos el CSS corregido para que el ojito se vea parejo
     st.markdown("""
         <style>
-            /* Unifica fondo de inputs */
+            /* Unifica fondo de los campos de texto */
             div[data-testid="stTextInputRootElement"] {
                 background-color: #475569 !important;
                 border: 1px solid #64748b !important;
                 border-radius: 10px !important;
             }
-            /* ESTO QUITA EL PARCHE GRIS DEL OJITO */
-            div[data-testid="stTextInputAdornment"] {
+
+            /* ELIMINA EL PARCHE GRIS: Forzamos transparencia en el contenedor y el botón */
+            div[data-testid="stTextInputAdornment"],
+            div[data-testid="stTextInputAdornment"] > button,
+            div[data-testid="stTextInputAdornment"] div {
                 background-color: transparent !important;
                 background: transparent !important;
                 border: none !important;
+                box-shadow: none !important;
             }
-            /* Estilo del botón del icono */
+
+            /* Estilo del icono del ojo (Blanco y centrado) */
             button[aria-label="Show password"], 
             button[aria-label="Hide password"] {
-                background-color: transparent !important;
-                border: none !important;
-                box-shadow: none !important;
                 color: white !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            
+            /* Ajuste de color para el icono SVG interno */
+            div[data-testid="stTextInputAdornment"] svg {
+                fill: white !important;
             }
         </style>
     """, unsafe_allow_html=True)
+
+    # RECUERDA: Deja esta línea de espacio vacía antes de st.columns
+    col1, col2, col3 = st.columns([1, 1.2, 1])
+    
+    with col2:
+        st.write("###") 
+        with st.form("form_login_recuperado"):
+            st.markdown('<div class="login-header">🔐 Acceso</div>', unsafe_allow_html=True)
+            u = st.text_input("Usuario")
+            p = st.text_input("Contraseña", type="password")
+            
+            if st.form_submit_button("Ingresar", use_container_width=True):
+                # Tu lógica de validación...
+                pass
     
     col1, col2, col3 = st.columns([1, 1.2, 1])
     
@@ -987,6 +1011,7 @@ if st.session_state.logueado:
         unsafe_allow_html=True
         )
     
+
 
 
 
