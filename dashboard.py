@@ -172,9 +172,9 @@ else:
     """, unsafe_allow_html=True)
 
     if st.button("Cerrar Sesión"):
-    st.session_state.splash_visto = False
-    st.session_state.motivo_splash = "logout"
-    st.rerun()
+        st.session_state.splash_visto = False
+        st.session_state.motivo_splash = "logout"
+        st.rerun()
 
 # --------------------------------------------------
 # 👋 SALUDO PERSONALIZADO
@@ -839,6 +839,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
