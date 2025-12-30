@@ -542,6 +542,29 @@ if st.session_state.pagina == "principal":
     # --------------------------------------------------
     # VISTA DE ATENCIÓN AL CLIENTE: ¿QUÉ PASÓ CON LOS ENTREGADOS?
     # --------------------------------------------------
+    st.markdown("<h2 style='text-align:center; color:white;'>Reporte de Servicio al Cliente</h2>", unsafe_allow_html=True)
+    
+    col_graf1, col_graf2 = st.columns(2)
+
+    # 1. PREPARACIÓN DE DATOS (Solo entregados)
+    df_entregados = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
+    df_entregados["DIAS_DESVIACION"] = (df_entregados["FECHA DE ENTREGA REAL"] - df_entregados["PROMESA DE ENTREGA"]).dt.days
+
+    # --- GRÁFICO IZQUIERDA: ¿CUÁNTOS LLEGARON TARDE? (Conteos) ---
+    with col_graf1:
+        df_conteo = df_entregados[df_entregados["DIAS_DESVIACION"] > 0].groupby("FLETERA").size().reset_index(name="PEDIDOS")
+        if not df_conteo.empty:
+            chart1 = alt.Chart(df_conteo).mark_bar(color="#FF0000", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
+                x=alt.X("FLETERA:N", title="Paquetería", sort='-y'),
+                y=alt.Y("PEDIDOS:Q", title="Total de Pedidos Tarde"),
+            ).properties(height=350)
+            
+            text1 = chart1.mark_text(align='center', baseline='bottom', dy=-10, fontSize=16, fontWeight='bold', color='white').encode(
+                text=alt.Text("PEDIDOS:Q")
+            )
+            st.markdown("<p style='text-align:center; color:#FF0000; font-weight:bold;'>Cantidad de Fallos</p>", unsafe_allow_html=True)
+            st.altair_chart((chart1 + text1), use_container_width=True)
+
     # --- GRÁFICO DERECHA: ¿QUÉ TAN TARDE LLEGAN? (Promedios) ---
     with col_graf2:
         df_prom = df_entregados.groupby("FLETERA")["DIAS_DESVIACION"].mean().reset_index(name="PROMEDIO")
@@ -598,6 +621,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
