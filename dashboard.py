@@ -55,23 +55,39 @@ if not st.session_state.get('splash_visto', False):
         width: 100%;
         z-index: 9999;
     }
-    .loader { 
-        border: 6px solid #2a2a2a; 
-        border-top: 6px solid #00FFAA; 
+    
+    loader { 
+        /* Diseño de Anillo de Neón */
+        border: 4px solid rgba(0, 255, 170, 0.1); 
+        border-top: 4px solid #00FFAA; 
         border-radius: 50%; 
-        width: 120px; 
-        height: 120px; 
-        animation: spin 1s linear infinite; 
-        margin-bottom: 20px; 
+        width: 100px; 
+        height: 100px; 
+        
+        /* Efecto de resplandor */
+        box-shadow: 0 0 15px rgba(0, 255, 170, 0.2);
+        
+        /* Animación con aceleración fluida */
+        animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; 
+        
+        /* Ajuste de altura: lo sube un poco respecto al centro */
+        margin-top: -12vh; 
+        margin-bottom: 25px; 
     }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    @keyframes spin { 
+        0% { transform: rotate(0deg); } 
+        100% { transform: rotate(360deg); } 
+    }
     </style>
     """, unsafe_allow_html=True)
     
     st.markdown(f'''
         <div class="splash-container">
             <div class="loader"></div>
-            <div style="color:#aaa; font-size:14px; font-family:sans-serif;">{texto_splash}</div>
+            <div style="color:#aaa; font-size:14px; font-family:sans-serif; letter-spacing: 1px;">
+                {texto_splash.upper()}
+            </div>
         </div>
     ''', unsafe_allow_html=True)
     
@@ -832,6 +848,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
