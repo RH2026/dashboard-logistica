@@ -1078,17 +1078,18 @@ if st.session_state.logueado:
     st.markdown("---")
     st.markdown(
         """
-        <div style="text-align:center; color: #888888; font-size: 14px; padding: 20px;">
-            🤖 <b>Estado del sistema:</b> Operando al 100% (el humano que lo usa al 70%).<br>
-            ¿Un paquete se perdió? No, está explorando el mundo. 🌍✈️
+        <div style="text-align:center; color: #888888; font-size: 12px; padding: 10px;">
+            📦 0% de paquetes dañados emocionalmente durante la creación de este reporte.<br>
+            © 2025 - Tu Dashboard de Operaciones |¡A darle!
         </div>
         """, 
         unsafe_allow_html=True
-    )
+        )
     st.markdown(
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
