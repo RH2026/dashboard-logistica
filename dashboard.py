@@ -843,7 +843,7 @@ if st.session_state.logueado:
     # --------------------------------------------------
     
     # === CONFIGURACIÓN VISUAL (Ajusta aquí el tamaño) ===
-    TAMANO_FUENTE = 16  # Tamaño de los números sobre las barras
+    TAMANO_FUENTE = 14  # Tamaño de los números sobre las barras
     ESPACIADO_DY = -12  # Espacio entre la barra y el número (más negativo = más arriba)
     MARGEN_SUPERIOR = 1.3  # Factor de espacio extra en el eje Y (1.3 = 30% de "aire")
     # ===================================================
@@ -946,9 +946,15 @@ if st.session_state.logueado:
     
     st.divider()
     
-    # --------------------------------------------------
+    # ---------------------------------------------------
     # PEDIDOS ENTREGADOS CON RETRASO POR PAQUETERÍA (FECHA REAL)
     # --------------------------------------------------
+    
+    # === AJUSTES DE DISEÑO ===
+    TAMANO_TEXTO_RETRASO = 14  # Ajusta este número a tu gusto
+    ESPACIADO_RETRASO = -15    # Ajusta si el texto queda muy pegado a la barra
+    # =========================
+    
     st.markdown(
         """
         <div style="text-align:center;">
@@ -977,25 +983,57 @@ if st.session_state.logueado:
     )
     
     if not df_retraso_paquete.empty:
-        graf_retraso_paquete = alt.Chart(df_retraso_paquete).mark_bar(
+        # Calculamos el techo dinámico (30% extra) para que no se corte el número
+        max_val = df_retraso_paquete["PEDIDOS_RETRASADOS"].max() * 1.3
+        
+        # Creamos la base del gráfico
+        base_retraso = alt.Chart(df_retraso_paquete).encode(
+            x=alt.X("FLETERA:N", title="Paquetería")
+        )
+        
+        # Capa de barras
+        bars_retraso = base_retraso.mark_bar(
             cornerRadiusTopLeft=6,
             cornerRadiusTopRight=6
         ).encode(
-            x=alt.X("FLETERA:N", title="Paquetería"),
-            y=alt.Y("PEDIDOS_RETRASADOS:Q", title="Pedidos entregados con retraso"),
+            y=alt.Y("PEDIDOS_RETRASADOS:Q", 
+                    title="Pedidos entregados con retraso", 
+                    scale=alt.Scale(domain=[0, max_val])),
             tooltip=["FLETERA", "PEDIDOS_RETRASADOS"],
             color=alt.value("#F44336")  # Rojo
-        ).properties(height=320)
+        )
+        
+        # Capa de texto (Los números grandes)
+        text_retraso = base_retraso.mark_text(
+            align='center',
+            baseline='bottom',
+            dy=ESPACIADO_RETRASO,
+            fontSize=TAMANO_TEXTO_RETRASO,
+            fontWeight='bold',
+            color='white'
+        ).encode(
+            y=alt.Y("PEDIDOS_RETRASADOS:Q"),
+            text=alt.Text("PEDIDOS_RETRASADOS:Q")
+        )
+        
+        # Combinamos ambas capas
+        graf_final = (bars_retraso + text_retraso).properties(height=320)
     
-        st.altair_chart(graf_retraso_paquete, use_container_width=True)
+        st.altair_chart(graf_final, use_container_width=True)
     else:
         st.info("No hay entregas con retraso para mostrar con los filtros actuales.")
     
-    st.divider()  # línea separadora antes de la tabla
+    st.divider()
     
     # --------------------------------------------------
-    # GRÁFICO DE ESTATUS – TITULO NARANJA
+    # GRÁFICO DE ESTATUS – CON NÚMEROS GRANDES
     # --------------------------------------------------
+    
+    # === AJUSTES DE DISEÑO (Cámbialos a tu gusto) ===
+    TAMANO_TEXTO_EST = 14  # Tamaño de los números
+    ESPACIADO_EST = -15    # Espacio hacia arriba
+    # ===============================================
+    
     st.markdown(
         """
         <div style="text-align:center;">
@@ -1025,15 +1063,40 @@ if st.session_state.logueado:
         "RETRASADO": COLOR_AVANCE_RETRASADOS
     })
     
-    # Crear gráfico
-    chart = alt.Chart(df_est).mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
-        x=alt.X("Estatus:N", title="Estatus"),
-        y=alt.Y("Cantidad:Q", title="Cantidad"),
-        color=alt.Color("Color:N", scale=None, legend=None),
+    # Cálculo dinámico del techo del gráfico (30% extra para que quepa el número)
+    max_est = max(df_est["Cantidad"].max() * 1.3, 5)
+    
+    # Crear gráfico con capas
+    base_est = alt.Chart(df_est).encode(
+        x=alt.X("Estatus:N", title="Estatus", sort=["ENTREGADO", "EN TRANSITO", "RETRASADO"])
+    )
+    
+    # Capa de barras
+    bars_est = base_est.mark_bar(
+        cornerRadiusTopLeft=6, 
+        cornerRadiusTopRight=6
+    ).encode(
+        y=alt.Y("Cantidad:Q", title="Cantidad", scale=alt.Scale(domain=[0, max_est])),
+        color=alt.Color("Color:N", scale=None), # Mantiene tus colores originales
         tooltip=["Estatus:N", "Cantidad:Q"]
     )
     
-    st.altair_chart(chart, use_container_width=True)
+    # Capa de texto (Números grandes)
+    text_est = base_est.mark_text(
+        align='center',
+        baseline='bottom',
+        dy=ESPACIADO_EST,
+        fontSize=TAMANO_TEXTO_EST,
+        fontWeight='bold',
+        color='white'
+    ).encode(
+        y=alt.Y("Cantidad:Q"),
+        text=alt.Text("Cantidad:Q")
+    )
+    
+    # Combinar capas y mostrar
+    st.altair_chart((bars_est + text_est).properties(height=350), use_container_width=True)
+    
     st.divider()
     
     # --------------------------------------------------
@@ -1043,6 +1106,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
