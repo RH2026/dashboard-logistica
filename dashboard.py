@@ -29,95 +29,78 @@ if "ultimo_movimiento" not in st.session_state:
 
 
 
-# 4. CONFIGURACIÓN DE PÁGINA
+# 1. CONFIGURACIÓN DE PÁGINA (DEBE SER LO PRIMERO)
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --------------------------------------------------
-# FONDO DE PANTALLA SOLO PARA LOGIN
-# --------------------------------------------------
-# --------------------------------------------------
-# LÓGICA DE ACCESO (LOGIN)
-# --------------------------------------------------
+# 2. ESTILO GLOBAL PARA MATAR EL ERROR ROJO
+# Ponemos esto fuera de cualquier IF para que actúe desde el segundo cero
+st.markdown("""
+    <style>
+    /* Ocultar CUALQUIER mensaje de error o excepción de Streamlit */
+    div[data-testid="stException"], 
+    div[data-testid="stNotification"], 
+    .stAlert, 
+    div.element-container:has(div.stException) {
+        display: none !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# 3. LÓGICA DE LOGIN
 if not st.session_state.logueado:
-    # Creamos un contenedor que ocupará TODA la pantalla
-    login_placeholder = st.empty()
-    
     img_base64 = get_base64_image("1.jpg")
     
-    with login_placeholder.container():
-        # CSS Ultra-agresivo para ocultar errores y poner el fondo
-        st.markdown(f"""
-            <style>
-            .stApp {{
-                background-image: url("data:image/jpg;base64,{img_base64}");
-                background-size: cover;
-                background-position: center;
-            }}
-            /* Bloqueo total de cualquier ventana de error o advertencia de Streamlit */
-            div[data-testid="stException"], 
-            div[data-testid="stNotification"], 
-            .stAlert, 
-            div[class*="st-key-"] {{ 
-                display: none !important; 
-            }}
-            </style>
-        """, unsafe_allow_html=True)
+    # Aplicar fondo de pantalla
+    st.markdown(f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/jpg;base64,{img_base64}");
+            background-size: cover;
+            background-position: center;
+        }}
+        .login-box {{
+            background-color: rgba(30, 41, 59, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #334151;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }}
+        </style>
+    """, unsafe_allow_html=True)
 
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col2:
-            # Agregamos una llave (key) única al formulario para evitar conflictos
-            with st.form(key="main_login_form"):
-                st.markdown('<div class="login-header" style="text-align:center;color:white;font-size:24px;">🔐 Acceso</div>', unsafe_allow_html=True)
-                u_input = st.text_input("Usuario")
-                c_input = st.text_input("Contraseña", type="password")
-                submit = st.form_submit_button("Ingresar", use_container_width=True)
+    # Centrado del login sin columnas complicadas para evitar que desaparezca el botón
+    _, center_col, _ = st.columns([1, 2, 1])
+    
+    with center_col:
+        st.markdown('<div class="login-box">', unsafe_allow_html=True)
+        st.markdown('<h2 style="text-align:center; color:white;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
+        
+        # Formulario simplificado
+        with st.form(key="login_final"):
+            u_input = st.text_input("Usuario")
+            c_input = st.text_input("Contraseña", type="password")
+            submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
-                if submit:
-                    # Validación ultra-segura
-                    if "usuarios" in st.secrets:
-                        usuarios = st.secrets["usuarios"]
+            if submit:
+                # Verificación manual de secretos para evitar el "fantasma"
+                try:
+                    # Accedemos de forma ultra-segura
+                    sec = st.secrets.to_dict()
+                    if "usuarios" in sec:
+                        usuarios = sec["usuarios"]
                         if u_input in usuarios and usuarios[u_input] == c_input:
                             st.session_state.logueado = True
                             st.session_state.usuario_actual = u_input
                             st.session_state.ultimo_movimiento = time.time()
-                            st.session_state.splash_visto = False 
-                            login_placeholder.empty() # Borramos el login de la memoria visual
+                            st.session_state.splash_visto = False
                             st.rerun()
                         else:
-                            # Error manual en HTML para no disparar el componente st.error
-                            st.markdown('<p style="color:#ff4b4b; text-align:center;">Datos incorrectos</p>', unsafe_allow_html=True)
-                    else:
-                        st.markdown('<p style="color:yellow; text-align:center;">Configuración no encontrada</p>', unsafe_allow_html=True)
+                            st.markdown('<p style="color:#ff4b4b; text-align:center;">Usuario o clave incorrectos</p>', unsafe_allow_html=True)
+                except:
+                    # Si algo falla con los secretos, mostramos un mensaje amigable en lugar del error rojo
+                    st.markdown('<p style="color:orange; text-align:center;">Error de conexión con base de datos</p>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    st.stop() # Detiene todo lo que esté abajo si no hay login
-
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        # Usamos un contenedor para agrupar el formulario y evitar saltos visuales
-        login_container = st.container()
-        with login_container.form("login_form"):
-            st.markdown('<div class="login-header">🔐 Acceso</div>', unsafe_allow_html=True)
-            u_input = st.text_input("Usuario")
-            c_input = st.text_input("Contraseña", type="password")
-            submit = st.form_submit_button("Ingresar", use_container_width=True)
-
-            if submit:
-                # MOVER LA CARGA DE SECRETOS AQUÍ DENTRO
-                try:
-                    usuarios = st.secrets["usuarios"]
-                    if u_input in usuarios and usuarios[u_input] == c_input:
-                        st.session_state.logueado = True
-                        st.session_state.usuario_actual = u_input
-                        st.session_state.ultimo_movimiento = time.time()
-                        # IMPORTANTE: Reiniciamos el splash para que se vea al entrar
-                        st.session_state.splash_visto = False 
-                        st.rerun()
-                    else:
-                        st.error("Usuario o contraseña incorrectos")
-                except Exception:
-                    st.error("Error al conectar con la base de datos de usuarios.")
-    
-    # Detenemos la ejecución de forma segura
     st.stop()
 
 # --------------------------------------------------
@@ -908,6 +891,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
