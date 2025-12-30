@@ -1088,16 +1088,16 @@ if st.session_state.pagina == "principal":
             st.divider()
             
             # ... al final de todo tu código, donde ya tienes el botón de KPIs:
-                col_espacio, col_btn = st.columns([5, 1])  
-                with col_btn:
-                    if st.button("📊 Ver KPIs", use_container_width=True):
-                        st.session_state.pagina = 'KPIs' # Asegúrate que coincida el nombre
-                        st.rerun()
-        
-                st.markdown(
-                    "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
-                    unsafe_allow_html=True
-                )        
+            col_espacio, col_btn = st.columns([5, 1])  
+            with col_btn:
+                if st.button("📊 Ver KPIs", use_container_width=True):
+                    st.session_state.pagina = 'KPIs' # Asegúrate que coincida el nombre
+                    st.rerun()
+    
+            st.markdown(
+                "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
+                unsafe_allow_html=True
+            )        
             
             # --------------------------------------------------
             # BLOQUE ÚNICO PARA LA PÁGINA DE KPIs
@@ -1122,6 +1122,7 @@ if st.session_state.pagina == "principal":
         
                 # FOOTER OPCIONAL PARA ESTA PÁGINA
                 st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística</div>", unsafe_allow_html=True)
+
 
 
 
