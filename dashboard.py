@@ -9,40 +9,75 @@ import textwrap
 st.set_page_config(
     page_title="Control de Envíos – Enero 2026",
     layout="wide",
-    initial_sidebar_state="collapsed" # Le decimos que empiece cerrada
+    initial_sidebar_state="collapsed"
 )
 
-# 2. EL "BLOQUEADOR TOTAL" (Ponlo así, sin 'if' primero para probar)
-# Este CSS mata la barra lateral desde que el navegador recibe el primer bit de datos
-st.markdown("""
-    <style>
-        /* Oculta el contenedor de la barra lateral */
-        [data-testid="stSidebar"] {
-            display: none !important;
-            width: 0px !important;
-        }
-        
-        /* Oculta el botón de la flecha de arriba a la izquierda */
-        [data-testid="stSidebarCollapsedControl"] {
-            display: none !important;
-        }
-
-        /* Quita el espacio en blanco que deja la barra al intentar aparecer */
-        .stAppDeployButton {
-            display: none;
-        }
-        
-        /* Desactiva TODAS las animaciones para que no haya parpadeo */
-        * {
-            transition: none !important;
-            animation: none !important;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-# 3. LÓGICA DE LOGIN
+# 2. ESTADOS INICIALES
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
+if "splash_visto" not in st.session_state:
+    st.session_state.splash_visto = False
+if "motivo_splash" not in st.session_state:
+    st.session_state.motivo_splash = "inicio"
+
+# 3. BLOQUEO RADICAL (Solo si NO está logueado)
+if not st.session_state.logueado:
+    st.markdown("""
+        <style>
+            [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] {
+                display: none !important;
+            }
+            .stMain { margin-left: 0px !important; }
+        </style>
+    """, unsafe_allow_html=True)
+
+# 4. SPLASH SCREEN MEJORADO (Sin congelarse)
+if not st.session_state.splash_visto:
+    texto = "Cerrando sistema..." if st.session_state.motivo_splash == "logout" else "Inicializando módulos..."
+    
+    placeholder = st.empty() # Contenedor temporal
+    with placeholder.container():
+        st.markdown(f"""
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:70vh;">
+                <div style="border:6px solid #2a2a2a; border-top:6px solid #00FFAA; border-radius:50%; width:80px; height:80px; animation:spin 1s linear infinite;"></div>
+                <p style="color:#aaa; margin-top:20px;">{texto}</p>
+            </div>
+            <style> @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }} </style>
+        """, unsafe_allow_html=True)
+        time.sleep(2)
+    
+    st.session_state.splash_visto = True
+    placeholder.empty() # Borra el splash sin refrescar toda la página
+    st.rerun()
+
+# 5. LÓGICA DE LOGIN
+if not st.session_state.logueado:
+    # --- Aquí pones todo tu código de la caja de LOGIN y Fondo ---
+    # (El código que ya tienes de col1, col2, col3 y st.form)
+    
+    # IMPORTANTE: Al validar el usuario exitosamente:
+    # if submit:
+    #     if login_valido:
+    #         st.session_state.logueado = True
+    #         st.rerun() 
+    st.stop() 
+
+# 6. DASHBOARD (SOLO SI YA ENTRÓ)
+else:
+    # ESTE CSS RE-ACTIVA LA BARRA (La "desbloquea")
+    st.markdown("""
+        <style>
+            [data-testid="stSidebar"] {
+                display: block !important;
+                visibility: visible !important;
+                width: auto !important;
+            }
+            [data-testid="stSidebarCollapsedControl"] {
+                display: block !important;
+                visibility: visible !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
 # --------------------------------------------------
 # 2. ESTADOS INICIALES DE SESIÓN
@@ -1080,6 +1115,7 @@ if st.session_state.logueado:
         unsafe_allow_html=True
         )
     
+
 
 
 
