@@ -470,7 +470,7 @@ if st.session_state.pagina == "principal":
     )
 
     # --------------------------------------------------
-    # GRÁFICOS DE BARRAS POR PAQUETERÍA
+    # GRÁFICOS DE BARRAS POR PAQUETERÍA (CON ETIQUETAS)
     # --------------------------------------------------
     st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Análisis por Paquetería</div></div>""", unsafe_allow_html=True)
     
@@ -479,24 +479,44 @@ if st.session_state.pagina == "principal":
     # Gráfico 1: En Tránsito por Fletera
     df_t = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
     if not df_t.empty:
-        chart_t = alt.Chart(df_t).mark_bar(color="#FFC107", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
-            x=alt.X("FLETERA:N", title="Paquetería"),
+        # Definimos la base de la barra
+        base_t = alt.Chart(df_t).encode(
+            x=alt.X("FLETERA:N", title="Paquetería", sort='-y'),
             y=alt.Y("CANTIDAD:Q", title="Pedidos"),
             tooltip=["FLETERA", "CANTIDAD"]
-        ).properties(height=300)
+        )
+        
+        # Color y forma de la barra
+        chart_t = base_t.mark_bar(color="#FFC107", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).properties(height=300)
+        
+        # Etiqueta numérica superior
+        text_t = base_t.mark_text(
+            align='center', baseline='bottom', dy=-10, fontSize=14, fontWeight='bold', color='white'
+        ).encode(text=alt.Text("CANTIDAD:Q"))
+        
         g1.markdown("<h4 style='text-align:center; color:yellow;'>En tránsito</h4>", unsafe_allow_html=True)
-        g1.altair_chart(chart_t, use_container_width=True)
+        g1.altair_chart((chart_t + text_t), use_container_width=True)
 
     # Gráfico 2: Retrasados por Fletera
     df_r = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
     if not df_r.empty:
-        chart_r = alt.Chart(df_r).mark_bar(color="#F44336", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
-            x=alt.X("FLETERA:N", title="Paquetería"),
+        # Definimos la base de la barra
+        base_r = alt.Chart(df_r).encode(
+            x=alt.X("FLETERA:N", title="Paquetería", sort='-y'),
             y=alt.Y("CANTIDAD:Q", title="Pedidos"),
             tooltip=["FLETERA", "CANTIDAD"]
-        ).properties(height=300)
+        )
+        
+        # Color y forma de la barra
+        chart_r = base_r.mark_bar(color="#F44336", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).properties(height=300)
+        
+        # Etiqueta numérica superior
+        text_r = base_r.mark_text(
+            align='center', baseline='bottom', dy=-10, fontSize=14, fontWeight='bold', color='white'
+        ).encode(text=alt.Text("CANTIDAD:Q"))
+        
         g2.markdown("<h4 style='text-align:center; color:#F44336;'>Retrasados</h4>", unsafe_allow_html=True)
-        g2.altair_chart(chart_r, use_container_width=True)
+        g2.altair_chart((chart_r + text_r), use_container_width=True)
 
     # --------------------------------------------------
     # GRÁFICO: CONTEO DE PEDIDOS ENTREGADOS CON RETRASO (COLOR ROJO)
@@ -709,6 +729,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
