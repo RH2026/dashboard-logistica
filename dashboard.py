@@ -1078,17 +1078,15 @@ if st.session_state.logueado:
     st.markdown("---")
     st.markdown(
         """
-        <div style="text-align:center; color: #888888; font-size: 12px; padding: 10px;">
+        <div style="text-align:center; color: #888888; font-size: 10px; padding: 10px;">
             📦 0% de paquetes dañados emocionalmente durante la creación de este reporte.<br>
-            © 2025 - Tu Dashboard de Operaciones |¡A darle!
+            © 2026 - Tu Dashboard de Operaciones | Design by Rigobertto Hernandez
         </div>
         """, 
         unsafe_allow_html=True
         )
-    st.markdown(
-        "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
-        unsafe_allow_html=True
-    )
+    
+
 
 
 
