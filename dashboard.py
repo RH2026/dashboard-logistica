@@ -5,41 +5,44 @@ import time
 import base64   # 👈 aquí
 import textwrap
 
-# 1. CONFIGURACIÓN (Línea 1 - el estado inicial DEBE ser collapsed)
+# 1. CONFIGURACIÓN (Línea 1)
 st.set_page_config(
     page_title="Control de Envíos – Enero 2026",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed" # Le decimos que empiece cerrada
 )
 
-# 2. CSS ANTIPARPADEO RADICAL
-# Lo ponemos fuera de cualquier 'if' primero para que el navegador lo lea antes que el login
-if "logueado" not in st.session_state or not st.session_state.logueado:
-    st.markdown("""
-        <style>
-            /* 1. Ocultar el contenedor del sidebar por completo */
-            section[data-testid="stSidebar"] {
-                display: none !important;
-                visibility: hidden !important;
-                width: 0px !important;
-            }
-            /* 2. Ocultar el botón de la flecha que Streamlit crea al inicio */
-            button[data-testid="stSidebarCollapsedControl"] {
-                display: none !important;
-                visibility: hidden !important;
-            }
-            /* 3. Forzar el contenido principal a usar el 100% del ancho sin margen izquierdo */
-            .main .block-container {
-                max-width: 100% !important;
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
-            }
-            /* 4. Eliminar la animación de transición de la barra lateral */
-            section[data-testid="stSidebar"] > div {
-                transition: none !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
+# 2. EL "BLOQUEADOR TOTAL" (Ponlo así, sin 'if' primero para probar)
+# Este CSS mata la barra lateral desde que el navegador recibe el primer bit de datos
+st.markdown("""
+    <style>
+        /* Oculta el contenedor de la barra lateral */
+        [data-testid="stSidebar"] {
+            display: none !important;
+            width: 0px !important;
+        }
+        
+        /* Oculta el botón de la flecha de arriba a la izquierda */
+        [data-testid="stSidebarCollapsedControl"] {
+            display: none !important;
+        }
+
+        /* Quita el espacio en blanco que deja la barra al intentar aparecer */
+        .stAppDeployButton {
+            display: none;
+        }
+        
+        /* Desactiva TODAS las animaciones para que no haya parpadeo */
+        * {
+            transition: none !important;
+            animation: none !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# 3. LÓGICA DE LOGIN
+if "logueado" not in st.session_state:
+    st.session_state.logueado = False
 
 # --------------------------------------------------
 # 2. ESTADOS INICIALES DE SESIÓN
@@ -1077,6 +1080,7 @@ if st.session_state.logueado:
         unsafe_allow_html=True
         )
     
+
 
 
 
