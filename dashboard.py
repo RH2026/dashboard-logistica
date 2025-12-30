@@ -99,27 +99,34 @@ if not st.session_state.splash_visto:
 elif not st.session_state.logueado:
     # --- PANTALLA DE LOGIN CON FORMATO RECUPERADO ---
     
-    # 1. El diseño (CSS)
+    # 1. Inyectamos el CSS para que el ojito se vea parejo
     st.markdown("""
         <style>
+            /* Unifica fondo de inputs */
             div[data-testid="stTextInputRootElement"] {
                 background-color: #475569 !important;
                 border: 1px solid #64748b !important;
                 border-radius: 10px !important;
             }
+            /* ESTO QUITA EL PARCHE GRIS DEL OJITO */
             div[data-testid="stTextInputAdornment"] {
                 background-color: transparent !important;
+                background: transparent !important;
                 border: none !important;
             }
+            /* Estilo del botón del icono */
             button[aria-label="Show password"], 
             button[aria-label="Hide password"] {
                 background-color: transparent !important;
                 border: none !important;
+                box-shadow: none !important;
                 color: white !important;
             }
-        </style>        
-  
-    """, unsafe_allow_html=True)col1, col2, col3 = st.columns([1, 1.2, 1])
+        </style>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 1.2, 1])
+    
     with col2:
         st.write("###") # Espaciado superior
         with st.form("form_login_recuperado"):
@@ -980,6 +987,7 @@ if st.session_state.logueado:
         unsafe_allow_html=True
         )
     
+
 
 
 
