@@ -240,8 +240,7 @@ if st.session_state.pagina == "principal":
     # --------------------------------------------------
     with st.sidebar:
         st.markdown("---") # Separador visual
-        st.markdown("### 🔐 Gestión de Usuario")
-        
+                
         # El botón dispara el cambio de estado para activar el Splash
         if st.button("Cerrar Sesión", use_container_width=True):
             st.session_state.splash_visto = False
@@ -847,6 +846,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
