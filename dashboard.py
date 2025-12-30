@@ -40,52 +40,41 @@ if not st.session_state.get('splash_visto', False):
 
     # Renderizado del CSS y HTML del Splash
     # --------------------------------------------------
-    # 3. SPLASH SCREEN (DISEÑO PULSO DE RADAR)
+    # 3. SPLASH SCREEN (DISEÑO ESCÁNER LOGÍSTICO)
     # --------------------------------------------------
     st.markdown("""
     <style>
     .splash-container { 
-        display: flex; 
-        flex-direction: column; 
-        justify-content: center; 
-        align-items: center; 
-        height: 100vh; 
-        background-color: #0e1117; 
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        z-index: 9999;
+        display: flex; flex-direction: column; justify-content: center; align-items: center; 
+        height: 100vh; background-color: #0e1117; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
     }
-
-    /* ANIMACIÓN DE PULSO */
-    .loader { 
-        width: 80px;
-        height: 80px;
-        background-color: #00FFAA;
-        border-radius: 50%;
-        
-        /* Ajuste de altura psicológico */
-        margin-top: -12vh; 
+    
+    .loader {
+        width: 120px;
+        height: 70px;
+        border: 2px solid #374151; /* Color del marco */
+        position: relative;
+        margin-top: -12vh;
         margin-bottom: 30px;
-        
-        /* La animación de pulso dura 1.5s para que sea suave */
-        animation: pulse 1.5s ease-out infinite;
-        box-shadow: 0 0 20px rgba(0, 255, 170, 0.4);
+        overflow: hidden;
+        border-radius: 4px;
+        background: rgba(0, 255, 170, 0.05);
+    }
+    
+    /* La línea del láser */
+    .loader::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 3px;
+        background-color: #00FFAA;
+        box-shadow: 0 0 15px #00FFAA;
+        animation: scan 1.5s ease-in-out infinite;
     }
 
-    @keyframes pulse {
-        0% { 
-            transform: scale(0.1); 
-            opacity: 1; 
-        }
-        70% { 
-            opacity: 0.5; 
-        }
-        100% { 
-            transform: scale(1.8); 
-            opacity: 0; 
-        }
+    @keyframes scan {
+        0%, 100% { top: 5%; }
+        50% { top: 90%; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -93,7 +82,7 @@ if not st.session_state.get('splash_visto', False):
     st.markdown(f'''
         <div class="splash-container">
             <div class="loader"></div>
-            <div style="color:#aaa; font-size:15px; font-family:sans-serif; letter-spacing: 2px; font-weight: 300;">
+            <div style="color:#aaa; font-size:14px; font-family:sans-serif; letter-spacing: 2px;">
                 {texto_splash.upper()}
             </div>
         </div>
@@ -856,6 +845,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
