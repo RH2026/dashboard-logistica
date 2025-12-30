@@ -5,18 +5,14 @@ import time
 import base64   # 👈 aquí
 import textwrap
 
-# --------------------------------------------------
-# 1. CONFIGURACIÓN (SIEMPRE LÍNEA 1)
-# --------------------------------------------------
+# 1. CONFIGURACIÓN (Línea 1)
 st.set_page_config(
     page_title="Control de Envíos – Enero 2026",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --------------------------------------------------
-# 2. ESTADOS INICIALES (UNIFICADOS)
-# --------------------------------------------------
+# 2. ESTADOS DE SESIÓN
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
 if "splash_visto" not in st.session_state:
@@ -28,121 +24,120 @@ if "ultimo_movimiento" not in st.session_state:
 if "usuario_actual" not in st.session_state:
     st.session_state.usuario_actual = None
 
-# --------------------------------------------------
 # 3. FUNCIONES AUXILIARES
-# --------------------------------------------------
 def get_base64_image(image_path):
     try:
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
-    except Exception:
-        return ""
+    except: return ""
 
-# --------------------------------------------------
-# 4. BLOQUEADOR DE BARRA LATERAL (Solo antes del login)
-# --------------------------------------------------
+# 4. CSS ANTIPARPADEO Y FORMATO DE LOGIN (RECUPERADO)
 if not st.session_state.logueado:
-    st.markdown("""
+    img_base64 = get_base64_image("1.jpg")
+    st.markdown(f"""
         <style>
-            section[data-testid="stSidebar"], 
-            [data-testid="stSidebarCollapsedControl"] {
+            /* Bloqueo de barra lateral */
+            section[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] {{
                 display: none !important;
-            }
-            .stMain { margin-left: 0px !important; }
+            }}
+            .stMain {{ margin-left: 0px !important; }}
+
+            /* Fondo de pantalla */
+            .stApp {{
+                background-image: url("data:image/jpg;base64,{img_base64}");
+                background-size: cover;
+                background-position: center;
+            }}
+
+            /* FORMATO DE LA CAJA DE ACCESO (AZUL PROFUNDO) */
+            .stForm {{
+                background-color: #1e293b !important;
+                padding: 30px !important;
+                border-radius: 20px !important;
+                border: 1px solid #334151 !important;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+            }}
+
+            /* Inputs unificados con el fondo */
+            div[data-testid="stTextInputRootElement"] {{
+                background-color: #475569 !important;
+                border: 1px solid #64748b !important;
+                border-radius: 10px !important;
+            }}
+            
+            div[data-testid="stTextInputRootElement"] input {{
+                color: white !important;
+            }}
+
+            /* Estilo del encabezado dentro de la caja */
+            .login-header {{
+                text-align: center;
+                color: white;
+                font-size: 28px;
+                font-weight: bold;
+                margin-bottom: 25px;
+                font-family: sans-serif;
+            }}
         </style>
     """, unsafe_allow_html=True)
 
-# --------------------------------------------------
-# 5. FLUJO: SPLASH -> LOGIN -> DASHBOARD
-# --------------------------------------------------
-
-# A. SPLASH SCREEN
+# 5. LÓGICA DE FLUJO
 if not st.session_state.splash_visto:
-    texto_splash = "Bye, cerrando sistema…" if st.session_state.motivo_splash == "logout" else "Inicializando módulos logísticos…"
-    
+    # --- SPLASH SCREEN ---
+    texto = "Bye, cerrando sistema…" if st.session_state.motivo_splash == "logout" else "Inicializando módulos logísticos…"
     st.markdown(f"""
-    <style>
-    .splash-container {{ display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh; background-color: #0e1117; }}
-    .loader {{ border: 6px solid #2a2a2a; border-top: 6px solid #00FFAA; border-radius: 50%; width: 100px; height: 100px; animation: spin 1s linear infinite; }}
-    @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
-    </style>
-    <div class="splash-container">
-        <div class="loader"></div>
-        <p style="color:#aaa; margin-top:20px; font-family:sans-serif;">{texto_splash}</p>
-    </div>
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:80vh;">
+            <div style="border:6px solid #2a2a2a; border-top:6px solid #00FFAA; border-radius:50%; width:100px; height:100px; animation:spin 1s linear infinite;"></div>
+            <p style="color:#aaa; margin-top:25px; font-family:sans-serif; font-size:16px;">{texto}</p>
+        </div>
+        <style> @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }} </style>
     """, unsafe_allow_html=True)
-    
     time.sleep(2)
     st.session_state.splash_visto = True
     st.rerun()
 
-# B. PANTALLA DE LOGIN
 elif not st.session_state.logueado:
-    # Imagen de fondo
-    img_base64 = get_base64_image("1.jpg")
-    if img_base64:
-        st.markdown(f'<style>.stApp {{ background-image: url("data:image/jpg;base64,{img_base64}"); background-size: cover; }}</style>', unsafe_allow_html=True)
-
-    # Estilos de la caja azul
-    st.markdown("""
-        <style>
-        .stForm { background-color: #1e293b; padding: 25px; border-radius: 15px; border: 1px solid #334151; }
-        div[data-testid="stTextInputRootElement"] { background-color: #475569 !important; border-radius: 8px !important; }
-        .login-header { text-align: center; color: white; font-size: 24px; font-weight: bold; margin-bottom: 20px; }
-        </style>
-    """, unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns([1, 1, 1])
+    # --- PANTALLA DE LOGIN CON FORMATO RECUPERADO ---
+    col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
-        with st.form("form_login_unico"): # Clave cambiada para evitar error de duplicado
+        st.write("###") # Espaciado superior
+        with st.form("form_login_recuperado"):
             st.markdown('<div class="login-header">🔐 Acceso</div>', unsafe_allow_html=True)
-            u_input = st.text_input("Usuario")
-            c_input = st.text_input("Contraseña", type="password")
-            submit = st.form_submit_button("Ingresar", use_container_width=True)
-
-            if submit:
-                usuarios = st.secrets["usuarios"]
-                if u_input in usuarios and usuarios[u_input] == c_input:
+            u = st.text_input("Usuario")
+            p = st.text_input("Contraseña", type="password")
+            
+            if st.form_submit_button("Ingresar", use_container_width=True):
+                if u in st.secrets["usuarios"] and st.secrets["usuarios"][u] == p:
                     st.session_state.logueado = True
-                    st.session_state.usuario_actual = u_input
+                    st.session_state.usuario_actual = u
                     st.session_state.ultimo_movimiento = time.time()
                     st.rerun()
                 else:
                     st.error("Credenciales incorrectas")
     st.stop()
 
-# C. DASHBOARD REAL (Solo llega aquí si está logueado)
+# 6. DASHBOARD (SOLO SI YA ENTRÓ)
 else:
-    # Lógica de Auto Logout (10 min)
-    ahora = time.time()
-    if ahora - st.session_state.ultimo_movimiento > (10 * 60):
+    # Auto Logout
+    if time.time() - st.session_state.ultimo_movimiento > (10 * 60):
         st.session_state.logueado = False
         st.session_state.splash_visto = False
         st.session_state.motivo_splash = "logout"
         st.rerun()
-    
+
     st.session_state.ultimo_movimiento = time.time()
-
-    # Barra Lateral
-    st.sidebar.title(f"👤 {st.session_state.usuario_actual}")
     
-    # Estilo del botón Logout
-    st.markdown("""
-        <style>
-        div[data-testid="stSidebar"] .stButton button { background: transparent; color: #ff4b4b; border: 1px solid #ff4b4b; }
-        </style>
-    """, unsafe_allow_html=True)
-
-    if st.sidebar.button("Cerrar sesión", use_container_width=True, key="btn_logout"):
-        st.session_state.motivo_splash = "logout"
-        st.session_state.splash_visto = False
+    # Barra Lateral (se activa sola al no haber CSS de bloqueo)
+    st.sidebar.title(f"👤 {st.session_state.usuario_actual}")
+    if st.sidebar.button("Cerrar sesión", use_container_width=True):
         st.session_state.logueado = False
+        st.session_state.splash_visto = False
+        st.session_state.motivo_splash = "logout"
         st.rerun()
 
-    # --- CONTENIDO DE TU DASHBOARD ---
+    # CONTENIDO DEL DASHBOARD
     st.title("🚚 Jypesa OpsDash 2026")
-    st.info("Bienvenido al sistema. Selecciona una página en el menú lateral para ver los KPIs.")
-    # Aquí puedes seguir pegando el resto de tus gráficas...
+    st.info("Formato recuperado exitosamente. Ya puedes continuar con tus KPIs.")
 # --------------------------------------------------
 # 👋 SALUDO PERSONALIZADO (SOLO ESTO SE AGREGÓ)
 # --------------------------------------------------
@@ -964,6 +959,7 @@ if st.session_state.logueado:
         unsafe_allow_html=True
         )
     
+
 
 
 
