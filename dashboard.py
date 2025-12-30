@@ -5,79 +5,68 @@ import time
 import base64   # 👈 aquí
 import textwrap
 
-# 1. CONFIGURACIÓN (Línea 1)
+# 1. CONFIGURACIÓN (Línea 1 - Iniciamos colapsado para ayudar al CSS)
 st.set_page_config(
     page_title="Control de Envíos – Enero 2026",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# 2. ESTADOS INICIALES
+# 2. INICIALIZACIÓN DE ESTADOS
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
 if "splash_visto" not in st.session_state:
     st.session_state.splash_visto = False
-if "motivo_splash" not in st.session_state:
-    st.session_state.motivo_splash = "inicio"
 
-# 3. BLOQUEO RADICAL (Solo si NO está logueado)
+# 3. EL BLOQUEADOR (Solo se inyecta si NO estamos logueados)
 if not st.session_state.logueado:
     st.markdown("""
         <style>
-            [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] {
+            /* Bloqueo total de sidebar y controles */
+            [data-testid="stSidebar"], 
+            [data-testid="stSidebarCollapsedControl"],
+            .stSidebarNav {
                 display: none !important;
+                width: 0px !important;
             }
+            /* Elimina el margen para que el login no se mueva */
             .stMain { margin-left: 0px !important; }
         </style>
     """, unsafe_allow_html=True)
 
-# 4. SPLASH SCREEN MEJORADO (Sin congelarse)
+# 4. LÓGICA DE FLUJO (Splash -> Login -> Dashboard)
 if not st.session_state.splash_visto:
-    texto = "Cerrando sistema..." if st.session_state.motivo_splash == "logout" else "Inicializando módulos..."
-    
-    placeholder = st.empty() # Contenedor temporal
+    # --- PANTALLA DE SPLASH ---
+    placeholder = st.empty()
     with placeholder.container():
-        st.markdown(f"""
+        st.markdown("""
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:70vh;">
                 <div style="border:6px solid #2a2a2a; border-top:6px solid #00FFAA; border-radius:50%; width:80px; height:80px; animation:spin 1s linear infinite;"></div>
-                <p style="color:#aaa; margin-top:20px;">{texto}</p>
+                <p style="color:#aaa; margin-top:20px; font-family:sans-serif;">Cargando Jypesa OpsDash...</p>
             </div>
-            <style> @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }} </style>
+            <style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
         """, unsafe_allow_html=True)
         time.sleep(2)
-    
     st.session_state.splash_visto = True
-    placeholder.empty() # Borra el splash sin refrescar toda la página
     st.rerun()
 
-# 5. LÓGICA DE LOGIN
-if not st.session_state.logueado:
-    # --- Aquí pones todo tu código de la caja de LOGIN y Fondo ---
-    # (El código que ya tienes de col1, col2, col3 y st.form)
-    
-    # IMPORTANTE: Al validar el usuario exitosamente:
-    # if submit:
-    #     if login_valido:
-    #         st.session_state.logueado = True
-    #         st.rerun() 
-    st.stop() 
-
-# 6. DASHBOARD (SOLO SI YA ENTRÓ)
-else:
-    # ESTE CSS RE-ACTIVA LA BARRA (La "desbloquea")
-    st.markdown("""
-        <style>
-            [data-testid="stSidebar"] {
-                display: block !important;
-                visibility: visible !important;
-                width: auto !important;
-            }
-            [data-testid="stSidebarCollapsedControl"] {
-                display: block !important;
-                visibility: visible !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
+elif not st.session_state.logueado:
+    # --- PANTALLA DE LOGIN ---
+    # (Aquí pones tu código de fondo de imagen y la caja azulada)
+    col1, col2, col3 = st.columns([1, 1.5, 1])
+    with col2:
+        st.write("#") # Espacio
+        with st.form("login_form"):
+            st.markdown("<h2 style='text-align:center;'>🔐 Acceso</h2>", unsafe_allow_html=True)
+            u = st.text_input("Usuario")
+            p = st.text_input("Contraseña", type="password")
+            if st.form_submit_button("Ingresar", use_container_width=True):
+                # Validación con tus Secrets
+                if u in st.secrets["usuarios"] and st.secrets["usuarios"][u] == p:
+                    st.session_state.logueado = True
+                    st.rerun()
+                else:
+                    st.error("Credenciales incorrectas")
 
 # --------------------------------------------------
 # 2. ESTADOS INICIALES DE SESIÓN
@@ -1115,6 +1104,7 @@ if st.session_state.logueado:
         unsafe_allow_html=True
         )
     
+
 
 
 
