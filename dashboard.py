@@ -472,7 +472,7 @@ if st.session_state.pagina == "principal":
     # --------------------------------------------------
     # GRÁFICOS DE BARRAS POR PAQUETERÍA (CON ETIQUETAS)
     # --------------------------------------------------
-    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Análisis por Paquetería</div></div>""", unsafe_allow_html=True)
+    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:18px; font-weight:700; margin:10px 0;">Análisis por Paquetería</div></div>""", unsafe_allow_html=True)
     
     g1, g2 = st.columns(2)
 
@@ -494,7 +494,7 @@ if st.session_state.pagina == "principal":
             align='center', baseline='bottom', dy=-10, fontSize=14, fontWeight='bold', color='white'
         ).encode(text=alt.Text("CANTIDAD:Q"))
         
-        g1.markdown("<h4 style='text-align:center; color:yellow;'>En tránsito</h4>", unsafe_allow_html=True)
+        g1.markdown("<h5 style='text-align:center; color:yellow;'>En tránsito / En tiempo</h5>", unsafe_allow_html=True)
         g1.altair_chart((chart_t + text_t), use_container_width=True)
 
     # Gráfico 2: Retrasados por Fletera
@@ -515,13 +515,13 @@ if st.session_state.pagina == "principal":
             align='center', baseline='bottom', dy=-10, fontSize=14, fontWeight='bold', color='white'
         ).encode(text=alt.Text("CANTIDAD:Q"))
         
-        g2.markdown("<h4 style='text-align:center; color:#F44336;'>Retrasados</h4>", unsafe_allow_html=True)
+        g2.markdown("<h5 style='text-align:center; color:#F44336;'>Sin entregar con retraso</h5>", unsafe_allow_html=True)
         g2.altair_chart((chart_r + text_r), use_container_width=True)
 
     # --------------------------------------------------
     # GRÁFICO: CONTEO DE PEDIDOS ENTREGADOS CON RETRASO (COLOR ROJO)
     # --------------------------------------------------
-    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:30px 0 10px 0;">Pedidos Entregados con Retraso por Fletera</div></div>""", unsafe_allow_html=True)
+    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:18px; font-weight:700; margin:30px 0 10px 0;">Pedidos Entregados con Retraso por Fletera</div></div>""", unsafe_allow_html=True)
 
     # 1. Filtramos: Solo los entregados donde la fecha real fue después de la promesa
     df_conteo_tarde = df_filtrado[
@@ -564,7 +564,7 @@ if st.session_state.pagina == "principal":
     # --------------------------------------------------
     import datetime
 
-    st.markdown("<h3 style='text-align:center; color:white;'>Retraso Promedio por Paquetería</h3>", unsafe_allow_html=True)
+    st.markdown("<h5 style='text-align:center; color:white;'>Retraso Promedio por Paquetería</h5>", unsafe_allow_html=True)
 
     # 1. Preparación de datos (Reactivo a df_filtrado)
     df_entregados_p = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
@@ -616,7 +616,7 @@ if st.session_state.pagina == "principal":
     # --------------------------------------------------
     # RANKING DE CALIDAD: MEJOR A PEOR FLETERA (MENOS FALLOS A MÁS)
     # --------------------------------------------------
-    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:30px 0 10px 0;">Ranking de Calidad por Paquetería</div></div>""", unsafe_allow_html=True)
+    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:18px; font-weight:700; margin:30px 0 10px 0;">Ranking de Calidad por Paquetería</div></div>""", unsafe_allow_html=True)
 
     # 1. Filtramos los entregados tarde
     df_entregas_tarde = df_filtrado[
@@ -660,7 +660,7 @@ if st.session_state.pagina == "principal":
     # --------------------------------------------------
     # SECCIÓN UNIFICADA: ANÁLISIS DE EXPERIENCIA (LUPA)
     # --------------------------------------------------
-    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:30px 0 10px 0;">🔍 Lupa por Paquetería: Distribución de Experiencia</div></div>""", unsafe_allow_html=True)
+    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:18px; font-weight:700; margin:30px 0 10px 0;">Ananlisis por Paquetería: Distribución de Experiencia</div></div>""", unsafe_allow_html=True)
 
     # 1. Selector único para controlar el gráfico
     lista_fleteras = ["TODAS"] + sorted(df_filtrado["FLETERA"].unique().tolist())
@@ -790,6 +790,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
