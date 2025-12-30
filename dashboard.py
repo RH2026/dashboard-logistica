@@ -1103,7 +1103,7 @@ if st.session_state.pagina == "principal":
 # BLOQUE ÚNICO PARA LA PÁGINA DE KPIs
 # --------------------------------------------------
 elif st.session_state.pagina == "KPIs":
-st.markdown("<h1 style='text-align:center;'>Análisis Detallado de KPIs</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;'>Análisis Detallado de KPIs</h1>", unsafe_allow_html=True)
 
     # --- AQUÍ VA TU CONTENIDO NUEVO (Métricas y gráficas) ---
     col1, col2 = st.columns(2)
@@ -1122,6 +1122,7 @@ st.markdown("<h1 style='text-align:center;'>Análisis Detallado de KPIs</h1>", u
     
     # FOOTER OPCIONAL PARA ESTA PÁGINA
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística</div>", unsafe_allow_html=True)
+
 
 
 
