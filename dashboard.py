@@ -363,12 +363,21 @@ if st.session_state.pagina == "principal":
                 st.divider()
     
     # --------------------------------------------------
-    # 1. CONFIGURACIÓN DE COLORES Y FUNCIÓN (DEFINIR ANTES DE USAR)
+    # 1. CÁLCULO DE MÉTRICAS (INDISPENSABLE ANTES DE LAS DONITAS)
     # --------------------------------------------------
-    COLOR_AVANCE_ENTREGADOS = "#4CAF50"   # Verde
-    COLOR_AVANCE_TRANSITO   = "#FFC107"   # Amarillo
-    COLOR_AVANCE_RETRASADOS = "#F44336"   # Rojo
-    COLOR_FALTANTE          = "#3A3A3A"   # Gris (ESTA ES LA QUE DABA ERROR)
+    # Aseguramos que 'total' y demás variables existan
+    total = len(df_filtrado)
+    entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
+    en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
+    retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
+
+    # --------------------------------------------------
+    # 2. CONFIGURACIÓN DE COLORES Y FUNCIÓN
+    # --------------------------------------------------
+    COLOR_AVANCE_ENTREGADOS = "#4CAF50"
+    COLOR_AVANCE_TRANSITO   = "#FFC107"
+    COLOR_AVANCE_RETRASADOS = "#F44336"
+    COLOR_FALTANTE          = "#3A3A3A"
 
     def donut_con_numero(avance, total_val, color_avance, color_faltante):
         porcentaje = int((avance / total_val) * 100) if total_val > 0 else 0
@@ -393,7 +402,7 @@ if st.session_state.pagina == "principal":
         return (donut + texto_n + texto_p).properties(width=140, height=140)
 
     # --------------------------------------------------
-    # 2. RENDERIZADO DE LOS KPIs (Línea 402 aproximada)
+    # 3. RENDERIZADO DE LOS KPIs (Línea 405)
     # --------------------------------------------------
     st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Indicadores Generales</div></div>""", unsafe_allow_html=True)
 
@@ -401,7 +410,7 @@ if st.session_state.pagina == "principal":
 
     with c1:
         st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Total de pedidos</div>", unsafe_allow_html=True)
-        # Ahora la función ya existe y no dará NameError
+        # Ahora 'total' ya está definido arriba
         st.altair_chart(donut_con_numero(total, total, "#FFD700", COLOR_FALTANTE), use_container_width=True)
 
     with c2:
@@ -527,6 +536,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
