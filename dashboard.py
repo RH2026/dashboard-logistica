@@ -28,15 +28,49 @@ if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time()
 
 # --------------------------------------------------
-# 3. SPLASH SCREEN (CORREGIDO PARA LOGOUT)
+# 3. SPLASH SCREEN (CORREGIDO SIN PARPADEO)
 # --------------------------------------------------
-# Usamos .get para que si la sesión está vacía no marque error
 if not st.session_state.get('splash_visto', False):
-    # Definir el mensaje según el motivo
+    # Creamos un contenedor vacío que ocupará toda la pantalla
+    placeholder = st.empty()
+    
     if st.session_state.get('motivo_splash') == "logout":
         texto_splash = "Bye, cerrando sistema…"
     else:
         texto_splash = "Inicializando módulos logísticos…"
+
+    with placeholder.container():
+        st.markdown("""
+        <style>
+        .splash-container { 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            height: 100vh; background-color: #0e1117; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
+        }
+        .loader {
+            width: 120px; height: 70px; border: 2px solid #374151; position: relative;
+            margin-top: -12vh; margin-bottom: 30px; overflow: hidden; border-radius: 4px;
+            background: repeating-linear-gradient(90deg, #0e1117, #0e1117 5px, #374151 5px, #374151 10px);
+        }
+        .loader::after {
+            content: ""; position: absolute; width: 100%; height: 3px;
+            background-color: #00FFAA; box-shadow: 0 0 15px #00FFAA;
+            animation: scan 1.5s ease-in-out infinite;
+        }
+        @keyframes scan { 0%, 100% { top: 5%; } 50% { top: 90%; } }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f'''
+            <div class="splash-container">
+                <div class="loader"></div>
+                <div style="color:#aaa; font-size:14px; font-family:sans-serif; letter-spacing: 2px;">
+                    {texto_splash.upper()}
+                </div>
+            </div>
+        ''', unsafe_allow_html=True)
+        
+        # Pausa mientras el splash está visible en el placeholder
+        time.sleep(2)
 
     # Renderizado del CSS y HTML del Splash
     # --------------------------------------------------
@@ -117,21 +151,19 @@ if not st.session_state.get('splash_visto', False):
     
     time.sleep(2)
     
-    # --- LÓGICA DE SALIDA O REINICIO ---
-    if st.session_state.get('motivo_splash') == "logout":
-        # 1. Limpiamos toda la memoria
-        st.session_state.clear()
+    # --- LÓGICA DE CIERRE REAL ---
+        if st.session_state.get('motivo_splash') == "logout":
+            st.session_state.clear()
+            st.session_state['autenticado'] = False
+            st.session_state['splash_visto'] = True
+            st.session_state['motivo_splash'] = "inicio"
+        else:
+            st.session_state['splash_visto'] = True
+            st.session_state['motivo_splash'] = "inicio"
         
-        # 2. IMPORTANTE: Re-inicializamos los estados para que el Login y Sidebar funcionen
-        st.session_state['autenticado'] = False
-        st.session_state['splash_visto'] = True
-        st.session_state['motivo_splash'] = "inicio"
-    else:
-        # Flujo de inicio normal
-        st.session_state['splash_visto'] = True
-        st.session_state['motivo_splash'] = "inicio"
-    
-    st.rerun()
+        # Limpiamos el placeholder antes del rerun para asegurar transición limpia
+        placeholder.empty()
+        st.rerun()
 
 # 4. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
@@ -872,6 +904,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
