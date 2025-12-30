@@ -499,6 +499,42 @@ if st.session_state.pagina == "principal":
         g2.altair_chart(chart_r, use_container_width=True)
 
     # --------------------------------------------------
+    # NUEVO GRÁFICO: RETRASOS TOTALES POR PAQUETERÍA
+    # --------------------------------------------------
+    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:30px 0 10px 0;">Retrasos Generales por Paquetería</div></div>""", unsafe_allow_html=True)
+    
+    # Calculamos los días de retraso por cada envío (solo si están realmente retrasados)
+    df_retrasos_calculados = df_filtrado.copy()
+    df_retrasos_calculados["DIAS_RETRASO_REAL"] = (
+        (df_retrasos_calculados["FECHA DE ENTREGA REAL"].fillna(pd.Timestamp.today().normalize()) - df_retrasos_calculados["PROMESA DE ENTREGA"]).dt.days
+    )
+    df_retrasos_calculados["DIAS_RETRASO_REAL"] = df_retrasos_calculados["DIAS_RETRASO_REAL"].apply(lambda x: x if x > 0 else 0)
+    
+    # Agrupamos por fletera y sumamos los días de retraso
+    df_total_retrasos = df_retrasos_calculados[df_retrasos_calculados["DIAS_RETRASO_REAL"] > 0].groupby("FLETERA")["DIAS_RETRASO_REAL"].sum().reset_index(name="DIAS_TOTALES_RETRASO")
+
+    if not df_total_retrasos.empty:
+        # Gráfica de barras para los días totales de retraso
+        chart_total_retrasos = alt.Chart(df_total_retrasos).mark_bar(color="#EF4444", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
+            x=alt.X("FLETERA:N", title="Paquetería"),
+            y=alt.Y("DIAS_TOTALES_RETRASO:Q", title="Días Totales de Retraso"),
+            tooltip=["FLETERA", "DIAS_TOTALES_RETRASO"]
+        ).properties(height=350)
+        
+        # Texto para mostrar los números sobre las barras
+        text_total_retrasos = chart_total_retrasos.mark_text(
+            align='center', baseline='bottom', dy=-10, fontSize=14, fontWeight='bold', color='white'
+        ).encode(
+            y=alt.Y("DIAS_TOTALES_RETRASO:Q"), text=alt.Text("DIAS_TOTALES_RETRASO:Q")
+        )
+        
+        st.altair_chart((chart_total_retrasos + text_total_retrasos), use_container_width=True)
+    else:
+        st.info("No hay pedidos retrasados en el rango seleccionado.")
+    
+    # El st.divider() y el botón a KPIs deben ir DESPUÉS de este bloque
+    
+    # --------------------------------------------------
     # FINAL DE PÁGINA Y BOTÓN A KPIs
     # --------------------------------------------------
     st.divider()
@@ -536,6 +572,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
