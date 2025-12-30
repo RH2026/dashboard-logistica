@@ -560,71 +560,58 @@ if st.session_state.pagina == "principal":
         st.success("✅ No hay registros de pedidos entregados tarde.")
     
     # --------------------------------------------------
-    # REPORTE DE SERVICIO AL CLIENTE (GRÁFICOS + NOTAS)
+    # GRÁFICO EXCLUSIVO: RETRASO PROMEDIO (DÍAS) + NOTA
     # --------------------------------------------------
-    st.markdown("<h2 style='text-align:center; color:white;'>Reporte de Servicio al Cliente</h2>", unsafe_allow_html=True)
+    import datetime
+
+    st.markdown("<h3 style='text-align:center; color:white;'>Retraso Promedio por Paquetería</h3>", unsafe_allow_html=True)
+
+    # 1. Preparación de datos (Reactivo a df_filtrado)
+    df_entregados_p = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
     
-    # 1. PREPARACIÓN ÚNICA DE DATOS
-    # Filtramos solo pedidos que ya fueron entregados
-    df_entregados_final = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
-    
-    if not df_entregados_final.empty:
-        # Calculamos la desviación de días
-        df_entregados_final["DIAS_DIF"] = (df_entregados_final["FECHA DE ENTREGA REAL"] - df_entregados_final["PROMESA DE ENTREGA"]).dt.days
-    
-        # --- SECCIÓN DE GRÁFICOS (COLUMNAS) ---
-        col1, col2 = st.columns(2)
-    
-        with col1:
-            st.markdown("<p style='text-align:center; color:red; font-weight:bold;'>Cantidad de Fallos</p>", unsafe_allow_html=True)
-            # Solo contamos los que tienen días de retraso > 0
-            df_fallos = df_entregados_final[df_entregados_final["DIAS_DIF"] > 0].groupby("FLETERA").size().reset_index(name="CANTIDAD")
-            
-            if not df_fallos.empty:
-                chart_f = alt.Chart(df_fallos).mark_bar(color="red", cornerRadiusTopLeft=8, cornerRadiusTopRight=8).encode(
-                    x=alt.X("FLETERA:N", title="Paquetería", sort='-y'),
-                    y=alt.Y("CANTIDAD:Q", title="Total de Pedidos Tarde"),
-                    tooltip=["FLETERA", "CANTIDAD"]
-                ).properties(height=350)
-                
-                text_f = chart_f.mark_text(align='center', baseline='bottom', dy=-10, fontSize=15, fontWeight='bold', color='white').encode(
-                    text=alt.Text("CANTIDAD:Q")
-                )
-                st.altair_chart(chart_f + text_f, use_container_width=True)
-    
-        with col2:
-            st.markdown("<p style='text-align:center; color:#F39C12; font-weight:bold;'>Retraso Promedio (Días)</p>", unsafe_allow_html=True)
-            df_prom_final = df_entregados_final.groupby("FLETERA")["DIAS_DIF"].mean().reset_index(name="PROMEDIO")
-            
-            chart_p = alt.Chart(df_prom_final).mark_bar(cornerRadiusTopRight=8, cornerRadiusBottomRight=8).encode(
-                y=alt.Y("FLETERA:N", title=None, sort='-x'),
-                x=alt.X("PROMEDIO:Q", title="Días promedio"),
-                color=alt.condition(alt.datum.PROMEDIO > 0, alt.value("#F39C12"), alt.value("#2ECC71"))
-            ).properties(height=350)
-            
-            text_p = chart_p.mark_text(align='left', baseline='middle', dx=5, fontSize=14, fontWeight='bold', color='white').encode(
-                text=alt.Text("PROMEDIO:Q", format='.1f')
+    if not df_entregados_p.empty:
+        # Cálculo de la desviación en días
+        df_entregados_p["DIAS_DESVIACION"] = (
+            (df_entregados_p["FECHA DE ENTREGA REAL"] - df_entregados_p["PROMESA DE ENTREGA"]).dt.days
+        )
+
+        # Promedio por Fletera
+        df_prom = df_entregados_p.groupby("FLETERA")["DIAS_DESVIACION"].mean().reset_index(name="PROMEDIO")
+
+        # 2. Creación del Gráfico Horizontal
+        chart_prom = alt.Chart(df_prom).mark_bar(
+            cornerRadiusTopRight=8, 
+            cornerRadiusBottomRight=8
+        ).encode(
+            y=alt.Y("FLETERA:N", title=None, sort='-x'),
+            x=alt.X("PROMEDIO:Q", title="Días promedio"),
+            color=alt.condition(
+                alt.datum.PROMEDIO > 0, 
+                alt.value("#F39C12"), # Naranja si hay retraso
+                alt.value("#2ECC71")  # Verde si es a tiempo/antes
             )
-            st.altair_chart(chart_p + text_p, use_container_width=True)
-    
-        # --- SECCIÓN DE NOTAS DINÁMICAS (DEBAJO DE LOS GRÁFICOS) ---
-        import datetime
+        ).properties(height=400)
+        
+        # Etiquetas de número con un decimal
+        text_prom = chart_prom.mark_text(
+            align='left', baseline='middle', dx=5, fontSize=15, fontWeight='bold', color='white'
+        ).encode(text=alt.Text("PROMEDIO:Q", format='.1f'))
+        
+        st.altair_chart((chart_prom + text_prom), use_container_width=True)
+
+        # 3. Nota Dinámica Diaria
         fecha_hoy = datetime.date.today().strftime('%d/%m/%Y')
+        peor_fletera = df_prom.sort_values(by="PROMEDIO", ascending=False).iloc[0]
         
-        # Buscamos los peores datos para la nota
-        peor_dias = df_prom_final.sort_values(by="PROMEDIO", ascending=False).iloc[0]
-        peor_cant = df_fallos.sort_values(by="CANTIDAD", ascending=False).iloc[0] if not df_fallos.empty else None
-    
-        # Nota de Diagnóstico
-        if peor_dias["PROMEDIO"] > 0:
-            texto_fallos = f" En cuanto a frecuencia, **{peor_cant['FLETERA']}** es quien más incidencias acumula con **{peor_cant['CANTIDAD']} pedidos**." if peor_cant is not None else ""
-            st.error(f"🔍 **Diagnóstico Logístico al {fecha_hoy}:** El mayor impacto lo tiene **{peor_dias['FLETERA']}** con **{peor_dias['PROMEDIO']:.1f} días** de retraso promedio.{texto_fallos}")
-        
-        # Guía rápida
+        if peor_fletera["PROMEDIO"] > 0:
+            st.error(f"🔍 **Diagnóstico Logístico al {fecha_hoy}:** El mayor impacto en la espera del cliente lo tiene **{peor_fletera['FLETERA']}** con un retraso promedio de **{peor_fletera['PROMEDIO']:.1f} días**.")
+        else:
+            st.success(f"✨ **Reporte al {fecha_hoy}:** Todas las fleteras están operando a tiempo o antes de lo prometido.")
+
+        # Guía visual fija
         st.info("💡 **Guía rápida:** Barras Verdes = Buen servicio | Barras Naranjas = Retraso promedio.")
-    
     else:
-        st.warning("No hay datos de entregas finalizadas para mostrar los gráficos.")
+        st.warning("No hay datos de entregas finalizadas para calcular el promedio.")
 
     # --------------------------------------------------
     # RANKING DE CALIDAD: MEJOR A PEOR FLETERA (MENOS FALLOS A MÁS)
@@ -849,6 +836,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
