@@ -39,15 +39,17 @@ if not st.session_state.get('splash_visto', False):
         texto_splash = "Inicializando módulos logísticos…"
 
     # Renderizado del CSS y HTML del Splash
+    # --------------------------------------------------
+    # 3. SPLASH SCREEN (DISEÑO NEÓN + POSICIÓN AJUSTADA)
+    # --------------------------------------------------
     st.markdown("""
     <style>
     .splash-container { 
         display: flex; 
         flex-direction: column; 
-        justify-content: flex-start; 
+        justify-content: center; 
         align-items: center; 
         height: 100vh; 
-        padding-top: 350px; 
         background-color: #0e1117; 
         position: fixed;
         top: 0;
@@ -55,8 +57,8 @@ if not st.session_state.get('splash_visto', False):
         width: 100%;
         z-index: 9999;
     }
-    
-    loader { 
+
+    .loader { 
         /* Diseño de Anillo de Neón */
         border: 4px solid rgba(0, 255, 170, 0.1); 
         border-top: 4px solid #00FFAA; 
@@ -848,6 +850,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
