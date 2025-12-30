@@ -1099,29 +1099,30 @@ if st.session_state.pagina == "principal":
                 unsafe_allow_html=True
             )        
             
-            # --------------------------------------------------
-            # BLOQUE ÚNICO PARA LA PÁGINA DE KPIs
-            # --------------------------------------------------
-            elif st.session_state.pagina == "KPIs":
-                st.markdown("<h1 style='text-align:center;'>Análisis Detallado de KPIs</h1>", unsafe_allow_html=True)
-                
-                # --- AQUÍ VA TU CONTENIDO NUEVO (Métricas y gráficas) ---
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.metric("Costo Promedio Envío", "$450 MXN", "+5%")
-                with col2:
-                    st.metric("Eficiencia de Entrega", "94%", "-2%")
-                
-                st.write("##") # Espacio
-                # Aquí puedes agregar más gráficas después...
-        
-                # --- BOTÓN PARA VOLVER (Siempre al final de la página) ---
-                if st.button("⬅ Volver al Inicio", use_container_width=True):
-                    st.session_state.pagina = "principal"
-                    st.rerun()
-        
-                # FOOTER OPCIONAL PARA ESTA PÁGINA
-                st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística</div>", unsafe_allow_html=True)
+# --------------------------------------------------
+# BLOQUE ÚNICO PARA LA PÁGINA DE KPIs
+# --------------------------------------------------
+elif st.session_state.pagina == "KPIs":
+    st.markdown("<h1 style='text-align:center;'>Análisis Detallado de KPIs</h1>", unsafe_allow_html=True)
+    
+    # --- AQUÍ VA TU CONTENIDO NUEVO (Métricas y gráficas) ---
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Costo Promedio Envío", "$450 MXN", "+5%")
+    with col2:
+        st.metric("Eficiencia de Entrega", "94%", "-2%")
+    
+    st.write("##") # Espacio
+    # Aquí puedes agregar más gráficas después...
+
+    # --- BOTÓN PARA VOLVER (Siempre al final de la página) ---
+    if st.button("⬅ Volver al Inicio", use_container_width=True):
+        st.session_state.pagina = "principal"
+        st.rerun()
+
+    # FOOTER OPCIONAL PARA ESTA PÁGINA
+    st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística</div>", unsafe_allow_html=True)
+
 
 
 
