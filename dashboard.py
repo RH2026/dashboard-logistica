@@ -40,7 +40,7 @@ if not st.session_state.get('splash_visto', False):
 
     # Renderizado del CSS y HTML del Splash
     # --------------------------------------------------
-    # 3. SPLASH SCREEN (DISEÑO ESCÁNER LOGÍSTICO)
+    # 3. SPLASH SCREEN (DISEÑO ESCÁNER REAL)
     # --------------------------------------------------
     st.markdown("""
     <style>
@@ -52,15 +52,37 @@ if not st.session_state.get('splash_visto', False):
     .loader {
         width: 120px;
         height: 70px;
-        border: 2px solid #374151; /* Color del marco */
+        border: 2px solid #374151;
         position: relative;
         margin-top: -12vh;
         margin-bottom: 30px;
         overflow: hidden;
         border-radius: 4px;
-        background: rgba(0, 255, 170, 0.05);
+        /* ESTO CREA LAS BARRAS VERTICALES */
+        background: repeating-linear-gradient(
+          90deg,
+          #0e1117,
+          #0e1117 5px,
+          #374151 5px,
+          #374151 10px,
+          #0e1117 10px,
+          #0e1117 12px,
+          #374151 12px,
+          #374151 15px
+        );
     }
     
+    /* El efecto de brillo de fondo detrás del láser */
+    .loader::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(transparent, rgba(0, 255, 170, 0.1), transparent);
+        top: -100%;
+        animation: scan-glow 1.5s ease-in-out infinite;
+    }
+
     /* La línea del láser */
     .loader::after {
         content: "";
@@ -75,6 +97,11 @@ if not st.session_state.get('splash_visto', False):
     @keyframes scan {
         0%, 100% { top: 5%; }
         50% { top: 90%; }
+    }
+    
+    @keyframes scan-glow {
+        0%, 100% { top: -50%; }
+        50% { top: 0%; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -845,6 +872,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
