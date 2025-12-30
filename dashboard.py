@@ -300,31 +300,31 @@ if st.session_state.pagina == "principal":
              
            
         
-            # -----------------------------
-            # CARGA DE DATOS
-            # -----------------------------
-            @st.cache_data
-            def cargar_datos():
-                df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
-                df.columns = df.columns.str.strip().str.upper()
-        
-                df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.strip()
-                df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors="coerce", dayfirst=True)
-                df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
-                df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
-        
-                hoy = pd.Timestamp.today().normalize()
-        
-                def calcular_estatus(row):
-                    if pd.notna(row["FECHA DE ENTREGA REAL"]):
-                        return "ENTREGADO"
-                    if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy:
-                        return "RETRASADO"
-                    return "EN TRANSITO"
-        
-                df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
-                return df
-        
+        # -----------------------------
+        # CARGA DE DATOS
+        # -----------------------------
+        @st.cache_data
+        def cargar_datos():
+            df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
+            df.columns = df.columns.str.strip().str.upper()
+    
+            df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.strip()
+            df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors="coerce", dayfirst=True)
+            df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
+            df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
+    
+            hoy = pd.Timestamp.today().normalize()
+    
+            def calcular_estatus(row):
+                if pd.notna(row["FECHA DE ENTREGA REAL"]):
+                    return "ENTREGADO"
+                if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy:
+                    return "RETRASADO"
+                return "EN TRANSITO"
+    
+            df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
+            return df
+    
             df = cargar_datos()
         
             # --------------------------------------------------
@@ -1122,6 +1122,7 @@ if st.session_state.pagina == "principal":
         
                 # FOOTER OPCIONAL PARA ESTA PÁGINA
                 st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística</div>", unsafe_allow_html=True)
+
 
 
 
