@@ -575,32 +575,35 @@ if st.session_state.pagina == "principal":
     # 3. Calculamos el promedio por cada fletera
     df_prom = df_entregados_p.groupby("FLETERA")["DIAS_DESVIACION"].mean().reset_index(name="PROMEDIO")
 
-    if not df_prom.empty:
-        # 4. Creamos el gráfico horizontal
-        chart_prom = alt.Chart(df_prom).mark_bar(
-            cornerRadiusTopRight=8, 
-            cornerRadiusBottomRight=8
-        ).encode(
-            y=alt.Y("FLETERA:N", title=None, sort='-x'),
-            x=alt.X("PROMEDIO:Q", title="Días promedio"),
-            color=alt.condition(
-                alt.datum.PROMEDIO > 0, 
-                alt.value("#F39C12"), # Naranja
-                alt.value("#2ECC71")  # Verde
-            )
-        ).properties(height=400)
-        
-        # 5. Etiquetas de número
-        text_prom = chart_prom.mark_text(
-            align='left', baseline='middle', dx=5, fontSize=15, fontWeight='bold', color='white'
-        ).encode(text=alt.Text("PROMEDIO:Q", format='.1f'))
-        
-        st.altair_chart((chart_prom + text_prom), use_container_width=True)
+    import datetime
 
-        # --- LA NOTA PARA ATENCIÓN AL CLIENTE ---
-        st.info("💡 Consejo para Atención: Las barras verdes en el promedio indican que la fletera suele cumplir o adelantarse a la fecha promesa.")
-    else:
-        st.warning("No hay datos suficientes para calcular el promedio de retraso.")
+        if not df_prom.empty:
+            # 1. Obtener la fecha actual para el encabezado
+            fecha_actual = datetime.date.today().strftime('%d/%m/%Y')
+            
+            # 2. Identificar a la peor fletera en tiempo (Días)
+            peor_fletera_dias = df_prom.sort_values(by="PROMEDIO", ascending=False).iloc[0]
+            nombre_peor_dias = peor_fletera_dias["FLETERA"]
+            valor_peor_dias = peor_fletera_dias["PROMEDIO"]
+
+            # 3. Identificar a la fletera con más volumen de fallos (Cantidad)
+            # Usamos el conteo que calculamos para el gráfico de barras rojas
+            if not df_conteo.empty:
+                peor_volumen = df_conteo.sort_values(by="PEDIDOS", ascending=False).iloc[0]
+                nombre_volumen = peor_volumen["FLETERA"]
+                cantidad_fallos = peor_volumen["PEDIDOS"]
+
+                # 4. Mostrar la nota que cambia según los datos
+                if valor_peor_dias > 0:
+                    st.error(f"""
+                        🔍 **Diagnóstico Logístico al {fecha_actual}:** El mayor impacto en la espera del cliente lo tiene **{nombre_peor_dias}** con un retraso promedio de **{valor_peor_dias:.1f} días**.  
+                        En cuanto a frecuencia, **{nombre_volumen}** es quien más incidencias acumula con **{cantidad_fallos} pedidos** entregados fuera de tiempo.
+                    """)
+                else:
+                    st.success(f"✨ **Reporte al {fecha_actual}:** ¡Excelente desempeño! Todas las fleteras están operando dentro de los tiempos prometidos.")
+            
+            # Nota fija de apoyo visual
+            st.info("💡 **Guía rápida:** Barras <span style='color:#2ECC71; font-weight:bold;'>Verdes</span> = Buen servicio | Barras <span style='color:#F39C12; font-weight:bold;'>Naranjas</span> = Retraso promedio.", unsafe_allow_html=True)
     
     # --------------------------------------------------
     # RANKING DE CALIDAD: MEJOR A PEOR FLETERA (MENOS FALLOS A MÁS)
@@ -825,6 +828,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
