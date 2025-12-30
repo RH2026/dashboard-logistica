@@ -27,6 +27,25 @@ if "ultimo_movimiento" not in st.session_state:
 if "usuario_actual" not in st.session_state:
     st.session_state.usuario_actual = None
 
+# 2. CSS DE EMERGENCIA (Para evitar el parpadeo)
+# Ponemos esto ANTES de cualquier animación o imagen
+if "autenticado" not in st.session_state or not st.session_state.autenticado:
+    st.markdown("""
+        <style>
+            /* Ocultar todo rastro de la barra lateral de inmediato */
+            section[data-testid="stSidebar"] {
+                display: none !important;
+                width: 0px;
+            }
+            [data-testid="stSidebarCollapsedControl"] {
+                display: none !important;
+            }
+            /* Forzar el contenedor principal a ocupar todo el ancho */
+            .stMain {
+                margin-left: 0px !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 # --------------------------------------------------
 # SPLASH SCREEN (ANTES DE TODO)
 # --------------------------------------------------
@@ -1085,6 +1104,7 @@ if st.session_state.logueado:
         unsafe_allow_html=True
         )
     
+
 
 
 
