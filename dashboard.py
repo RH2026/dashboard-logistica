@@ -96,26 +96,6 @@ if not st.session_state.get('splash_visto', False):
 # 4. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. EL CSS PARA COMPACTAR LA BARRA LATERAL (Va aquí)
-st.markdown("""
-    <style>
-    /* 1. Reduce el espacio general entre todos los elementos de la sidebar */
-    [data-testid="stSidebarUserContent"] .stVerticalBlock {
-        gap: 0.2rem !important; 
-    }
-    /* 2. Quita el espacio vacío arriba del logo/título de la sidebar */
-    [data-testid="stSidebarUserContent"] {
-        padding-top: 10px !important;
-    }
-    /* 3. Estilo para las líneas separadoras más delgadas */
-    hr {
-        margin-top: 5px !important;
-        margin-bottom: 5px !important;
-        border: 0.5px solid #374151 !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
 # --------------------------------------------------
 # FONDO DE PANTALLA SOLO PARA LOGIN
 # --------------------------------------------------
@@ -852,6 +832,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
