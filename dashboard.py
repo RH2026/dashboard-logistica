@@ -96,6 +96,26 @@ if not st.session_state.get('splash_visto', False):
 # 4. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
+# 2. EL CSS PARA COMPACTAR LA BARRA LATERAL (Va aquí)
+st.markdown("""
+    <style>
+    /* 1. Reduce el espacio general entre todos los elementos de la sidebar */
+    [data-testid="stSidebarUserContent"] .stVerticalBlock {
+        gap: 0.2rem !important; 
+    }
+    /* 2. Quita el espacio vacío arriba del logo/título de la sidebar */
+    [data-testid="stSidebarUserContent"] {
+        padding-top: 10px !important;
+    }
+    /* 3. Estilo para las líneas separadoras más delgadas */
+    hr {
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
+        border: 0.5px solid #374151 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # --------------------------------------------------
 # FONDO DE PANTALLA SOLO PARA LOGIN
 # --------------------------------------------------
@@ -157,20 +177,7 @@ if not st.session_state.logueado:
 # INICIO DEL CONTENIDO PRIVADO (SI ESTÁ LOGUEADO)
 # --------------------------------------------------
 else:
-    # A partir de aquí, todo el código futuro irá dentro de este 'else'
-    st.sidebar.title("🔐 Sesión Activa")
-    
-    # Estilo para el botón de cerrar sesión
-    st.markdown("""
-        <style>
-        div[data-testid="stSidebar"] .stButton:first-of-type button {
-            background-color: transparent !important;
-            color: #ff4b4b !important;
-            border: 1px solid rgba(255, 75, 75, 0.5) !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)    
-
+  
 # --------------------------------------------------
 # 👋 SALUDO PERSONALIZADO
 # --------------------------------------------------
@@ -234,15 +241,17 @@ if st.session_state.pagina == "principal":
     # BOTÓN DE CIERRE DE SESIÓN EN LA BARRA LATERAL
     # --------------------------------------------------
     with st.sidebar:
-        st.markdown("---") # Separador visual
-                
-        # El botón dispara el cambio de estado para activar el Splash
+        st.markdown("### 🔐 Sesión Activa")
+        
+        # Usamos la línea compacta en lugar de st.divider() o st.markdown("---")
+        st.markdown("<hr>", unsafe_allow_html=True)
+        
         if st.button("Cerrar Sesión", use_container_width=True):
             st.session_state.splash_visto = False
             st.session_state.motivo_splash = "logout"
             st.rerun()
-        
-        st.markdown("---") # Separador visual
+    
+        st.markdown("<hr>", unsafe_allow_html=True)
     
     # 1. FUNCIÓN DE LIMPIEZA
     def limpiar_filtros():
@@ -843,6 +852,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
