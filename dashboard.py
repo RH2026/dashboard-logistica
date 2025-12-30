@@ -35,28 +35,61 @@ st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide"
 # --------------------------------------------------
 # FONDO DE PANTALLA SOLO PARA LOGIN
 # --------------------------------------------------
+# --------------------------------------------------
+# LÓGICA DE ACCESO (LOGIN)
+# --------------------------------------------------
 if not st.session_state.logueado:
+    # Creamos un contenedor que ocupará TODA la pantalla
+    login_placeholder = st.empty()
+    
     img_base64 = get_base64_image("1.jpg")
-    st.markdown(f"""
-        <style>
-        .stApp {{
-            background-image: url("data:image/jpg;base64,{img_base64}");
-            background-size: cover;
-            background-position: center;
-        }}
-        /* Oculta los mensajes de error nativos que causan el parpadeo rojo */
-        div[data-testid="stException"], div[data-testid="stNotification"] {{
-            display: none !important;
-        }}
-        /* Estilo para tu caja de login */
-        .stForm {{
-            background-color: rgba(30, 41, 59, 0.9); /* Un poco de transparencia se ve genial */
-            padding: 25px;
-            border-radius: 15px;
-            border: 1px solid #334151;
-        }}
-        </style>
-    """, unsafe_allow_html=True)
+    
+    with login_placeholder.container():
+        # CSS Ultra-agresivo para ocultar errores y poner el fondo
+        st.markdown(f"""
+            <style>
+            .stApp {{
+                background-image: url("data:image/jpg;base64,{img_base64}");
+                background-size: cover;
+                background-position: center;
+            }}
+            /* Bloqueo total de cualquier ventana de error o advertencia de Streamlit */
+            div[data-testid="stException"], 
+            div[data-testid="stNotification"], 
+            .stAlert, 
+            div[class*="st-key-"] {{ 
+                display: none !important; 
+            }}
+            </style>
+        """, unsafe_allow_html=True)
+
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col2:
+            # Agregamos una llave (key) única al formulario para evitar conflictos
+            with st.form(key="main_login_form"):
+                st.markdown('<div class="login-header" style="text-align:center;color:white;font-size:24px;">🔐 Acceso</div>', unsafe_allow_html=True)
+                u_input = st.text_input("Usuario")
+                c_input = st.text_input("Contraseña", type="password")
+                submit = st.form_submit_button("Ingresar", use_container_width=True)
+
+                if submit:
+                    # Validación ultra-segura
+                    if "usuarios" in st.secrets:
+                        usuarios = st.secrets["usuarios"]
+                        if u_input in usuarios and usuarios[u_input] == c_input:
+                            st.session_state.logueado = True
+                            st.session_state.usuario_actual = u_input
+                            st.session_state.ultimo_movimiento = time.time()
+                            st.session_state.splash_visto = False 
+                            login_placeholder.empty() # Borramos el login de la memoria visual
+                            st.rerun()
+                        else:
+                            # Error manual en HTML para no disparar el componente st.error
+                            st.markdown('<p style="color:#ff4b4b; text-align:center;">Datos incorrectos</p>', unsafe_allow_html=True)
+                    else:
+                        st.markdown('<p style="color:yellow; text-align:center;">Configuración no encontrada</p>', unsafe_allow_html=True)
+    
+    st.stop() # Detiene todo lo que esté abajo si no hay login
 
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
@@ -875,6 +908,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
