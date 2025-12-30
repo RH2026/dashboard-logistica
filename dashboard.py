@@ -658,94 +658,48 @@ if st.session_state.pagina == "principal":
         st.caption("🏆 Las fleteras a la izquierda son las más cumplidas (menos fallos).")
     
     # --------------------------------------------------
-    # GRÁFICO: DISTRIBUCIÓN DE ENTREGAS (HISTOGRAMA)
+    # SECCIÓN UNIFICADA: ANÁLISIS DE EXPERIENCIA (LUPA)
     # --------------------------------------------------
-    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:30px 0 10px 0;">Distribución de Experiencia del Cliente</div></div>""", unsafe_allow_html=True)
+    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:30px 0 10px 0;">🔍 Lupa por Paquetería: Distribución de Experiencia</div></div>""", unsafe_allow_html=True)
 
-    # 1. Calculamos la desviación de todos los entregados
-    df_hist = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
-    df_hist["DIAS_DESVIACION"] = (df_hist["FECHA DE ENTREGA REAL"] - df_hist["PROMESA DE ENTREGA"]).dt.days
-
-    if not df_hist.empty:
-        # 2. Creamos el histograma
-        # Agrupamos por cuántos días de desviación hubo
-        df_dist = df_hist.groupby("DIAS_DESVIACION").size().reset_index(name="CANTIDAD_PEDIDOS")
-
-        chart_hist = alt.Chart(df_dist).mark_bar(
-            cornerRadiusTopLeft=5,
-            cornerRadiusTopRight=5
-        ).encode(
-            x=alt.X("DIAS_DESVIACION:Q", title="Días de diferencia (0 = A tiempo)"),
-            y=alt.Y("CANTIDAD_PEDIDOS:Q", title="Número de Clientes"),
-            color=alt.condition(
-                alt.datum.DIAS_DESVIACION <= 0,
-                alt.value("#2ECC71"), # Verde: A tiempo o antes
-                alt.value("#E74C3C")  # Rojo: Retrasados
-            ),
-            tooltip=["DIAS_DESVIACION", "CANTIDAD_PEDIDOS"]
-        ).properties(height=350)
-
-        # Etiqueta de cantidad sobre las barras
-        text_hist = chart_hist.mark_text(
-            align='center', baseline='bottom', dy=-10, fontWeight='bold', color='white'
-        ).encode(text=alt.Text("CANTIDAD_PEDIDOS:Q"))
-
-        st.altair_chart((chart_hist + text_hist), use_container_width=True)
-        
-        st.markdown(f"""
-            <div style="background-color:#1E1E1E; padding:15px; border-radius:10px; border-left: 5px solid #3498DB;">
-            <strong>Tip para Atención al Cliente:</strong><br>
-            La barra más alta en el lado rojo indica el retraso más frecuente. 
-            Si la barra de 1 día es la más alta, pueden decir con confianza: 
-            "Normalmente los retrasos no pasan de 24 horas".
-            </div>
-        """, unsafe_allow_html=True)
-    
-    # --------------------------------------------------
-    # ANÁLISIS PROFUNDO: ¿QUIÉN EMPUJA AL LADO ROJO?
-    # --------------------------------------------------
-    st.markdown("<h3 style='text-align:center; color:white;'>🔍 Lupa por Paquetería: ¿Qué tan grave es su retraso?</h3>", unsafe_allow_html=True)
-    
-    # 1. Selector de Fletera para el análisis detallado
+    # 1. Selector único para controlar el gráfico
     lista_fleteras = ["TODAS"] + sorted(df_filtrado["FLETERA"].unique().tolist())
-    fletera_analisis = st.selectbox("Selecciona una paquetería para ver su comportamiento:", lista_fleteras)
+    fletera_seleccionada = st.selectbox("Selecciona una paquetería para analizar su detalle de entregas:", lista_fleteras)
 
-    # 2. Filtrado de datos para el histograma
-    df_hist_deep = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
-    if fletera_analisis != "TODAS":
-        df_hist_deep = df_hist_deep[df_hist_deep["FLETERA"] == fletera_analisis]
+    # 2. Filtrado dinámico
+    df_lupa = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
+    if fletera_seleccionada != "TODAS":
+        df_lupa = df_lupa[df_lupa["FLETERA"] == fletera_seleccionada]
     
-    df_hist_deep["DIAS_DESVIACION"] = (df_hist_deep["FECHA DE ENTREGA REAL"] - df_hist_deep["PROMESA DE ENTREGA"]).dt.days
+    # Cálculo de días de diferencia
+    df_lupa["DIAS_DIF"] = (df_lupa["FECHA DE ENTREGA REAL"] - df_lupa["PROMESA DE ENTREGA"]).dt.days
 
-    if not df_hist_deep.empty:
-        # 3. Creación del Histograma
-        df_dist_deep = df_hist_deep.groupby("DIAS_DESVIACION").size().reset_index(name="CANTIDAD")
+    if not df_lupa.empty:
+        # 3. Gráfico Único de Distribución
+        df_dist_lupa = df_lupa.groupby("DIAS_DIF").size().reset_index(name="PEDIDOS")
         
-        chart_deep = alt.Chart(df_dist_deep).mark_bar(cornerRadiusTopLeft=5, cornerRadiusTopRight=5).encode(
-            x=alt.X("DIAS_DESVIACION:Q", title="Días de diferencia (Negativo = Antes / Positivo = Retraso)"),
-            y=alt.Y("CANTIDAD:Q", title="Número de Entregas"),
+        chart_lupa = alt.Chart(df_dist_lupa).mark_bar(cornerRadiusTopLeft=5, cornerRadiusTopRight=5).encode(
+            x=alt.X("DIAS_DIF:Q", title="Días de diferencia (Negativo = Antes / Positivo = Retraso)"),
+            y=alt.Y("PEDIDOS:Q", title="Número de Entregas"),
             color=alt.condition(
-                alt.datum.DIAS_DESVIACION <= 0,
-                alt.value("#2ECC71"), # Verde
-                alt.value("#E74C3C")  # Rojo
+                alt.datum.DIAS_DIF <= 0,
+                alt.value("#2ECC71"), # Verde: A tiempo
+                alt.value("#E74C3C")  # Rojo: Retraso
             ),
-            tooltip=["DIAS_DESVIACION", "CANTIDAD"]
-        ).properties(height=350)
+            tooltip=["DIAS_DIF", "PEDIDOS"]
+        ).properties(height=400)
 
-        # Etiquetas de texto
-        text_deep = chart_deep.mark_text(align='center', baseline='bottom', dy=-10, fontWeight='bold', color='white').encode(
-            text=alt.Text("CANTIDAD:Q")
+        # Etiquetas numéricas sobre las barras
+        text_lupa = chart_lupa.mark_text(align='center', baseline='bottom', dy=-10, fontWeight='bold', color='white').encode(
+            text=alt.Text("PEDIDOS:Q")
         )
 
-        st.altair_chart((chart_deep + text_deep), use_container_width=True)
+        st.altair_chart((chart_lupa + text_lupa), use_container_width=True)
 
-        # 4. EXPLICACIÓN LOGÍSTICA (Basada en tus imágenes)
-        if fletera_analisis == "TRES GUERRAS":
-            st.warning("⚠️ **Caso TRES GUERRAS:** Tienes muchos fallos (55), pero nota cómo la mayoría se amontonan cerca del 0 o 1. Fallan mucho en cantidad, pero sus retrasos son 'cortos'.")
-        elif fletera_analisis == "ONE":
-            st.error("🚨 **Caso ONE:** Aunque tienen menos fallos que Tres Guerras (26), sus barras en el lado rojo están más a la derecha. Sus retrasos son más largos y afectan más al cliente.")
+        # 4. Tip dinámico según la selección
+        st.info(f"💡 **Tip de Atención:** Estás viendo la distribución de **{fletera_seleccionada}**. La barra más alta en el lado rojo indica el retraso más frecuente para esta selección.")
     else:
-        st.info("No hay datos de entregas para esta selección.")
+        st.warning("No hay datos disponibles para esta paquetería.")
     
     # --------------------------------------------------
     # TABLA SCORECARD: CALIFICACIÓN DE FLETERAS
@@ -836,6 +790,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
