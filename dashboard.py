@@ -628,6 +628,50 @@ if st.session_state.pagina == "principal":
         st.caption("🏆 Las fleteras a la izquierda son las más cumplidas (menos fallos).")
     
     # --------------------------------------------------
+    # GRÁFICO: DISTRIBUCIÓN DE ENTREGAS (HISTOGRAMA)
+    # --------------------------------------------------
+    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:30px 0 10px 0;">Distribución de Experiencia del Cliente</div></div>""", unsafe_allow_html=True)
+
+    # 1. Calculamos la desviación de todos los entregados
+    df_hist = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
+    df_hist["DIAS_DESVIACION"] = (df_hist["FECHA DE ENTREGA REAL"] - df_hist["PROMESA DE ENTREGA"]).dt.days
+
+    if not df_hist.empty:
+        # 2. Creamos el histograma
+        # Agrupamos por cuántos días de desviación hubo
+        df_dist = df_hist.groupby("DIAS_DESVIACION").size().reset_index(name="CANTIDAD_PEDIDOS")
+
+        chart_hist = alt.Chart(df_dist).mark_bar(
+            cornerRadiusTopLeft=5,
+            cornerRadiusTopRight=5
+        ).encode(
+            x=alt.X("DIAS_DESVIACION:Q", title="Días de diferencia (0 = A tiempo)"),
+            y=alt.Y("CANTIDAD_PEDIDOS:Q", title="Número de Clientes"),
+            color=alt.condition(
+                alt.datum.DIAS_DESVIACION <= 0,
+                alt.value("#2ECC71"), # Verde: A tiempo o antes
+                alt.value("#E74C3C")  # Rojo: Retrasados
+            ),
+            tooltip=["DIAS_DESVIACION", "CANTIDAD_PEDIDOS"]
+        ).properties(height=350)
+
+        # Etiqueta de cantidad sobre las barras
+        text_hist = chart_hist.mark_text(
+            align='center', baseline='bottom', dy=-10, fontWeight='bold', color='white'
+        ).encode(text=alt.Text("CANTIDAD_PEDIDOS:Q"))
+
+        st.altair_chart((chart_hist + text_hist), use_container_width=True)
+        
+        st.markdown(f"""
+            <div style="background-color:#1E1E1E; padding:15px; border-radius:10px; border-left: 5px solid #3498DB;">
+            <strong>💡 Tip para Atención al Cliente:</strong><br>
+            La barra más alta en el lado rojo indica el retraso más frecuente. 
+            Si la barra de 1 día es la más alta, pueden decir con confianza: 
+            "Normalmente los retrasos no pasan de 24 horas".
+            </div>
+        """, unsafe_allow_html=True)
+    
+    # --------------------------------------------------
     # FINAL DE PÁGINA Y BOTÓN A KPIs
     # --------------------------------------------------
     st.divider()
@@ -665,6 +709,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
