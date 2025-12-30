@@ -5,12 +5,17 @@ import time
 import base64   # 👈 aquí
 import textwrap
 
-def get_base64_image(image_path):  # 👈 aquí
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode()
+# --------------------------------------------------
+# 1. CONFIGURACIÓN DE PÁGINA (DEBE SER LO PRIMERO)
+# --------------------------------------------------
+st.set_page_config(
+    page_title="Control de Envíos – Enero 2026",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 # --------------------------------------------------
-# ESTADOS INICIALES
+# 2. ESTADOS INICIALES DE SESIÓN
 # --------------------------------------------------
 if "splash_visto" not in st.session_state:
     st.session_state.splash_visto = False
@@ -27,30 +32,39 @@ if "ultimo_movimiento" not in st.session_state:
 if "usuario_actual" not in st.session_state:
     st.session_state.usuario_actual = None
 
-# 2. CSS DE EMERGENCIA (Para evitar el parpadeo)
-# Ponemos esto ANTES de cualquier animación o imagen
-if "autenticado" not in st.session_state or not st.session_state.autenticado:
+# --------------------------------------------------
+# 3. CSS DE EMERGENCIA ANTIPARPADEO
+# --------------------------------------------------
+if not st.session_state.logueado:
     st.markdown("""
         <style>
-            /* Ocultar todo rastro de la barra lateral de inmediato */
             section[data-testid="stSidebar"] {
                 display: none !important;
-                width: 0px;
+                width: 0px !important;
             }
             [data-testid="stSidebarCollapsedControl"] {
                 display: none !important;
             }
-            /* Forzar el contenedor principal a ocupar todo el ancho */
             .stMain {
                 margin-left: 0px !important;
             }
         </style>
     """, unsafe_allow_html=True)
+
 # --------------------------------------------------
-# SPLASH SCREEN (ANTES DE TODO)
+# 4. FUNCIONES AUXILIARES
+# --------------------------------------------------
+def get_base64_image(image_path):
+    try:
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    except Exception:
+        return ""
+
+# --------------------------------------------------
+# 5. SPLASH SCREEN (INICIO Y SALIDA)
 # --------------------------------------------------
 if not st.session_state.splash_visto:
-
     texto_splash = (
         "Bye, cerrando sistema…"
         if st.session_state.motivo_splash == "logout"
@@ -68,7 +82,6 @@ if not st.session_state.splash_visto:
         padding-top: 160px;
         background-color: #0e1117;
     }
-
     .loader {
         border: 6px solid #2a2a2a;
         border-top: 6px solid #00FFAA;
@@ -78,7 +91,6 @@ if not st.session_state.splash_visto:
         animation: spin 1s linear infinite;
         margin-bottom: 20px;
     }
-
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -89,7 +101,7 @@ if not st.session_state.splash_visto:
     st.markdown(f"""
     <div class="splash-container">
         <div class="loader"></div>
-        <div style="color:#aaa; font-size:14px;">
+        <div style="color:#aaa; font-size:14px; font-family: sans-serif;">
             {texto_splash}
         </div>
     </div>
@@ -99,78 +111,42 @@ if not st.session_state.splash_visto:
     st.session_state.splash_visto = True
     st.session_state.motivo_splash = "inicio"
     st.rerun()
-# --------------------------------------------------
-# 1. CONFIGURACIÓN DE PÁGINA (Debe ser lo primero)
-# --------------------------------------------------
-st.set_page_config(
-    page_title="Control de Envíos – Enero 2026",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
 
 # --------------------------------------------------
-# FONDO DE PANTALLA SOLO PARA LOGIN (COMPATIBLE CLOUD)
-# --------------------------------------------------
-if not st.session_state.get("logueado", False):
-
-    img_base64 = get_base64_image("1.jpg")
-
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background-image: url("data:image/jpg;base64,{img_base64}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-# --------------------------------------------------
-# CONFIGURACIÓN AUTO LOGOUT
+# 6. LÓGICA DE AUTO LOGOUT
 # --------------------------------------------------
 TIEMPO_MAX_INACTIVIDAD = 10 * 60  # 10 minutos
 
-# --------------------------------------------------
-# INICIALIZAR SESIÓN (NO BORRAR)
-# --------------------------------------------------
-if "logueado" not in st.session_state:
-    st.session_state.logueado = False
-
-if "ultimo_movimiento" not in st.session_state:
-    st.session_state.ultimo_movimiento = time.time()
-
-if "usuario_actual" not in st.session_state:
-    st.session_state.usuario_actual = None
-
-# --------------------------------------------------
-# SECRETOS – MULTIUSUARIOS
-# --------------------------------------------------
-usuarios = st.secrets["usuarios"]  # diccionario desde Secrets
-
-# --------------------------------------------------
-# AUTO LOGOUT POR INACTIVIDAD (SEGURO)
-# --------------------------------------------------
 if st.session_state.logueado:
     ahora = time.time()
     if ahora - st.session_state.ultimo_movimiento > TIEMPO_MAX_INACTIVIDAD:
-        st.session_state.clear()
-        st.warning("Sesión cerrada por inactividad ⏱️")
+        st.session_state.logueado = False
+        st.session_state.splash_visto = False
+        st.session_state.motivo_splash = "logout"
+        st.session_state.usuario_actual = None
         st.rerun()
 
-
 # --------------------------------------------------
-# LOGIN CENTRAL COMPACTO
-# --------------------------------------------------
-# --------------------------------------------------
-# LOGIN CENTRAL CON INPUTS Y BOTÓN "OJO" UNIFICADOS
+# 7. INTERFAZ DE LOGIN (SI NO ESTÁ LOGUEADO)
 # --------------------------------------------------
 if not st.session_state.logueado:
+    # Imagen de fondo
+    img_base64 = get_base64_image("1.jpg")
+    if img_base64:
+        st.markdown(f"""
+            <style>
+            .stApp {{
+                background-image: url("data:image/jpg;base64,{img_base64}");
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+            }}
+            </style>
+            """, unsafe_allow_html=True)
+
+    # Estilos de la Caja de Login
     st.markdown("""
         <style>
-        /* 1. CAJA DE LOGIN */
         .stForm {
             background-color: #1e293b;
             padding: 25px;
@@ -178,64 +154,37 @@ if not st.session_state.logueado:
             border: 1px solid #334151;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        
-        /* 2. UNIFICACIÓN TOTAL DE COLOR (INPUTS Y OJO) */
-        /* Seleccionamos absolutamente todo el interior del input */
         div[data-testid="stTextInputRootElement"], 
         div[data-testid="stTextInputRootElement"] *, 
         .stForm input {
             background-color: #475569 !important;
             color: white !important;
             border: none !important;
-            box-shadow: none !important;
         }
-
-        /* 3. BORDE ÚNICO EXTERIOR */
         div[data-testid="stTextInputRootElement"] {
             border: 1px solid #64748b !important;
             border-radius: 8px !important;
         }
-
-        /* 4. ELIMINAR CUALQUIER RESIDUO DEL BOTÓN DEL OJO */
         button[aria-label="Show password"], 
-        button[aria-label="Hide password"],
-        div[data-testid="stTextInputAdornment"] {
+        button[aria-label="Hide password"] {
             background-color: transparent !important;
-            background: transparent !important;
-            border: none !important;
         }
-
-        /* 5. BLOQUEO VISUAL DE SUGERENCIAS DE GOOGLE */
-        input::-webkit-credentials-auto-fill-button,
-        input::-webkit-contacts-auto-fill-button,
-        input::-internal-autofill-selected {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-
         .login-header {
             text-align: center; color: white; font-size: 24px; font-weight: bold; margin-bottom: 20px;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # 2. Columnas para centrar. El [1, 1, 1] hace que la caja sea de 1/3 del ancho
     col1, col2, col3 = st.columns([1, 1, 1])
-
     with col2:
-        # Usamos st.form para agrupar los elementos en un cuadro visual
         with st.form("login_form"):
             st.markdown('<div class="login-header">🔐 Acceso</div>', unsafe_allow_html=True)
-            
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
-            
-            # Botón dentro del formulario
             submit = st.form_submit_button("Ingresar", use_container_width=True)
 
             if submit:
+                usuarios = st.secrets["usuarios"]
                 if u_input in usuarios and usuarios[u_input] == c_input:
                     st.session_state.logueado = True
                     st.session_state.usuario_actual = u_input
@@ -243,46 +192,43 @@ if not st.session_state.logueado:
                     st.rerun()
                 else:
                     st.error("Usuario o contraseña incorrectos")
-    
     st.stop()
 
+# --------------------------------------------------
+# 8. DASHBOARD PRINCIPAL (DESPUÉS DEL LOGIN)
+# --------------------------------------------------
 else:
-    st.sidebar.title("🔐 Sesión Activa")
+    # Actualizar último movimiento al cargar cualquier parte del dashboard
+    st.session_state.ultimo_movimiento = time.time()
+
+    # Barra Lateral
+    st.sidebar.title(f"👤 {st.session_state.usuario_actual}")
+    st.sidebar.markdown("---")
     
-    # 1. Definimos el estilo ANTES del botón, usando un selector de atributo para el 'key'
-    # Esto asegura que el CSS busque específicamente el botón con key='btn_logout'
+    # Estilo del botón Logout
     st.markdown("""
         <style>
-        /* Buscamos el botón que tenga el atributo help o la estructura de la key btn_logout */
-        div[data-testid="stSidebar"] div.stButton button[key="btn_logout"] {
-            background-color: transparent !important;
-            color: #ff4b4b !important;
-            border: 1px solid rgba(255, 75, 75, 0.5) !important;
-            transition: all 0.3s ease !important;
-        }
-
-        /* Si el selector anterior es muy estricto, usamos este que busca por el orden:
-           Asumiendo que Cerrar Sesión es el PRIMER botón que aparece en la sidebar */
-        div[data-testid="stSidebar"] .stButton:first-of-type button {
+        div[data-testid="stSidebar"] .stButton button {
             background-color: transparent !important;
             color: #ff4b4b !important;
             border: 1px solid rgba(255, 75, 75, 0.5) !important;
         }
-        
-        div[data-testid="stSidebar"] .stButton:first-of-type button:hover {
+        div[data-testid="stSidebar"] .stButton button:hover {
             background-color: rgba(255, 75, 75, 0.1) !important;
             border-color: #ff4b4b !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # 2. Botón cerrar sesión (con motivo de splash)
     if st.sidebar.button("Cerrar sesión", use_container_width=True, key="btn_logout"):
         st.session_state.motivo_splash = "logout"
         st.session_state.splash_visto = False
         st.session_state.logueado = False
         st.rerun()
 
+    # --- AQUÍ EMPIEZA TU CONTENIDO DE DASHBOARD ---
+    st.title("🚚 Jypesa OpsDash 2026")
+    st.info("Bienvenido al sistema. Selecciona una página en el menú superior para ver los KPIs.")
 # --------------------------------------------------
 # 👋 SALUDO PERSONALIZADO (SOLO ESTO SE AGREGÓ)
 # --------------------------------------------------
@@ -1104,6 +1050,7 @@ if st.session_state.logueado:
         unsafe_allow_html=True
         )
     
+
 
 
 
