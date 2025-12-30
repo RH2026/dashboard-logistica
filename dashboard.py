@@ -839,8 +839,15 @@ if st.session_state.logueado:
 )
     
     # --------------------------------------------------
-    # GRÁFICOS POR PAQUETERÍA – NUEVO BLOQUE
+    # GRÁFICOS POR PAQUETERÍA – VERSIÓN FINAL INTEGRADA
     # --------------------------------------------------
+    
+    # === CONFIGURACIÓN VISUAL (Ajusta aquí el tamaño) ===
+    TAMANO_FUENTE = 16  # Tamaño de los números sobre las barras
+    ESPACIADO_DY = -12  # Espacio entre la barra y el número (más negativo = más arriba)
+    MARGEN_SUPERIOR = 1.3  # Factor de espacio extra en el eje Y (1.3 = 30% de "aire")
+    # ===================================================
+    
     st.markdown(
         """
         <div style="text-align:center;">
@@ -854,7 +861,7 @@ if st.session_state.logueado:
     
     g1, g2 = st.columns(2)
     
-    # En tránsito por paquetería
+    # --- 1. GRÁFICO: EN TRÁNSITO ---
     df_transito = (
         df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"]
         .groupby("FLETERA")
@@ -862,20 +869,41 @@ if st.session_state.logueado:
         .reset_index(name="PEDIDOS")
     )
     
-    graf_transito = alt.Chart(df_transito).mark_bar(
-        cornerRadiusTopLeft=6,
+    # Cálculo dinámico del techo del gráfico para que quepa el texto
+    max_t = df_transito["PEDIDOS"].max() * MARGEN_SUPERIOR if not df_transito.empty else 10
+    
+    base_t = alt.Chart(df_transito).encode(
+        x=alt.X("FLETERA:N", title="Paquetería")
+    )
+    
+    bars_t = base_t.mark_bar(
+        cornerRadiusTopLeft=6, 
         cornerRadiusTopRight=6
     ).encode(
-        x=alt.X("FLETERA:N", title="Paquetería"),
-        y=alt.Y("PEDIDOS:Q", title="Pedidos en tránsito"),
+        y=alt.Y("PEDIDOS:Q", title="Pedidos en tránsito", scale=alt.Scale(domain=[0, max_t])),
         tooltip=["FLETERA", "PEDIDOS"],
         color=alt.value("#FFC107")  # Amarillo
-    ).properties(height=320)
+    )
+    
+    text_t = base_t.mark_text(
+        align='center',
+        baseline='bottom',
+        dy=ESPACIADO_DY,
+        fontSize=TAMANO_FUENTE,
+        fontWeight='bold',
+        color='white'
+    ).encode(
+        y=alt.Y("PEDIDOS:Q"),
+        text=alt.Text("PEDIDOS:Q")
+    )
+    
+    graf_transito_final = (bars_t + text_t).properties(height=320)
     
     g1.markdown("<h4 style='color:yellow; text-align:center;'>En tránsito</h4>", unsafe_allow_html=True)
-    g1.altair_chart(graf_transito, use_container_width=True)
+    g1.altair_chart(graf_transito_final, use_container_width=True)
     
-    # Retrasados por paquetería
+    
+    # --- 2. GRÁFICO: RETRASADOS ---
     df_retrasados = (
         df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"]
         .groupby("FLETERA")
@@ -883,20 +911,40 @@ if st.session_state.logueado:
         .reset_index(name="PEDIDOS")
     )
     
-    graf_retrasados = alt.Chart(df_retrasados).mark_bar(
-        cornerRadiusTopLeft=6,
+    # Cálculo dinámico del techo para evitar que el 21 o números altos se corten
+    max_r = df_retrasados["PEDIDOS"].max() * MARGEN_SUPERIOR if not df_retrasados.empty else 10
+    
+    base_r = alt.Chart(df_retrasados).encode(
+        x=alt.X("FLETERA:N", title="Paquetería")
+    )
+    
+    bars_r = base_r.mark_bar(
+        cornerRadiusTopLeft=6, 
         cornerRadiusTopRight=6
     ).encode(
-        x=alt.X("FLETERA:N", title="Paquetería"),
-        y=alt.Y("PEDIDOS:Q", title="Pedidos retrasados"),
+        y=alt.Y("PEDIDOS:Q", title="Pedidos retrasados", scale=alt.Scale(domain=[0, max_r])),
         tooltip=["FLETERA", "PEDIDOS"],
         color=alt.value("#F44336")  # Rojo
-    ).properties(height=320)
+    )
+    
+    text_r = base_r.mark_text(
+        align='center',
+        baseline='bottom',
+        dy=ESPACIADO_DY,
+        fontSize=TAMANO_FUENTE,
+        fontWeight='bold',
+        color='white'
+    ).encode(
+        y=alt.Y("PEDIDOS:Q"),
+        text=alt.Text("PEDIDOS:Q")
+    )
+    
+    graf_retrasados_final = (bars_r + text_r).properties(height=320)
     
     g2.markdown("<h4 style='color:#F44336; text-align:center;'>Retrasados</h4>", unsafe_allow_html=True)
-    g2.altair_chart(graf_retrasados, use_container_width=True)
+    g2.altair_chart(graf_retrasados_final, use_container_width=True)
     
-    st.divider()  # línea separadora antes de la tabla
+    st.divider()
     
     # --------------------------------------------------
     # PEDIDOS ENTREGADOS CON RETRASO POR PAQUETERÍA (FECHA REAL)
@@ -995,6 +1043,18 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
