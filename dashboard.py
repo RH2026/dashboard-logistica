@@ -515,7 +515,7 @@ if st.session_state.pagina == "principal":
     if not df_resumen_conteo.empty:
         # 3. Gráfica de barras (Conteo de pedidos)
         chart_conteo = alt.Chart(df_resumen_conteo).mark_bar(
-            color="#3498DB", # Azul para diferenciarlo del de días
+            color="##FF0000", # Azul para diferenciarlo del de días
             cornerRadiusTopLeft=6, 
             cornerRadiusTopRight=6
         ).encode(
@@ -572,6 +572,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
