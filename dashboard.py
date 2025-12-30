@@ -231,11 +231,6 @@ if st.session_state.pagina == "principal":
     st.divider()
 
     # --------------------------------------------------
-    # SIDEBAR – FILTROS
-    # --------------------------------------------------
-    st.sidebar.header("Filtros")
-
-    # --------------------------------------------------
     # BOTÓN DE CIERRE DE SESIÓN EN LA BARRA LATERAL
     # --------------------------------------------------
     with st.sidebar:
@@ -848,6 +843,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
