@@ -311,12 +311,33 @@ if st.session_state.logueado:
     # 2. LLAMAR A LOS DATOS (Ahora sí, porque ya sabe cómo hacerlo)
     df = cargar_datos()
 
-    # 3. LOGICA DE NAVEGACIÓN (Todo esto lleva sangría porque depende del login)
+    # --- 2. LOGICA DE NAVEGACIÓN ---
     if st.session_state.pagina == "principal":
         # TÍTULO
         st.markdown("<h1 style='text-align:center;'>Control de Embarques</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;'>Logística – Enero 2026</p>", unsafe_allow_html=True)
         st.divider()
+
+        # AQUÍ VA TODO EL CONTENIDO DE TU DASHBOARD (Círculos, tablas, etc.)
+        # ... (Tu código actual de la página principal) ...
+
+    elif st.session_state.pagina == "KPIs":
+        st.markdown("<h1 style='text-align:center; color:#00FFAA;'>📈 Análisis Detallado de KPIs</h1>", unsafe_allow_html=True)
+        st.divider()
+
+        # MÉTRICAS DE EJEMPLO
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Total de Pedidos", len(df))
+        with col2:
+            st.metric("Efectividad", f"{(len(df[df['ESTATUS_CALCULADO'] == 'ENTREGADO']) / len(df) * 100):.1f}%")
+
+        st.write("##")
+
+        # BOTÓN PARA REGRESAR
+        if st.button("⬅ Volver al Inicio", use_container_width=True):
+            st.session_state.pagina = "principal"
+            st.rerun()
     # --------------------------------------------------
     # SIDEBAR – FILTROS (BLOQUE UNIFICADO Y CORREGIDO)
     # --------------------------------------------------
@@ -1109,6 +1130,7 @@ elif st.session_state.pagina == "KPIs":
     
     # FOOTER DE ESTA PÁGINA
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística</div>", unsafe_allow_html=True)
+
 
 
 
