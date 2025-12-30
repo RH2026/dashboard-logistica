@@ -43,50 +43,42 @@ if not st.session_state.logueado:
             background-image: url("data:image/jpg;base64,{img_base64}");
             background-size: cover;
             background-position: center;
-            background-repeat: no-repeat;
         }}
-        /* CAJA DE LOGIN */
-        .stForm {{
-            background-color: #1e293b;
-            padding: 25px;
-            border-radius: 15px;
-            border: 1px solid #334151;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }}
-        /* UNIFICACIÓN DE COLOR INPUTS */
-        div[data-testid="stTextInputRootElement"], 
-        div[data-testid="stTextInputRootElement"] *, 
-        .stForm input {{
-            background-color: #475569 !important;
-            color: white !important;
-            border: none !important;
-        }}
-        .login-header {{
-            text-align: center; color: white; font-size: 24px; font-weight: bold; margin-bottom: 20px;
+        /* Evita que los mensajes de error de Streamlit floten antes de tiempo */
+        .stAlert {{
+            position: absolute;
+            z-index: 1000;
         }}
         </style>
     """, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        with st.form("login_form"):
+        # Usamos un contenedor para agrupar el formulario y evitar saltos visuales
+        login_container = st.container()
+        with login_container.form("login_form"):
             st.markdown('<div class="login-header">🔐 Acceso</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("Ingresar", use_container_width=True)
 
             if submit:
-                # Usamos los secretos guardados en Streamlit Cloud
-                usuarios = st.secrets["usuarios"]
-                if u_input in usuarios and usuarios[u_input] == c_input:
-                    st.session_state.logueado = True
-                    st.session_state.usuario_actual = u_input
-                    st.session_state.ultimo_movimiento = time.time()
-                    st.rerun()
-                else:
-                    st.error("Usuario o contraseña incorrectos")
+                # MOVER LA CARGA DE SECRETOS AQUÍ DENTRO
+                try:
+                    usuarios = st.secrets["usuarios"]
+                    if u_input in usuarios and usuarios[u_input] == c_input:
+                        st.session_state.logueado = True
+                        st.session_state.usuario_actual = u_input
+                        st.session_state.ultimo_movimiento = time.time()
+                        # IMPORTANTE: Reiniciamos el splash para que se vea al entrar
+                        st.session_state.splash_visto = False 
+                        st.rerun()
+                    else:
+                        st.error("Usuario o contraseña incorrectos")
+                except Exception:
+                    st.error("Error al conectar con la base de datos de usuarios.")
     
-    # Detenemos la ejecución aquí si no está logueado
+    # Detenemos la ejecución de forma segura
     st.stop()
 
 # --------------------------------------------------
@@ -921,6 +913,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
