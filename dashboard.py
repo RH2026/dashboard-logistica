@@ -31,14 +31,14 @@ if "ultimo_movimiento" not in st.session_state:
 # 3. SPLASH SCREEN (CORREGIDO PARA LOGOUT)
 # --------------------------------------------------
 # Usamos .get para que si la sesión está vacía no marque error
-# --- BLOQUE DE SPLASH SCREEN: RUTA LOGÍSTICA CON PUNTOS PULSANTES ---
+# --- BLOQUE DE SPLASH SCREEN: RUTA LOGÍSTICA PREMIUM ---
 if not st.session_state.get('splash_visto', False):
     placeholder = st.empty()
     
     if st.session_state.get('motivo_splash') == "logout":
-        texto_splash = "Finalizando despachos y rutas..."
+        texto_splash = "Sincronizando flota y cerrando sesión..."
     else:
-        texto_splash = "Trazando rutas de entrega..."
+        texto_splash = "Optimizando rutas de transporte..."
 
     with placeholder.container():
         st.markdown("""
@@ -46,75 +46,96 @@ if not st.session_state.get('splash_visto', False):
         .splash-container { 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
             height: 100vh; background-color: #05070a; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
+            /* Fondo de micro-puntos estilo radar */
+            background-image: radial-gradient(rgba(0, 255, 170, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
         }
 
         .map-scene {
             position: relative;
-            width: 300px;
-            height: 150px;
+            width: 400px;
+            height: 200px;
             margin-top: -10vh;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
         }
 
-        /* Los Puntos (Almacenes) con efecto de pulsación */
+        /* La Ruta Curva de Fondo (La guía) */
+        .path-guide {
+            position: absolute;
+            width: 380px;
+            height: 180px;
+            bottom: 10px;
+            left: 10px;
+            border: 1px solid rgba(0, 255, 170, 0.1);
+            border-radius: 0 100% 0 0;
+            border-color: transparent rgba(0, 255, 170, 0.2) transparent transparent;
+            transform: rotate(-5deg);
+        }
+
+        /* Puntos Pulsantes */
         .point {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background-color: #00FFAA;
+            border-radius: 50%;
+            box-shadow: 0 0 20px #00FFAA;
+            z-index: 10;
+        }
+
+        .point::before, .point::after {
+            content: "";
+            position: absolute;
+            width: 100%; height: 100%;
+            background-color: #00FFAA;
+            border-radius: 50%;
+            animation: pulse-ring 2.5s infinite;
+        }
+        .point::after { animation-delay: 1.2s; }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(4); opacity: 0; }
+        }
+
+        .point.origin { bottom: 0; left: 0; background-color: #00FFAA; }
+        .point.destination { top: 0; right: 0; background-color: #fff; box-shadow: 0 0 20px #fff; }
+
+        /* El Paquete con Estela de Luz */
+        .delivery-node {
             position: absolute;
             width: 14px;
             height: 14px;
-            background-color: #00FFAA;
-            border-radius: 50%;
-            box-shadow: 0 0 15px #00FFAA;
-            z-index: 2;
-        }
-
-        /* El efecto de onda que sale de los puntos */
-        .point::before {
-            content: "";
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-color: #00FFAA;
-            border-radius: 50%;
-            animation: pulse-ring 2s infinite;
-        }
-
-        @keyframes pulse-ring {
-            0% { transform: scale(1); opacity: 0.7; }
-            100% { transform: scale(3); opacity: 0; }
-        }
-
-        .point.origin { bottom: 10px; left: 10px; }
-        .point.destination { top: 10px; right: 10px; }
-
-        /* El Paquete viajero (delivery-node) */
-        .delivery-node {
-            position: absolute;
-            width: 12px;
-            height: 12px;
             background: #fff;
             border-radius: 50%;
-            box-shadow: 0 0 20px 5px #00FFAA;
-            /* Esta es la trayectoria curva */
-            offset-path: path('M 15 135 Q 150 135 285 15'); 
-            animation: travel 2s infinite ease-in-out;
-            z-index: 3;
+            box-shadow: 0 0 30px 10px rgba(0, 255, 170, 0.6);
+            /* Trayectoria matemática */
+            offset-path: path('M 10 190 Q 200 190 390 10'); 
+            animation: travel-v2 2.5s infinite cubic-bezier(0.45, 0, 0.55, 1);
+            z-index: 20;
         }
 
-        @keyframes travel {
-            0% { offset-distance: 0%; opacity: 0; }
-            15% { opacity: 1; }
-            85% { opacity: 1; }
-            100% { offset-distance: 100%; opacity: 0; }
+        @keyframes travel-v2 {
+            0% { offset-distance: 0%; opacity: 0; filter: blur(2px); }
+            10% { opacity: 1; filter: blur(0px); }
+            90% { opacity: 1; filter: blur(0px); }
+            100% { offset-distance: 100%; opacity: 0; filter: blur(5px); }
         }
 
+        /* Texto con Brillo Neón */
         .loading-text {
-            color: #00FFAA;
-            font-family: 'Segoe UI', sans-serif;
+            color: #fff;
+            font-family: 'Courier New', monospace;
             font-size: 14px;
-            font-weight: bold;
+            letter-spacing: 6px;
             text-transform: uppercase;
-            letter-spacing: 4px;
-            text-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+            text-shadow: 0 0 10px #00FFAA;
+            animation: text-glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes text-glow {
+            from { opacity: 0.6; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
         }
         </style>
         """, unsafe_allow_html=True)
@@ -122,6 +143,7 @@ if not st.session_state.get('splash_visto', False):
         st.markdown(f'''
             <div class="splash-container">
                 <div class="map-scene">
+                    <div class="path-guide"></div>
                     <div class="point origin"></div>
                     <div class="point destination"></div>
                     <div class="delivery-node"></div>
@@ -131,6 +153,19 @@ if not st.session_state.get('splash_visto', False):
         ''', unsafe_allow_html=True)
         
         time.sleep(2.5)
+
+    # Lógica de cierre/reinicio
+    if st.session_state.get('motivo_splash') == "logout":
+        st.session_state.clear()
+        st.session_state['autenticado'] = False
+        st.session_state['splash_visto'] = True
+        st.session_state['motivo_splash'] = "inicio"
+    else:
+        st.session_state['splash_visto'] = True
+        st.session_state['motivo_splash'] = "inicio"
+    
+    placeholder.empty()
+    st.rerun()
 
     # Lógica de salida/reinicio
     if st.session_state.get('motivo_splash') == "logout":
@@ -884,6 +919,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
