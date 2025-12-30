@@ -283,6 +283,8 @@ if st.session_state.logueado:
         </div>
     """, unsafe_allow_html=True)
 
+    df = cargar_datos()
+
     # --- 2. LOGICA DE NAVEGACIÓN (Aquí empieza el cambio) ---
     # En lugar de abrir otro "if logueado", usamos el mismo espacio:
 
@@ -291,15 +293,8 @@ if st.session_state.pagina == "principal":
     # TÍTULO (Solo una vez)
     st.markdown("<h1 style='text-align:center;'>Control de Embarques</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;'>Logística – Enero 2026</p>", unsafe_allow_html=True)
-    st.divider()
-
-    
-    # --------------------------------------------------
-    # CONTENIDO PROTEGIDO
-    # --------------------------------------------------
+    st.divider()         
          
-       
-    
     # -----------------------------
     # CARGA DE DATOS
     # -----------------------------
@@ -325,7 +320,7 @@ if st.session_state.pagina == "principal":
         df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
         return df
 
-        df = cargar_datos()
+        
     
     # --------------------------------------------------
     # SIDEBAR – FILTROS (BLOQUE UNIFICADO Y CORREGIDO)
@@ -1119,6 +1114,7 @@ elif st.session_state.pagina == "KPIs":
     
     # FOOTER DE ESTA PÁGINA
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística</div>", unsafe_allow_html=True)
+
 
 
 
