@@ -845,7 +845,7 @@ if st.session_state.logueado:
     # ==========================================
     # 👇 AJUSTA ESTOS VALORES A TU GUSTO 👇
     # ==========================================
-    TAMANO_TEXTO = 30    # Cambia este número para el tamaño de la fuente
+    TAMANO_TEXTO = 14   # Cambia este número para el tamaño de la fuente
     ESPACIADO_DY = -15   # Si haces el texto más grande, pon un número más negativo (ej. -20)
     # ==========================================
     
@@ -1015,6 +1015,7 @@ if st.session_state.logueado:
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
         unsafe_allow_html=True
     )
+
 
 
 
