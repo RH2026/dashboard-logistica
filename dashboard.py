@@ -584,6 +584,50 @@ if st.session_state.pagina == "principal":
     st.info("💡 Consejo para Atención: Las barras verdes en el promedio indican que la fletera suele cumplir o adelantarse a la fecha promesa.")
     
     # --------------------------------------------------
+    # RANKING DE CALIDAD: MEJOR A PEOR FLETERA (MENOS FALLOS A MÁS)
+    # --------------------------------------------------
+    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:30px 0 10px 0;">Ranking de Calidad por Paquetería</div></div>""", unsafe_allow_html=True)
+
+    # 1. Filtramos los entregados tarde
+    df_entregas_tarde = df_filtrado[
+        (df_filtrado["FECHA DE ENTREGA REAL"].notna()) & 
+        (df_filtrado["FECHA DE ENTREGA REAL"] > df_filtrado["PROMESA DE ENTREGA"])
+    ].copy()
+
+    # 2. Contamos fallos por fletera
+    df_ranking = df_entregas_tarde.groupby("FLETERA").size().reset_index(name="CANTIDAD_FALLOS")
+    
+    # 3. Incluimos a las fleteras que tienen 0 fallos para que aparezcan como las "mejores"
+    todas_las_fleteras = pd.DataFrame(df_filtrado["FLETERA"].unique(), columns=["FLETERA"])
+    df_ranking_completo = pd.merge(todas_las_fleteras, df_ranking, on="FLETERA", how="left").fillna(0)
+
+    if not df_ranking_completo.empty:
+        # 4. Gráfica de barras - Ordenada de Menos Fallos (Mejor) a Más Fallos (Peor)
+        chart_ranking = alt.Chart(df_ranking_completo).mark_bar(
+            cornerRadiusTopLeft=8, 
+            cornerRadiusTopRight=8
+        ).encode(
+            # sort='y' ordena de menor a mayor (la mejor fletera primero)
+            x=alt.X("FLETERA:N", title="Paquetería (Mejor → Peor)", sort='y', axis=alt.Axis(labelAngle=-45)),
+            y=alt.Y("CANTIDAD_FALLOS:Q", title="Total de Pedidos Tarde"),
+            # Color dinámico: Verde si es 0, Rojo si tiene fallos
+            color=alt.condition(
+                alt.datum.CANTIDAD_FALLOS == 0,
+                alt.value("#2ECC71"), # Verde para las perfectas
+                alt.value("#FF0000")  # Rojo para las que tienen fallos
+            ),
+            tooltip=["FLETERA", "CANTIDAD_FALLOS"]
+        ).properties(height=400)
+
+        # 5. Etiqueta numérica
+        text_ranking = chart_ranking.mark_text(
+            align='center', baseline='bottom', dy=-10, fontSize=16, fontWeight='bold', color='white'
+        ).encode(text=alt.Text("CANTIDAD_FALLOS:Q"))
+
+        st.altair_chart((chart_ranking + text_ranking), use_container_width=True)
+        st.caption("🏆 Las fleteras a la izquierda son las más cumplidas (menos fallos).")
+    
+    # --------------------------------------------------
     # FINAL DE PÁGINA Y BOTÓN A KPIs
     # --------------------------------------------------
     st.divider()
@@ -621,6 +665,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
