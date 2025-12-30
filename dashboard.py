@@ -89,6 +89,20 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Inicializar el estado de la sesión si no existe
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
+
+# CSS para ocultar el menú lateral (sidebar)
+no_sidebar_style = """
+    <style>
+        [data-testid="stSidebarNav"] {display: none;}
+    </style>
+"""
+
+if not st.session_state.autenticado:
+    st.markdown(no_sidebar_style, unsafe_allow_html=True)
+
 # --------------------------------------------------
 # FONDO DE PANTALLA SOLO PARA LOGIN (COMPATIBLE CLOUD)
 # --------------------------------------------------
@@ -1085,6 +1099,7 @@ if st.session_state.logueado:
         unsafe_allow_html=True
         )
     
+
 
 
 
