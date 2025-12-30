@@ -206,6 +206,22 @@ else:
     df = cargar_datos()
     
     # --------------------------------------------------
+    # BOTÓN DE CIERRE DE SESIÓN EN LA BARRA LATERAL
+    # --------------------------------------------------
+    with st.sidebar:
+        st.markdown("### 🔐 Sesión Activa")
+        
+        # Usamos la línea compacta en lugar de st.divider() o st.markdown("---")
+        st.markdown("<hr>", unsafe_allow_html=True)
+        
+        if st.button("Cerrar Sesión", use_container_width=True):
+            st.session_state.splash_visto = False
+            st.session_state.motivo_splash = "logout"
+            st.rerun()
+    
+        st.markdown("<hr>", unsafe_allow_html=True)
+    
+    # --------------------------------------------------
     # 🛣️ INICIO DE LA LÓGICA DE NAVEGACIÓN
     # --------------------------------------------------
     if st.session_state.pagina == "principal":
@@ -216,23 +232,7 @@ else:
         st.markdown("<h1 style='text-align:center;'>Control de Embarques</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;'>Logística – Enero 2026</p>", unsafe_allow_html=True)
         st.divider()
-    
-        # --------------------------------------------------
-        # BOTÓN DE CIERRE DE SESIÓN EN LA BARRA LATERAL
-        # --------------------------------------------------
-        with st.sidebar:
-            st.markdown("### 🔐 Sesión Activa")
-            
-            # Usamos la línea compacta en lugar de st.divider() o st.markdown("---")
-            st.markdown("<hr>", unsafe_allow_html=True)
-            
-            if st.button("Cerrar Sesión", use_container_width=True):
-                st.session_state.splash_visto = False
-                st.session_state.motivo_splash = "logout"
-                st.rerun()
-        
-            st.markdown("<hr>", unsafe_allow_html=True)
-        
+           
         # 1. FUNCIÓN DE LIMPIEZA
         def limpiar_filtros():
             st.session_state.filtro_cliente_actual = ""
@@ -832,6 +832,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
