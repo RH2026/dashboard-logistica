@@ -1099,7 +1099,8 @@ st.altair_chart((bars_est + text_est).properties(height=350), use_container_widt
 st.divider()
     
 # --- 1. FINAL DE LA PÁGINA PRINCIPAL ---
-        st.divider()
+        st.divider()  # Línea 1102 corregida
+        
         col_esp, col_btn = st.columns([4, 1])
         with col_btn:
             # Este es el botón que te lleva a la otra página
@@ -1109,8 +1110,7 @@ st.divider()
 
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True) 
 
-    # --- 2. BLOQUE DE KPIs (Línea 1116) ---
-    # Fíjate que el 'elif' está alineado con el 'if' de la página principal
+    # --- 2. BLOQUE DE KPIs (Fíjate que el elif está un paso atrás del st.markdown anterior) ---
     elif st.session_state.pagina == "KPIs":
         st.markdown("<h1 style='text-align:center; color:#00FFAA;'>📈 Análisis Detallado de KPIs</h1>", unsafe_allow_html=True)
 
@@ -1128,8 +1128,6 @@ st.divider()
             st.rerun()
 
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
-
-
 
 
 
