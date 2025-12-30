@@ -28,11 +28,12 @@ if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time()
 
 # --------------------------------------------------
-# 3. SPLASH SCREEN (INICIO Y CIERRE DE SESIÓN)
+# 3. SPLASH SCREEN (CORREGIDO PARA LOGOUT)
 # --------------------------------------------------
-if not st.session_state.splash_visto:
+# Usamos .get para que si la sesión está vacía no marque error
+if not st.session_state.get('splash_visto', False):
     # Definir el mensaje según el motivo
-    if st.session_state.motivo_splash == "logout":
+    if st.session_state.get('motivo_splash') == "logout":
         texto_splash = "Bye, cerrando sistema…"
     else:
         texto_splash = "Inicializando módulos logísticos…"
@@ -74,23 +75,22 @@ if not st.session_state.splash_visto:
         </div>
     ''', unsafe_allow_html=True)
     
-    # Pausa para que la animación sea visible
     time.sleep(2)
     
     # --- LÓGICA DE SALIDA O REINICIO ---
-    if st.session_state.motivo_splash == "logout":
-        # 1. Limpiamos toda la memoria del usuario
+    if st.session_state.get('motivo_splash') == "logout":
+        # 1. Limpiamos toda la memoria
         st.session_state.clear()
-        # 2. Re-inicializamos solo lo básico para evitar errores de llave (KeyError)
-        st.session_state.splash_visto = True
-        st.session_state.motivo_splash = "inicio"
-        st.session_state.autenticado = False # Asegura que vaya al login
+        
+        # 2. IMPORTANTE: Re-inicializamos los estados para que el Login y Sidebar funcionen
+        st.session_state['autenticado'] = False
+        st.session_state['splash_visto'] = True
+        st.session_state['motivo_splash'] = "inicio"
     else:
         # Flujo de inicio normal
-        st.session_state.splash_visto = True
-        st.session_state.motivo_splash = "inicio"
+        st.session_state['splash_visto'] = True
+        st.session_state['motivo_splash'] = "inicio"
     
-    # Reiniciar la app para aplicar los cambios
     st.rerun()
 
 # 4. CONFIGURACIÓN DE PÁGINA
@@ -239,6 +239,19 @@ if st.session_state.pagina == "principal":
     # SIDEBAR – FILTROS
     # --------------------------------------------------
     st.sidebar.header("Filtros")
+
+    # --------------------------------------------------
+    # BOTÓN DE CIERRE DE SESIÓN EN LA BARRA LATERAL
+    # --------------------------------------------------
+    with st.sidebar:
+        st.markdown("---") # Separador visual
+        st.markdown("### 🔐 Gestión de Usuario")
+        
+        # El botón dispara el cambio de estado para activar el Splash
+        if st.button("Cerrar Sesión", use_container_width=True):
+            st.session_state.splash_visto = False
+            st.session_state.motivo_splash = "logout"
+            st.rerun()
 
     # 1. FUNCIÓN DE LIMPIEZA
     def limpiar_filtros():
@@ -839,6 +852,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
