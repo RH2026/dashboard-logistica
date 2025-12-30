@@ -90,33 +90,6 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
-# 2. ESTADO DE SESIÓN
-# --------------------------------------------------
-if "autenticado" not in st.session_state:
-    st.session_state.autenticado = False
-
-# --------------------------------------------------
-# 3. CSS PARA OCULTAR BARRA LATERAL TOTALMENTE
-# --------------------------------------------------
-if not st.session_state.autenticado:
-    st.markdown("""
-        <style>
-            /* Oculta la barra lateral completa */
-            [data-testid="stSidebar"] {
-                display: none;
-            }
-            /* Oculta el botón de la flecha (flechita de arriba a la izquierda) */
-            [data-testid="stSidebarCollapsedControl"] {
-                display: none;
-            }
-            /* Ajusta el margen del contenido para que no quede un hueco blanco a la izquierda */
-            .stMain {
-                margin-left: 0px;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
-# --------------------------------------------------
 # FONDO DE PANTALLA SOLO PARA LOGIN (COMPATIBLE CLOUD)
 # --------------------------------------------------
 if not st.session_state.get("logueado", False):
@@ -1112,6 +1085,7 @@ if st.session_state.logueado:
         unsafe_allow_html=True
         )
     
+
 
 
 
