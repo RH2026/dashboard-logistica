@@ -1098,44 +1098,36 @@ st.altair_chart((bars_est + text_est).properties(height=350), use_container_widt
 
 st.divider()
     
-# --- ESTE ES EL FINAL DE TU PÁGINA PRINCIPAL (Asegúrate que tenga espacios) ---
-col_espacio, col_btn = st.columns([5, 1])  
-with col_btn:
-    if st.button("📊 Ver KPIs", use_container_width=True):
-        st.session_state.pagina = 'KPIs'
-        st.rerun()
+# --- 1. FINAL DE LA PÁGINA PRINCIPAL ---
+        st.divider()
+        col_esp, col_btn = st.columns([4, 1])
+        with col_btn:
+            # Este es el botón que te lleva a la otra página
+            if st.button("📊 Ver KPIs", use_container_width=True):
+                st.session_state.pagina = "KPIs"
+                st.rerun()
 
-st.markdown(
-    "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
-    unsafe_allow_html=True
-)        
+        st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True) 
 
-# ------------------------------------------------------------------
-# --- BLOQUE ÚNICO PARA LA PÁGINA DE KPIs ---
-# ------------------------------------------------------------------
-elif st.session_state.pagina == "KPIs":
-    st.markdown("<h1 style='text-align:center; color:#00FFAA;'>📈 Análisis Detallado de KPIs</h1>", unsafe_allow_html=True)
+    # --- 2. BLOQUE DE KPIs (Línea 1116) ---
+    # Fíjate que el 'elif' está alineado con el 'if' de la página principal
+    elif st.session_state.pagina == "KPIs":
+        st.markdown("<h1 style='text-align:center; color:#00FFAA;'>📈 Análisis Detallado de KPIs</h1>", unsafe_allow_html=True)
 
-    # --- CONTENIDO DE KPIs ---
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Costo Promedio Envío", "$450 MXN", "+5%")
-    with col2:
-        st.metric("Eficiencia de Entrega", "94%", "-2%")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Costo Promedio Envío", "$450 MXN", "+5%")
+        with col2:
+            st.metric("Eficiencia de Entrega", "94%", "-2%")
 
-    st.write("##") 
+        st.write("##") 
 
-    # --- BOTÓN PARA VOLVER ---
-    if st.button("⬅ Volver al Inicio", use_container_width=True):
-        st.session_state.pagina = "principal"
-        st.rerun()
+        # Botón para regresar a la página principal
+        if st.button("⬅ Volver al Inicio", use_container_width=True):
+            st.session_state.pagina = "principal"
+            st.rerun()
 
-    # FOOTER DE ESTA PÁGINA
-    st.divider()
-    st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística - Vista Gerencial</div>", unsafe_allow_html=True)
-
-
-
+        st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
 
 
 
