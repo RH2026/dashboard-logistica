@@ -28,141 +28,69 @@ if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time()
 
 # --------------------------------------------------
-# 3. SPLASH SCREEN (CORREGIDO SIN PARPADEO)
+# 3. SPLASH SCREEN (CORREGIDO PARA LOGOUT)
 # --------------------------------------------------
+# Usamos .get para que si la sesión está vacía no marque error
 if not st.session_state.get('splash_visto', False):
-    # Creamos un contenedor vacío que ocupará toda la pantalla
-    placeholder = st.empty()
-    
+    # Definir el mensaje según el motivo
     if st.session_state.get('motivo_splash') == "logout":
         texto_splash = "Bye, cerrando sistema…"
     else:
         texto_splash = "Inicializando módulos logísticos…"
 
-    with placeholder.container():
-        st.markdown("""
-        <style>
-        .splash-container { 
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            height: 100vh; background-color: #0e1117; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
-        }
-        .loader {
-            width: 120px; height: 70px; border: 2px solid #374151; position: relative;
-            margin-top: -12vh; margin-bottom: 30px; overflow: hidden; border-radius: 4px;
-            background: repeating-linear-gradient(90deg, #0e1117, #0e1117 5px, #374151 5px, #374151 10px);
-        }
-        .loader::after {
-            content: ""; position: absolute; width: 100%; height: 3px;
-            background-color: #00FFAA; box-shadow: 0 0 15px #00FFAA;
-            animation: scan 1.5s ease-in-out infinite;
-        }
-        @keyframes scan { 0%, 100% { top: 5%; } 50% { top: 90%; } }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        st.markdown(f'''
-            <div class="splash-container">
-                <div class="loader"></div>
-                <div style="color:#aaa; font-size:14px; font-family:sans-serif; letter-spacing: 2px;">
-                    {texto_splash.upper()}
-                </div>
-            </div>
-        ''', unsafe_allow_html=True)
-        
-        # Pausa mientras el splash está visible en el placeholder
-        time.sleep(2)
-
     # Renderizado del CSS y HTML del Splash
-    # --------------------------------------------------
-    # 3. SPLASH SCREEN (DISEÑO ESCÁNER REAL)
-    # --------------------------------------------------
     st.markdown("""
     <style>
     .splash-container { 
-        display: flex; flex-direction: column; justify-content: center; align-items: center; 
-        height: 100vh; background-color: #0e1117; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
-    }
-    
-    .loader {
-        width: 120px;
-        height: 70px;
-        border: 2px solid #374151;
-        position: relative;
-        margin-top: -12vh;
-        margin-bottom: 30px;
-        overflow: hidden;
-        border-radius: 4px;
-        /* ESTO CREA LAS BARRAS VERTICALES */
-        background: repeating-linear-gradient(
-          90deg,
-          #0e1117,
-          #0e1117 5px,
-          #374151 5px,
-          #374151 10px,
-          #0e1117 10px,
-          #0e1117 12px,
-          #374151 12px,
-          #374151 15px
-        );
-    }
-    
-    /* El efecto de brillo de fondo detrás del láser */
-    .loader::before {
-        content: "";
-        position: absolute;
+        display: flex; 
+        flex-direction: column; 
+        justify-content: flex-start; 
+        align-items: center; 
+        height: 100vh; 
+        padding-top: 350px; 
+        background-color: #0e1117; 
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 100%;
-        height: 100%;
-        background: linear-gradient(transparent, rgba(0, 255, 170, 0.1), transparent);
-        top: -100%;
-        animation: scan-glow 1.5s ease-in-out infinite;
+        z-index: 9999;
     }
-
-    /* La línea del láser */
-    .loader::after {
-        content: "";
-        position: absolute;
-        width: 100%;
-        height: 3px;
-        background-color: #00FFAA;
-        box-shadow: 0 0 15px #00FFAA;
-        animation: scan 1.5s ease-in-out infinite;
+    .loader { 
+        border: 6px solid #2a2a2a; 
+        border-top: 6px solid #00FFAA; 
+        border-radius: 50%; 
+        width: 120px; 
+        height: 120px; 
+        animation: spin 1s linear infinite; 
+        margin-bottom: 20px; 
     }
-
-    @keyframes scan {
-        0%, 100% { top: 5%; }
-        50% { top: 90%; }
-    }
-    
-    @keyframes scan-glow {
-        0%, 100% { top: -50%; }
-        50% { top: 0%; }
-    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
     """, unsafe_allow_html=True)
     
     st.markdown(f'''
         <div class="splash-container">
             <div class="loader"></div>
-            <div style="color:#00FFAA; font-size:10px; font-family:sans-serif; letter-spacing: 2px;">
-                {texto_splash.upper()}
-            </div>
+            <div style="color:#aaa; font-size:14px; font-family:sans-serif;">{texto_splash}</div>
         </div>
     ''', unsafe_allow_html=True)
     
     time.sleep(2)
     
-    # --- LÓGICA DE CIERRE REAL ---
+    # --- LÓGICA DE SALIDA O REINICIO ---
     if st.session_state.get('motivo_splash') == "logout":
+        # 1. Limpiamos toda la memoria
         st.session_state.clear()
+        
+        # 2. IMPORTANTE: Re-inicializamos los estados para que el Login y Sidebar funcionen
         st.session_state['autenticado'] = False
         st.session_state['splash_visto'] = True
         st.session_state['motivo_splash'] = "inicio"
     else:
+        # Flujo de inicio normal
         st.session_state['splash_visto'] = True
         st.session_state['motivo_splash'] = "inicio"
     
-    # Limpiamos el placeholder antes del rerun para asegurar transición limpia
-    placeholder.empty()
     st.rerun()
 
 # 4. CONFIGURACIÓN DE PÁGINA
@@ -904,14 +832,6 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
-
-
-
-
-
-
-
-
 
 
 
