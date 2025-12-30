@@ -575,35 +575,47 @@ if st.session_state.pagina == "principal":
     # 3. Calculamos el promedio por cada fletera
     df_prom = df_entregados_p.groupby("FLETERA")["DIAS_DESVIACION"].mean().reset_index(name="PROMEDIO")
 
+    # --------------------------------------------------
+    # NOTA INTELIGENTE Y DINÁMICA (SOLUCIÓN AL NAMEERROR)
+    # --------------------------------------------------
     import datetime
 
+    # 1. Definimos las variables de cálculo de nuevo para asegurar que existan
+    df_entregas_tarde_nota = df_filtrado[
+        (df_filtrado["FECHA DE ENTREGA REAL"].notna()) & 
+        (df_filtrado["FECHA DE ENTREGA REAL"] > df_filtrado["PROMESA DE ENTREGA"])
+    ].copy()
+
+    # 2. Solo ejecutamos si hay datos entregados
     if not df_prom.empty:
-        # 1. Obtener la fecha actual para el encabezado
         fecha_actual = datetime.date.today().strftime('%d/%m/%Y')
         
-        # 2. Identificar a la peor fletera en tiempo (Días)
+        # Identificar peor fletera por DIAS (Promedio)
         peor_fletera_dias = df_prom.sort_values(by="PROMEDIO", ascending=False).iloc[0]
         nombre_peor_dias = peor_fletera_dias["FLETERA"]
         valor_peor_dias = peor_fletera_dias["PROMEDIO"]
 
-        # 3. Identificar a la fletera con más volumen de fallos (Cantidad)
-        # Usamos el conteo que calculamos para el gráfico de barras rojas
-        if not df_conteo.empty:
-            peor_volumen = df_conteo.sort_values(by="PEDIDOS", ascending=False).iloc[0]
+        # Identificar peor fletera por CANTIDAD (Conteo)
+        # Aquí creamos df_conteo_local para evitar el NameError
+        df_conteo_local = df_entregas_tarde_nota.groupby("FLETERA").size().reset_index(name="PEDIDOS")
+
+        if not df_conteo_local.empty:
+            peor_volumen = df_conteo_local.sort_values(by="PEDIDOS", ascending=False).iloc[0]
             nombre_volumen = peor_volumen["FLETERA"]
             cantidad_fallos = peor_volumen["PEDIDOS"]
 
-            # 4. Mostrar la nota que cambia según los datos
             if valor_peor_dias > 0:
                 st.error(f"""
                     🔍 **Diagnóstico Logístico al {fecha_actual}:** El mayor impacto en la espera del cliente lo tiene **{nombre_peor_dias}** con un retraso promedio de **{valor_peor_dias:.1f} días**.  
                     En cuanto a frecuencia, **{nombre_volumen}** es quien más incidencias acumula con **{cantidad_fallos} pedidos** entregados fuera de tiempo.
                 """)
             else:
-                st.success(f"✨ **Reporte al {fecha_actual}:** ¡Excelente desempeño! Todas las fleteras están operando dentro de los tiempos prometidos.")
+                st.success(f"✨ **Reporte al {fecha_actual}:** ¡Excelente desempeño! Todas las fleteras operando a tiempo.")
+        else:
+            st.success(f"✨ **Reporte al {fecha_actual}:** No se detectan pedidos entregados con retraso.")
         
         # Nota fija de apoyo visual
-        st.info("💡 **Guía rápida:** Barras <span style='color:#2ECC71; font-weight:bold;'>Verdes</span> = Buen servicio | Barras <span style='color:#F39C12; font-weight:bold;'>Naranjas</span> = Retraso promedio.", unsafe_allow_html=True)
+        st.info("💡 **Guía rápida:** Barras Verdes = Buen servicio | Barras Naranjas = Retraso promedio.") 
 
     # --------------------------------------------------
     # RANKING DE CALIDAD: MEJOR A PEOR FLETERA (MENOS FALLOS A MÁS)
@@ -828,6 +840,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
