@@ -488,31 +488,32 @@ if st.session_state.pagina == "principal":
 
     st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
 
-    # ------------------------------------------------------------------
-    # BLOQUE 9: PÁGINA DE KPIs (Alineado con el IF principal)
-    # ------------------------------------------------------------------
-    elif st.session_state.pagina == "KPIs":
-        st.markdown("<h1 style='text-align:center; color:#00FFAA;'>📈 Análisis Detallado de KPIs</h1>", unsafe_allow_html=True)
-        st.divider()
-    
-        # Métricas ejemplo para la segunda página
-        m1, m2, m3 = st.columns(3)
-        with m1:
-            st.metric("Eficiencia Total", f"{(len(df[df['ESTATUS_CALCULADO'] == 'ENTREGADO']) / len(df) * 100):.1f}%")
-        with m2:
-            st.metric("Costo Promedio", "$450 MXN", "+5%")
-        with m3:
-            st.metric("Total General", len(df))
-    
-        st.write("##")
-        st.info("💡 Esta es tu nueva página de KPIs. Aquí puedes agregar análisis gerenciales profundos.")
-    
-        # Botón para regresar
-        if st.button("⬅ Volver al Inicio", use_container_width=True):
-            st.session_state.pagina = "principal"
-            st.rerun()
-    
-        st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+# ------------------------------------------------------------------
+# BLOQUE 9: PÁGINA DE KPIs (Alineado con el IF principal)
+# ------------------------------------------------------------------
+elif st.session_state.pagina == "KPIs":
+    st.markdown("<h1 style='text-align:center; color:#00FFAA;'>📈 Análisis Detallado de KPIs</h1>", unsafe_allow_html=True)
+    st.divider()
+
+    # Métricas ejemplo para la segunda página
+    m1, m2, m3 = st.columns(3)
+    with m1:
+        st.metric("Eficiencia Total", f"{(len(df[df['ESTATUS_CALCULADO'] == 'ENTREGADO']) / len(df) * 100):.1f}%")
+    with m2:
+        st.metric("Costo Promedio", "$450 MXN", "+5%")
+    with m3:
+        st.metric("Total General", len(df))
+
+    st.write("##")
+    st.info("💡 Esta es tu nueva página de KPIs. Aquí puedes agregar análisis gerenciales profundos.")
+
+    # Botón para regresar
+    if st.button("⬅ Volver al Inicio", use_container_width=True):
+        st.session_state.pagina = "principal"
+        st.rerun()
+
+    st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
