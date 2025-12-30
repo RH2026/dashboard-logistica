@@ -1075,10 +1075,9 @@ if st.session_state.logueado:
     # FOOTER
     # --------------------------------------------------
 
-    st.markdown("---")
     st.markdown(
         """
-        <div style="text-align:center; color: #888888; font-size: 10px; padding: 10px;">
+        <div style="text-align:center; color: #888888; font-size: 12px; padding: 10px;">
             📦 0% de paquetes dañados emocionalmente durante la creación de este reporte.<br>
             © 2026 - Tu Dashboard de Operaciones | Design by Rigobertto Hernandez
         </div>
@@ -1086,6 +1085,7 @@ if st.session_state.logueado:
         unsafe_allow_html=True
         )
     
+
 
 
 
