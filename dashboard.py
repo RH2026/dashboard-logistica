@@ -47,7 +47,7 @@ if not st.session_state.get('splash_visto', False):
         justify-content: flex-start; 
         align-items: center; 
         height: 100vh; 
-        padding-top: 500px; 
+        padding-top: 200px; 
         background-color: #0e1117; 
         position: fixed;
         top: 0;
@@ -832,6 +832,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
