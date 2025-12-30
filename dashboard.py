@@ -27,20 +27,70 @@ if "pagina" not in st.session_state:
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time()
 
-# 3. SPLASH SCREEN
+# --------------------------------------------------
+# 3. SPLASH SCREEN (INICIO Y CIERRE DE SESIÓN)
+# --------------------------------------------------
 if not st.session_state.splash_visto:
-    texto_splash = "Bye, cerrando sistema…" if st.session_state.motivo_splash == "logout" else "Inicializando módulos logísticos…"
+    # Definir el mensaje según el motivo
+    if st.session_state.motivo_splash == "logout":
+        texto_splash = "Bye, cerrando sistema…"
+    else:
+        texto_splash = "Inicializando módulos logísticos…"
+
+    # Renderizado del CSS y HTML del Splash
     st.markdown("""
     <style>
-    .splash-container { display: flex; flex-direction: column; justify-content: flex-start; align-items: center; height: 100vh; padding-top: 160px; background-color: #0e1117; }
-    .loader { border: 6px solid #2a2a2a; border-top: 6px solid #00FFAA; border-radius: 50%; width: 120px; height: 120px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+    .splash-container { 
+        display: flex; 
+        flex-direction: column; 
+        justify-content: flex-start; 
+        align-items: center; 
+        height: 100vh; 
+        padding-top: 160px; 
+        background-color: #0e1117; 
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 9999;
+    }
+    .loader { 
+        border: 6px solid #2a2a2a; 
+        border-top: 6px solid #00FFAA; 
+        border-radius: 50%; 
+        width: 120px; 
+        height: 120px; 
+        animation: spin 1s linear infinite; 
+        margin-bottom: 20px; 
+    }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
     """, unsafe_allow_html=True)
-    st.markdown(f'<div class="splash-container"><div class="loader"></div><div style="color:#aaa; font-size:14px;">{texto_splash}</div></div>', unsafe_allow_html=True)
+    
+    st.markdown(f'''
+        <div class="splash-container">
+            <div class="loader"></div>
+            <div style="color:#aaa; font-size:14px; font-family:sans-serif;">{texto_splash}</div>
+        </div>
+    ''', unsafe_allow_html=True)
+    
+    # Pausa para que la animación sea visible
     time.sleep(2)
-    st.session_state.splash_visto = True
-    st.session_state.motivo_splash = "inicio"
+    
+    # --- LÓGICA DE SALIDA O REINICIO ---
+    if st.session_state.motivo_splash == "logout":
+        # 1. Limpiamos toda la memoria del usuario
+        st.session_state.clear()
+        # 2. Re-inicializamos solo lo básico para evitar errores de llave (KeyError)
+        st.session_state.splash_visto = True
+        st.session_state.motivo_splash = "inicio"
+        st.session_state.autenticado = False # Asegura que vaya al login
+    else:
+        # Flujo de inicio normal
+        st.session_state.splash_visto = True
+        st.session_state.motivo_splash = "inicio"
+    
+    # Reiniciar la app para aplicar los cambios
     st.rerun()
 
 # 4. CONFIGURACIÓN DE PÁGINA
@@ -121,11 +171,10 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-    if st.sidebar.button("Cerrar sesión", use_container_width=True):
-        st.session_state.motivo_splash = "logout"
-        st.session_state.splash_visto = False
-        st.session_state.logueado = False
-        st.rerun()
+    if st.button("Cerrar Sesión"):
+    st.session_state.splash_visto = False
+    st.session_state.motivo_splash = "logout"
+    st.rerun()
 
 # --------------------------------------------------
 # 👋 SALUDO PERSONALIZADO
@@ -790,6 +839,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
