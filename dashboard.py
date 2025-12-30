@@ -363,18 +363,18 @@ if st.session_state.pagina == "principal":
                 st.divider()
     
     # --------------------------------------------------
-    # CONFIGURACIÓN DE COLORES Y FUNCIÓN DE DONA
+    # 1. CONFIGURACIÓN DE COLORES Y FUNCIÓN (DEFINIR ANTES DE USAR)
     # --------------------------------------------------
     COLOR_AVANCE_ENTREGADOS = "#4CAF50"   # Verde
     COLOR_AVANCE_TRANSITO   = "#FFC107"   # Amarillo
     COLOR_AVANCE_RETRASADOS = "#F44336"   # Rojo
-    COLOR_FALTANTE          = "#3A3A3A"   # Gris
+    COLOR_FALTANTE          = "#3A3A3A"   # Gris (ESTA ES LA QUE DABA ERROR)
 
-    def donut_con_numero(avance, total_total, color_avance, color_faltante):
-        porcentaje = int((avance / total_total) * 100) if total_total > 0 else 0
+    def donut_con_numero(avance, total_val, color_avance, color_faltante):
+        porcentaje = int((avance / total_val) * 100) if total_val > 0 else 0
         data_dona = pd.DataFrame({
             "segmento": ["avance", "faltante"],
-            "valor": [avance, max(total_total - avance, 0)]
+            "valor": [avance, max(total_val - avance, 0)]
         })
         
         donut = alt.Chart(data_dona).mark_arc(innerRadius=50).encode(
@@ -393,27 +393,28 @@ if st.session_state.pagina == "principal":
         return (donut + texto_n + texto_p).properties(width=140, height=140)
 
     # --------------------------------------------------
-    # RENDERIZADO DE LAS 4 COLUMNAS DE KPIs
+    # 2. RENDERIZADO DE LOS KPIs (Línea 402 aproximada)
     # --------------------------------------------------
+    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Indicadores Generales</div></div>""", unsafe_allow_html=True)
+
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
-        st.markdown("<div style='text-align:center; color:yellow; font-size:14px; margin-bottom:10px;'>Total de pedidos</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Total de pedidos</div>", unsafe_allow_html=True)
+        # Ahora la función ya existe y no dará NameError
         st.altair_chart(donut_con_numero(total, total, "#FFD700", COLOR_FALTANTE), use_container_width=True)
 
     with c2:
-        st.markdown("<div style='text-align:center; color:yellow; font-size:14px; margin-bottom:10px;'>Entregados</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Entregados</div>", unsafe_allow_html=True)
         st.altair_chart(donut_con_numero(entregados, total, COLOR_AVANCE_ENTREGADOS, COLOR_FALTANTE), use_container_width=True)
 
     with c3:
-        st.markdown("<div style='text-align:center; color:yellow; font-size:14px; margin-bottom:10px;'>En tránsito</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>En tránsito</div>", unsafe_allow_html=True)
         st.altair_chart(donut_con_numero(en_transito, total, COLOR_AVANCE_TRANSITO, COLOR_FALTANTE), use_container_width=True)
 
     with c4:
-        st.markdown("<div style='text-align:center; color:yellow; font-size:14px; margin-bottom:10px;'>Retrasados</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Retrasados</div>", unsafe_allow_html=True)
         st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
-        
-    st.divider()
     
     # --------------------------------------------------
     # TABLA DE ENVÍOS – DISEÑO PERSONALIZADO
@@ -526,6 +527,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
