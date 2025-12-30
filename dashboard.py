@@ -240,7 +240,7 @@ if st.session_state.pagina == "principal":
         options=[""] + sorted(df["FLETERA"].dropna().unique()),
         index=0,
         key="fletera_filtro"
-
+    )
     # --------------------------------------------------
     # APLICACIÓN DE FILTROS (LÓGICA PRIORIZADA)
     # --------------------------------------------------
@@ -535,6 +535,7 @@ if st.session_state.pagina == "principal":
             st.rerun()
 
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística - Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
