@@ -684,12 +684,109 @@ if st.session_state.pagina == "principal":
         
         st.markdown(f"""
             <div style="background-color:#1E1E1E; padding:15px; border-radius:10px; border-left: 5px solid #3498DB;">
-            <strong>💡 Tip para Atención al Cliente:</strong><br>
+            <strong>Tip para Atención al Cliente:</strong><br>
             La barra más alta en el lado rojo indica el retraso más frecuente. 
             Si la barra de 1 día es la más alta, pueden decir con confianza: 
             "Normalmente los retrasos no pasan de 24 horas".
             </div>
         """, unsafe_allow_html=True)
+    
+    # --------------------------------------------------
+    # ANÁLISIS PROFUNDO: ¿QUIÉN EMPUJA AL LADO ROJO?
+    # --------------------------------------------------
+    st.markdown("<h3 style='text-align:center; color:white;'>🔍 Lupa por Paquetería: ¿Qué tan grave es su retraso?</h3>", unsafe_allow_html=True)
+    
+    # 1. Selector de Fletera para el análisis detallado
+    lista_fleteras = ["TODAS"] + sorted(df_filtrado["FLETERA"].unique().tolist())
+    fletera_analisis = st.selectbox("Selecciona una paquetería para ver su comportamiento:", lista_fleteras)
+
+    # 2. Filtrado de datos para el histograma
+    df_hist_deep = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
+    if fletera_analisis != "TODAS":
+        df_hist_deep = df_hist_deep[df_hist_deep["FLETERA"] == fletera_analisis]
+    
+    df_hist_deep["DIAS_DESVIACION"] = (df_hist_deep["FECHA DE ENTREGA REAL"] - df_hist_deep["PROMESA DE ENTREGA"]).dt.days
+
+    if not df_hist_deep.empty:
+        # 3. Creación del Histograma
+        df_dist_deep = df_hist_deep.groupby("DIAS_DESVIACION").size().reset_index(name="CANTIDAD")
+        
+        chart_deep = alt.Chart(df_dist_deep).mark_bar(cornerRadiusTopLeft=5, cornerRadiusTopRight=5).encode(
+            x=alt.X("DIAS_DESVIACION:Q", title="Días de diferencia (Negativo = Antes / Positivo = Retraso)"),
+            y=alt.Y("CANTIDAD:Q", title="Número de Entregas"),
+            color=alt.condition(
+                alt.datum.DIAS_DESVIACION <= 0,
+                alt.value("#2ECC71"), # Verde
+                alt.value("#E74C3C")  # Rojo
+            ),
+            tooltip=["DIAS_DESVIACION", "CANTIDAD"]
+        ).properties(height=350)
+
+        # Etiquetas de texto
+        text_deep = chart_deep.mark_text(align='center', baseline='bottom', dy=-10, fontWeight='bold', color='white').encode(
+            text=alt.Text("CANTIDAD:Q")
+        )
+
+        st.altair_chart((chart_deep + text_deep), use_container_width=True)
+
+        # 4. EXPLICACIÓN LOGÍSTICA (Basada en tus imágenes)
+        if fletera_analisis == "TRES GUERRAS":
+            st.warning("⚠️ **Caso TRES GUERRAS:** Tienes muchos fallos (55), pero nota cómo la mayoría se amontonan cerca del 0 o 1. Fallan mucho en cantidad, pero sus retrasos son 'cortos'.")
+        elif fletera_analisis == "ONE":
+            st.error("🚨 **Caso ONE:** Aunque tienen menos fallos que Tres Guerras (26), sus barras en el lado rojo están más a la derecha. Sus retrasos son más largos y afectan más al cliente.")
+    else:
+        st.info("No hay datos de entregas para esta selección.")
+    
+    # --------------------------------------------------
+    # TABLA SCORECARD: CALIFICACIÓN DE FLETERAS
+    # --------------------------------------------------
+    st.markdown("<h3 style='text-align:center; color:white;'>🏆 Scorecard de Desempeño Logístico</h3>", unsafe_allow_html=True)
+
+    # 1. Agrupamos métricas clave por fletera
+    # Calculamos total de pedidos, cuántos tarde y el promedio de días
+    resumen_score = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
+    resumen_score["ES_TARDE"] = (resumen_score["FECHA DE ENTREGA REAL"] > resumen_score["PROMESA DE ENTREGA"])
+    resumen_score["DIAS_DIF"] = (resumen_score["FECHA DE ENTREGA REAL"] - resumen_score["PROMESA DE ENTREGA"]).dt.days
+
+    df_score = resumen_score.groupby("FLETERA").agg(
+        Total_Entregas=('FLETERA', 'count'),
+        Pedidos_Tarde=('ES_TARDE', 'sum'),
+        Promedio_Dias=('DIAS_DIF', 'mean')
+    ).reset_index()
+
+    # 2. Calculamos % de Eficiencia (Entregas a tiempo)
+    df_score["Eficiencia"] = ((1 - (df_score["Pedidos_Tarde"] / df_score["Total_Entregas"])) * 100).round(1)
+    df_score["Promedio_Dias"] = df_score["Promedio_Dias"].round(1)
+
+    # 3. Función para asignar Medalla/Calificación
+    def asignar_calificacion(row):
+        if row["Eficiencia"] >= 95 and row["Promedio_Dias"] <= 0:
+            return "⭐ EXCELENTE"
+        elif row["Eficiencia"] >= 80:
+            return "✅ CONFIABLE"
+        elif row["Eficiencia"] >= 60:
+            return "⚠️ EN OBSERVACIÓN"
+        else:
+            return "🚨 CRÍTICO"
+
+    df_score["Calificación"] = df_score.apply(asignar_calificacion, axis=1)
+
+    # 4. Ordenar por Eficiencia (Mejor a peor)
+    df_score = df_score.sort_values(by="Eficiencia", ascending=False)
+
+    # 5. Mostrar tabla con estilo
+    def color_score(val):
+        if "EXCELENTE" in str(val): return 'color: #2ECC71; font-weight: bold'
+        if "CONFIABLE" in str(val): return 'color: #3498DB; font-weight: bold'
+        if "OBSERVACIÓN" in str(val): return 'color: #F39C12; font-weight: bold'
+        if "CRÍTICO" in str(val): return 'color: #E74C3C; font-weight: bold'
+        return ''
+
+    st.dataframe(
+        df_score.style.applymap(color_score, subset=["Calificación"]),
+        use_container_width=True,
+        hide_index=True
+    )
     
     # --------------------------------------------------
     # FINAL DE PÁGINA Y BOTÓN A KPIs
@@ -729,6 +826,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
