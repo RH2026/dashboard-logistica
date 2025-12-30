@@ -152,18 +152,18 @@ if not st.session_state.get('splash_visto', False):
     time.sleep(2)
     
     # --- LÓGICA DE CIERRE REAL ---
-        if st.session_state.get('motivo_splash') == "logout":
-            st.session_state.clear()
-            st.session_state['autenticado'] = False
-            st.session_state['splash_visto'] = True
-            st.session_state['motivo_splash'] = "inicio"
-        else:
-            st.session_state['splash_visto'] = True
-            st.session_state['motivo_splash'] = "inicio"
-        
-        # Limpiamos el placeholder antes del rerun para asegurar transición limpia
-        placeholder.empty()
-        st.rerun()
+    if st.session_state.get('motivo_splash') == "logout":
+        st.session_state.clear()
+        st.session_state['autenticado'] = False
+        st.session_state['splash_visto'] = True
+        st.session_state['motivo_splash'] = "inicio"
+    else:
+        st.session_state['splash_visto'] = True
+        st.session_state['motivo_splash'] = "inicio"
+    
+    # Limpiamos el placeholder antes del rerun para asegurar transición limpia
+    placeholder.empty()
+    st.rerun()
 
 # 4. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
@@ -904,6 +904,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
