@@ -560,47 +560,47 @@ if st.session_state.pagina == "principal":
         st.success("✅ No hay registros de pedidos entregados tarde.")
     
     # --------------------------------------------------
-    # GRÁFICO: RETRASO PROMEDIO EN DÍAS (VISTA ATENCIÓN AL CLIENTE)
+    # GRÁFICO: RETRASO PROMEDIO + NOTA PARA ATENCIÓN
     # --------------------------------------------------
     st.markdown("<h3 style='text-align:center; color:white;'>Retraso Promedio por Paquetería</h3>", unsafe_allow_html=True)
 
-    # 1. Preparación de datos (Solo pedidos con entrega confirmada)
+    # 1. Filtramos datos de la tabla (usando df_filtrado para que sea reactivo)
     df_entregados_p = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
-    df_entregados_p["DIAS_DESVIACION"] = (df_entregados_p["FECHA DE ENTREGA REAL"] - df_entregados_p["PROMESA DE ENTREGA"]).dt.days
+    
+    # 2. Calculamos los días de diferencia (Real vs Promesa)
+    df_entregados_p["DIAS_DESVIACION"] = (
+        (df_entregados_p["FECHA DE ENTREGA REAL"] - df_entregados_p["PROMESA DE ENTREGA"]).dt.days
+    )
 
-    # 2. Agrupación por promedio
+    # 3. Calculamos el promedio por cada fletera
     df_prom = df_entregados_p.groupby("FLETERA")["DIAS_DESVIACION"].mean().reset_index(name="PROMEDIO")
 
     if not df_prom.empty:
-        # 3. Creación del Gráfico Horizontal
+        # 4. Creamos el gráfico horizontal
         chart_prom = alt.Chart(df_prom).mark_bar(
             cornerRadiusTopRight=8, 
             cornerRadiusBottomRight=8
         ).encode(
             y=alt.Y("FLETERA:N", title=None, sort='-x'),
             x=alt.X("PROMEDIO:Q", title="Días promedio"),
-            # Naranja si es positivo (retraso), Verde si es cero o negativo (a tiempo)
             color=alt.condition(
                 alt.datum.PROMEDIO > 0, 
-                alt.value("#F39C12"), 
-                alt.value("#2ECC71")
+                alt.value("#F39C12"), # Naranja
+                alt.value("#2ECC71")  # Verde
             )
-        ).properties(height=400) # Un poco más alto para que luzca bien solo
+        ).properties(height=400)
         
-        # 4. Etiquetas de texto a la derecha de la barra
+        # 5. Etiquetas de número
         text_prom = chart_prom.mark_text(
-            align='left', 
-            baseline='middle', 
-            dx=5, 
-            fontSize=15, 
-            fontWeight='bold', 
-            color='white'
-        ).encode(
-            text=alt.Text("PROMEDIO:Q", format='.1f')
-        )
+            align='left', baseline='middle', dx=5, fontSize=15, fontWeight='bold', color='white'
+        ).encode(text=alt.Text("PROMEDIO:Q", format='.1f'))
         
         st.altair_chart((chart_prom + text_prom), use_container_width=True)
-        st.info("💡 Las barras verdes indican que la fletera suele cumplir o adelantarse a la fecha promesa.")
+
+        # --- LA NOTA PARA ATENCIÓN AL CLIENTE ---
+        st.info("💡 Consejo para Atención: Las barras verdes en el promedio indican que la fletera suele cumplir o adelantarse a la fecha promesa.")
+    else:
+        st.warning("No hay datos suficientes para calcular el promedio de retraso.")
     
     # --------------------------------------------------
     # RANKING DE CALIDAD: MEJOR A PEOR FLETERA (MENOS FALLOS A MÁS)
@@ -825,6 +825,7 @@ elif st.session_state.pagina == "KPIs":
         st.rerun()
 
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
