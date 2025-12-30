@@ -1100,7 +1100,18 @@ if st.session_state.logueado:
     st.divider()
     
     # --------------------------------------------------
-    # FOOTER
+    # SECCIÓN PRE-FOOTER (BOTÓN DISCRETO)
+    # --------------------------------------------------
+    # Creamos columnas donde la última es pequeña para el botón
+    col_espacio, col_btn = st.columns([5, 1]) 
+
+    with col_btn:
+        if st.button("📊 Ver KPIs", use_container_width=True):
+            st.session_state.pagina = 'KPIs'
+            st.rerun()
+
+    # --------------------------------------------------
+    # TU FOOTER ACTUAL
     # --------------------------------------------------
     st.markdown(
         "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
