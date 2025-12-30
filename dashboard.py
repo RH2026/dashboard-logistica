@@ -242,47 +242,37 @@ if st.session_state.pagina == "principal":
         key="fletera_filtro"
     )
     # --------------------------------------------------
-    # APLICACIÓN DE FILTROS (LÓGICA PRIORIZADA)
+    # APLICACIÓN DE FILTROS (Lógica para que aparezcan los datos)
     # --------------------------------------------------
     df_filtrado = df.copy()
     valor_buscado = str(st.session_state.filtro_cliente_actual).strip().lower()
 
-    # PRIORIDAD 1: Búsqueda de Texto (Cliente o Guía)
+    # Si hay algo escrito en el buscador, filtramos por eso
     if valor_buscado != "":
-        col_cliente = "NO CLIENTE"
-        col_guia = "NÚMERO DE GUÍA"
-        
-        def limpiar_col(s):
-            return s.astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
-
-        mask_cliente = limpiar_col(df_filtrado[col_cliente]).str.contains(valor_buscado, na=False)
-        mask_guia = limpiar_col(df_filtrado[col_guia]).str.contains(valor_buscado, na=False)
-        
+        mask_cliente = df_filtrado["NO CLIENTE"].astype(str).str.contains(valor_buscado, na=False)
+        mask_guia = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.contains(valor_buscado, na=False)
         df_filtrado = df_filtrado[mask_cliente | mask_guia]
         
-    # PRIORIDAD 2: Filtros Normales (Fecha y Fletera)
+    # Si no hay búsqueda, usamos fechas y fletera
     else:
         if isinstance(rango_fechas, (list, tuple)) and len(rango_fechas) == 2:
             f_inicio, f_fin = rango_fechas
-            col_fechas_dt = pd.to_datetime(df_filtrado["FECHA DE ENVÍO"], errors='coerce')
-            df_filtrado = df_filtrado[(col_fechas_dt >= pd.to_datetime(f_inicio)) & 
-                                      (col_fechas_dt <= pd.to_datetime(f_fin))]
-            
+            df_filtrado = df_filtrado[(df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(f_inicio)) & 
+                                      (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(f_fin))]
+        
         if fletera_sel != "":
-            df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
+            df_filtrado = df_filtrado[df_filtrado["FLETERA"] == fletera_sel]
 
     # --------------------------------------------------
-    # GRÁFICO DE ESTATUS POR FLETERA (Visualización Interactiva)
+    # INDICADORES GENERALES (LOS CÍRCULOS DE COLORES)
     # --------------------------------------------------
-    if fletera_sel:
-        st.markdown(f"<h4 style='text-align:center;'>Estatus de pedidos - {fletera_sel}</h4>", unsafe_allow_html=True)
-        
-        df_graf = df_filtrado[df_filtrado["FLETERA"] == fletera_sel].copy()
-        # Agrupamos y rellenamos ceros para que la gráfica no desaparezca si no hay datos de un tipo
-        graf_estatus = df_graf.groupby("ESTATUS_CALCULADO").size().reset_index(name="Total")
-        
-        st.bar_chart(graf_estatus.set_index("ESTATUS_CALCULADO")["Total"])
-        st.divider()
+    st.markdown("<h2 style='text-align:center;'>Indicadores Generales</h2>", unsafe_allow_html=True)
+    
+    # Aquí calculamos los números para tus donitas
+    total = len(df_filtrado)
+    entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
+    en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
+    retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
 
     # --------------------------------------------------
     # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
@@ -360,181 +350,170 @@ if st.session_state.pagina == "principal":
                 st.divider()
     
     # --------------------------------------------------
-    # KPIs CON DONITAS (Función y Renderizado)
+    # CONFIGURACIÓN DE COLORES Y FUNCIÓN DE DONA
     # --------------------------------------------------
     COLOR_AVANCE_ENTREGADOS = "#4CAF50"   # Verde
     COLOR_AVANCE_TRANSITO   = "#FFC107"   # Amarillo
     COLOR_AVANCE_RETRASADOS = "#F44336"   # Rojo
     COLOR_FALTANTE          = "#3A3A3A"   # Gris
 
-    def donut_con_numero(avance, total, color_avance, color_faltante):
-        porcentaje = int((avance / total) * 100) if total > 0 else 0
-        data = pd.DataFrame({
+    def donut_con_numero(avance, total_total, color_avance, color_faltante):
+        porcentaje = int((avance / total_total) * 100) if total_total > 0 else 0
+        data_dona = pd.DataFrame({
             "segmento": ["avance", "faltante"],
-            "valor": [avance, max(total - avance, 0)]
+            "valor": [avance, max(total_total - avance, 0)]
         })
-        donut = alt.Chart(data).mark_arc(innerRadius=50).encode(
+        
+        donut = alt.Chart(data_dona).mark_arc(innerRadius=50).encode(
             theta=alt.Theta("valor:Q"),
             color=alt.Color("segmento:N", scale=alt.Scale(range=[color_avance, color_faltante]), legend=None)
         )
-        texto_numero = alt.Chart(pd.DataFrame({"texto": [f"{avance}"]})).mark_text(
+        
+        texto_n = alt.Chart(pd.DataFrame({"texto": [f"{avance}"]})).mark_text(
             align="center", baseline="middle", fontSize=26, fontWeight="bold", dy=-8, color="white"
         ).encode(text="texto:N")
-        texto_porcentaje = alt.Chart(pd.DataFrame({"texto": [f"{porcentaje}%"]})).mark_text(
+        
+        texto_p = alt.Chart(pd.DataFrame({"texto": [f"{porcentaje}%"]})).mark_text(
             align="center", baseline="middle", fontSize=14, dy=16, color="gray"
         ).encode(text="texto:N")
-        return (donut + texto_numero + texto_porcentaje).properties(width=140, height=140)
+        
+        return (donut + texto_n + texto_p).properties(width=140, height=140)
 
-    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Indicadores Generales</div></div>""", unsafe_allow_html=True)
-
+    # --------------------------------------------------
+    # RENDERIZADO DE LAS 4 COLUMNAS DE KPIs
+    # --------------------------------------------------
     c1, c2, c3, c4 = st.columns(4)
-    
-    # Conteos para las donitas
-    t_val = len(df_filtrado)
-    e_val = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
-    tr_val = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
-    r_val = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
 
     with c1:
-        st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Total de pedidos</div>", unsafe_allow_html=True)
-        st.altair_chart(donut_con_numero(t_val, t_val, "#FFD700", COLOR_FALTANTE), use_container_width=True)
+        st.markdown("<div style='text-align:center; color:yellow; font-size:14px; margin-bottom:10px;'>Total de pedidos</div>", unsafe_allow_html=True)
+        st.altair_chart(donut_con_numero(total, total, "#FFD700", COLOR_FALTANTE), use_container_width=True)
+
     with c2:
-        st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Entregados</div>", unsafe_allow_html=True)
-        st.altair_chart(donut_con_numero(e_val, t_val, COLOR_AVANCE_ENTREGADOS, COLOR_FALTANTE), use_container_width=True)
+        st.markdown("<div style='text-align:center; color:yellow; font-size:14px; margin-bottom:10px;'>Entregados</div>", unsafe_allow_html=True)
+        st.altair_chart(donut_con_numero(entregados, total, COLOR_AVANCE_ENTREGADOS, COLOR_FALTANTE), use_container_width=True)
+
     with c3:
-        st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>En tránsito</div>", unsafe_allow_html=True)
-        st.altair_chart(donut_con_numero(tr_val, t_val, COLOR_AVANCE_TRANSITO, COLOR_FALTANTE), use_container_width=True)
+        st.markdown("<div style='text-align:center; color:yellow; font-size:14px; margin-bottom:10px;'>En tránsito</div>", unsafe_allow_html=True)
+        st.altair_chart(donut_con_numero(en_transito, total, COLOR_AVANCE_TRANSITO, COLOR_FALTANTE), use_container_width=True)
+
     with c4:
-        st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Retrasados</div>", unsafe_allow_html=True)
-        st.altair_chart(donut_con_numero(r_val, t_val, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
+        st.markdown("<div style='text-align:center; color:yellow; font-size:14px; margin-bottom:10px;'>Retrasados</div>", unsafe_allow_html=True)
+        st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
+        
+    st.divider()
     
     # --------------------------------------------------
-    # TABLA FINAL – LISTA DE ENVÍOS CON ESTILOS
+    # TABLA DE ENVÍOS – DISEÑO PERSONALIZADO
     # --------------------------------------------------
     st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Lista de envíos</div></div>""", unsafe_allow_html=True)
 
-    hoy_tabla = pd.Timestamp.today().normalize()
+    hoy_t = pd.Timestamp.today().normalize()
     df_mostrar = df_filtrado.copy()
 
-    # Cálculos para la tabla
-    df_mostrar["DIAS_TRANSCURRIDOS"] = ((df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy_tabla) - df_mostrar["FECHA DE ENVÍO"]).dt.days)
-    df_mostrar["DIAS_RETRASO"] = ((df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy_tabla) - df_mostrar["PROMESA DE ENTREGA"]).dt.days)
+    # Cálculo de días transcurridos y retraso para las columnas de la tabla
+    df_mostrar["DIAS_TRANSCURRIDOS"] = (
+        (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_mostrar["FECHA DE ENVÍO"]).dt.days
+    )
+    df_mostrar["DIAS_RETRASO"] = (
+        (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_mostrar["PROMESA DE ENTREGA"]).dt.days
+    )
     df_mostrar["DIAS_RETRASO"] = df_mostrar["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
 
-    # Formateo de fechas para visualización
+    # Formateo de fechas para que se vean limpias (DD/MM/YYYY)
     df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y').fillna('')
     df_mostrar["FECHA DE ENVÍO"] = df_mostrar["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y').fillna('')
     df_mostrar["PROMESA DE ENTREGA"] = df_mostrar["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y').fillna('')
 
-    # Funciones de Estilo para la Tabla
+    # --- FUNCIONES DE ESTILO CSS PARA LA TABLA ---
     def colorear_retraso(val):
+        # Si hay días de retraso, fondo rojo y texto negro
         return 'background-color: #ff4d4d; color: black; font-weight: bold;' if val > 0 else ''
 
     def zebra_filas(row):
+        # Alterna colores entre las filas para facilitar la lectura
         color = '#0E1117' if row.name % 2 == 0 else '#1A1E25'
         return [f'background-color: {color}; color: white;' for _ in row]
 
-    # Renderizado de la Tabla con CSS inyectado
+    # Renderizado de la tabla con los estilos aplicados
     st.dataframe(
         df_mostrar.style.apply(zebra_filas, axis=1)
                         .applymap(colorear_retraso, subset=["DIAS_RETRASO"])
                         .set_table_styles([
-            {'selector': 'th', 'props': [('background-color', 'orange'), ('color', 'white'), ('font-weight','bold')]},
-            {'selector': 'td', 'props': [('padding', '10px')]}
+            {'selector': 'th', 'props': [('background-color', 'orange'), ('color', 'white'), ('font-weight','bold'), ('font-size','14px')]},
+            {'selector': 'td', 'props': [('padding', '12px')]}
         ]),
         use_container_width=True,
         height=520
     )
 
     # --------------------------------------------------
-    # GRÁFICOS POR PAQUETERÍA – (TRÁNSITO Y RETRASOS)
+    # GRÁFICOS DE BARRAS POR PAQUETERÍA
     # --------------------------------------------------
-    TAMANO_FUENTE = 14
-    ESPACIADO_DY = -12
-    MARGEN_SUPERIOR = 1.3
-
-    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Pendientes por Paquetería</div></div>""", unsafe_allow_html=True)
-
+    st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Análisis por Paquetería</div></div>""", unsafe_allow_html=True)
+    
     g1, g2 = st.columns(2)
 
-    # --- 1. GRÁFICO: EN TRÁNSITO ---
-    df_transito = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"].groupby("FLETERA").size().reset_index(name="PEDIDOS")
-    
-    if not df_transito.empty:
-        max_t = df_transito["PEDIDOS"].max() * MARGEN_SUPERIOR
-        base_t = alt.Chart(df_transito).encode(x=alt.X("FLETERA:N", title="Paquetería"))
-        bars_t = base_t.mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
-            y=alt.Y("PEDIDOS:Q", title="Pedidos en tránsito", scale=alt.Scale(domain=[0, max_t])),
-            color=alt.value("#FFC107")
-        )
-        text_t = base_t.mark_text(align='center', baseline='bottom', dy=ESPACIADO_DY, fontSize=TAMANO_FUENTE, fontWeight='bold', color='white').encode(
-            y=alt.Y("PEDIDOS:Q"), text=alt.Text("PEDIDOS:Q")
-        )
-        g1.markdown("<h4 style='color:yellow; text-align:center;'>En tránsito</h4>", unsafe_allow_html=True)
-        g1.altair_chart((bars_t + text_t).properties(height=320), use_container_width=True)
+    # Gráfico 1: En Tránsito por Fletera
+    df_t = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
+    if not df_t.empty:
+        chart_t = alt.Chart(df_t).mark_bar(color="#FFC107", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
+            x=alt.X("FLETERA:N", title="Paquetería"),
+            y=alt.Y("CANTIDAD:Q", title="Pedidos"),
+            tooltip=["FLETERA", "CANTIDAD"]
+        ).properties(height=300)
+        g1.markdown("<h4 style='text-align:center; color:yellow;'>En tránsito</h4>", unsafe_allow_html=True)
+        g1.altair_chart(chart_t, use_container_width=True)
 
-    # --- 2. GRÁFICO: RETRASADOS ---
-    df_retrasados = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"].groupby("FLETERA").size().reset_index(name="PEDIDOS")
-    
-    if not df_retrasados.empty:
-        max_r = df_retrasados["PEDIDOS"].max() * MARGEN_SUPERIOR
-        base_r = alt.Chart(df_retrasados).encode(x=alt.X("FLETERA:N", title="Paquetería"))
-        bars_r = base_r.mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
-            y=alt.Y("PEDIDOS:Q", title="Pedidos retrasados", scale=alt.Scale(domain=[0, max_r])),
-            color=alt.value("#F44336")
-        )
-        text_r = base_r.mark_text(align='center', baseline='bottom', dy=ESPACIADO_DY, fontSize=TAMANO_FUENTE, fontWeight='bold', color='white').encode(
-            y=alt.Y("PEDIDOS:Q"), text=alt.Text("PEDIDOS:Q")
-        )
-        g2.markdown("<h4 style='color:#F44336; text-align:center;'>Retrasados</h4>", unsafe_allow_html=True)
-        g2.altair_chart((bars_r + text_r).properties(height=320), use_container_width=True)
+    # Gráfico 2: Retrasados por Fletera
+    df_r = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
+    if not df_r.empty:
+        chart_r = alt.Chart(df_r).mark_bar(color="#F44336", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
+            x=alt.X("FLETERA:N", title="Paquetería"),
+            y=alt.Y("CANTIDAD:Q", title="Pedidos"),
+            tooltip=["FLETERA", "CANTIDAD"]
+        ).properties(height=300)
+        g2.markdown("<h4 style='text-align:center; color:#F44336;'>Retrasados</h4>", unsafe_allow_html=True)
+        g2.altair_chart(chart_r, use_container_width=True)
 
-    # --- 1. FINAL DE LA PÁGINA PRINCIPAL ---
-        st.divider()
-        
-        # Botón para ir a los KPIs (Cerca del final)
-        col_esp, col_btn = st.columns([4, 1])
-        with col_btn:
-            if st.button("📊 Ver KPIs Detallados", use_container_width=True):
-                st.session_state.pagina = "KPIs"
-                st.rerun()
+    # --------------------------------------------------
+    # FINAL DE PÁGINA Y BOTÓN A KPIs
+    # --------------------------------------------------
+    st.divider()
+    col_esp, col_btn = st.columns([4, 1])
+    with col_btn:
+        # Este es el botón que cambia el estado para ir a la otra página
+        if st.button("📊 Ver KPIs Detallados", use_container_width=True):
+            st.session_state.pagina = "KPIs"
+            st.rerun()
 
-        st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True) 
+    st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
 
     # ------------------------------------------------------------------
-    # --- 2. VISTA DE KPIs (Esta es la nueva habitación de tu casa) ---
+    # BLOQUE 9: PÁGINA DE KPIs (Alineado con el IF principal)
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "KPIs":
         st.markdown("<h1 style='text-align:center; color:#00FFAA;'>📈 Análisis Detallado de KPIs</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center;'>Logística – Indicadores de Rendimiento</p>", unsafe_allow_html=True)
         st.divider()
-
-        # MÉTRICAS GERENCIALES
-        kpi1, kpi2, kpi3 = st.columns(3)
-        
-        # Calculamos algunos datos globales para esta vista
-        total_p = len(df)
-        eficiencia = (len(df[df['ESTATUS_CALCULADO'] == 'ENTREGADO']) / total_p * 100) if total_p > 0 else 0
-        
-        with kpi1:
-            st.metric("Total de Pedidos Mes", f"{total_p}")
-        with kpi2:
-            st.metric("Eficiencia de Entrega", f"{eficiencia:.1f}%", "+2.5%")
-        with kpi3:
-            st.metric("Costo Promedio Envío", "$425 MXN", "-1.2%")
-
+    
+        # Métricas ejemplo para la segunda página
+        m1, m2, m3 = st.columns(3)
+        with m1:
+            st.metric("Eficiencia Total", f"{(len(df[df['ESTATUS_CALCULADO'] == 'ENTREGADO']) / len(df) * 100):.1f}%")
+        with m2:
+            st.metric("Costo Promedio", "$450 MXN", "+5%")
+        with m3:
+            st.metric("Total General", len(df))
+    
         st.write("##")
-        
-        # Espacio para tus futuras gráficas de KPIs
-        st.info("💡 En esta sección puedes agregar comparativas anuales o gráficas de rendimiento por fletera sin que se mezclen con el tablero de búsqueda.")
-
-        # --- BOTÓN PARA VOLVER ---
-        st.divider()
-        if st.button("⬅ Volver al Tablero de Control", use_container_width=True):
+        st.info("💡 Esta es tu nueva página de KPIs. Aquí puedes agregar análisis gerenciales profundos.")
+    
+        # Botón para regresar
+        if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
+    
+        st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
 
-        st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística - Vista Gerencial</div>", unsafe_allow_html=True)
 
 
 
