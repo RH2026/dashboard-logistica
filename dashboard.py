@@ -1087,41 +1087,39 @@ if st.session_state.pagina == "principal":
         
         st.divider()
         
-        # ... al final de todo tu código, donde ya tienes el botón de KPIs:
-        col_espacio, col_btn = st.columns([5, 1])  
-        with col_btn:
-            if st.button("📊 Ver KPIs", use_container_width=True):
-                st.session_state.pagina = 'KPIs' # Asegúrate que coincida el nombre
-                st.rerun()
+    # --- ESTE ES EL FINAL DE TU PÁGINA PRINCIPAL (Asegúrate que tenga espacios) ---
+    col_espacio, col_btn = st.columns([5, 1])  
+    with col_btn:
+        if st.button("📊 Ver KPIs", use_container_width=True):
+            st.session_state.pagina = 'KPIs'
+            st.rerun()
 
-        st.markdown(
-            "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
-            unsafe_allow_html=True
-        )        
-        
-# --------------------------------------------------
-# BLOQUE ÚNICO PARA LA PÁGINA DE KPIs
-# --------------------------------------------------
+    st.markdown(
+        "<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística – Control de Envios</div>",
+        unsafe_allow_html=True
+    )        
+    
+# --- BLOQUE ÚNICO PARA LA PÁGINA DE KPIs (Fíjate en los espacios iniciales) ---
 elif st.session_state.pagina == "KPIs":
     st.markdown("<h1 style='text-align:center;'>Análisis Detallado de KPIs</h1>", unsafe_allow_html=True)
 
-    # --- AQUÍ VA TU CONTENIDO NUEVO (Métricas y gráficas) ---
+    # --- CONTENIDO DE KPIs ---
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Costo Promedio Envío", "$450 MXN", "+5%")
     with col2:
         st.metric("Eficiencia de Entrega", "94%", "-2%")
     
-    st.write("##") # Espacio
-    # Aquí puedes agregar más gráficas después...
+    st.write("##") 
     
-    # --- BOTÓN PARA VOLVER (Siempre al final de la página) ---
+    # --- BOTÓN PARA VOLVER ---
     if st.button("⬅ Volver al Inicio", use_container_width=True):
         st.session_state.pagina = "principal"
         st.rerun()
     
-    # FOOTER OPCIONAL PARA ESTA PÁGINA
+    # FOOTER DE ESTA PÁGINA
     st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística</div>", unsafe_allow_html=True)
+
 
 
 
