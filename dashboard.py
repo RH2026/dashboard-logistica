@@ -73,7 +73,7 @@ if not st.session_state.get('splash_visto', False):
         @keyframes pulse-core { 0%, 100% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 1; } }
         @keyframes scan-move { 0%, 100% { top: 0%; opacity: 0; } 10%, 90% { opacity: 1; } 50% { top: 100%; } }
         .loading-text {
-            color: #00FFAA; font-family: 'Courier New', monospace; font-size: 16px;
+            color: #00FFAA; font-family: 'Courier New', monospace; font-size: 10px;
             text-transform: uppercase; letter-spacing: 5px; text-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
             animation: blink 1s step-end infinite;
         }
@@ -846,6 +846,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
