@@ -5,10 +5,10 @@ import time
 import base64
 import textwrap
 
-# 1. CONFIGURACIÓN DE PÁGINA
+# 1. CONFIGURACIÓN DE PÁGINA (Debe ir al inicio)
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. ESTADOS DE SESIÓN (Todos los necesarios)
+# 2. ESTADOS DE SESIÓN
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
 if "splash_completado" not in st.session_state:
@@ -18,68 +18,12 @@ if "motivo_splash" not in st.session_state:
 if "usuario_actual" not in st.session_state:
     st.session_state.usuario_actual = None
 if "pagina" not in st.session_state:
-    st.session_state.pagina = "principal"
+    st.session_state.pagina = "principal"  # Controla qué sección del dashboard se ve
 if "ultimo_movimiento" not in st.session_state:
-    st.session_state.ultimo_movimiento = time.time()
+    st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
 
 # --------------------------------------------------
-# 3. LÓGICA DE SPLASH (Entrada y Salida)
-# --------------------------------------------------
-# Se muestra si el splash no se ha completado
-if not st.session_state.splash_completado:
-    # Solo mostramos splash de entrada si está logueado, 
-    # O splash de salida si el motivo es logout
-    if st.session_state.logueado or st.session_state.motivo_splash == "logout":
-        
-        if st.session_state.motivo_splash == "logout":
-            texto_splash = "Cerrando sistema de forma segura..."
-            color_loader = "#FF4B4B"  # Rojo para salida
-        else:
-            texto_splash = f"Bienvenido {st.session_state.usuario_actual}, inicializando módulos..."
-            color_loader = "#00FF00"  # Verde para entrada
-
-        st.markdown(f"""
-        <style>
-        .splash-container {{ 
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            height: 100vh; background-color: #0e1117; position: fixed;
-            top: 0; left: 0; width: 100%; z-index: 9999;
-        }}
-        .loader {{ 
-            border: 6px solid #1a1c24; border-top: 6px solid {color_loader}; border-radius: 50%; 
-            width: 80px; height: 80px; animation: spin 0.8s linear infinite; 
-            margin-bottom: 25px; filter: drop-shadow(0 0 10px {color_loader}33);
-        }}
-        @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
-        .splash-text {{ color: #FFFFFF; font-size: 14px; font-family: sans-serif; letter-spacing: 1px; opacity: 0.8; }}
-        header, footer {{visibility: hidden;}}
-        </style>
-        """, unsafe_allow_html=True)
-        
-        st.markdown(f'''
-            <div class="splash-container">
-                <div class="loader"></div>
-                <div class="splash-text">{texto_splash}</div>
-            </div>
-        ''', unsafe_allow_html=True)
-        
-        time.sleep(2)
-        
-        # Lógica post-animación
-        if st.session_state.motivo_splash == "logout":
-            # Si veníamos de un logout, después del splash limpiamos TODO y reseteamos a inicio
-            st.session_state.clear()
-            st.session_state.logueado = False
-            st.session_state.splash_completado = True # Para que no entre en bucle
-            st.session_state.motivo_splash = "inicio"
-        else:
-            # Si era entrada, marcamos como visto para mostrar el dashboard
-            st.session_state.splash_completado = True
-        
-        st.rerun()
-
-# --------------------------------------------------
-# 4. PANTALLA DE LOGIN
+# 3. LÓGICA DE LOGIN (Primero en ejecutarse)
 # --------------------------------------------------
 if not st.session_state.logueado:
     color_fondo_nativo = "#0e1117" 
@@ -94,17 +38,20 @@ if not st.session_state.logueado:
             background-color: {color_fondo_nativo} !important;
             padding: 40px; border-radius: 20px;
             border: 1.5px solid {color_borde_gris} !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             margin-top: -30px;
         }}
         @keyframes pulse-intense {{
-            0% {{ transform: scale(1); opacity: 0.7; }}
-            50% {{ transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.4)); }}
-            100% {{ transform: scale(1); opacity: 0.7; }}
+            0% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
+            50% {{ transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.6)); }}
+            100% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
         }}
         .animated-icon {{ animation: pulse-intense 2s infinite ease-in-out; display: flex; justify-content: center; margin-bottom: 20px; }}
         div[data-testid="stTextInputRootElement"] {{ background-color: #1a1c24 !important; border: 1px solid #30333d !important; border-radius: 10px !important; }}
+        div[data-testid="stTextInputRootElement"] > div {{ background-color: transparent !important; }}
         input {{ color: white !important; }}
-        .login-header {{ text-align: center; color: {color_blanco}; font-size: 24px; font-weight: bold; margin-bottom: 25px; text-transform: uppercase; }}
+        div[data-testid="stTextInputRootElement"] button {{ color: {color_verde} !important; }}
+        .login-header {{ text-align: center; color: {color_blanco}; font-size: 24px; font-weight: bold; margin-bottom: 25px; letter-spacing: 2px; text-transform: uppercase; }}
         header, footer {{visibility: hidden;}}
         </style>
     """, unsafe_allow_html=True)
@@ -113,23 +60,60 @@ if not st.session_state.logueado:
     with col2:
         st.markdown('<div style="height:5vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
-            st.markdown(f'''<div class="animated-icon"><svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="{color_blanco}" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div class="animated-icon"><svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="{color_blanco}" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><circle cx="12" cy="11" r="3" fill="{color_blanco}" fill-opacity="0.2"></circle><path d="M12 11v4"></path></svg></div>''', unsafe_allow_html=True)
             st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
             if submit:
-                # Reemplaza con tus credenciales reales o st.secrets
-                if u_input == "admin" and c_input == "1234":
+                usuarios = st.secrets["usuarios"]
+                if u_input in usuarios and usuarios[u_input] == c_input:
                     st.session_state.logueado = True
                     st.session_state.usuario_actual = u_input
+                    # Al loguear, reseteamos el splash para que se muestre una vez
                     st.session_state.splash_completado = False 
-                    st.session_state.motivo_splash = "inicio"
                     st.rerun()
                 else:
                     st.error("Acceso Denegado")
     st.stop()
+
+# --------------------------------------------------
+# 4. SPLASH SCREEN (Se activa DESPUÉS del login)
+# --------------------------------------------------
+if not st.session_state.splash_completado:
+    if st.session_state.get('motivo_splash') == "logout":
+        texto_splash = "Cerrando sesión de forma segura..."
+    else:
+        texto_splash = f"Bienvenido {st.session_state.usuario_actual}, inicializando módulos..."
+
+    st.markdown(f"""
+    <style>
+    .splash-container {{ 
+        display: flex; flex-direction: column; justify-content: center; align-items: center; 
+        height: 100vh; background-color: #0e1117; position: fixed;
+        top: 0; left: 0; width: 100%; z-index: 9999;
+    }}
+    .loader {{ 
+        border: 6px solid #1a1c24; border-top: 6px solid #00FF00; border-radius: 50%; 
+        width: 80px; height: 80px; animation: spin 0.8s linear infinite; 
+        margin-bottom: 25px; filter: drop-shadow(0 0 10px rgba(0, 255, 0, 0.2));
+    }}
+    @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
+    .splash-text {{ color: #FFFFFF; font-size: 14px; font-family: sans-serif; letter-spacing: 1px; opacity: 0.8; }}
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown(f'''
+        <div class="splash-container">
+            <div class="loader"></div>
+            <div class="splash-text">{texto_splash}</div>
+        </div>
+    ''', unsafe_allow_html=True)
+    
+    time.sleep(2.5) # Tiempo de carga
+    st.session_state.splash_completado = True
+    st.rerun()
 
 # --------------------------------------------------
 # INICIO DEL CONTENIDO PRIVADO (SI ESTÁ LOGUEADO)
@@ -810,6 +794,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
