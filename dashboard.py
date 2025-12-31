@@ -27,8 +27,16 @@ if "pagina" not in st.session_state:
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time()
 
+Para que todo el sistema sea visualmente coherente, he actualizado el Splash Screen con el color nativo de Streamlit (#0e1117).
+
+También aproveché para intensificar la animación del cargador y ajustar el diseño para que se vea mejor en dispositivos móviles, centrando el contenido y usando el color verde que ya traemos en el resto de la app.
+
+Aquí tienes el código modificado:
+
+Python
+
 # --------------------------------------------------
-# 3. SPLASH SCREEN
+# 3. SPLASH SCREEN (ESTILO NATIVO Y OPTIMIZADO)
 # --------------------------------------------------
 if not st.session_state.get('splash_visto', False):
     if st.session_state.get('motivo_splash') == "logout":
@@ -36,36 +44,47 @@ if not st.session_state.get('splash_visto', False):
     else:
         texto_splash = "Inicializando módulos logísticos…"
 
-    st.markdown("""
+    st.markdown(f"""
     <style>
-    .splash-container { 
+    .splash-container {{ 
         display: flex; 
         flex-direction: column; 
-        justify-content: flex-start; 
+        justify-content: center; /* Centrado vertical para móvil */
         align-items: center; 
         height: 100vh; 
-        padding-top: 350px; 
-        background-color: #000000; 
+        background-color: #0e1117; /* Color nativo Streamlit */
         position: fixed;
         top: 0; left: 0; width: 100%;
         z-index: 9999;
-    }
-    .loader { 
-        border: 6px solid #1a1a1a; 
-        border-top: 6px solid #00FFAA; 
+    }}
+    
+    .loader {{ 
+        border: 6px solid #1a1c24; /* Gris oscuro nativo */
+        border-top: 6px solid #00FF00; /* Verde esmeralda (saludo) */
         border-radius: 50%; 
-        width: 120px; height: 120px; 
-        animation: spin 1s linear infinite; 
-        margin-bottom: 20px; 
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        width: 80px;  /* Tamaño más balanceado para móvil/PC */
+        height: 80px; 
+        animation: spin 0.8s linear infinite; /* Un poco más rápido para dar energía */
+        margin-bottom: 25px;
+        filter: drop-shadow(0 0 10px rgba(0, 255, 0, 0.2));
+    }}
+    
+    @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
+    
+    .splash-text {{
+        color: #FFFFFF; 
+        font-size: 16px; 
+        font-family: sans-serif;
+        letter-spacing: 1px;
+        opacity: 0.8;
+    }}
     </style>
     """, unsafe_allow_html=True)
     
     st.markdown(f'''
         <div class="splash-container">
             <div class="loader"></div>
-            <div style="color:#666; font-size:14px; font-family:sans-serif;">{texto_splash}</div>
+            <div class="splash-text">{texto_splash}</div>
         </div>
     ''', unsafe_allow_html=True)
     
@@ -78,6 +97,7 @@ if not st.session_state.get('splash_visto', False):
         st.session_state['motivo_splash'] = "inicio"
     else:
         st.session_state['splash_visto'] = True
+        st.session_state['motivo_splash'] = "inicio"
     
     st.rerun()
 
@@ -85,7 +105,7 @@ if not st.session_state.get('splash_visto', False):
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# DISEÑO ESTILO NATIVO STREAMLIT (CAJA POSICIONADA MÁS ARRIBA)
+# DISEÑO OPTIMIZADO PARA MÓVIL (RESPONSIVE)
 # --------------------------------------------------
 if not st.session_state.logueado:
     color_fondo_nativo = "#0e1117" 
@@ -99,18 +119,34 @@ if not st.session_state.logueado:
             background-color: {color_fondo_nativo} !important;
         }}
         
+        /* Ajuste de la caja para que sea responsiva */
         .stForm {{
             background-color: {color_fondo_nativo} !important;
-            padding: 40px;
+            padding: 30px 20px !important;
             border-radius: 20px;
             border: 1.5px solid {color_borde_gris} !important;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-top: -30px; /* Ajuste fino para subir la caja aún más */
+        }}
+
+        /* CSS ESPECÍFICO PARA MÓVILES */
+        @media (max-width: 640px) {{
+            .stForm {{
+                padding: 20px 15px !important;
+                margin-top: -20px !important; /* Sube la caja en móvil */
+            }}
+            .login-header {{
+                font-size: 20px !important; /* Texto un poco más pequeño */
+                margin-bottom: 15px !important;
+            }}
+            .animated-icon svg {{
+                width: 60px !important; /* Icono más pequeño para ahorrar espacio */
+                height: 60px !important;
+            }}
         }}
 
         @keyframes pulse-intense {{
             0% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
-            50% {{ transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.6)); }}
+            50% {{ transform: scale(1.12); opacity: 1; filter: drop-shadow(0 0 12px rgba(255,255,255,0.5)); }}
             100% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
         }}
         
@@ -118,7 +154,7 @@ if not st.session_state.logueado:
             animation: pulse-intense 2s infinite ease-in-out;
             display: flex;
             justify-content: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }}
 
         div[data-testid="stTextInputRootElement"] {{
@@ -131,7 +167,8 @@ if not st.session_state.logueado:
             background-color: transparent !important;
         }}
 
-        input {{ color: white !important; }}
+        input {{ color: white !important; font-size: 16px !important; }} /* 16px evita zoom automático en iPhone */
+        
         div[data-testid="stTextInputRootElement"] button {{
             color: {color_verde} !important;
         }}
@@ -150,10 +187,11 @@ if not st.session_state.logueado:
         </style>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1, 1.2, 1])
+    # Usamos columnas que en móvil se apilan automáticamente
+    col1, col2, col3 = st.columns([0.1, 1, 0.1]) # Columnas laterales muy delgadas en móvil
     with col2:
-        # CAMBIO: Reducimos de 12vh a 5vh para subir la caja
-        st.markdown('<div style="height:5vh"></div>', unsafe_allow_html=True)
+        # Espaciado superior mínimo para móvil
+        st.markdown('<div style="height:3vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
             st.markdown(f'''
                 <div class="animated-icon">
@@ -165,7 +203,7 @@ if not st.session_state.logueado:
                 </div>
             ''', unsafe_allow_html=True)
             
-            st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-header">Acceso</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
@@ -858,6 +896,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
