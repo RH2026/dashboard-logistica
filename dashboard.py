@@ -47,12 +47,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (VERSIÓN FINAL ANTI-FANTASMA)
+# 3. LÓGICA DE LOGIN (VERSIÓN FINAL SIN CAJA FANTASMA)
 # --------------------------------------------------
 if not st.session_state.logueado:
     img_base64 = get_base64_image("1.jpg")
     
-    # CSS Global para matar el error rojo ANTES de que aparezca
     st.markdown(f"""
         <style>
         .stApp {{
@@ -60,9 +59,14 @@ if not st.session_state.logueado:
             background-size: cover;
             background-position: center;
         }}
-        /* Bloqueo total de la ventana roja de error */
-        div[data-testid="stException"], div[data-testid="stNotification"], .stAlert {{
+        /* ELIMINA TOTALMENTE EL ESPACIO DEL ERROR (LA CAJA DE ARRIBA) */
+        div[data-testid="stException"], 
+        div[data-testid="stNotification"], 
+        div[data-testid="stStatusWidget"],
+        .stAlert {{
             display: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }}
         .login-box {{
             background-color: rgba(30, 41, 59, 0.95);
@@ -70,6 +74,7 @@ if not st.session_state.logueado:
             border-radius: 15px;
             border: 1px solid #334151;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            margin-top: 50px; /* Ajusta la posición para que no pegue arriba */
         }}
         </style>
     """, unsafe_allow_html=True)
@@ -80,32 +85,26 @@ if not st.session_state.logueado:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
         st.markdown('<h2 style="text-align:center; color:white;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
         
-        # 1. El Formulario solo captura los datos
+        # Formulario
         with st.form(key="login_final"):
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
-        # 2. La lógica de validación se ejecuta FUERA del formulario para evitar el doble clic
+        # Lógica fuera del formulario para evitar doble clic y parpadeos
         if submit:
-            try:
-                # Acceso ultra-seguro
-                if "usuarios" in st.secrets:
-                    usuarios = st.secrets["usuarios"]
-                    if u_input in usuarios and usuarios[u_input] == c_input:
-                        st.session_state.logueado = True
-                        st.session_state.usuario_actual = u_input
-                        st.session_state.ultimo_movimiento = time.time()
-                        st.session_state.splash_visto = False
-                        st.session_state.motivo_splash = "inicio"
-                        st.rerun() # Ahora sí funcionará al primer clic
-                    else:
-                        st.markdown('<p style="color:#ff4b4b; text-align:center; font-weight:bold;">⚠️ Usuario o clave incorrectos</p>', unsafe_allow_html=True)
-                else:
-                    st.markdown('<p style="color:orange; text-align:center;">Configuración de acceso no encontrada.</p>', unsafe_allow_html=True)
-            except Exception as e:
-                # Fallback silencioso
-                pass
+            # Usamos .get() para evitar que Python lance error si no encuentra la clave
+            usuarios = st.secrets.get("usuarios", {})
+            if u_input in usuarios and usuarios[u_input] == c_input:
+                st.session_state.logueado = True
+                st.session_state.usuario_actual = u_input
+                st.session_state.ultimo_movimiento = time.time()
+                st.session_state.splash_visto = False
+                st.session_state.motivo_splash = "inicio"
+                st.rerun()
+            else:
+                # Error en HTML propio para que no use la caja de arriba
+                st.markdown('<p style="color:#ff4b4b; text-align:center; font-weight:bold;">⚠️ Datos incorrectos</p>', unsafe_allow_html=True)
                 
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -899,6 +898,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
