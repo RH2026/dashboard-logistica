@@ -85,10 +85,10 @@ if not st.session_state.get('splash_visto', False):
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# DISEÑO DARK (FONDO NEGRO, BORDE VERDE ESMERALDA E ICONO ANIMADO)
+# DISEÑO DARK (FONDO NEGRO, BORDE GRIS E ICONO ALIEN ANIMADO)
 # --------------------------------------------------
 if not st.session_state.logueado:
-    # Definimos el color verde esmeralda y la animación CSS
+    # Definimos el color verde esmeralda (saludo)
     verde_id = "#00FF00"
     
     st.markdown(f"""
@@ -98,26 +98,26 @@ if not st.session_state.logueado:
             background-color: #000000 !important;
         }}
         
-        /* CAJA DE LOGIN */
+        /* CAJA DE LOGIN - BORDE GRIS OSCURO */
         .stForm {{
             background-color: #000000 !important;
             padding: 40px;
             border-radius: 20px;
             border: 2px solid #333333 !important;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.05);
         }}
 
-        /* ANIMACIÓN DE PULSO PARA EL ICONO */
+        /* ANIMACIÓN DE PULSO PARA EL ALIEN */
         @keyframes pulse-green {{
-            0% {{ transform: scale(1); opacity: 0.8; }}
-            50% {{ transform: scale(1.05); opacity: 1; }}
-            100% {{ transform: scale(1); opacity: 0.8; }}
+            0% {{ transform: scale(1); filter: drop-shadow(0 0 2px {verde_id}); opacity: 0.8; }}
+            50% {{ transform: scale(1.08); filter: drop-shadow(0 0 10px {verde_id}); opacity: 1; }}
+            100% {{ transform: scale(1); filter: drop-shadow(0 0 2px {verde_id}); opacity: 0.8; }}
         }}
         .animated-icon {{
             animation: pulse-green 3s infinite ease-in-out;
             display: flex;
             justify-content: center;
-            margin-bottom: -10px;
+            margin-bottom: 10px;
         }}
 
         /* FIX INPUTS Y OJITO */
@@ -163,18 +163,21 @@ if not st.session_state.logueado:
     with col2:
         st.markdown('<div style="height:12vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
-            # ICONO SVG ANIMADO
+            # ICONO ALIEN SVG ANIMADO
             st.markdown(f'''
                 <div class="animated-icon">
-                    <svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="{verde_id}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        <circle cx="12" cy="11" r="3" fill="{verde_id}" fill-opacity="0.2"></circle>
-                        <path d="M12 11v4"></path>
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C8.13 2 5 5.13 5 9C5 13.68 8.42 18.08 10.5 21.22C10.87 21.78 11.41 22 12 22C12.59 22 13.13 21.78 13.5 21.22C15.58 18.08 19 13.68 19 9C19 5.13 15.87 2 12 2Z" 
+                              stroke="{verde_id}" stroke-width="1.5" fill="{verde_id}" fill-opacity="0.1"/>
+                        <path d="M9 13C10.1046 13 11 11.6569 11 10C11 8.34315 10.1046 7 9 7C7.89543 7 7 8.34315 7 10C7 11.6569 7.89543 13 9 13Z" 
+                              fill="{verde_id}"/>
+                        <path d="M15 13C16.1046 13 17 11.6569 17 10C17 8.34315 16.1046 7 15 7C13.8954 7 13 8.34315 13 10C13 11.6569 13.8954 13 15 13Z" 
+                              fill="{verde_id}"/>
                     </svg>
                 </div>
             ''', unsafe_allow_html=True)
             
-            st.markdown('<div class="login-header">ACCESO AL SISTEMA</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-header">SISTEMA CONTROL</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
@@ -870,6 +873,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
