@@ -47,27 +47,32 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (VERSIÓN FINAL: CORRECCIÓN DE VISIBILIDAD)
+# 3. LÓGICA DE LOGIN (VERSIÓN FINAL: CERO CAJAS, TODO VISIBLE)
 # --------------------------------------------------
 if not st.session_state.logueado:
     img_base64 = get_base64_image("1.jpg")
     
     st.markdown(f"""
         <style>
-        /* 1. ELIMINAR HEADER Y AJUSTAR CONTENEDOR */
+        /* 1. ELIMINAR EL HEADER Y EL PADDING MUERTO */
         header[data-testid="stHeader"] {{
             display: none !important;
         }}
         
         .main .block-container {{
-            padding-top: 2rem !important; /* Damos un poco de espacio para que no se esconda nada */
+            padding-top: 1rem !important;
             padding-bottom: 0rem !important;
         }}
 
-        /* 2. OCULTAR CAJAS FANTASMA (ERRORES) SIN AFECTAR INPUTS */
-        [data-testid="stStatusWidget"],
+        /* 2. OCULTAR SOLO LA CAJA DE ERROR/NOTIFICACIÓN (SIN BORRAR INPUTS) */
+        /* Apuntamos específicamente al contenedor de alertas y excepciones */
+        div[data-testid="stNotification"], 
+        div[data-testid="stException"],
         .stAlert {{
             display: none !important;
+            height: 0px !important;
+            margin: 0px !important;
+            padding: 0px !important;
         }}
 
         /* 3. FONDO Y CAJA DE LOGIN */
@@ -85,13 +90,11 @@ if not st.session_state.logueado:
             border: 1px solid rgba(0, 255, 170, 0.3);
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
             margin-top: 10vh;
-            color: white;
         }}
 
-        /* Asegurar que las etiquetas de los inputs sean blancas y visibles */
+        /* Forzar que las etiquetas sean blancas */
         label {{
             color: white !important;
-            font-weight: bold !important;
         }}
         </style>
     """, unsafe_allow_html=True)
@@ -100,16 +103,17 @@ if not st.session_state.logueado:
     
     with center_col:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<h2 style="text-align:center; color:#00FFAA; margin-bottom:30px;">🔐 ACCESO AL SISTEMA</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 style="text-align:center; color:#00FFAA; margin-bottom:20px;">🔐 ACCESO AL SISTEMA</h2>', unsafe_allow_html=True)
         
-        # Formulario con llaves únicas
-        with st.form(key="login_final_v2"):
-            # Usamos un identificador único para el widget para que Streamlit no se confunda
-            u_input = st.text_input("Usuario", key="user_field", placeholder="Ingrese su usuario")
-            c_input = st.text_input("Contraseña", type="password", key="pass_field", placeholder="Ingrese su contraseña")
+        # Formulario
+        with st.form(key="login_estable"):
+            u_input = st.text_input("Usuario", placeholder="Ingrese su usuario")
+            c_input = st.text_input("Contraseña", type="password", placeholder="Ingrese su contraseña")
             submit = st.form_submit_button("INGRESAR AL DASHBOARD", use_container_width=True)
 
+        # Lógica fuera del formulario para el "clic único"
         if submit:
+            # Obtención silenciosa de secretos
             usuarios_dict = st.secrets.get("usuarios", {})
             if u_input in usuarios_dict and usuarios_dict[u_input] == c_input:
                 st.session_state.logueado = True
@@ -912,6 +916,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
