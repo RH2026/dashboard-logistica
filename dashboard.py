@@ -47,7 +47,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (FONDO NEGRO Y CAMUFLAJE TOTAL)
+# 3. LÓGICA DE LOGIN (CORRECCIÓN: OJITO SIN FONDO GRIS)
 # --------------------------------------------------
 if not st.session_state.logueado:
     st.markdown(f"""
@@ -60,13 +60,11 @@ if not st.session_state.logueado:
             background-image: none !important;
         }}
         
-        /* 2. CAMUFLAJE DE LA CAJA FANTASMA (NEGRO SIN BORDES) */
-        /* Quitamos borde, fondo y sombras a cualquier alerta o excepción */
+        /* 2. CAMUFLAJE DE LA CAJA FANTASMA */
         div[data-testid="stNotification"], 
         div[data-testid="stException"],
         .stAlert,
-        div.element-container:has(div.stAlert),
-        div.element-container:has(div.stException) {{
+        div.element-container:has(div.stAlert) {{
             background-color: #000000 !important;
             border: none !important;
             box-shadow: none !important;
@@ -75,25 +73,31 @@ if not st.session_state.logueado:
 
         /* 3. CAJA DE LOGIN COMPACTA */
         .login-box {{
-            background-color: #000000; /* Negro total para fundirse con el fondo */
+            background-color: #000000;
             padding: 20px;
             border-radius: 12px;
-            border: 1px solid #1a1a1a; /* Borde muy sutil */
+            border: 1px solid #1a1a1a;
             max-width: 320px;
             margin: auto;
             margin-top: 10vh;
         }}
         
-        /* INPUTS MÁS PEQUEÑOS */
-        .stTextInput > div > div > input {{
+        /* INPUTS Y EL BOTÓN DEL OJITO */
+        .stTextInput > div > div > input, 
+        .stTextInput div[data-baseweb="input"] {{
             background-color: #111111 !important;
             color: white !important;
-            padding: 4px 10px !important;
-            font-size: 13px !important;
             border: 1px solid #333333 !important;
         }}
+
+        /* CORRECCIÓN ESPECÍFICA PARA EL BOTÓN DEL OJITO */
+        button[aria-label="Show password"] {{
+            background-color: #111111 !important;
+            border: none !important;
+            color: white !important;
+        }}
         
-        /* BOTÓN COMPACTO */
+        /* BOTÓN ENTRAR */
         .stButton > button {{
             background-color: #00FFAA !important;
             color: #000000 !important;
@@ -107,12 +111,10 @@ if not st.session_state.logueado:
         </style>
     """, unsafe_allow_html=True)
 
-    # Centrado
     _, center_col, _ = st.columns([1, 1.5, 1])
     
     with center_col:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        # Texto solicitado
         st.markdown('<h3 style="text-align:center; color:#00FFAA; margin-bottom:15px; font-size:16px;">🔐 Acceso al Sistema</h3>', unsafe_allow_html=True)
         
         with st.form(key="login_final_black"):
@@ -922,6 +924,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
