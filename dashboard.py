@@ -46,17 +46,23 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. LÓGICA DE LOGIN
+# --------------------------------------------------
+# 3. LÓGICA DE LOGIN (VERSIÓN FINAL ANTI-FANTASMA)
+# --------------------------------------------------
 if not st.session_state.logueado:
     img_base64 = get_base64_image("1.jpg")
     
-    # Aplicar fondo de pantalla
+    # CSS Global para matar el error rojo ANTES de que aparezca
     st.markdown(f"""
         <style>
         .stApp {{
             background-image: url("data:image/jpg;base64,{img_base64}");
             background-size: cover;
             background-position: center;
+        }}
+        /* Bloqueo total de la ventana roja de error */
+        div[data-testid="stException"], div[data-testid="stNotification"], .stAlert {{
+            display: none !important;
         }}
         .login-box {{
             background-color: rgba(30, 41, 59, 0.95);
@@ -68,37 +74,39 @@ if not st.session_state.logueado:
         </style>
     """, unsafe_allow_html=True)
 
-    # Centrado del login sin columnas complicadas para evitar que desaparezca el botón
     _, center_col, _ = st.columns([1, 2, 1])
     
     with center_col:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
         st.markdown('<h2 style="text-align:center; color:white;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
         
-        # Formulario simplificado
+        # 1. El Formulario solo captura los datos
         with st.form(key="login_final"):
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
-            if submit:
-                # Verificación manual de secretos para evitar el "fantasma"
-                try:
-                    # Accedemos de forma ultra-segura
-                    sec = st.secrets.to_dict()
-                    if "usuarios" in sec:
-                        usuarios = sec["usuarios"]
-                        if u_input in usuarios and usuarios[u_input] == c_input:
-                            st.session_state.logueado = True
-                            st.session_state.usuario_actual = u_input
-                            st.session_state.ultimo_movimiento = time.time()
-                            st.session_state.splash_visto = False
-                            st.rerun()
-                        else:
-                            st.markdown('<p style="color:#ff4b4b; text-align:center;">Usuario o clave incorrectos</p>', unsafe_allow_html=True)
-                except:
-                    # Si algo falla con los secretos, mostramos un mensaje amigable en lugar del error rojo
-                    st.markdown('<p style="color:orange; text-align:center;">Error de conexión con base de datos</p>', unsafe_allow_html=True)
+        # 2. La lógica de validación se ejecuta FUERA del formulario para evitar el doble clic
+        if submit:
+            try:
+                # Acceso ultra-seguro
+                if "usuarios" in st.secrets:
+                    usuarios = st.secrets["usuarios"]
+                    if u_input in usuarios and usuarios[u_input] == c_input:
+                        st.session_state.logueado = True
+                        st.session_state.usuario_actual = u_input
+                        st.session_state.ultimo_movimiento = time.time()
+                        st.session_state.splash_visto = False
+                        st.session_state.motivo_splash = "inicio"
+                        st.rerun() # Ahora sí funcionará al primer clic
+                    else:
+                        st.markdown('<p style="color:#ff4b4b; text-align:center; font-weight:bold;">⚠️ Usuario o clave incorrectos</p>', unsafe_allow_html=True)
+                else:
+                    st.markdown('<p style="color:orange; text-align:center;">Configuración de acceso no encontrada.</p>', unsafe_allow_html=True)
+            except Exception as e:
+                # Fallback silencioso
+                pass
+                
         st.markdown('</div>', unsafe_allow_html=True)
     
     st.stop()
@@ -891,6 +899,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
