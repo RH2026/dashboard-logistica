@@ -885,106 +885,92 @@ else:
         st.info("💡 Esta es tu nueva página de KPIs. Aquí puedes agregar análisis gerenciales profundos.")
 
         # ------------------------------------------------------------------
-        # 🧠 CEREBRO ANALÍTICO AVANZADO DEL CHATBOT
+        # 🧠 CEREBRO ANALÍTICO AVANZADO + RASTREO ESPECÍFICO
         # ------------------------------------------------------------------
-        if prompt := st.chat_input("Ej: ¿Quién es mi mejor fletera? o ¿Qué pedidos están urgentes?"):
+        if prompt := st.chat_input("Ej: ¿Quién es mi mejor fletera? o ¿Qué pasó con el pedido 232134?"):
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
         
             with st.chat_message("assistant"):
-                p = prompt.lower()
+                p = prompt.lower().strip()
                 response_text = ""
                 fig_to_show = None
                 
-                # --- PRE-PROCESAMIENTO: Aseguramos cálculos frescos ---
+                # --- PRE-PROCESAMIENTO ---
                 hoy = pd.Timestamp.now().normalize()
-                # Costo por caja
-                df['COSTO_X_CAJA'] = df['COSTO DE LA GUÍA'] / df['CANTIDAD DE CAJAS'].replace(0, 1)
-                # Identificar pedidos con retraso actual (Aún no entregados y fecha promesa vencida)
-                pedidos_retrasados = df[(df['FECHA DE ENTREGA REAL'].isna()) & (df['PROMESA DE ENTREGA'] < hoy)]
                 
                 try:
                     import plotly.express as px
-                    import plotly.graph_objects as go
         
-                    # 🎯 INTENCIÓN 1: RANKING DE FLETERAS (Quién es bueno y quién no)
-                    if any(word in p for word in ["mejor", "peor", "fletera", "bueno", "malo", "desempeño"]):
-                        # Calculamos Score: (Promedio de Retraso * 0.7) + (Costo Promedio * 0.3)
-                        ranking = df.groupby("FLETERA").agg({
-                            "DIAS_RETRASO": "mean",
-                            "COSTO DE LA GUÍA": "mean",
-                            "NÚMERO DE PEDIDO": "count"
-                        }).rename(columns={"NÚMERO DE PEDIDO": "Total_Envios"})
+                    # 🎯 NUEVA INTENCIÓN: BÚSQUEDA DE GUÍA O PEDIDO (Numérico o Alfanumérico)
+                    # Buscamos si el mensaje contiene algo que parezca un ID de pedido o guía
+                    palabras = p.split()
+                    hallazgo = pd.DataFrame()
+                    
+                    for palabra in palabras:
+                        # Buscamos coincidencias en las columnas de identificación
+                        match = df[
+                            (df['NÚMERO DE PEDIDO'].astype(str).str.lower() == palabra) |
+                            (df['NÚMERO DE GUÍA'].astype(str).str.lower() == palabra)
+                        ]
+                        if not match.empty:
+                            hallazgo = match
+                            break
+        
+                    if not hallazgo.empty:
+                        row = hallazgo.iloc[0]
+                        entregado = pd.notna(row['FECHA DE ENTREGA REAL'])
+                        status = "✅ ENTREGADO" if entregado else "🚚 EN CAMINO"
                         
-                        mejor = ranking.sort_values("DIAS_RETRASO").index[0]
-                        peor = ranking.sort_values("DIAS_RETRASO", ascending=False).index[0]
+                        response_text = f"### 📍 Rastreo de Pedido: {row['NÚMERO DE PEDIDO']}\n"
+                        response_text += f"- **Estatus:** {status}\n"
+                        response_text += f"- **Cliente:** {row['NOMBRE DEL CLIENTE']}\n"
+                        response_text += f"- **Fletera:** {row['FLETERA']} (Guía: {row['NÚMERO DE GUÍA']})\n"
+                        response_text += f"- **Destino:** {row['DESTINO']}\n"
                         
-                        response_text = f"### 🏆 Análisis de Desempeño:\n"
-                        response_text += f"- **La mejor fletera:** Es **{mejor}** con el menor promedio de retraso.\n"
-                        response_text += f"- **Alerta crítica:** **{peor}** es la que más días de retraso acumula en promedio.\n\n"
-                        response_text += "Te sugiero revisar los contratos con las fleteras en color rojo del gráfico."
+                        if entregado:
+                            response_text += f"- **Entregado el:** {row['FECHA DE ENTREGA REAL'].strftime('%d/%m/%Y')}\n"
+                        else:
+                            response_text += f"- **Promesa de Entrega:** {row['PROMESA DE ENTREGA'].strftime('%d/%m/%Y')}\n"
                         
-                        fig_to_show = px.bar(ranking.reset_index(), x="FLETERA", y="DIAS_RETRASO", 
-                                           color="DIAS_RETRASO", title="Días de Retraso Promedio por Transportista",
+                        if row['DIAS_RETRASO'] > 0:
+                            response_text += f"- **⚠️ Retraso:** {row['DIAS_RETRASO']} días acumulados.\n"
+        
+                    # 🎯 INTENCIÓN: RANKING DE FLETERAS
+                    elif any(word in p for word in ["mejor", "peor", "bueno", "malo", "ranking"]):
+                        ranking = df.groupby("FLETERA").agg({"DIAS_RETRASO": "mean"}).reset_index()
+                        mejor = ranking.sort_values("DIAS_RETRASO").iloc[0]
+                        response_text = f"Analizando el historial, **{mejor['FLETERA']}** es tu opción más confiable con apenas {mejor['DIAS_RETRASO']:.1f} días de retraso promedio."
+                        fig_to_show = px.bar(ranking, x="FLETERA", y="DIAS_RETRASO", color="DIAS_RETRASO", 
                                            color_continuous_scale='RdYlGn_r', template="plotly_dark")
         
-                    # 🎯 INTENCIÓN 2: LISTADO DE PEDIDOS EN RETRASO (Urgencias)
-                    elif any(word in p for word in ["cuales", "retraso", "demora", "atrasado", "lista", "urgente"]):
-                        if not pedidos_retrasados.empty:
-                            count = len(pedidos_retrasados)
-                            response_text = f"⚠️ **¡Atención!** Tienes **{count} pedidos** con la fecha promesa vencida y sin entrega confirmada.\n\n"
-                            response_text += "**Los más críticos son:**\n"
-                            
-                            # Mostramos los 5 más retrasados
-                            criticos = pedidos_retrasados.sort_values("PROMESA DE ENTREGA").head(5)
-                            for _, r in criticos.iterrows():
-                                response_text += f"- **{r['NÚMERO DE PEDIDO']}**: {r['NOMBRE DEL CLIENTE']} (Venció: {r['PROMESA DE ENTREGA'].strftime('%d/%m')})\n"
-                            
-                            # Gráfico de pastel de estatus
-                            fig_to_show = px.pie(names=['En Retraso', 'En Tiempo/Entregado'], 
-                                               values=[count, len(df)-count], hole=0.6,
-                                               color_discrete_sequence=['#FF4B4B', '#00FFAA'],
-                                               title="Salud de los Pedidos Actuales")
+                    # 🎯 INTENCIÓN: LISTADO DE RETRASOS
+                    elif any(word in p for word in ["retrasados", "demoras", "urgentes"]):
+                        retrasados = df[(df['FECHA DE ENTREGA REAL'].isna()) & (df['PROMESA DE ENTREGA'] < hoy)]
+                        if not retrasados.empty:
+                            response_text = f"Actualmente hay **{len(retrasados)} pedidos urgentes**. El más crítico es de **{retrasados.iloc[0]['NOMBRE DEL CLIENTE']}**."
+                            fig_to_show = px.pie(names=['Con Retraso', 'Ok'], values=[len(retrasados), len(df)-len(retrasados)], hole=0.5)
                         else:
-                            response_text = "✅ No hay pedidos con retraso actualmente. Todos están dentro de su fecha promesa o ya fueron entregados."
+                            response_text = "Todo parece estar bajo control. No hay pedidos vencidos hoy."
         
-                    # 🎯 INTENCIÓN 3: POR QUÉ DE LAS COSAS (Análisis de Correlación)
-                    elif any(word in p for word in ["porque", "explicame", "analiza", "razon", "motivo"]):
-                        # Analizamos si el costo influye en la rapidez
-                        correlacion = df['COSTO DE LA GUÍA'].corr(df['DIAS_RETRASO'])
-                        if correlacion < 0:
-                            response_text = "🧐 **Análisis:** He detectado que *a mayor costo de envío, menor es el retraso*. Estás pagando más por prioridad y está funcionando.\n\n"
-                        else:
-                            response_text = "🧐 **Análisis:** No hay una relación clara entre lo que pagas y la puntualidad. Hay fleteras baratas que entregan mejor que las caras.\n\n"
-                        
-                        response_text += f"El destino **{df.groupby('DESTINO')['DIAS_RETRASO'].mean().idxmax()}** es tu cuello de botella geográfico."
-                        
-                        fig_to_show = px.scatter(df, x="COSTO DE LA GUÍA", y="DIAS_RETRASO", color="FLETERA",
-                                               size="CANTIDAD DE CAJAS", title="Relación: Costo vs Retraso (Tamaño = Volumen)")
-        
-                    # 🎯 INTENCIÓN 4: NÚMERO DE PEDIDOS Y VOLUMEN
-                    elif any(word in p for word in ["cuanto", "numero", "pedidos", "total", "cantidad"]):
-                        total = len(df)
-                        cajas = df["CANTIDAD DE CAJAS"].sum()
-                        response_text = f"En total tenemos **{total} pedidos** registrados que representan un movimiento de **{cajas:,.0f} cajas**.\n\n"
-                        response_text += f"El destino con más flujo es **{df['DESTINO'].mode()[0]}**."
-                        
-                        fig_to_show = px.line(df.groupby("FECHA DE ENVÍO")["NÚMERO DE PEDIDO"].count().reset_index(), 
-                                            x="FECHA DE ENVÍO", y="NÚMERO DE PEDIDO", title="Tendencia de Pedidos por Día")
+                    # 🎯 INTENCIÓN: EXPLICACIÓN DE DATOS (POR QUÉ)
+                    elif any(word in p for word in ["porque", "explica", "analiza"]):
+                        costo_medio = df.groupby("DESTINO")["COSTO DE LA GUÍA"].mean().idxmax()
+                        response_text = f"El gasto se eleva principalmente por los envíos a **{costo_medio}**. Si logramos optimizar esa zona, el porcentaje logístico bajará notablemente."
+                        fig_to_show = px.scatter(df, x="COSTO DE LA GUÍA", y="DIAS_RETRASO", color="FLETERA", title="Relación Costo vs Entrega")
         
                     else:
-                        response_text = "Soy tu analista logístico. Puedo decirte:\n1. Quién es tu **mejor/peor fletera**.\n2. Qué **pedidos específicos** están urgentes.\n3. **Explicarte el porqué** de los costos vs retrasos.\n4. Totales de **volumen y cajas**."
+                        response_text = "Soy tu analista. Puedes darme un **número de pedido**, preguntarme por la **mejor fletera**, o pedirme que **analice los retrasos**."
         
                 except Exception as e:
-                    response_text = f"❌ Error de análisis: {e}. Verifica que tus columnas no tengan celdas vacías."
+                    response_text = f"❌ Error al consultar: {e}"
         
-                # --- SALIDA FINAL ---
+                # --- SALIDA ---
                 st.markdown(response_text)
                 if fig_to_show:
                     st.plotly_chart(fig_to_show, use_container_width=True)
                 
-                # Guardar en memoria
                 st.session_state.chat_history.append({"role": "assistant", "content": response_text, "fig": fig_to_show})
         
         # Botón para regresar
@@ -993,6 +979,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
