@@ -34,83 +34,46 @@ color_blanco = "#FFFFFF"
 color_verde = "#00FF00"
 color_borde_gris = "#333333"
 
-# --- 3. ESTILOS CSS UNIFICADOS (CORREGIDO Y SELLADO) ---
+# --------------------------------------------------
+# 3. ESTILOS CSS (Corregido para NO ocultar la flecha)
+# --------------------------------------------------
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
+    
     .stApp {{ background-color: {color_fondo_nativo} !important; }}
     
-    /* Contenedor principal */
-    .scene {{ 
-        width: 100%; 
-        height: 150px; 
-        perspective: 600px; 
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-        margin-bottom: 20px; 
-    }}
+    /* Mostrar flecha de sidebar pero ocultar decoradores innecesarios */
+    header[data-testid="stHeader"] {{ background: rgba(0,0,0,0) !important; }}
+    footer {{ visibility: hidden !important; }}
+    div[data-testid="stDecoration"] {{ display: none !important; }}
 
-    /* El cuerpo de la caja */
-    .cube {{ 
-        width: 60px; 
-        height: 60px; 
-        position: relative; 
-        transform-style: preserve-3d; 
-        transform: rotateX(-20deg) rotateY(45deg); 
-        animation: move-pkg 6s infinite ease-in-out; 
-    }}
-
-    /* Estilo común de todas las caras */
-    .cube-face {{ 
-        position: absolute; 
-        width: 60px; 
-        height: 60px; 
-        background: #d2a679; /* Color cartón */
-        border: 1px solid #b08d5c; 
-        box-shadow: inset 0 0 15px rgba(0,0,0,0.1); 
-    }}
-
-    /* Cinta de embalaje sutil */
-    .cube-face::after {{ 
-        content: ''; 
-        position: absolute; 
-        top: 45%; 
-        width: 100%; 
-        height: 8px; 
-        background: rgba(0,0,0,0.1); 
-    }}
-
-    /* POSICIONAMIENTO MATEMÁTICO PARA SELLAR LA CAJA */
-    /* Todas se mueven 30px porque la caja mide 60px de ancho (la mitad) */
-    .front  {{ transform: rotateY(  0deg) translateZ(30px); }}
-    .back   {{ transform: rotateY(180deg) translateZ(30px); }}
-    .right  {{ transform: rotateY( 90deg) translateZ(30px); }}
-    .left   {{ transform: rotateY(-90deg) translateZ(30px); }}
-    .top    {{ transform: rotateX( 90deg) translateZ(30px); background: #e3bc94; }} /* Tapa */
-    .bottom {{ transform: rotateX(-90deg) translateZ(30px); background: #b08d5c; }} /* Suelo */
-
-    /* Animación de flotado y rotación */
-    @keyframes move-pkg {{ 
-        0%, 100% {{ transform: translateY(0px) rotateX(-20deg) rotateY(45deg); }} 
-        50% {{ transform: translateY(-20px) rotateX(-20deg) rotateY(225deg); }} 
-    }}
-
-    /* Estilos de Formulario y Texto */
-    .stForm {{ background-color: {color_fondo_nativo} !important; border: 1.5px solid {color_borde_gris} !important; border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
-    .login-header {{ text-align: center; color: white; font-family: sans-serif; font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 2px; }}
-    input {{ font-family: 'Courier Prime', monospace !important; color: white !important; }}
-    div[data-testid="stTextInputRootElement"] {{ background-color: #1a1c24 !important; border-radius: 10px !important; }}
+    /* Caja 3D Logística Sellada */
+    .scene {{ width: 100%; height: 120px; perspective: 600px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }}
+    .cube {{ width: 60px; height: 60px; position: relative; transform-style: preserve-3d; transform: rotateX(-20deg) rotateY(45deg); animation: move-pkg 6s infinite ease-in-out; }}
+    .cube-face {{ position: absolute; width: 60px; height: 60px; background: #d2a679; border: 1.5px solid #b08d5c; box-shadow: inset 0 0 15px rgba(0,0,0,0.1); }}
+    .cube-face::after {{ content: ''; position: absolute; top: 45%; width: 100%; height: 6px; background: rgba(0,0,0,0.15); }}
     
-    header, footer {{ visibility: hidden !important; }}
+    .front  {{ transform: rotateY(0deg) translateZ(30px); }}
+    .back   {{ transform: rotateY(180deg) translateZ(30px); }}
+    .right  {{ transform: rotateY(90deg) translateZ(30px); }}
+    .left   {{ transform: rotateY(-90deg) translateZ(30px); }}
+    .top    {{ transform: rotateX(90deg) translateZ(30px); background: #e3bc94; }}
+    .bottom {{ transform: rotateX(-90deg) translateZ(30px); background: #b08d5c; }}
+    
+    @keyframes move-pkg {{ 0%, 100% {{ transform: translateY(0px) rotateX(-20deg) rotateY(45deg); }} 50% {{ transform: translateY(-15px) rotateX(-20deg) rotateY(225deg); }} }}
+    
+    /* Login Form */
+    .stForm {{ background-color: {color_fondo_nativo} !important; border: 1.5px solid {color_borde_gris} !important; border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
+    .login-header {{ text-align: center; color: white; font-family: sans-serif; font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; }}
+    input {{ font-family: 'Courier Prime', monospace !important; color: white !important; }}
 </style>
 """, unsafe_allow_html=True)
 
-# Contenedor vacío para manejar transiciones limpias
 placeholder = st.empty()
 
 # --------------------------------------------------
-# 4. FLUJO DE NAVEGACIÓN (Lógica Principal)
+# 4. FLUJO DE PANTALLAS
 # --------------------------------------------------
 
 # CASO A: LOGIN
@@ -124,7 +87,6 @@ if not st.session_state.logueado:
                 st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
                 u_input = st.text_input("Usuario")
                 c_input = st.text_input("Contraseña", type="password")
-                
                 if st.form_submit_button("INGRESAR", use_container_width=True):
                     usuarios = st.secrets["usuarios"]
                     if u_input in usuarios and str(usuarios[u_input]) == str(c_input):
@@ -137,39 +99,34 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# CASO B: SPLASH SCREEN (BLOQUEO VISUAL TOTAL Y CAJA SELLADA)
+# CASO B: SPLASH SCREEN
 elif not st.session_state.splash_completado:
     with placeholder.container():
         t_splash = "Cerrando sistema..." if st.session_state.motivo_splash == "logout" else f"Bienvenid@ {st.session_state.usuario_actual}..."
-        color_caja_splash = "#FF4B4B" if st.session_state.motivo_splash == "logout" else "#d2a679"
+        c_caja = "#FF4B4B" if st.session_state.motivo_splash == "logout" else "#d2a679"
         
         st.markdown(f"""
             <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0e1117; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                 <div class="scene">
                     <div class="cube" style="width:80px; height:80px; animation: move-pkg 3s infinite linear;">
-                        <div class="cube-face front"  style="width:80px; height:80px; background:{color_caja_splash}; transform: rotateY(  0deg) translateZ(40px);"></div>
-                        <div class="cube-face back"   style="width:80px; height:80px; background:{color_caja_splash}; transform: rotateY(180deg) translateZ(40px);"></div>
-                        <div class="cube-face right"  style="width:80px; height:80px; background:{color_caja_splash}; transform: rotateY( 90deg) translateZ(40px);"></div>
-                        <div class="cube-face left"   style="width:80px; height:80px; background:{color_caja_splash}; transform: rotateY(-90deg) translateZ(40px);"></div>
-                        <div class="cube-face top"    style="width:80px; height:80px; background:#e3bc94; transform: rotateX( 90deg) translateZ(40px);"></div>
+                        <div class="cube-face front"  style="width:80px; height:80px; background:{c_caja}; transform: rotateY(0deg) translateZ(40px);"></div>
+                        <div class="cube-face back"   style="width:80px; height:80px; background:{c_caja}; transform: rotateY(180deg) translateZ(40px);"></div>
+                        <div class="cube-face right"  style="width:80px; height:80px; background:{c_caja}; transform: rotateY(90deg) translateZ(40px);"></div>
+                        <div class="cube-face left"   style="width:80px; height:80px; background:{c_caja}; transform: rotateY(-90deg) translateZ(40px);"></div>
+                        <div class="cube-face top"    style="width:80px; height:80px; background:#e3bc94; transform: rotateX(90deg) translateZ(40px);"></div>
                         <div class="cube-face bottom" style="width:80px; height:80px; background:#b08d5c; transform: rotateX(-90deg) translateZ(40px);"></div>
                     </div>
                 </div>
                 <div style="color:white; font-family:'Courier Prime'; margin-top:60px; letter-spacing:2px; text-transform: uppercase;">{t_splash}</div>
             </div>
         """, unsafe_allow_html=True)
-        
         time.sleep(2.5)
         
         if st.session_state.motivo_splash == "logout":
             st.session_state.logueado = False
             st.session_state.usuario_actual = None
+            st.session_state.pagina = "principal" # Reseteo de página
             st.session_state.motivo_splash = "inicio"
-
-            # ESTA ES LA LÍNEA CLAVE:
-            st.session_state.pagina = "principal" 
-            
-            # Opcional: Limpiar el caché de datos para que no queden rastros del usuario anterior
             st.cache_data.clear()
         
         st.session_state.splash_completado = True
@@ -201,6 +158,19 @@ else:
 
     # BARRA LATERAL
     st.sidebar.markdown(f'### 👤 Sesión: <span style="color:#00FFAA;">{st.session_state.usuario_actual}</span>', unsafe_allow_html=True)
+    
+    st.sidebar.divider()
+    
+    # Navegación entre secciones
+    if st.sidebar.button("🏠 Inicio", use_container_width=True):
+        st.session_state.pagina = "principal"
+        st.rerun()
+    
+    if st.sidebar.button("📊 KPIs Logísticos", use_container_width=True):
+        st.session_state.pagina = "kpis"
+        st.rerun()
+        
+    st.sidebar.divider()
     
     if st.sidebar.button("Cerrar Sesión", use_container_width=True):
         st.session_state.splash_completado = False 
@@ -847,6 +817,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
