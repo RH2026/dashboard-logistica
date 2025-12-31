@@ -175,7 +175,7 @@ else:
         # --------------------------------------------------
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
-        st.markdown("<h2 style='text-align:center;'>📦Control de Embarques</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;color:#FFFFFF;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 7.5L12 3L21 7.5L12 12L3 7.5Z' stroke='#00FFAA' stroke-width='1.6' stroke-linejoin='round'/><path d='M3 7.5V16.5L12 21L21 16.5V7.5' stroke='#00FFAA' stroke-width='1.6' stroke-linejoin='round'/><path d='M12 12V21' stroke='#00FFAA' stroke-width='1.6'/></svg>Control de Embarques</h2>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;'>Logística – Enero 2026</p>", unsafe_allow_html=True)
         st.divider()
            
@@ -806,6 +806,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
