@@ -8,7 +8,7 @@ import textwrap
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. ESTADOS DE SESIÓN
+# 2. ESTADOS DE SESIÓN (Inicialización segura)
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
 if "splash_completado" not in st.session_state:
@@ -22,14 +22,14 @@ if "pagina" not in st.session_state:
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
 
-# --- COLORES GLOBALES ---
+# Colores Globales
 color_fondo_nativo = "#0e1117" 
 color_blanco = "#FFFFFF"
 color_verde = "#00FF00" 
 color_borde_gris = "#333333"
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN
+# 3. LÓGICA DE LOGIN (Se muestra si no está logueado y NO hay un logout en curso)
 # --------------------------------------------------
 if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
     st.markdown(f"""
@@ -68,15 +68,17 @@ if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
             if submit:
+                # Acceso a st.secrets["usuarios"]
                 usuarios = st.secrets["usuarios"]
-                if u_input in usuarios and usuarios[u_input] == c_input:
+                # Validación: comparamos usuario y contraseña (convertida a string por si acaso)
+                if u_input in usuarios and str(usuarios[u_input]) == str(c_input):
                     st.session_state.logueado = True
                     st.session_state.usuario_actual = u_input
                     st.session_state.splash_completado = False
                     st.session_state.motivo_splash = "inicio"
                     st.rerun()
                 else:
-                    st.error("Acceso Denegado")
+                    st.error("Acceso Denegado: Usuario o Contraseña incorrectos")
     st.stop()
 
 # --------------------------------------------------
@@ -85,10 +87,10 @@ if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
 if not st.session_state.splash_completado:
     if st.session_state.motivo_splash == "logout":
         texto_splash = "Cerrando sesión de forma segura..."
-        color_loader = "#FF4B4B" # Rojo para salida
+        color_loader = "#FF4B4B" # Rojo
     else:
         texto_splash = f"Bienvenido {st.session_state.usuario_actual}, inicializando módulos..."
-        color_loader = "#00FF00" # Verde para entrada
+        color_loader = "#00FF00" # Verde
 
     st.markdown(f"""
     <style>
@@ -103,7 +105,7 @@ if not st.session_state.splash_completado:
         margin-bottom: 25px; filter: drop-shadow(0 0 10px {color_loader}66);
     }}
     @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
-    .splash-text {{ color: #FFFFFF; font-size: 14px; font-family: sans-serif; letter-spacing: 1px; opacity: 0.8; }}
+    .splash-text {{ color: #FFFFFF; font-size: 16px; font-family: sans-serif; letter-spacing: 1px; opacity: 0.8; }}
     header, footer {{visibility: hidden;}}
     </style>
     """, unsafe_allow_html=True)
@@ -118,8 +120,11 @@ if not st.session_state.splash_completado:
     time.sleep(2.5)
     
     if st.session_state.motivo_splash == "logout":
-        # Limpieza real después de la animación
-        st.session_state.clear()
+        # Resetear estados manualmente en lugar de .clear() para no perder configuraciones críticas
+        st.session_state.logueado = False
+        st.session_state.usuario_actual = None
+        st.session_state.splash_completado = True
+        st.session_state.motivo_splash = "inicio"
         st.rerun()
     else:
         st.session_state.splash_completado = True
@@ -805,6 +810,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
