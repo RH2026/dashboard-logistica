@@ -47,7 +47,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (LIMPIEZA ABSOLUTA)
+# 3. LÓGICA DE LOGIN (ELIMINACIÓN DEFINITIVA DE BORDES)
 # --------------------------------------------------
 if not st.session_state.logueado:
     st.markdown(f"""
@@ -59,22 +59,28 @@ if not st.session_state.logueado:
             background-color: #000000 !important;
         }}
 
-        /* 2. ELIMINAR CAJITA FANTASMA Y SUS BORDES */
-        /* Bloqueamos cualquier contenedor de mensaje, alerta o excepción */
-        div[data-testid="stNotification"], 
+        /* 2. ELIMINACIÓN QUIRÚRGICA DE LA CAJA FANTASMA */
+        /* Atacamos el contenedor de la celda, el widget de estado y las alertas */
+        div[data-testid="stStatusWidget"],
+        div[data-testid="stNotification"],
         div[data-testid="stException"],
-        div.stAlert,
-        div[class*="st-key-"] {{
+        .stAlert,
+        div.element-container:has(div.stAlert),
+        div.element-container:has(div.stException) {{
             display: none !important;
-            border: none !important;
-            background-color: transparent !important;
+            border: 0px solid transparent !important;
+            border-style: none !important;
+            outline: none !important;
             box-shadow: none !important;
+            height: 0px !important;
+            margin: 0px !important;
+            padding: 0px !important;
         }}
 
         /* 3. CAJA DE LOGIN */
         .login-box {{
             background-color: #000000;
-            padding: 20px;
+            padding: 25px;
             border-radius: 12px;
             border: 1px solid #1a1a1a;
             max-width: 320px;
@@ -82,8 +88,7 @@ if not st.session_state.logueado:
             margin-top: 15vh;
         }}
 
-        /* 4. INPUTS Y UNIFICACIÓN DEL OJITO */
-        /* Forzamos el fondo negro en el contenedor del input y en el botón del ojito */
+        /* 4. INPUTS Y OJITO (YA RESUELTO) */
         div[data-baseweb="input"], 
         div[data-baseweb="input"] > div,
         input[type="text"], 
@@ -95,7 +100,6 @@ if not st.session_state.logueado:
             border: none !important;
         }}
         
-        /* Ajuste fino para el borde del input cuando está enfocado */
         div[data-baseweb="input"] {{
             border: 1px solid #333333 !important;
         }}
@@ -125,6 +129,7 @@ if not st.session_state.logueado:
             submit = st.form_submit_button("ENTRAR", use_container_width=True)
 
         if submit:
+            # Validación con .get para evitar errores de clave que activen la caja
             usuarios_dict = st.secrets.get("usuarios", {})
             if u_input in usuarios_dict and usuarios_dict[u_input] == c_input:
                 st.session_state.logueado = True
@@ -133,7 +138,8 @@ if not st.session_state.logueado:
                 st.session_state.splash_visto = False
                 st.rerun()
             else:
-                st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:12px;">Datos incorrectos</p>', unsafe_allow_html=True)
+                # Error en HTML puro
+                st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:12px; margin-top:5px;">Datos incorrectos</p>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -926,6 +932,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
