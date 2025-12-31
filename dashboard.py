@@ -157,24 +157,21 @@ else:
     df = cargar_datos()
 
     # BARRA LATERAL
-    # Icono de usuario en azul (SVG en Base64 para que no dependa de archivos externos)
-    icon_azul = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjMDBmZGRkIj48cGF0aCBkPSJNMTIgMmMtMi43NiAwLTUgMi4yNC01IDVzMi4yNCA1IDUgNSA1LTIuMjQgNS01LTIuMjQtNS01LTV6bTAgMTRjLTQuNDIgMC0xMyAyLjIxLTEzIDYuNnYxLjRoMjZ2LTEuNGMwLTQuMzktOC41OC02LjYtMTMtNi42eiIvPjwvc3ZnPg=="
-    
-    st.sidebar.markdown(
-        f"""
-        <div style="display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; background: rgba(0, 255, 170, 0.05); margin-bottom: 20px;">
-            <img src="{icon_azul}" width="35" height="35" style="filter: drop-shadow(0px 0px 5px rgba(0, 123, 255, 0.5));">
-            <div style="line-height: 1.2;">
-                <span style="color: #888; font-size: 12px; font-family: sans-serif;">SESIÓN ACTIVA</span><br>
-                <span style="color: #00FFAA; font-size: 18px; font-weight: bold; font-family: 'Courier Prime', monospace;">{st.session_state.usuario_actual}</span>
-            </div>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
+    st.sidebar.markdown(f'### 👤 Sesión: <span style="color:#00FFAA;">{st.session_state.usuario_actual}</span>', unsafe_allow_html=True)
     
     st.sidebar.divider()
-            
+    
+    # Navegación entre secciones
+    if st.sidebar.button("🏠 Inicio", use_container_width=True):
+        st.session_state.pagina = "principal"
+        st.rerun()
+    
+    if st.sidebar.button("📊 KPIs Logísticos", use_container_width=True):
+        st.session_state.pagina = "kpis"
+        st.rerun()
+        
+    st.sidebar.divider()
+    
     if st.sidebar.button("Cerrar Sesión", use_container_width=True):
         st.session_state.splash_completado = False 
         st.session_state.motivo_splash = "logout"
@@ -820,10 +817,6 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
-
-
-
-
 
 
 
