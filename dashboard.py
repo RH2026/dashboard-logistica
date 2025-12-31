@@ -85,73 +85,99 @@ if not st.session_state.get('splash_visto', False):
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# DISEÑO DARK (FONDO NEGRO, BORDE VERDE Y FIX INPUT)
+# DISEÑO DARK (FONDO NEGRO, BORDE VERDE ESMERALDA E ICONO ANIMADO)
 # --------------------------------------------------
 if not st.session_state.logueado:
-    st.markdown("""
+    # Definimos el color verde esmeralda y la animación CSS
+    verde_id = "#00FF00"
+    
+    st.markdown(f"""
         <style>
-        /* FONDO GENERAL DE LA APP */
-        .stApp {
+        /* FONDO GENERAL */
+        .stApp {{
             background-color: #000000 !important;
-        }
+        }}
         
-        /* CAJA DE LOGIN CON BORDE VERDE NEÓN */
-        .stForm {
+        /* CAJA DE LOGIN */
+        .stForm {{
             background-color: #000000 !important;
             padding: 40px;
             border-radius: 20px;
-            border: 2px solid #00FFAA !important; /* Verde como el splash */
-            box-shadow: 0 0 20px rgba(0, 255, 170, 0.2); /* Resplandor suave */
-        }
+            border: 2px solid {verde_id} !important;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.1);
+        }}
 
-        /* FIX PARA INPUTS Y EL BOTÓN DEL OJITO */
-        div[data-testid="stTextInputRootElement"] {
+        /* ANIMACIÓN DE PULSO PARA EL ICONO */
+        @keyframes pulse-green {{
+            0% {{ transform: scale(1); opacity: 0.8; }}
+            50% {{ transform: scale(1.05); opacity: 1; }}
+            100% {{ transform: scale(1); opacity: 0.8; }}
+        }}
+        .animated-icon {{
+            animation: pulse-green 3s infinite ease-in-out;
+            display: flex;
+            justify-content: center;
+            margin-bottom: -10px;
+        }}
+
+        /* FIX INPUTS Y OJITO */
+        div[data-testid="stTextInputRootElement"] {{
             background-color: #111111 !important;
             border: 1px solid #333333 !important;
-            border-radius: 8px !important;
-        }
-
-        /* Asegura que el área del 'ojito' tenga el mismo fondo que el input */
-        div[data-testid="stTextInputRootElement"] > div {
+            border-radius: 10px !important;
+        }}
+        div[data-testid="stTextInputRootElement"] > div {{
             background-color: transparent !important;
-        }
-        
-        /* Color del texto e iconos */
-        input {
-            color: white !important;
-        }
-        
-        button[aria-label="Show password"] {
-            color: #00FFAA !important;
-        }
+        }}
+        div[data-testid="stTextInputRootElement"] button {{
+            background-color: transparent !important;
+            color: {verde_id} !important;
+        }}
 
-        /* TÍTULO Y ETIQUETAS */
-        .login-header {
+        /* TEXTOS */
+        .login-header {{
             text-align: center; 
-            color: #FFFFFF; 
-            font-size: 28px; 
+            color: {verde_id}; 
+            font-size: 24px; 
             font-weight: bold; 
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             letter-spacing: 2px;
-        }
+        }}
+        label {{ color: #dddddd !important; }}
+
+        /* BOTÓN INGRESAR */
+        div.stButton > button {{
+            background-color: {verde_id} !important;
+            color: black !important;
+            font-weight: bold !important;
+            border-radius: 10px !important;
+            border: none !important;
+            padding: 10px 0 !important;
+        }}
         
-        label {
-            color: #888888 !important;
-        }
-        
-        /* OCULTAR HEADER Y FOOTER */
-        header, footer {visibility: hidden;}
+        header, footer {{visibility: hidden;}}
         </style>
     """, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
-        st.markdown('<div style="height:15vh"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:12vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
-            st.markdown('<div class="login-header">ACCESO AL SISTEMA</div>', unsafe_allow_html=True)
+            # ICONO SVG ANIMADO
+            st.markdown(f'''
+                <div class="animated-icon">
+                    <svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="{verde_id}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <circle cx="12" cy="11" r="3" fill="{verde_id}" fill-opacity="0.2"></circle>
+                        <path d="M12 11v4"></path>
+                    </svg>
+                </div>
+            ''', unsafe_allow_html=True)
+            
+            st.markdown('<div class="login-header">ACCESO RESTRINGIDO</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
-            submit = st.form_submit_button("INGRESAR", use_container_width=True)
+            submit = st.form_submit_button("INGRESAR AL SISTEMA", use_container_width=True)
 
             if submit:
                 usuarios = st.secrets["usuarios"]
@@ -161,7 +187,7 @@ if not st.session_state.logueado:
                     st.session_state.ultimo_movimiento = time.time()
                     st.rerun()
                 else:
-                    st.error("Credenciales inválidas")
+                    st.error("Acceso Denegado")
     
     st.stop()
 
@@ -844,6 +870,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
