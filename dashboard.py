@@ -179,30 +179,8 @@ else:
     # BOTÓN DE CIERRE DE SESIÓN EN LA BARRA LATERAL
     # --------------------------------------------------
     st.sidebar.markdown(f'### 👤 Sesión Activa: {st.session_state.usuario_actual}')
-        
-    # --- ESTILO CSS PARA EL BOTÓN ESTILO "GLOW" ---
-    st.markdown("""
-        <style>
-        /* Seleccionamos el botón de la sidebar que contiene el texto de cierre */
-        div[data-testid="stSidebar"] button:has(div p:contains("Cerrar Sesión")) {
-            background-color: rgba(255, 75, 75, 0.05) !important; /* Fondo casi invisible */
-            color: white !important;                             /* Texto blanco */
-            border: 2px solid #ff4b4b !important;               /* Borde rojo sólido */
-            box-shadow: 0 0 10px rgba(255, 75, 75, 0.2) !important; /* Efecto de resplandor suave */
-            border-radius: 10px !important;
-            transition: all 0.3s ease !important;
-            margin-top: 10px;
-        }
-
-        /* Efecto al pasar el mouse (Hover) */
-        div[data-testid="stSidebar"] button:has(div p:contains("Cerrar Sesión")):hover {
-            background-color: rgba(255, 75, 75, 0.2) !important; /* Se ilumina el fondo */
-            box-shadow: 0 0 20px rgba(255, 75, 75, 0.5) !important; /* Resplandor más fuerte */
-            transform: scale(1.02); /* Crece un poquito */
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    
+     
+     
     # Usamos la línea compacta en lugar de st.divider() o st.markdown("---")
     st.markdown("<hr>", unsafe_allow_html=True)
         
@@ -825,6 +803,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
