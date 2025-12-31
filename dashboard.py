@@ -33,12 +33,12 @@ if "ultimo_movimiento" not in st.session_state:
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (ELIMINACIÓN TOTAL Y OJITO)
+# 3. LÓGICA DE LOGIN (CAMUFLAJE TOTAL: BORDE NEGRO)
 # --------------------------------------------------
 if not st.session_state.logueado:
     st.markdown("""
         <style>
-        /* 1. ELIMINAR CUALQUIER RASTRO DE INTERFAZ DE STREAMLIT */
+        /* 1. ELIMINAR INTERFAZ NATIVA */
         header, [data-testid="stHeader"], footer, [data-testid="stStatusWidget"] {
             display: none !important;
         }
@@ -47,30 +47,30 @@ if not st.session_state.logueado:
             background-color: #000000 !important;
         }
 
-        /* 2. MATAR LA CAJA FANTASMA (CONTENEDOR DE BLOQUE Y FORMULARIO) */
-        /* Este es el culpable del borde: el BorderWrapper */
+        /* 2. SI NO PUEDES CON EL ENEMIGO, PÍNTALO DE NEGRO */
+        /* Forzamos que cualquier borde de contenedor sea negro y sin sombra */
         [data-testid="stVerticalBlockBorderWrapper"],
         [data-testid="stForm"],
         [data-testid="stVerticalBlock"],
+        div[class*="st-key-"],
         .element-container {
-            border: none !important;
+            border: 1px solid #000000 !important; /* Borde negro sobre fondo negro */
             box-shadow: none !important;
-            background-color: transparent !important;
+            background-color: #000000 !important;
         }
 
-        /* 3. CAJA DE LOGIN (DISEÑO LIMPIO) */
+        /* 3. CAJA DE LOGIN (NUESTRO DISEÑO) */
         .login-box {
             background-color: #000000;
             padding: 30px;
             border-radius: 12px;
-            border: 1px solid #1a1a1a;
+            border: 1px solid #1a1a1a; /* Este es el único borde que queremos ver */
             max-width: 350px;
             margin: auto;
             margin-top: 15vh;
         }
 
-        /* 4. INPUTS Y OJITO (UNIFICACIÓN TOTAL SIN BORDES) */
-        /* Atacamos el contenedor de BaseWeb para el ojito */
+        /* 4. UNIFICACIÓN DE INPUTS Y OJITO */
         div[data-baseweb="input"], 
         div[data-baseweb="base-input"],
         div[data-baseweb="input"] > div {
@@ -85,13 +85,13 @@ if not st.session_state.logueado:
             border: none !important;
         }
 
-        /* BOTÓN DEL OJITO: Forzamos el mismo fondo que el input */
+        /* El botón del ojito camuflado al fondo del input */
         button[aria-label="Show password"], 
         button[aria-label="Hide password"],
         [data-testid="stInputActionButton"] {
             background-color: transparent !important;
             border: none !important;
-            color: white !important;
+            color: #555555 !important; /* Color gris suave para el icono */
             box-shadow: none !important;
         }
 
@@ -103,8 +103,8 @@ if not st.session_state.logueado:
             border: none !important;
             width: 100%;
             margin-top: 20px;
-            border-radius: 8px;
             height: 45px;
+            border-radius: 8px;
         }
 
         label { color: #888888 !important; }
@@ -117,8 +117,7 @@ if not st.session_state.logueado:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
         st.markdown('<h2 style="text-align:center; color:#00FFAA; font-size:20px;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
         
-        # Regresamos al formulario pero con el CSS que mata su borde
-        with st.form(key="login_definitivo_v7"):
+        with st.form(key="login_camuflado"):
             u_input = st.text_input("Usuario", placeholder="Usuario")
             c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
@@ -925,6 +924,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
