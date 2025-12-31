@@ -160,18 +160,7 @@ else:
     st.sidebar.markdown(f'### 👤 Sesión: <span style="color:#00FFAA;">{st.session_state.usuario_actual}</span>', unsafe_allow_html=True)
     
     st.sidebar.divider()
-    
-    # Navegación entre secciones
-    if st.sidebar.button("🏠 Inicio", use_container_width=True):
-        st.session_state.pagina = "principal"
-        st.rerun()
-    
-    if st.sidebar.button("📊 KPIs Logísticos", use_container_width=True):
-        st.session_state.pagina = "kpis"
-        st.rerun()
-        
-    st.sidebar.divider()
-    
+            
     if st.sidebar.button("Cerrar Sesión", use_container_width=True):
         st.session_state.splash_completado = False 
         st.session_state.motivo_splash = "logout"
@@ -817,6 +806,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
