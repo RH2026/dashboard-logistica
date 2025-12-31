@@ -31,107 +31,30 @@ color_borde_gris = "#333333"
 # --------------------------------------------------
 # 3. LÓGICA DE LOGIN
 # --------------------------------------------------
-if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
-    st.markdown(f"""
-        <style>
-        .stApp {{ background-color: {color_fondo_nativo} !important; }}
-        
-        /* ESCENA 3D */
-        .scene {{
-            width: 120px;
-            height: 120px;
-            perspective: 600px;
-            margin: 0 auto 30px auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }}
-
-        .cube {{
-            width: 60px;
-            height: 50px; /* Un poco más baja para parecer caja de envío */
-            position: relative;
-            transform-style: preserve-3d;
-            transform: rotateX(-25deg) rotateY(45deg);
-            animation: move-package 5s infinite ease-in-out;
-        }}
-
-        /* CARAS DE CARTÓN */
-        .cube-face {{
-            position: absolute;
-            width: 60px;
-            height: 50px;
-            background: #d2a679; /* Color cartón */
-            border: 1px solid #b08d5c;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }}
-
-        /* Cinta de embalaje */
-        .cube-face::after {{
-            content: '';
-            position: absolute;
-            background: rgba(0,0,0,0.1); /* Efecto de cinta */
-            width: 100%;
-            height: 10px;
-        }}
-
-        /* Ajustes de tamaño por cara para que encaje el cubo */
-        .front  {{ transform: rotateY(  0deg) translateZ(30px); }}
-        .back   {{ transform: rotateY(180deg) translateZ(30px); }}
-        .right  {{ width: 60px; transform: rotateY( 90deg) translateZ(30px); }}
-        .left   {{ width: 60px; transform: rotateY(-90deg) translateZ(30px); }}
-        
-        .top, .bottom {{ 
-            width: 60px; 
-            height: 60px; 
-            background: #e3bc94; 
-        }}
-        .top    {{ transform: rotateX( 90deg) translateZ(25px); border-bottom: 2px solid rgba(0,0,0,0.2); }}
-        .bottom {{ transform: rotateX(-90deg) translateZ(25px); }}
-
-        /* ANIMACIÓN: Flotar y balanceo suave */
-        @keyframes move-package {{
-            0% {{ transform: translateY(0px) rotateX(-20deg) rotateY(45deg); }}
-            50% {{ transform: translateY(-15px) rotateX(-25deg) rotateY(225deg); }}
-            100% {{ transform: translateY(0px) rotateX(-20deg) rotateY(405deg); }}
-        }}
-
-        /* ESTILO DEL FORMULARIO */
-        .stForm {{
-            background-color: {color_fondo_nativo} !important;
-            padding: 40px; border-radius: 20px;
-            border: 1.5px solid {color_borde_gris} !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }}
-        
-        .login-header {{ 
-            text-align: center; 
-            color: {color_blanco}; 
-            font-size: 22px; 
-            font-weight: 800; 
-            margin-bottom: 25px; 
-            font-family: 'Courier Prime', monospace; /* Usando una de las fuentes que te gustaron */
-            letter-spacing: 1px;
-        }}
-        
-        header, footer {{visibility: hidden;}}
-        </style>
-
-        <div class="scene">
-            <div class="cube">
-                <div class="cube-face front"></div>
-                <div class="cube-face back"></div>
-                <div class="cube-face right"></div>
-                <div class="cube-face left"></div>
-                <div class="cube-face top"></div>
-                <div class="cube-face bottom"></div>
-            </div>
-        </div>
-        <div class="login-header">SISTEMA DE LOGÍSTICA</div>
-    """, unsafe_allow_html=True)
+st.markdown(f"""
+        <style>
+        .stApp {{ background-color: {color_fondo_nativo} !important; }}
+        .stForm {{
+            background-color: {color_fondo_nativo} !important;
+            padding: 40px; border-radius: 20px;
+            border: 1.5px solid {color_borde_gris} !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-top: -30px;
+        }}
+        @keyframes pulse-intense {{
+            0% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
+            50% {{ transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.6)); }}
+            100% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
+        }}
+        .animated-icon {{ animation: pulse-intense 2s infinite ease-in-out; display: flex; justify-content: center; margin-bottom: 20px; }}
+        div[data-testid="stTextInputRootElement"] {{ background-color: #1a1c24 !important; border: 1px solid #30333d !important; border-radius: 10px !important; }}
+        div[data-testid="stTextInputRootElement"] > div {{ background-color: transparent !important; }}
+        input {{ color: white !important; }}
+        div[data-testid="stTextInputRootElement"] button {{ color: {color_verde} !important; }}
+        .login-header {{ text-align: center; color: {color_blanco}; font-size: 24px; font-weight: bold; margin-bottom: 25px; letter-spacing: 2px; text-transform: uppercase; }}
+        header, footer {{visibility: hidden;}}
+        </style>
+    """, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
@@ -888,6 +811,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
