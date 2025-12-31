@@ -175,7 +175,7 @@ else:
         # --------------------------------------------------
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
-        st.markdown("<style>@keyframes flapOpen{0%,78%,100%{transform:rotateX(0deg);}84%{transform:rotateX(32deg);}90%{transform:rotateX(0deg);}}</style><h2 style='text-align:center;display:flex;align-items:center;justify-content:center;gap:14px;font-weight:600;color:#FFFFFF;'><svg width='38' height='38' viewBox='0 0 64 64' fill='none' xmlns='http://www.w3.org/2000/svg'><g style='transform-origin:32px 18px;animation:flapOpen 9s ease-in-out infinite;'><path d='M8 20L32 8L56 20L32 32L8 20Z' stroke='#00FFAA' stroke-width='2' stroke-linejoin='round'/></g><path d='M8 20V46L32 58L56 46V20' stroke='#00FFAA' stroke-width='2' stroke-linejoin='round'/><path d='M32 32V58' stroke='#00FFAA' stroke-width='2'/></svg><span>Control de Embarques</span></h2>", unsafe_allow_html=True)
+        st.markdown("<style>@keyframes floatSpin{0%{transform:translateY(0) rotateY(0deg);}25%{transform:translateY(-6px) rotateY(90deg);}50%{transform:translateY(0) rotateY(180deg);}75%{transform:translateY(6px) rotateY(270deg);}100%{transform:translateY(0) rotateY(360deg);}}</style><h2 style='text-align:center;display:flex;align-items:center;justify-content:center;gap:14px;font-weight:600;color:#FFFFFF;'><svg style='animation:floatSpin 4.5s ease-in-out infinite;transform-origin:center;' width='38' height='38' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 7L12 2L21 7L12 12L3 7Z' stroke='#00FFAA' stroke-width='1.6' stroke-linejoin='round'/><path d='M3 7V17L12 22L21 17V7' stroke='#00FFAA' stroke-width='1.6' stroke-linejoin='round'/><path d=
         st.markdown("<p style='text-align:center;'>Logística – Enero 2026</p>", unsafe_allow_html=True)
        
         st.divider()
@@ -807,6 +807,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
