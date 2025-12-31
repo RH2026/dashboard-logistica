@@ -5,71 +5,102 @@ import time
 import base64
 import textwrap
 
-# 1. FUNCIÓN PARA IMAGEN DE FONDO (Ya no es necesaria para el fondo, pero la mantengo por si la usas en otra parte)
-def get_base64_image(image_path):
-    try:
-        with open(image_path, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode()
-    except:
-        return ""
+# 1. CONFIGURACIÓN DE PÁGINA (Debe ir al inicio)
+st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. ESTADOS DE SESIÓN (Sin cambios)
-if "splash_visto" not in st.session_state:
-    st.session_state.splash_visto = False
-if "motivo_splash" not in st.session_state:
-    st.session_state.motivo_splash = "inicio"
+# 2. ESTADOS DE SESIÓN
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
+if "splash_completado" not in st.session_state:
+    st.session_state.splash_completado = False
+if "motivo_splash" not in st.session_state:
+    st.session_state.motivo_splash = "inicio"
 if "usuario_actual" not in st.session_state:
     st.session_state.usuario_actual = None
 if "pagina" not in st.session_state:
-    st.session_state.pagina = "principal"
+    st.session_state.pagina = "principal"  # Controla qué sección del dashboard se ve
 if "ultimo_movimiento" not in st.session_state:
-    st.session_state.ultimo_movimiento = time.time()
+    st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
 
 # --------------------------------------------------
-# 3. SPLASH SCREEN (ESTILO NATIVO Y OPTIMIZADO)
+# 3. LÓGICA DE LOGIN (Primero en ejecutarse)
 # --------------------------------------------------
-if not st.session_state.get('splash_visto', False):
+if not st.session_state.logueado:
+    color_fondo_nativo = "#0e1117" 
+    color_blanco = "#FFFFFF"
+    color_verde = "#00FF00" 
+    color_borde_gris = "#333333"
+
+    st.markdown(f"""
+        <style>
+        .stApp {{ background-color: {color_fondo_nativo} !important; }}
+        .stForm {{
+            background-color: {color_fondo_nativo} !important;
+            padding: 40px; border-radius: 20px;
+            border: 1.5px solid {color_borde_gris} !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-top: -30px;
+        }}
+        @keyframes pulse-intense {{
+            0% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
+            50% {{ transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.6)); }}
+            100% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
+        }}
+        .animated-icon {{ animation: pulse-intense 2s infinite ease-in-out; display: flex; justify-content: center; margin-bottom: 20px; }}
+        div[data-testid="stTextInputRootElement"] {{ background-color: #1a1c24 !important; border: 1px solid #30333d !important; border-radius: 10px !important; }}
+        div[data-testid="stTextInputRootElement"] > div {{ background-color: transparent !important; }}
+        input {{ color: white !important; }}
+        div[data-testid="stTextInputRootElement"] button {{ color: {color_verde} !important; }}
+        .login-header {{ text-align: center; color: {color_blanco}; font-size: 24px; font-weight: bold; margin-bottom: 25px; letter-spacing: 2px; text-transform: uppercase; }}
+        header, footer {{visibility: hidden;}}
+        </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 1.2, 1])
+    with col2:
+        st.markdown('<div style="height:5vh"></div>', unsafe_allow_html=True)
+        with st.form("login_form"):
+            st.markdown(f'''<div class="animated-icon"><svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="{color_blanco}" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><circle cx="12" cy="11" r="3" fill="{color_blanco}" fill-opacity="0.2"></circle><path d="M12 11v4"></path></svg></div>''', unsafe_allow_html=True)
+            st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
+            u_input = st.text_input("Usuario")
+            c_input = st.text_input("Contraseña", type="password")
+            submit = st.form_submit_button("INGRESAR", use_container_width=True)
+
+            if submit:
+                usuarios = st.secrets["usuarios"]
+                if u_input in usuarios and usuarios[u_input] == c_input:
+                    st.session_state.logueado = True
+                    st.session_state.usuario_actual = u_input
+                    # Al loguear, reseteamos el splash para que se muestre una vez
+                    st.session_state.splash_completado = False 
+                    st.rerun()
+                else:
+                    st.error("Acceso Denegado")
+    st.stop()
+
+# --------------------------------------------------
+# 4. SPLASH SCREEN (Se activa DESPUÉS del login)
+# --------------------------------------------------
+if not st.session_state.splash_completado:
     if st.session_state.get('motivo_splash') == "logout":
-        texto_splash = "Bye, cerrando sistema…"
+        texto_splash = "Cerrando sesión de forma segura..."
     else:
-        texto_splash = "Inicializando módulos logísticos…"
+        texto_splash = f"Bienvenido {st.session_state.usuario_actual}, inicializando módulos..."
 
     st.markdown(f"""
     <style>
     .splash-container {{ 
-        display: flex; 
-        flex-direction: column; 
-        justify-content: center; /* Centrado vertical para móvil */
-        align-items: center; 
-        height: 100vh; 
-        background-color: #0e1117; /* Color nativo Streamlit */
-        position: fixed;
-        top: 0; left: 0; width: 100%;
-        z-index: 9999;
+        display: flex; flex-direction: column; justify-content: center; align-items: center; 
+        height: 100vh; background-color: #0e1117; position: fixed;
+        top: 0; left: 0; width: 100%; z-index: 9999;
     }}
-    
     .loader {{ 
-        border: 6px solid #1a1c24; /* Gris oscuro nativo */
-        border-top: 6px solid #00FF00; /* Verde esmeralda (saludo) */
-        border-radius: 50%; 
-        width: 80px;  /* Tamaño más balanceado para móvil/PC */
-        height: 80px; 
-        animation: spin 0.8s linear infinite; /* Un poco más rápido para dar energía */
-        margin-bottom: 25px;
-        filter: drop-shadow(0 0 10px rgba(0, 255, 0, 0.2));
+        border: 6px solid #1a1c24; border-top: 6px solid #00FF00; border-radius: 50%; 
+        width: 80px; height: 80px; animation: spin 0.8s linear infinite; 
+        margin-bottom: 25px; filter: drop-shadow(0 0 10px rgba(0, 255, 0, 0.2));
     }}
-    
     @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
-    
-    .splash-text {{
-        color: #FFFFFF; 
-        font-size: 14px; 
-        font-family: sans-serif;
-        letter-spacing: 1px;
-        opacity: 0.8;
-    }}
+    .splash-text {{ color: #FFFFFF; font-size: 14px; font-family: sans-serif; letter-spacing: 1px; opacity: 0.8; }}
     </style>
     """, unsafe_allow_html=True)
     
@@ -80,116 +111,21 @@ if not st.session_state.get('splash_visto', False):
         </div>
     ''', unsafe_allow_html=True)
     
-    time.sleep(2)
-    
-    if st.session_state.get('motivo_splash') == "logout":
-        st.session_state.clear()
-        st.session_state['autenticado'] = False
-        st.session_state['splash_visto'] = True
-        st.session_state['motivo_splash'] = "inicio"
-    else:
-        st.session_state['splash_visto'] = True
-        st.session_state['motivo_splash'] = "inicio"
-    
+    time.sleep(2.5) # Tiempo de carga
+    st.session_state.splash_completado = True
     st.rerun()
 
-# 4. CONFIGURACIÓN DE PÁGINA
-st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
-
 # --------------------------------------------------
-# DISEÑO ESTILO NATIVO STREAMLIT (CAJA POSICIONADA MÁS ARRIBA)
+# 5. CONTENIDO DEL TABLERO (Solo visible tras login y splash)
 # --------------------------------------------------
-if not st.session_state.logueado:
-    color_fondo_nativo = "#0e1117" 
-    color_blanco = "#FFFFFF"
-    color_verde = "#00FF00" 
-    color_borde_gris = "#333333"
+st.title(f"Dashboard Logístico - {st.session_state.usuario_actual}")
+st.write("Aquí va tu contenido principal...")
 
-    st.markdown(f"""
-        <style>
-        .stApp {{
-            background-color: {color_fondo_nativo} !important;
-        }}
-        
-        .stForm {{
-            background-color: {color_fondo_nativo} !important;
-            padding: 40px;
-            border-radius: 20px;
-            border: 1.5px solid {color_borde_gris} !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-top: -30px; /* Ajuste fino para subir la caja aún más */
-        }}
-
-        @keyframes pulse-intense {{
-            0% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
-            50% {{ transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.6)); }}
-            100% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
-        }}
-        
-        .animated-icon {{
-            animation: pulse-intense 2s infinite ease-in-out;
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }}
-
-        div[data-testid="stTextInputRootElement"] {{
-            background-color: #1a1c24 !important;
-            border: 1px solid #30333d !important;
-            border-radius: 10px !important;
-        }}
-        
-        div[data-testid="stTextInputRootElement"] > div {{
-            background-color: transparent !important;
-        }}
-
-        input {{ color: white !important; }}
-        div[data-testid="stTextInputRootElement"] button {{
-            color: {color_verde} !important;
-        }}
-
-        .login-header {{
-            text-align: center; 
-            color: {color_blanco}; 
-            font-size: 24px; 
-            font-weight: bold; 
-            margin-bottom: 25px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }}
-        
-        header, footer {{visibility: hidden;}}
-        </style>
-    """, unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns([1, 1.2, 1])
-    with col2:
-        # CAMBIO: Reducimos de 12vh a 5vh para subir la caja
-        st.markdown('<div style="height:5vh"></div>', unsafe_allow_html=True)
-        with st.form("login_form"):
-            st.markdown(f'''
-                <div class="animated-icon">
-                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="{color_blanco}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        <circle cx="12" cy="11" r="3" fill="{color_blanco}" fill-opacity="0.2"></circle>
-                        <path d="M12 11v4"></path>
-                    </svg>
-                </div>
-            ''', unsafe_allow_html=True)
-            
-            st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
-            u_input = st.text_input("Usuario")
-            c_input = st.text_input("Contraseña", type="password")
-            submit = st.form_submit_button("INGRESAR", use_container_width=True)
-
-            if submit:
-                usuarios = st.secrets["usuarios"]
-                if u_input in usuarios and usuarios[u_input] == c_input:
-                    st.session_state.logueado = True
-                    st.rerun()
-                else:
-                    st.error("Acceso Denegado")
-    st.stop()
+if st.sidebar.button("Cerrar Sesión"):
+    st.session_state.logueado = False
+    st.session_state.splash_completado = False
+    st.session_state.motivo_splash = "logout"
+    st.rerun()
 
 # --------------------------------------------------
 # INICIO DEL CONTENIDO PRIVADO (SI ESTÁ LOGUEADO)
@@ -870,6 +806,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
