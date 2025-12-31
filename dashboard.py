@@ -165,6 +165,12 @@ elif not st.session_state.splash_completado:
             st.session_state.logueado = False
             st.session_state.usuario_actual = None
             st.session_state.motivo_splash = "inicio"
+
+            # ESTA ES LA LÍNEA CLAVE:
+            st.session_state.pagina = "principal" 
+            
+            # Opcional: Limpiar el caché de datos para que no queden rastros del usuario anterior
+            st.cache_data.clear()
         
         st.session_state.splash_completado = True
         st.rerun()
@@ -841,6 +847,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
