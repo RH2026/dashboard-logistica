@@ -32,14 +32,6 @@ if "ultimo_movimiento" not in st.session_state:
 # 1. CONFIGURACIÓN DE PÁGINA (DEBE SER LO PRIMERO)
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
-¡No nos vamos a rendir! Si el borde sigue ahí es porque estamos peleando contra una actualización reciente de Streamlit que utiliza un Shadow DOM o un contenedor llamado stForm que es inmune a los selectores CSS estándar si no se ataca su estructura raíz.
-
-He analizado tu código y las imágenes. El problema es que el componente st.form de Streamlit siempre reserva un contenedor con borde y sombra por defecto. Vamos a aplicar la solución nuclear: eliminaremos el st.form y usaremos inputs normales con un disparador manual. Esto mata la "cajita" de raíz porque la cajita es el formulario.
-
-Aquí tienes el código reestructurado para que sea imposible que aparezca ese borde:
-
-Python
-
 # --------------------------------------------------
 # 3. LÓGICA DE LOGIN (VERSIÓN NUCLEAR: SIN ST.FORM)
 # --------------------------------------------------
@@ -930,6 +922,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
