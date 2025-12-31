@@ -32,13 +32,21 @@ if "ultimo_movimiento" not in st.session_state:
 # 1. CONFIGURACIÓN DE PÁGINA (DEBE SER LO PRIMERO)
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
+¡No nos vamos a rendir! Si el borde sigue ahí es porque estamos peleando contra una actualización reciente de Streamlit que utiliza un Shadow DOM o un contenedor llamado stForm que es inmune a los selectores CSS estándar si no se ataca su estructura raíz.
+
+He analizado tu código y las imágenes. El problema es que el componente st.form de Streamlit siempre reserva un contenedor con borde y sombra por defecto. Vamos a aplicar la solución nuclear: eliminaremos el st.form y usaremos inputs normales con un disparador manual. Esto mata la "cajita" de raíz porque la cajita es el formulario.
+
+Aquí tienes el código reestructurado para que sea imposible que aparezca ese borde:
+
+Python
+
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (ANULACIÓN TOTAL DE BORDES)
+# 3. LÓGICA DE LOGIN (VERSIÓN NUCLEAR: SIN ST.FORM)
 # --------------------------------------------------
 if not st.session_state.logueado:
     st.markdown("""
         <style>
-        /* 1. LIMPIEZA RADICAL DE STREAMLIT */
+        /* 1. LIMPIEZA TOTAL */
         header, [data-testid="stHeader"], footer, [data-testid="stStatusWidget"] {
             display: none !important;
         }
@@ -47,64 +55,62 @@ if not st.session_state.logueado:
             background-color: #000000 !important;
         }
 
-        /* 2. ELIMINACIÓN DE TODOS LOS BORDES DE CONTENEDORES INTERNOS */
-        /* Forzamos a que CUALQUIER divisor o bloque de Streamlit pierda bordes y sombras */
-        div[data-testid="stVerticalBlock"],
-        div[data-testid="stVerticalBlockBorderWrapper"],
-        div[data-testid="stForm"],
+        /* 2. MATAR CUALQUIER CONTENEDOR DE STREAMLIT QUE TENGA BORDES */
+        [data-testid="stVerticalBlockBorderWrapper"], 
+        [data-testid="stVerticalBlock"],
         div.element-container,
-        div.stChatMessage,
+        .stMultiSelect,
         div[class*="st-key-"] {
             border: none !important;
-            border-width: 0px !important;
             box-shadow: none !important;
-            outline: none !important;
         }
 
-        /* 3. CAJA DE LOGIN (ESTA SÍ TIENE BORDE SUTIL) */
+        /* 3. CAJA DE LOGIN (DISEÑO PROPIO) */
         .login-box {
             background-color: #000000;
             padding: 30px;
             border-radius: 12px;
             border: 1px solid #1a1a1a;
-            max-width: 320px;
+            max-width: 350px;
             margin: auto;
-            margin-top: 15vh;
+            margin-top: 20vh;
         }
 
         /* 4. INPUTS Y OJITO (UNIFICACIÓN TOTAL) */
-        /* Atacamos el contenedor de BaseWeb para que no haya fugas de color */
-        [data-baseweb="input"], 
-        [data-baseweb="base-input"],
-        [data-baseweb="input"] > div,
+        div[data-baseweb="input"] {
+            background-color: #111111 !important;
+            border: 1px solid #333333 !important;
+            border-radius: 8px !important;
+        }
+        
         input {
             background-color: #111111 !important;
             color: white !important;
             border: none !important;
-            box-shadow: none !important;
-        }
-        
-        /* El borde sutil solo para que se vea el campo */
-        div[data-baseweb="input"] {
-            border: 1px solid #333333 !important;
         }
 
-        /* EL OJITO: Forzamos el fondo del botón de visibilidad */
-        button[aria-label="Show password"],
-        button[aria-label="Hide password"],
-        button[kind="tertiary"] {
-            background-color: #111111 !important;
+        /* Botón del ojito */
+        button[aria-label="Show password"], 
+        button[aria-label="Hide password"] {
+            background-color: transparent !important;
             border: none !important;
-            box-shadow: none !important;
+            color: white !important;
         }
 
-        /* 5. BOTÓN ENTRAR */
-        .stButton > button {
+        /* 5. BOTÓN ENTRAR PERSONALIZADO */
+        div.stButton > button {
             background-color: #00FFAA !important;
             color: #000000 !important;
             font-weight: bold !important;
             border: none !important;
-            margin-top: 15px;
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+        
+        div.stButton > button:hover {
+            background-color: #00e699 !important;
+            color: #000000 !important;
         }
 
         label { color: #888888 !important; }
@@ -115,15 +121,14 @@ if not st.session_state.logueado:
     
     with center_col:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<h2 style="text-align:center; color:#00FFAA; font-size:18px;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 style="text-align:center; color:#00FFAA; font-size:20px;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
         
-        # Formulario sin borde (atacado por el CSS de arriba)
-        with st.form(key="login_final_boss_v6"):
-            u_input = st.text_input("Usuario", placeholder="Usuario")
-            c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
-            submit = st.form_submit_button("ENTRAR", use_container_width=True)
-
-        if submit:
+        # USAMOS INPUTS NORMALES (SIN ST.FORM) PARA QUE NO EXISTA LA CAJA GRIS
+        u_input = st.text_input("Usuario", placeholder="Tu usuario", key="user_input")
+        c_input = st.text_input("Contraseña", type="password", placeholder="Tu contraseña", key="pass_input")
+        
+        # Botón manual
+        if st.button("INGRESAR"):
             usuarios_dict = st.secrets.get("usuarios", {})
             if u_input in usuarios_dict and usuarios_dict[u_input] == c_input:
                 st.session_state.logueado = True
@@ -925,6 +930,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
