@@ -29,44 +29,122 @@ color_verde = "#00FF00"
 color_borde_gris = "#333333"
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN
+# 3. LÓGICA DE LOGIN CON CAJA 3D (PAQUETERÍA)
 # --------------------------------------------------
-st.markdown(f"""
-        <style>
-        .stApp {{ background-color: {color_fondo_nativo} !important; }}
-        .stForm {{
-            background-color: {color_fondo_nativo} !important;
-            padding: 40px; border-radius: 20px;
-            border: 1.5px solid {color_borde_gris} !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-top: -30px;
-        }}
-        @keyframes pulse-intense {{
-            0% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
-            50% {{ transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.6)); }}
-            100% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
-        }}
-        .animated-icon {{ animation: pulse-intense 2s infinite ease-in-out; display: flex; justify-content: center; margin-bottom: 20px; }}
-        div[data-testid="stTextInputRootElement"] {{ background-color: #1a1c24 !important; border: 1px solid #30333d !important; border-radius: 10px !important; }}
-        div[data-testid="stTextInputRootElement"] > div {{ background-color: transparent !important; }}
-        input {{ color: white !important; }}
-        div[data-testid="stTextInputRootElement"] button {{ color: {color_verde} !important; }}
-        .login-header {{ text-align: center; color: {color_blanco}; font-size: 24px; font-weight: bold; margin-bottom: 25px; letter-spacing: 2px; text-transform: uppercase; }}
-        header, footer {{visibility: hidden;}}
-        </style>
-    """, unsafe_allow_html=True)
+if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
+    st.markdown(f"""
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+
+        .stApp {{ background-color: {color_fondo_nativo} !important; }}
+        
+        /* CONTENEDOR DE LA CAJA 3D */
+        .scene {{
+            width: 100%;
+            height: 120px;
+            perspective: 600px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }}
+
+        .cube {{
+            width: 60px;
+            height: 50px;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(-20deg) rotateY(45deg);
+            animation: move-package 6s infinite ease-in-out;
+        }}
+
+        /* CARAS DE CARTÓN DE LA CAJA */
+        .cube-face {{
+            position: absolute;
+            width: 60px;
+            height: 50px;
+            background: #d2a679; /* Color Cartón */
+            border: 1px solid #b08d5c;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
+        }}
+
+        /* Cinta de embalaje sutil */
+        .cube-face::after {{
+            content: '';
+            position: absolute;
+            top: 40%;
+            width: 100%;
+            height: 8px;
+            background: rgba(0,0,0,0.08);
+        }}
+
+        .front  {{ transform: rotateY(  0deg) translateZ(30px); }}
+        .back   {{ transform: rotateY(180deg) translateZ(30px); }}
+        .right  {{ transform: rotateY( 90deg) translateZ(30px); }}
+        .left   {{ transform: rotateY(-90deg) translateZ(30px); }}
+        .top    {{ width: 60px; height: 60px; transform: rotateX( 90deg) translateZ(25px); background: #e3bc94; border-bottom: 2px solid rgba(0,0,0,0.1); }}
+        .bottom {{ width: 60px; height: 60px; transform: rotateX(-90deg) translateZ(25px); }}
+
+        @keyframes move-package {{
+            0% {{ transform: translateY(0px) rotateX(-20deg) rotateY(45deg); }}
+            50% {{ transform: translateY(-15px) rotateX(-25deg) rotateY(225deg); }}
+            100% {{ transform: translateY(0px) rotateX(-20deg) rotateY(405deg); }}
+        }}
+
+        /* ESTILO DEL FORMULARIO */
+        .stForm {{
+            background-color: {color_fondo_nativo} !important;
+            padding: 40px; border-radius: 20px;
+            border: 1.5px solid {color_borde_gris} !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-top: -30px;
+        }}
+        
+        .login-header {{ 
+            text-align: center; 
+            color: {color_blanco}; 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin-bottom: 25px; 
+            font-family: 'Courier Prime', monospace;
+            letter-spacing: 2px; 
+            text-transform: uppercase; 
+        }}
+
+        div[data-testid="stTextInputRootElement"] {{ background-color: #1a1c24 !important; border: 1px solid #30333d !important; border-radius: 10px !important; }}
+        div[data-testid="stTextInputRootElement"] > div {{ background-color: transparent !important; }}
+        input {{ color: white !important; font-family: 'Courier Prime', monospace; }}
+        div[data-testid="stTextInputRootElement"] button {{ color: {color_verde} !important; }}
+        
+        header, footer {{visibility: hidden;}}
+        </style>
+    """, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown('<div style="height:5vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
-            st.markdown(f'''<div class="animated-icon"><svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="{color_blanco}" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><circle cx="12" cy="11" r="3" fill="{color_blanco}" fill-opacity="0.2"></circle><path d="M12 11v4"></path></svg></div>''', unsafe_allow_html=True)
+            # Caja 3D Flotante
+            st.markdown('''
+                <div class="scene">
+                    <div class="cube">
+                        <div class="cube-face front"></div>
+                        <div class="cube-face back"></div>
+                        <div class="cube-face right"></div>
+                        <div class="cube-face left"></div>
+                        <div class="cube-face top"></div>
+                        <div class="cube-face bottom"></div>
+                    </div>
+                </div>
+            ''', unsafe_allow_html=True)
+            
             st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
             if submit:
+                # REINSTALADA TU LÓGICA ORIGINAL DE SECRETS
                 usuarios = st.secrets["usuarios"]
                 if u_input in usuarios and str(usuarios[u_input]) == str(c_input):
                     st.session_state.logueado = True
@@ -76,6 +154,7 @@ st.markdown(f"""
                     st.rerun()
                 else:
                     st.error("Acceso Denegado")
+                    
     st.stop()
 
 # --------------------------------------------------
@@ -811,6 +890,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
