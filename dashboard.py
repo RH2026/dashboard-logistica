@@ -116,18 +116,6 @@ if not st.session_state.splash_completado:
     st.rerun()
 
 # --------------------------------------------------
-# 5. CONTENIDO DEL TABLERO (Solo visible tras login y splash)
-# --------------------------------------------------
-st.title(f"Dashboard Logístico - {st.session_state.usuario_actual}")
-st.write("Aquí va tu contenido principal...")
-
-if st.sidebar.button("Cerrar Sesión"):
-    st.session_state.logueado = False
-    st.session_state.splash_completado = False
-    st.session_state.motivo_splash = "logout"
-    st.rerun()
-
-# --------------------------------------------------
 # INICIO DEL CONTENIDO PRIVADO (SI ESTÁ LOGUEADO)
 # --------------------------------------------------
 else:
@@ -806,6 +794,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
