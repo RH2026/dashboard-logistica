@@ -85,13 +85,14 @@ if not st.session_state.get('splash_visto', False):
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# DISEÑO DARK (FONDO NEGRO, BORDE GRIS E ICONO ALIEN BLANCO)
+# DISEÑO DARK (FONDO NEGRO, BORDE GRIS E ICONO ESCUDO BLANCO)
 # --------------------------------------------------
 if not st.session_state.logueado:
-    # Colores definidos
-    color_acento = "#FFFFFF"  # Blanco para el Alien y Título
-    verde_id = "#00FF00"      # Mantenemos el verde solo para el botón y detalles
-    
+    # Definición de colores
+    color_blanco = "#FFFFFF"
+    color_verde = "#00FF00" # Para el botón y el ojito
+    color_borde_gris = "#333333"
+
     st.markdown(f"""
         <style>
         /* FONDO GENERAL */
@@ -103,58 +104,58 @@ if not st.session_state.logueado:
         .stForm {{
             background-color: #000000 !important;
             padding: 40px;
-            border-radius: 25px;
-            border: 1px solid #333333 !important;
+            border-radius: 20px;
+            border: 1.5px solid {color_borde_gris} !important;
             box-shadow: 0 10px 30px rgba(0,0,0,1);
         }}
 
-        /* ANIMACIÓN DE PULSO PARA EL ALIEN */
+        /* ANIMACIÓN DE PULSO PARA EL ESCUDO */
         @keyframes pulse-white {{
-            0% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px white); }}
-            50% {{ transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 8px white); }}
-            100% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px white); }}
+            0% {{ transform: scale(1); opacity: 0.8; filter: drop-shadow(0 0 2px rgba(255,255,255,0.3)); }}
+            50% {{ transform: scale(1.03); opacity: 1; filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); }}
+            100% {{ transform: scale(1); opacity: 0.8; filter: drop-shadow(0 0 2px rgba(255,255,255,0.3)); }}
         }}
-        .animated-alien {{
+        .animated-icon {{
             animation: pulse-white 4s infinite ease-in-out;
             display: flex;
             justify-content: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }}
 
         /* FIX INPUTS Y OJITO */
         div[data-testid="stTextInputRootElement"] {{
             background-color: #111111 !important;
             border: 1px solid #222222 !important;
-            border-radius: 12px !important;
+            border-radius: 10px !important;
         }}
         div[data-testid="stTextInputRootElement"] > div {{
             background-color: transparent !important;
         }}
         div[data-testid="stTextInputRootElement"] button {{
-            color: {verde_id} !important;
+            background-color: transparent !important;
+            color: {color_verde} !important;
         }}
 
-        /* TEXTOS EN BLANCO */
+        /* TEXTOS */
         .login-header {{
             text-align: center; 
-            color: #FFFFFF; 
-            font-size: 22px; 
+            color: {color_blanco}; 
+            font-size: 24px; 
             font-weight: 300; 
-            margin-bottom: 30px;
-            letter-spacing: 4px;
+            margin-bottom: 25px;
+            letter-spacing: 3px;
             text-transform: uppercase;
         }}
-        label {{ color: #888888 !important; font-size: 14px !important; }}
+        label {{ color: #888888 !important; }}
 
-        /* BOTÓN INGRESAR (VERDE PARA QUE RESALTE) */
+        /* BOTÓN INGRESAR */
         div.stButton > button {{
-            background-color: {verde_id} !important;
+            background-color: {color_verde} !important;
             color: black !important;
             font-weight: bold !important;
-            border-radius: 12px !important;
+            border-radius: 10px !important;
             border: none !important;
-            padding: 12px 0 !important;
-            margin-top: 10px;
+            padding: 10px 0 !important;
         }}
         
         header, footer {{visibility: hidden;}}
@@ -163,21 +164,20 @@ if not st.session_state.logueado:
 
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
-        st.markdown('<div style="height:10vh"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:12vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
-            # ICONO ALIEN "GREY" MINIMALISTA EN BLANCO
+            # ICONO ESCUDO SVG EN BLANCO
             st.markdown(f'''
-                <div class="animated-alien">
-                    <svg width="90" height="90" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2C7 2 4 6 4 11C4 15.5 7.5 19 10 21.5C10.5 22 11.2 22 12 22C12.8 22 13.5 22 14 21.5C16.5 19 20 15.5 20 11C20 6 17 2 12 2Z" 
-                              stroke="white" stroke-width="1" fill="white" fill-opacity="0.05"/>
-                        <path d="M8.5 14C9.5 14 11 12.5 11 10.5C11 8.5 9.5 7.5 8.5 7.5C7.5 7.5 6 8.5 6 10.5C6 12.5 7.5 14 8.5 14Z" fill="white"/>
-                        <path d="M15.5 14C16.5 14 18 12.5 18 10.5C18 8.5 16.5 7.5 15.5 7.5C14.5 7.5 13 8.5 13 10.5C13 12.5 14.5 14 15.5 14Z" fill="white"/>
+                <div class="animated-icon">
+                    <svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="{color_blanco}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <circle cx="12" cy="11" r="3" fill="{color_blanco}" fill-opacity="0.1"></circle>
+                        <path d="M12 11v4"></path>
                     </svg>
                 </div>
             ''', unsafe_allow_html=True)
             
-            st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
@@ -190,7 +190,7 @@ if not st.session_state.logueado:
                     st.session_state.ultimo_movimiento = time.time()
                     st.rerun()
                 else:
-                    st.error("Credenciales inválidas")
+                    st.error("Acceso Denegado")
     
     st.stop()
 
@@ -873,6 +873,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
