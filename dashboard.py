@@ -157,7 +157,17 @@ else:
     df = cargar_datos()
 
     # BARRA LATERAL
-    st.sidebar.markdown(f'### 👤 Sesión: <span style="color:#00FFAA;">{st.session_state.usuario_actual}</span>', unsafe_allow_html=True)
+    st.sidebar.markdown(
+    f"""
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 24px; color: #007BFF;">👤</span>
+        <h3 style="margin: 0; color: white;">Sesión: 
+            <span style="color: #00FFAA;">{st.session_state.usuario_actual}</span>
+        </h3>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
     
     st.sidebar.divider()
             
@@ -806,6 +816,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
