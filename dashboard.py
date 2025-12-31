@@ -164,7 +164,7 @@ else:
     # --------------------------------------------------
     # BOTÓN DE CIERRE DE SESIÓN EN LA BARRA LATERAL
     # --------------------------------------------------
-    st.sidebar.markdown(f'### 👤 Sesión Activa: {st.session_state.usuario_actual}')
+    st.sidebar.markdown(f'### 👤 Sesión Activa: <span style="color:#00FFAA;">{st.session_state.usuario_actual}</span>', unsafe_allow_html=True)
     
         
     if st.sidebar.button("Cerrar Sesión", use_container_width=True, key="logout_sidebar"):
@@ -785,6 +785,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
