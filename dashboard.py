@@ -47,31 +47,31 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (CORRECCIÓN: OJITO SIN FONDO GRIS)
+# 3. LÓGICA DE LOGIN (LIMPIEZA ABSOLUTA)
 # --------------------------------------------------
 if not st.session_state.logueado:
     st.markdown(f"""
         <style>
-        /* 1. FONDO NEGRO TOTAL Y ELIMINAR HEADER */
+        /* 1. FONDO NEGRO TOTAL Y OCULTAR HEADER */
         header[data-testid="stHeader"] {{ display: none !important; }}
         
         .stApp {{
             background-color: #000000 !important;
-            background-image: none !important;
-        }}
-        
-        /* 2. CAMUFLAJE DE LA CAJA FANTASMA */
-        div[data-testid="stNotification"], 
-        div[data-testid="stException"],
-        .stAlert,
-        div.element-container:has(div.stAlert) {{
-            background-color: #000000 !important;
-            border: none !important;
-            box-shadow: none !important;
-            display: none !important;
         }}
 
-        /* 3. CAJA DE LOGIN COMPACTA */
+        /* 2. ELIMINAR CAJITA FANTASMA Y SUS BORDES */
+        /* Bloqueamos cualquier contenedor de mensaje, alerta o excepción */
+        div[data-testid="stNotification"], 
+        div[data-testid="stException"],
+        div.stAlert,
+        div[class*="st-key-"] {{
+            display: none !important;
+            border: none !important;
+            background-color: transparent !important;
+            box-shadow: none !important;
+        }}
+
+        /* 3. CAJA DE LOGIN */
         .login-box {{
             background-color: #000000;
             padding: 20px;
@@ -79,35 +79,37 @@ if not st.session_state.logueado:
             border: 1px solid #1a1a1a;
             max-width: 320px;
             margin: auto;
-            margin-top: 10vh;
+            margin-top: 15vh;
         }}
-        
-        /* INPUTS Y EL BOTÓN DEL OJITO */
-        .stTextInput > div > div > input, 
-        .stTextInput div[data-baseweb="input"] {{
+
+        /* 4. INPUTS Y UNIFICACIÓN DEL OJITO */
+        /* Forzamos el fondo negro en el contenedor del input y en el botón del ojito */
+        div[data-baseweb="input"], 
+        div[data-baseweb="input"] > div,
+        input[type="text"], 
+        input[type="password"],
+        button[aria-label="Show password"],
+        button[aria-label="Hide password"] {{
             background-color: #111111 !important;
             color: white !important;
+            border: none !important;
+        }}
+        
+        /* Ajuste fino para el borde del input cuando está enfocado */
+        div[data-baseweb="input"] {{
             border: 1px solid #333333 !important;
         }}
 
-        /* CORRECCIÓN ESPECÍFICA PARA EL BOTÓN DEL OJITO */
-        button[aria-label="Show password"] {{
-            background-color: #111111 !important;
-            border: none !important;
-            color: white !important;
-        }}
-        
-        /* BOTÓN ENTRAR */
+        /* 5. BOTÓN ENTRAR */
         .stButton > button {{
             background-color: #00FFAA !important;
             color: #000000 !important;
             font-weight: bold !important;
-            padding: 2px !important;
-            font-size: 13px !important;
             border: none !important;
+            margin-top: 10px;
         }}
 
-        label {{ color: #888888 !important; font-size: 12px !important; }}
+        label {{ color: #888888 !important; }}
         </style>
     """, unsafe_allow_html=True)
 
@@ -115,9 +117,9 @@ if not st.session_state.logueado:
     
     with center_col:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<h3 style="text-align:center; color:#00FFAA; margin-bottom:15px; font-size:16px;">🔐 Acceso al Sistema</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 style="text-align:center; color:#00FFAA; margin-bottom:20px; font-size:18px;">🔐 ACCESO AL SISTEMA</h3>', unsafe_allow_html=True)
         
-        with st.form(key="login_final_black"):
+        with st.form(key="login_final_fixed"):
             u_input = st.text_input("Usuario", placeholder="Usuario")
             c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
             submit = st.form_submit_button("ENTRAR", use_container_width=True)
@@ -131,7 +133,7 @@ if not st.session_state.logueado:
                 st.session_state.splash_visto = False
                 st.rerun()
             else:
-                st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:12px; margin-top:5px;">Datos incorrectos</p>', unsafe_allow_html=True)
+                st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:12px;">Datos incorrectos</p>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -924,6 +926,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
