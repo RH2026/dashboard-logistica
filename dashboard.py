@@ -85,35 +85,36 @@ if not st.session_state.get('splash_visto', False):
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# DISEÑO DARK (FONDO NEGRO, BORDE GRIS E ICONO ESCUDO BLANCO)
+# DISEÑO ESTILO NATIVO STREAMLIT (FONDO #0e1117)
 # --------------------------------------------------
 if not st.session_state.logueado:
     # Definición de colores
+    color_fondo_nativo = "#0e1117"  # El color de tus capturas
     color_blanco = "#FFFFFF"
-    color_verde = "#00FF00" # Para el botón y el ojito
+    color_verde = "#00FF00" 
     color_borde_gris = "#333333"
 
     st.markdown(f"""
         <style>
-        /* FONDO GENERAL */
+        /* FONDO GENERAL NATIVO */
         .stApp {{
-            background-color: #000000 !important;
+            background-color: {color_fondo_nativo} !important;
         }}
         
-        /* CAJA DE LOGIN - BORDE GRIS OSCURO */
+        /* CAJA DE LOGIN */
         .stForm {{
-            background-color: #000000 !important;
+            background-color: {color_fondo_nativo} !important;
             padding: 40px;
             border-radius: 20px;
             border: 1.5px solid {color_borde_gris} !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }}
 
-        /* ANIMACIÓN DE PULSO PARA EL ESCUDO */
+        /* ANIMACIÓN DE PULSO PARA EL ESCUDO BLANCO */
         @keyframes pulse-white {{
-            0% {{ transform: scale(1); opacity: 0.8; filter: drop-shadow(0 0 2px rgba(255,255,255,0.3)); }}
-            50% {{ transform: scale(1.03); opacity: 1; filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); }}
-            100% {{ transform: scale(1); opacity: 0.8; filter: drop-shadow(0 0 2px rgba(255,255,255,0.3)); }}
+            0% {{ transform: scale(1); opacity: 0.8; }}
+            50% {{ transform: scale(1.03); opacity: 1; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }}
+            100% {{ transform: scale(1); opacity: 0.8; }}
         }}
         .animated-icon {{
             animation: pulse-white 4s infinite ease-in-out;
@@ -122,40 +123,32 @@ if not st.session_state.logueado:
             margin-bottom: 15px;
         }}
 
-        /* FIX INPUTS Y OJITO */
+        /* FIX INPUTS (Se integran con el fondo nativo) */
         div[data-testid="stTextInputRootElement"] {{
-            background-color: #111111 !important;
-            border: 1px solid #222222 !important;
+            background-color: #1a1c24 !important; /* Un poco más claro que el fondo para contraste */
+            border: 1px solid #30333d !important;
             border-radius: 10px !important;
         }}
+        
         div[data-testid="stTextInputRootElement"] > div {{
             background-color: transparent !important;
         }}
+
+        /* Texto e icono del ojito */
+        input {{ color: white !important; }}
         div[data-testid="stTextInputRootElement"] button {{
-            background-color: transparent !important;
             color: {color_verde} !important;
         }}
 
-        /* TEXTOS */
+        /* TÍTULO EN BLANCO */
         .login-header {{
             text-align: center; 
             color: {color_blanco}; 
             font-size: 24px; 
-            font-weight: 300; 
+            font-weight: bold; 
             margin-bottom: 25px;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
             text-transform: uppercase;
-        }}
-        label {{ color: #888888 !important; }}
-
-        /* BOTÓN INGRESAR */
-        div.stButton > button {{
-            background-color: {color_verde} !important;
-            color: black !important;
-            font-weight: bold !important;
-            border-radius: 10px !important;
-            border: none !important;
-            padding: 10px 0 !important;
         }}
         
         header, footer {{visibility: hidden;}}
@@ -166,7 +159,7 @@ if not st.session_state.logueado:
     with col2:
         st.markdown('<div style="height:12vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
-            # ICONO ESCUDO SVG EN BLANCO
+            # ESCUDO EN BLANCO
             st.markdown(f'''
                 <div class="animated-icon">
                     <svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="{color_blanco}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -177,21 +170,19 @@ if not st.session_state.logueado:
                 </div>
             ''', unsafe_allow_html=True)
             
-            st.markdown(f'<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
             if submit:
+                # Tu lógica de login aquí
                 usuarios = st.secrets["usuarios"]
                 if u_input in usuarios and usuarios[u_input] == c_input:
                     st.session_state.logueado = True
-                    st.session_state.usuario_actual = u_input
-                    st.session_state.ultimo_movimiento = time.time()
                     st.rerun()
                 else:
                     st.error("Acceso Denegado")
-    
     st.stop()
 
 # --------------------------------------------------
@@ -873,6 +864,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
