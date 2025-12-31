@@ -5,7 +5,7 @@ import time
 import base64
 import textwrap
 
-# 1. FUNCIÓN PARA IMAGEN DE FONDO
+# 1. FUNCIÓN PARA IMAGEN DE FONDO (Ya no es necesaria para el fondo, pero la mantengo por si la usas en otra parte)
 def get_base64_image(image_path):
     try:
         with open(image_path, "rb") as img_file:
@@ -13,7 +13,7 @@ def get_base64_image(image_path):
     except:
         return ""
 
-# 2. ESTADOS DE SESIÓN (Control de navegación y login)
+# 2. ESTADOS DE SESIÓN (Sin cambios)
 if "splash_visto" not in st.session_state:
     st.session_state.splash_visto = False
 if "motivo_splash" not in st.session_state:
@@ -28,17 +28,14 @@ if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time()
 
 # --------------------------------------------------
-# 3. SPLASH SCREEN (CORREGIDO PARA LOGOUT)
+# 3. SPLASH SCREEN
 # --------------------------------------------------
-# Usamos .get para que si la sesión está vacía no marque error
 if not st.session_state.get('splash_visto', False):
-    # Definir el mensaje según el motivo
     if st.session_state.get('motivo_splash') == "logout":
         texto_splash = "Bye, cerrando sistema…"
     else:
         texto_splash = "Inicializando módulos logísticos…"
 
-    # Renderizado del CSS y HTML del Splash
     st.markdown("""
     <style>
     .splash-container { 
@@ -48,19 +45,16 @@ if not st.session_state.get('splash_visto', False):
         align-items: center; 
         height: 100vh; 
         padding-top: 350px; 
-        background-color: #0e1117; 
+        background-color: #000000; 
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
+        top: 0; left: 0; width: 100%;
         z-index: 9999;
     }
     .loader { 
-        border: 6px solid #2a2a2a; 
+        border: 6px solid #1a1a1a; 
         border-top: 6px solid #00FFAA; 
         border-radius: 50%; 
-        width: 120px; 
-        height: 120px; 
+        width: 120px; height: 120px; 
         animation: spin 1s linear infinite; 
         margin-bottom: 20px; 
     }
@@ -71,76 +65,85 @@ if not st.session_state.get('splash_visto', False):
     st.markdown(f'''
         <div class="splash-container">
             <div class="loader"></div>
-            <div style="color:#aaa; font-size:14px; font-family:sans-serif;">{texto_splash}</div>
+            <div style="color:#666; font-size:14px; font-family:sans-serif;">{texto_splash}</div>
         </div>
     ''', unsafe_allow_html=True)
     
     time.sleep(2)
     
-    # --- LÓGICA DE SALIDA O REINICIO ---
     if st.session_state.get('motivo_splash') == "logout":
-        # 1. Limpiamos toda la memoria
         st.session_state.clear()
-        
-        # 2. IMPORTANTE: Re-inicializamos los estados para que el Login y Sidebar funcionen
         st.session_state['autenticado'] = False
         st.session_state['splash_visto'] = True
         st.session_state['motivo_splash'] = "inicio"
     else:
-        # Flujo de inicio normal
         st.session_state['splash_visto'] = True
-        st.session_state['motivo_splash'] = "inicio"
     
     st.rerun()
 
 # 4. CONFIGURACIÓN DE PÁGINA
-st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# FONDO DE PANTALLA SOLO PARA LOGIN
+# DISEÑO DARK (FONDO NEGRO Y CAJA NEGRA)
 # --------------------------------------------------
 if not st.session_state.logueado:
-    img_base64 = get_base64_image("1.jpg")
-    st.markdown(f"""
+    st.markdown("""
         <style>
-        .stApp {{
-            background-image: url("data:image/jpg;base64,{img_base64}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }}
-        /* CAJA DE LOGIN */
-        .stForm {{
-            background-color: #1e293b;
-            padding: 25px;
-            border-radius: 15px;
-            border: 1px solid #334151;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }}
-        /* UNIFICACIÓN DE COLOR INPUTS */
-        div[data-testid="stTextInputRootElement"], 
-        div[data-testid="stTextInputRootElement"] *, 
-        .stForm input {{
-            background-color: #475569 !important;
+        /* FONDO GENERAL DE LA APP */
+        .stApp {
+            background-color: #000000 !important;
+        }
+        
+        /* CAJA DE LOGIN (NEGRA CON BORDE SUTIL) */
+        .stForm {
+            background-color: #000000 !important;
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid #333333 !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,1);
+        }
+
+        /* INPUTS (GRIS MUY OSCURO PARA CONTRASTE) */
+        div[data-testid="stTextInputRootElement"] {
+            background-color: #111111 !important;
+            border: 1px solid #333333 !important;
+            border-radius: 8px !important;
+        }
+
+        input {
             color: white !important;
-            border: none !important;
-        }}
-        .login-header {{
-            text-align: center; color: white; font-size: 24px; font-weight: bold; margin-bottom: 20px;
-        }}
+        }
+
+        /* ETIQUETAS DE TEXTO */
+        label {
+            color: #888888 !important;
+        }
+
+        .login-header {
+            text-align: center; 
+            color: white; 
+            font-size: 28px; 
+            font-weight: 300; 
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+        
+        /* OCULTAR ELEMENTOS INNECESARIOS EN LOGIN */
+        header, footer {visibility: hidden;}
         </style>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1, 1, 1])
+    col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
+        st.markdown('<div style="height:15vh"></div>', unsafe_allow_html=True) # Espaciador superior
         with st.form("login_form"):
-            st.markdown('<div class="login-header">🔐 Acceso</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-header">SISTEMA LOGÍSTICO</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
-            submit = st.form_submit_button("Ingresar", use_container_width=True)
+            submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
             if submit:
-                # Usamos los secretos guardados en Streamlit Cloud
                 usuarios = st.secrets["usuarios"]
                 if u_input in usuarios and usuarios[u_input] == c_input:
                     st.session_state.logueado = True
@@ -148,9 +151,8 @@ if not st.session_state.logueado:
                     st.session_state.ultimo_movimiento = time.time()
                     st.rerun()
                 else:
-                    st.error("Usuario o contraseña incorrectos")
+                    st.error("Credenciales inválidas")
     
-    # Detenemos la ejecución aquí si no está logueado
     st.stop()
 
 # --------------------------------------------------
@@ -832,6 +834,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
