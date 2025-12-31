@@ -65,7 +65,7 @@ if not st.session_state.get('splash_visto', False):
     
     .splash-text {{
         color: #FFFFFF; 
-        font-size: 16px; 
+        font-size: 10px; 
         font-family: sans-serif;
         letter-spacing: 1px;
         opacity: 0.8;
@@ -97,7 +97,7 @@ if not st.session_state.get('splash_visto', False):
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# DISEÑO OPTIMIZADO PARA MÓVIL (RESPONSIVE)
+# DISEÑO ESTILO NATIVO STREAMLIT (CAJA POSICIONADA MÁS ARRIBA)
 # --------------------------------------------------
 if not st.session_state.logueado:
     color_fondo_nativo = "#0e1117" 
@@ -111,34 +111,18 @@ if not st.session_state.logueado:
             background-color: {color_fondo_nativo} !important;
         }}
         
-        /* Ajuste de la caja para que sea responsiva */
         .stForm {{
             background-color: {color_fondo_nativo} !important;
-            padding: 30px 20px !important;
+            padding: 40px;
             border-radius: 20px;
             border: 1.5px solid {color_borde_gris} !important;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }}
-
-        /* CSS ESPECÍFICO PARA MÓVILES */
-        @media (max-width: 640px) {{
-            .stForm {{
-                padding: 20px 15px !important;
-                margin-top: -20px !important; /* Sube la caja en móvil */
-            }}
-            .login-header {{
-                font-size: 20px !important; /* Texto un poco más pequeño */
-                margin-bottom: 15px !important;
-            }}
-            .animated-icon svg {{
-                width: 60px !important; /* Icono más pequeño para ahorrar espacio */
-                height: 60px !important;
-            }}
+            margin-top: -30px; /* Ajuste fino para subir la caja aún más */
         }}
 
         @keyframes pulse-intense {{
             0% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
-            50% {{ transform: scale(1.12); opacity: 1; filter: drop-shadow(0 0 12px rgba(255,255,255,0.5)); }}
+            50% {{ transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.6)); }}
             100% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
         }}
         
@@ -146,7 +130,7 @@ if not st.session_state.logueado:
             animation: pulse-intense 2s infinite ease-in-out;
             display: flex;
             justify-content: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }}
 
         div[data-testid="stTextInputRootElement"] {{
@@ -159,8 +143,7 @@ if not st.session_state.logueado:
             background-color: transparent !important;
         }}
 
-        input {{ color: white !important; font-size: 16px !important; }} /* 16px evita zoom automático en iPhone */
-        
+        input {{ color: white !important; }}
         div[data-testid="stTextInputRootElement"] button {{
             color: {color_verde} !important;
         }}
@@ -179,11 +162,10 @@ if not st.session_state.logueado:
         </style>
     """, unsafe_allow_html=True)
 
-    # Usamos columnas que en móvil se apilan automáticamente
-    col1, col2, col3 = st.columns([0.1, 1, 0.1]) # Columnas laterales muy delgadas en móvil
+    col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
-        # Espaciado superior mínimo para móvil
-        st.markdown('<div style="height:3vh"></div>', unsafe_allow_html=True)
+        # CAMBIO: Reducimos de 12vh a 5vh para subir la caja
+        st.markdown('<div style="height:5vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
             st.markdown(f'''
                 <div class="animated-icon">
@@ -195,7 +177,7 @@ if not st.session_state.logueado:
                 </div>
             ''', unsafe_allow_html=True)
             
-            st.markdown('<div class="login-header">Acceso</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
@@ -888,6 +870,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
