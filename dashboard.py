@@ -85,7 +85,7 @@ if not st.session_state.get('splash_visto', False):
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# DISEÑO DARK (FONDO NEGRO Y CAJA NEGRA)
+# DISEÑO DARK (FONDO NEGRO, BORDE VERDE Y FIX INPUT)
 # --------------------------------------------------
 if not st.session_state.logueado:
     st.markdown("""
@@ -95,50 +95,60 @@ if not st.session_state.logueado:
             background-color: #000000 !important;
         }
         
-        /* CAJA DE LOGIN (NEGRA CON BORDE SUTIL) */
+        /* CAJA DE LOGIN CON BORDE VERDE NEÓN */
         .stForm {
             background-color: #000000 !important;
             padding: 40px;
             border-radius: 20px;
-            border: 1px solid #333333 !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,1);
+            border: 2px solid #00FFAA !important; /* Verde como el splash */
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.2); /* Resplandor suave */
         }
 
-        /* INPUTS (GRIS MUY OSCURO PARA CONTRASTE) */
+        /* FIX PARA INPUTS Y EL BOTÓN DEL OJITO */
         div[data-testid="stTextInputRootElement"] {
             background-color: #111111 !important;
             border: 1px solid #333333 !important;
             border-radius: 8px !important;
         }
 
+        /* Asegura que el área del 'ojito' tenga el mismo fondo que el input */
+        div[data-testid="stTextInputRootElement"] > div {
+            background-color: transparent !important;
+        }
+        
+        /* Color del texto e iconos */
         input {
             color: white !important;
         }
+        
+        button[aria-label="Show password"] {
+            color: #00FFAA !important;
+        }
 
-        /* ETIQUETAS DE TEXTO */
+        /* TÍTULO Y ETIQUETAS */
+        .login-header {
+            text-align: center; 
+            color: #00FFAA; 
+            font-size: 28px; 
+            font-weight: bold; 
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+        
         label {
             color: #888888 !important;
         }
-
-        .login-header {
-            text-align: center; 
-            color: white; 
-            font-size: 28px; 
-            font-weight: 300; 
-            margin-bottom: 30px;
-            letter-spacing: 1px;
-        }
         
-        /* OCULTAR ELEMENTOS INNECESARIOS EN LOGIN */
+        /* OCULTAR HEADER Y FOOTER */
         header, footer {visibility: hidden;}
         </style>
     """, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
-        st.markdown('<div style="height:15vh"></div>', unsafe_allow_html=True) # Espaciador superior
+        st.markdown('<div style="height:15vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
-            st.markdown('<div class="login-header">SISTEMA LOGÍSTICO</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-header">ACCESO SISTEMA</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
@@ -834,6 +844,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
