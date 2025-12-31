@@ -884,63 +884,63 @@ else:
         st.write("##")
         st.info("💡 Esta es tu nueva página de KPIs. Aquí puedes agregar análisis gerenciales profundos.")
 
-    # --------------------------------------------------
-    # BLOQUE: CHATBOT ANALISTA DE DATOS (GRAFICADOR)
-    # --------------------------------------------------
-    st.divider()
-    st.subheader("🤖 Asistente Inteligente de Análisis")
-    
-    # 1. Memoria del chat
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-    
-    # 2. Renderizar historial
-    for m in st.session_state.chat_history:
-        with st.chat_message(m["role"]):
-            st.markdown(m["content"])
-            if "fig" in m: st.plotly_chart(m["fig"], use_container_width=True)
-    
-    # 3. Entrada de usuario
-    if prompt := st.chat_input("¿Qué quieres analizar hoy? (Ej: Grafica fletes por fletera)"):
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-    
-        with st.chat_message("assistant"):
-            p = prompt.lower()
-            response_text = ""
-            fig_to_show = None
-    
-            # --- Lógica de Gráficos ---
-            if "grafica" in p or "gráfico" in p or "compara" in p:
-                if "fletera" in p:
-                    res = df.groupby("FLETERA")["COSTO_FLETE"].sum().reset_index()
-                    import plotly.express as px
-                    fig_to_show = px.bar(res, x="FLETERA", y="COSTO_FLETE", title="Gasto por Fletera", color_discrete_sequence=['#00FFAA'])
-                    response_text = "Aquí tienes el desglose de gastos por transportista:"
+        # --------------------------------------------------
+        # BLOQUE: CHATBOT ANALISTA DE DATOS (GRAFICADOR)
+        # --------------------------------------------------
+        st.divider()
+        st.subheader("🤖 Asistente Inteligente de Análisis")
+        
+        # 1. Memoria del chat
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
+        
+        # 2. Renderizar historial
+        for m in st.session_state.chat_history:
+            with st.chat_message(m["role"]):
+                st.markdown(m["content"])
+                if "fig" in m: st.plotly_chart(m["fig"], use_container_width=True)
+        
+        # 3. Entrada de usuario
+        if prompt := st.chat_input("¿Qué quieres analizar hoy? (Ej: Grafica fletes por fletera)"):
+            st.session_state.chat_history.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+        
+            with st.chat_message("assistant"):
+                p = prompt.lower()
+                response_text = ""
+                fig_to_show = None
+        
+                # --- Lógica de Gráficos ---
+                if "grafica" in p or "gráfico" in p or "compara" in p:
+                    if "fletera" in p:
+                        res = df.groupby("FLETERA")["COSTO_FLETE"].sum().reset_index()
+                        import plotly.express as px
+                        fig_to_show = px.bar(res, x="FLETERA", y="COSTO_FLETE", title="Gasto por Fletera", color_discrete_sequence=['#00FFAA'])
+                        response_text = "Aquí tienes el desglose de gastos por transportista:"
+                    
+                    elif "destino" in p or "ciudad" in p:
+                        res = df.groupby("DESTINO")["COSTO_FLETE"].sum().reset_index()
+                        import plotly.express as px
+                        fig_to_show = px.pie(res, values="COSTO_FLETE", names="DESTINO", title="Distribución por Destino", hole=0.4)
+                        response_text = "Esta es la distribución del gasto por zonas:"
                 
-                elif "destino" in p or "ciudad" in p:
-                    res = df.groupby("DESTINO")["COSTO_FLETE"].sum().reset_index()
-                    import plotly.express as px
-                    fig_to_show = px.pie(res, values="COSTO_FLETE", names="DESTINO", title="Distribución por Destino", hole=0.4)
-                    response_text = "Esta es la distribución del gasto por zonas:"
-            
-            # --- Lógica de Totales ---
-            elif "total" in p or "cuánto" in p:
-                gasto = df["COSTO_FLETE"].sum()
-                response_text = f"El gasto total acumulado en fletes es de **${gasto:,.2f}**."
-            
-            else:
-                response_text = "Puedo ayudarte a graficar gastos por fletera o destino. Prueba diciendo: 'Grafica fletes por fletera'."
-    
-            st.markdown(response_text)
-            if fig_to_show:
-                st.plotly_chart(fig_to_show, use_container_width=True)
-            
-            # Guardar en memoria
-            new_msg = {"role": "assistant", "content": response_text}
-            if fig_to_show: new_msg["fig"] = fig_to_show
-            st.session_state.chat_history.append(new_msg)
+                # --- Lógica de Totales ---
+                elif "total" in p or "cuánto" in p:
+                    gasto = df["COSTO_FLETE"].sum()
+                    response_text = f"El gasto total acumulado en fletes es de **${gasto:,.2f}**."
+                
+                else:
+                    response_text = "Puedo ayudarte a graficar gastos por fletera o destino. Prueba diciendo: 'Grafica fletes por fletera'."
+        
+                st.markdown(response_text)
+                if fig_to_show:
+                    st.plotly_chart(fig_to_show, use_container_width=True)
+                
+                # Guardar en memoria
+                new_msg = {"role": "assistant", "content": response_text}
+                if fig_to_show: new_msg["fig"] = fig_to_show
+                st.session_state.chat_history.append(new_msg)
         
         # Botón para regresar
         if st.button("⬅ Volver al Inicio", use_container_width=True):
@@ -948,6 +948,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
