@@ -4,7 +4,6 @@ import altair as alt
 import time
 import base64
 import textwrap
-import plotly.graph_objects as go
 
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
@@ -1001,6 +1000,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
