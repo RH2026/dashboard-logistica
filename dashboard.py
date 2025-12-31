@@ -496,7 +496,7 @@ else:
                 {'selector': 'td', 'props': [('padding', '12px')]}
             ]),
             use_container_width=True,
-            height=850
+            height=450
         )
     
         # --------------------------------------------------
@@ -821,6 +821,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
