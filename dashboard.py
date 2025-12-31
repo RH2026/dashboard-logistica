@@ -47,62 +47,70 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (BORRADO TOTAL DE CAJA SUPERIOR)
+# 3. LÓGICA DE LOGIN (ELIMINACIÓN TOTAL DE CABECERA)
 # --------------------------------------------------
 if not st.session_state.logueado:
     img_base64 = get_base64_image("1.jpg")
     
     st.markdown(f"""
         <style>
-        /* 1. BORRADO RADICAL DE LA CAJA SUPERIOR */
-        [data-testid="stHeader"], 
-        [data-testid="stStatusWidget"],
-        .stAlertContainer, 
-        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stException"]),
-        div[data-testid="stVerticalBlock"] > div:has(div.stAlert) {{
+        /* 1. ELIMINAR EL HEADER Y EL ESPACIO SUPERIOR DE STREAMLIT */
+        header[data-testid="stHeader"] {{
             display: none !important;
-            height: 0px !important;
-            min-height: 0px !important;
-            margin: 0px !important;
-            padding: 0px !important;
+        }}
+        
+        /* Eliminar el padding superior del contenedor principal */
+        .main .block-container {{
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+            max-width: 100% !important;
         }}
 
-        /* 2. FONDO Y CAJA DE LOGIN */
+        /* 2. OCULTAR CUALQUIER CAJA DE ERROR/MENSAJE */
+        [data-testid="stStatusWidget"],
+        .stAlert,
+        div[data-testid="stVerticalBlock"] > div:first-child {{
+            display: none !important;
+            height: 0 !important;
+            margin: 0 !important;
+        }}
+
+        /* 3. FONDO Y CAJA DE LOGIN */
         .stApp {{
             background-image: url("data:image/jpg;base64,{img_base64}");
             background-size: cover;
             background-position: center;
+            background-attachment: fixed;
         }}
         
         .login-box {{
-            background-color: rgba(30, 41, 59, 0.95);
+            background-color: rgba(15, 23, 42, 0.9); /* Azul muy oscuro elegante */
             padding: 40px;
             border-radius: 20px;
-            border: 1px solid #475569;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
-            margin-top: 15vh; /* Empuja la caja hacia abajo para que se vea centrada */
+            border: 1px solid rgba(0, 255, 170, 0.3);
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            margin-top: 20vh; /* Centrado vertical manual */
         }}
         </style>
     """, unsafe_allow_html=True)
 
-    # Contenedor centrado
-    _, center_col, _ = st.columns([0.5, 2, 0.5])
+    # Estructura limpia de columnas
+    col_izq, col_centro, col_der = st.columns([1, 2, 1])
     
-    with center_col:
+    with col_centro:
+        # Usamos un div contenedor para nuestro login-box
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<h2 style="text-align:center; color:white; margin-bottom:20px;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 style="text-align:center; color:#00FFAA; margin-bottom:20px;">🔐 ACCESO AL SISTEMA</h2>', unsafe_allow_html=True)
         
         # Formulario
-        with st.form(key="login_final"):
+        with st.form(key="login_final_limpio"):
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
-            submit = st.form_submit_button("INGRESAR", use_container_width=True)
+            submit = st.form_submit_button("INGRESAR AL DASHBOARD", use_container_width=True)
 
-        # Lógica de validación
+        # Lógica de validación (FUERA del with st.form para evitar doble clic)
         if submit:
-            # Usamos st.secrets.get para que sea una operación "silenciosa"
             usuarios_dict = st.secrets.get("usuarios", {})
-            
             if u_input in usuarios_dict and usuarios_dict[u_input] == c_input:
                 st.session_state.logueado = True
                 st.session_state.usuario_actual = u_input
@@ -111,8 +119,8 @@ if not st.session_state.logueado:
                 st.session_state.motivo_splash = "inicio"
                 st.rerun()
             else:
-                # Error en HTML puro (no st.error) para evitar que la caja regrese
-                st.markdown('<p style="color:#ff4b4b; text-align:center; margin-top:10px;">⚠️ Credenciales incorrectas</p>', unsafe_allow_html=True)
+                # Error en texto simple para no invocar la caja roja
+                st.markdown('<p style="color:#ff4b4b; text-align:center; font-weight:bold; margin-top:15px;">⚠️ Credenciales Inválidas</p>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -905,6 +913,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
