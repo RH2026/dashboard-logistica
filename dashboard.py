@@ -47,101 +47,108 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (BORRADO QUIRÚRGICO DE BORDES)
+# 3. LÓGICA DE LOGIN (BORRADO TOTAL DE BORDES Y CAJAS)
 # --------------------------------------------------
 if not st.session_state.logueado:
-    # Usar un placeholder vacío ayuda a Streamlit a no reservar espacios basura arriba
-    login_area = st.empty()
-    
-    with login_area.container():
-        st.markdown(f"""
-            <style>
-            /* 1. ELIMINAR EL HEADER Y ESPACIOS MUERTOS */
-            header[data-testid="stHeader"] {{ display: none !important; }}
-            .main .block-container {{ padding-top: 0rem !important; }}
-
-            /* 2. EL EXORCISMO FINAL: BORDES Y SOMBRAS FUERA */
-            /* Este selector busca cualquier cosa que Streamlit use para alertas y la aniquila */
-            [data-testid="stNotification"], 
-            [data-testid="stException"],
-            [data-testid="stFormElementContainer"],
-            .stAlert,
-            div[class*="stAlert"],
-            div[data-baseweb="notification"] {{
-                display: none !important;
-                border: none !important;
-                border-width: 0px !important;
-                outline: none !important;
-                box-shadow: none !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                height: 0 !important;
-            }}
-
-            /* 3. FONDO NEGRO Y CAJA DE LOGIN */
-            .stApp {{ background-color: #000000 !important; }}
-            
-            .login-box {{
-                background-color: #000000;
-                padding: 30px;
-                border-radius: 12px;
-                border: 1px solid #1a1a1a;
-                max-width: 320px;
-                margin: auto;
-                margin-top: 15vh;
-            }}
-
-            /* 4. INPUTS Y OJITO UNIFICADOS */
-            div[data-baseweb="input"], 
-            div[data-baseweb="input"] > div,
-            input[type="text"], 
-            input[type="password"],
-            button[aria-label="Show password"],
-            button[aria-label="Hide password"] {{
-                background-color: #111111 !important;
-                color: white !important;
-                border: none !important;
-            }}
-            
-            div[data-baseweb="input"] {{ border: 1px solid #333333 !important; }}
-
-            /* 5. BOTÓN ENTRAR */
-            .stButton > button {{
-                background-color: #00FFAA !important;
-                color: #000000 !important;
-                font-weight: bold !important;
-                border: none !important;
-            }}
-
-            label {{ color: #888888 !important; }}
-            </style>
-        """, unsafe_allow_html=True)
-
-        _, center_col, _ = st.columns([1, 1.5, 1])
+    st.markdown(f"""
+        <style>
+        /* 1. LIMPIEZA TOTAL DEL ENTORNO */
+        header[data-testid="stHeader"], 
+        [data-testid="stStatusWidget"],
+        footer {{
+            display: none !important;
+        }}
         
-        with center_col:
-            st.markdown('<div class="login-box">', unsafe_allow_html=True)
-            st.markdown('<h3 style="text-align:center; color:#00FFAA; font-size:18px;">🔐 Acceso al Sistema</h3>', unsafe_allow_html=True)
-            
-            with st.form(key="login_final_exorcismo"):
-                u_input = st.text_input("Usuario", placeholder="Usuario")
-                c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
-                submit = st.form_submit_button("ENTRAR", use_container_width=True)
+        .main .block-container {{
+            padding-top: 0rem !important;
+        }}
 
-            if submit:
-                usuarios_dict = st.secrets.get("usuarios", {})
-                if u_input in usuarios_dict and usuarios_dict[u_input] == c_input:
-                    st.session_state.logueado = True
-                    st.session_state.usuario_actual = u_input
-                    st.session_state.ultimo_movimiento = time.time()
-                    st.session_state.splash_visto = False
-                    # Antes de reiniciar, vaciamos el área de login para que no parpadee
-                    login_area.empty()
-                    st.rerun()
-                else:
-                    st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:12px;">Datos incorrectos</p>', unsafe_allow_html=True)
-            
-            st.markdown('</div>', unsafe_allow_html=True)
+        /* 2. ELIMINAR CUALQUIER BORDE FANTASMA (EL "MISIL" CSS) */
+        /* Aplicamos transparencia y borrado de bordes a todos los contenedores de alerta */
+        [data-testid="stNotification"], 
+        [data-testid="stException"],
+        .stAlert,
+        div[class*="st-key-"],
+        div[data-baseweb="notification"],
+        .element-container:has(.stAlert),
+        .element-container:has([data-testid="stException"]) {{
+            display: none !important;
+            border: none !important;
+            border-width: 0px !important;
+            box-shadow: none !important;
+            background-color: transparent !important;
+        }}
+
+        /* 3. FONDO NEGRO Y CAJA DE LOGIN */
+        .stApp {{
+            background-color: #000000 !important;
+        }}
+        
+        .login-box {{
+            background-color: #000000;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #1a1a1a;
+            max-width: 320px;
+            margin: auto;
+            margin-top: 20vh;
+        }}
+
+        /* 4. UNIFICACIÓN DE INPUTS Y EL FAMOSO OJITO */
+        div[data-baseweb="input"], 
+        div[data-baseweb="input"] > div,
+        input[type="text"], 
+        input[type="password"],
+        button[aria-label="Show password"],
+        button[aria-label="Hide password"] {{
+            background-color: #111111 !important;
+            color: white !important;
+            border: none !important;
+            box-shadow: none !important;
+        }}
+        
+        /* Solo un borde sutil para el cuadro de texto */
+        div[data-baseweb="input"] {{
+            border: 1px solid #333333 !important;
+        }}
+
+        /* 5. BOTÓN ENTRAR */
+        .stButton > button {{
+            background-color: #00FFAA !important;
+            color: #000000 !important;
+            font-weight: bold !important;
+            border: none !important;
+            margin-top: 15px;
+        }}
+
+        label {{ color: #888888 !important; }}
+        </style>
+    """, unsafe_allow_html=True)
+
+    _, center_col, _ = st.columns([1, 1.5, 1])
+    
+    with center_col:
+        st.markdown('<div class="login-box">', unsafe_allow_html=True)
+        st.markdown('<h2 style="text-align:center; color:#00FFAA; font-size:18px;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
+        
+        with st.form(key="login_final_boss_v3"):
+            u_input = st.text_input("Usuario", placeholder="Usuario")
+            c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
+            submit = st.form_submit_button("ENTRAR", use_container_width=True)
+
+        if submit:
+            usuarios_dict = st.secrets.get("usuarios", {})
+            if u_input in usuarios_dict and usuarios_dict[u_input] == c_input:
+                st.session_state.logueado = True
+                st.session_state.usuario_actual = u_input
+                st.session_state.ultimo_movimiento = time.time()
+                st.session_state.splash_visto = False
+                st.rerun()
+            else:
+                # Texto simple para no disparar la caja fantasma
+                st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:12px; margin-top:10px;">⚠️ Datos incorrectos</p>', unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
     st.stop()
 # --------------------------------------------------
@@ -932,6 +939,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
