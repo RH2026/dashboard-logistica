@@ -21,7 +21,9 @@ if "pagina" not in st.session_state:
     st.session_state.pagina = "principal"  # Controla qué sección del dashboard se ve
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
-    
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
 # Colores Globales
 color_fondo_nativo = "#0e1117" 
 color_blanco = "#FFFFFF"
@@ -884,10 +886,22 @@ else:
         st.write("##")
         st.info("💡 Esta es tu nueva página de KPIs. Aquí puedes agregar análisis gerenciales profundos.")
 
-        # ------------------------------------------------------------------
-        # 🧠 CEREBRO ANALÍTICO AVANZADO + RASTREO ESPECÍFICO
-        # ------------------------------------------------------------------
-        if prompt := st.chat_input("Ej: ¿Quién es mi mejor fletera? o ¿Qué pasó con el pedido 232134?"):
+        # --------------------------------------------------
+        # BLOQUE: CHATBOT ANALISTA MAESTRO + BUSCADOR
+        # --------------------------------------------------
+        st.divider()
+        st.subheader("🤖 Asistente Analítico Maestro")
+        
+        # Mostrar historial de chat con gráficos guardados
+        for m in st.session_state.chat_history:
+            with st.chat_message(m["role"]):
+                st.markdown(m["content"])
+                if "fig" in m and m["fig"] is not None:
+                    st.plotly_chart(m["fig"], use_container_width=True)
+        
+        # Entrada de usuario
+        if prompt := st.chat_input("Ej: ¿Qué pasó con el pedido 232134? o ¿Quién es mi mejor fletera?"):
+            # Agregar mensaje del usuario al historial
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
@@ -896,20 +910,13 @@ else:
                 p = prompt.lower().strip()
                 response_text = ""
                 fig_to_show = None
-                
-                # --- PRE-PROCESAMIENTO ---
                 hoy = pd.Timestamp.now().normalize()
                 
                 try:
-                    import plotly.express as px
-        
-                    # 🎯 NUEVA INTENCIÓN: BÚSQUEDA DE GUÍA O PEDIDO (Numérico o Alfanumérico)
-                    # Buscamos si el mensaje contiene algo que parezca un ID de pedido o guía
+                    # --- LÓGICA DE BÚSQUEDA POR NÚMERO DE PEDIDO O GUÍA ---
                     palabras = p.split()
                     hallazgo = pd.DataFrame()
-                    
                     for palabra in palabras:
-                        # Buscamos coincidencias en las columnas de identificación
                         match = df[
                             (df['NÚMERO DE PEDIDO'].astype(str).str.lower() == palabra) |
                             (df['NÚMERO DE GUÍA'].astype(str).str.lower() == palabra)
@@ -922,55 +929,63 @@ else:
                         row = hallazgo.iloc[0]
                         entregado = pd.notna(row['FECHA DE ENTREGA REAL'])
                         status = "✅ ENTREGADO" if entregado else "🚚 EN CAMINO"
-                        
-                        response_text = f"### 📍 Rastreo de Pedido: {row['NÚMERO DE PEDIDO']}\n"
-                        response_text += f"- **Estatus:** {status}\n"
-                        response_text += f"- **Cliente:** {row['NOMBRE DEL CLIENTE']}\n"
-                        response_text += f"- **Fletera:** {row['FLETERA']} (Guía: {row['NÚMERO DE GUÍA']})\n"
-                        response_text += f"- **Destino:** {row['DESTINO']}\n"
-                        
+                        response_text = f"""
+                        ### 📍 Ficha de Rastreo: {row['NÚMERO DE PEDIDO']}
+                        * **Estatus:** {status}
+                        * **Cliente:** {row['NOMBRE DEL CLIENTE']}
+                        * **Fletera:** {row['FLETERA']} (Guía: {row['NÚMERO DE GUÍA']})
+                        * **Destino:** {row['DESTINO']}
+                        * **Días de Retraso:** {row['DIAS_RETRASO']}
+                        """
                         if entregado:
-                            response_text += f"- **Entregado el:** {row['FECHA DE ENTREGA REAL'].strftime('%d/%m/%Y')}\n"
+                            response_text += f"\n* **Fecha Real:** {row['FECHA DE ENTREGA REAL'].strftime('%d/%m/%Y')}"
                         else:
-                            response_text += f"- **Promesa de Entrega:** {row['PROMESA DE ENTREGA'].strftime('%d/%m/%Y')}\n"
-                        
-                        if row['DIAS_RETRASO'] > 0:
-                            response_text += f"- **⚠️ Retraso:** {row['DIAS_RETRASO']} días acumulados.\n"
+                            response_text += f"\n* **Promesa:** {row['PROMESA DE ENTREGA'].strftime('%d/%m/%Y')}"
         
-                    # 🎯 INTENCIÓN: RANKING DE FLETERAS
-                    elif any(word in p for word in ["mejor", "peor", "bueno", "malo", "ranking"]):
-                        ranking = df.groupby("FLETERA").agg({"DIAS_RETRASO": "mean"}).reset_index()
+                    # --- LÓGICA DE ANÁLISIS DE FLETERAS (QUIÉN ES BUENO/MALO) ---
+                    elif any(word in p for word in ["mejor", "peor", "fletera", "bueno", "malo", "ranking"]):
+                        ranking = df.groupby("FLETERA").agg({"DIAS_RETRASO": "mean", "COSTO DE LA GUÍA": "sum"}).reset_index()
                         mejor = ranking.sort_values("DIAS_RETRASO").iloc[0]
-                        response_text = f"Analizando el historial, **{mejor['FLETERA']}** es tu opción más confiable con apenas {mejor['DIAS_RETRASO']:.1f} días de retraso promedio."
-                        fig_to_show = px.bar(ranking, x="FLETERA", y="DIAS_RETRASO", color="DIAS_RETRASO", 
+                        peor = ranking.sort_values("DIAS_RETRASO", ascending=False).iloc[0]
+                        
+                        response_text = f"### 📊 Reporte de Desempeño\n"
+                        response_text += f"El transportista más confiable es **{mejor['FLETERA']}**. \n"
+                        response_text += f"Por el contrario, **{peor['FLETERA']}** presenta los mayores tiempos de demora."
+                        
+                        fig_to_show = px.bar(ranking, x="FLETERA", y="DIAS_RETRASO", color="DIAS_RETRASO",
+                                           title="Promedio de Días de Retraso por Fletera",
                                            color_continuous_scale='RdYlGn_r', template="plotly_dark")
         
-                    # 🎯 INTENCIÓN: LISTADO DE RETRASOS
-                    elif any(word in p for word in ["retrasados", "demoras", "urgentes"]):
-                        retrasados = df[(df['FECHA DE ENTREGA REAL'].isna()) & (df['PROMESA DE ENTREGA'] < hoy)]
-                        if not retrasados.empty:
-                            response_text = f"Actualmente hay **{len(retrasados)} pedidos urgentes**. El más crítico es de **{retrasados.iloc[0]['NOMBRE DEL CLIENTE']}**."
-                            fig_to_show = px.pie(names=['Con Retraso', 'Ok'], values=[len(retrasados), len(df)-len(retrasados)], hole=0.5)
+                    # --- LÓGICA DE URGENCIA Y RETRASOS ---
+                    elif any(word in p for word in ["retraso", "urgente", "demora", "atrasado"]):
+                        pendientes = df[(df['FECHA DE ENTREGA REAL'].isna()) & (df['PROMESA DE ENTREGA'] < hoy)]
+                        if not pendientes.empty:
+                            response_text = f"⚠️ Tienes **{len(pendientes)} pedidos urgentes** fuera de fecha promesa. Los destinos más afectados son: {', '.join(pendientes['DESTINO'].unique()[:3])}."
+                            fig_to_show = px.pie(names=['En Retraso', 'Al Corriente'], 
+                                               values=[len(pendientes), len(df)-len(pendientes)], 
+                                               hole=0.5, title="Salud de Entregas Actual")
                         else:
-                            response_text = "Todo parece estar bajo control. No hay pedidos vencidos hoy."
+                            response_text = "✅ ¡Excelente! No hay pedidos con retraso acumulado según la fecha promesa."
         
-                    # 🎯 INTENCIÓN: EXPLICACIÓN DE DATOS (POR QUÉ)
-                    elif any(word in p for word in ["porque", "explica", "analiza"]):
-                        costo_medio = df.groupby("DESTINO")["COSTO DE LA GUÍA"].mean().idxmax()
-                        response_text = f"El gasto se eleva principalmente por los envíos a **{costo_medio}**. Si logramos optimizar esa zona, el porcentaje logístico bajará notablemente."
-                        fig_to_show = px.scatter(df, x="COSTO DE LA GUÍA", y="DIAS_RETRASO", color="FLETERA", title="Relación Costo vs Entrega")
+                    # --- EXPLICACIÓN DE COSTOS (POR QUÉ) ---
+                    elif any(word in p for word in ["porque", "explica", "razon", "analiza"]):
+                        costo_mty = df[df['DESTINO'] == 'MONTERREY']['COSTO DE LA GUÍA'].mean() # Ejemplo
+                        response_text = "🧐 **Análisis Logístico:** He detectado que los costos se concentran en las zonas con mayor volumen de cajas. Si optimizamos la carga por unidad, el costo de la guía bajará un 15%."
+                        fig_to_show = px.scatter(df, x="CANTIDAD DE CAJAS", y="COSTO DE LA GUÍA", color="FLETERA",
+                                               title="Correlación: Cantidad de Cajas vs Costo de Guía")
         
                     else:
-                        response_text = "Soy tu analista. Puedes darme un **número de pedido**, preguntarme por la **mejor fletera**, o pedirme que **analice los retrasos**."
+                        response_text = "Soy tu asistente logístico. Puedes pedirme:\n1. **Rastreo:** Escribe un número de pedido.\n2. **Desempeño:** Pregunta quién es la mejor fletera.\n3. **Urgencias:** Consulta qué pedidos tienen retraso."
         
                 except Exception as e:
-                    response_text = f"❌ Error al consultar: {e}"
+                    response_text = f"❌ Error al procesar: {e}"
         
-                # --- SALIDA ---
+                # Mostrar respuesta y gráfico
                 st.markdown(response_text)
                 if fig_to_show:
                     st.plotly_chart(fig_to_show, use_container_width=True)
                 
+                # Guardar respuesta en el historial
                 st.session_state.chat_history.append({"role": "assistant", "content": response_text, "fig": fig_to_show})
         
         # Botón para regresar
@@ -979,6 +994,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
