@@ -46,28 +46,35 @@ CSS_TODO = f"""
     /* Caja 3D */
     .scene {{ width: 100%; height: 120px; perspective: 600px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }}
     .cube {{ width: 60px; height: 50px; position: relative; transform-style: preserve-3d; transform: rotateX(-20deg) rotateY(45deg); animation: move-pkg 6s infinite ease-in-out; }}
-    .cube-face {{ position: absolute; width: 60px; height: 50px; background: #d2a679; border: 1px solid #b08d5c; }}
+    .cube-face {{ position: absolute; width: 60px; height: 50px; background: #d2a679; border: 1px solid #b08d5c; box-shadow: inset 0 0 15px rgba(0,0,0,0.1); }}
+    .cube-face::after {{ content: ''; position: absolute; top: 40%; width: 100%; height: 8px; background: rgba(0,0,0,0.08); }}
+    
     .front  {{ transform: rotateY(0deg) translateZ(30px); }}
     .back   {{ transform: rotateY(180deg) translateZ(30px); }}
     .right  {{ transform: rotateY(90deg) translateZ(30px); }}
     .left   {{ transform: rotateY(-90deg) translateZ(30px); }}
     .top    {{ width: 60px; height: 60px; transform: rotateX(90deg) translateZ(25px); background: #e3bc94; }}
     .bottom {{ width: 60px; height: 60px; transform: rotateX(-90deg) translateZ(25px); }}
+    
     @keyframes move-pkg {{ 0%, 100% {{ transform: translateY(0px) rotateX(-20deg) rotateY(45deg); }} 50% {{ transform: translateY(-15px) rotateX(-25deg) rotateY(225deg); }} }}
     
-    /* Login */
-    .stForm {{ background-color: {color_fondo_nativo} !important; border: 1.5px solid {color_borde_gris} !important; border-radius: 20px; padding: 40px; }}
-    .login-header {{ text-align: center; color: white; font-family: sans-serif; font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; }}
-    input {{ font-family: 'Courier Prime', monospace !important; }}
+    /* Login Form */
+    .stForm {{ background-color: {color_fondo_nativo} !important; border: 1.5px solid {color_borde_gris} !important; border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
+    .login-header {{ text-align: center; color: white; font-family: sans-serif; font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 2px; }}
+    input {{ font-family: 'Courier Prime', monospace !important; color: white !important; }}
+    div[data-testid="stTextInputRootElement"] {{ background-color: #1a1c24 !important; border-radius: 10px !important; }}
+    
     header, footer {{ visibility: hidden; }}
 </style>
 """
 st.markdown(CSS_TODO, unsafe_allow_html=True)
 
-# --- CONTENEDOR PRINCIPAL ---
+# Contenedor para evitar saltos visuales
 placeholder = st.empty()
 
-# LÓGICA DE PANTALLAS
+# --- LÓGICA DE FLUJO PRINCIPAL ---
+
+# 1. PANTALLA DE LOGIN
 if not st.session_state.logueado:
     with placeholder.container():
         col1, col2, col3 = st.columns([1, 1.2, 1])
@@ -78,27 +85,40 @@ if not st.session_state.logueado:
                 st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
                 u_input = st.text_input("Usuario")
                 c_input = st.text_input("Contraseña", type="password")
+                
                 if st.form_submit_button("INGRESAR", use_container_width=True):
                     usuarios = st.secrets["usuarios"]
                     if u_input in usuarios and str(usuarios[u_input]) == str(c_input):
                         st.session_state.logueado = True
                         st.session_state.usuario_actual = u_input
                         st.session_state.splash_completado = False
+                        st.session_state.motivo_splash = "inicio"
                         st.rerun()
                     else:
                         st.error("Acceso Denegado")
-    st.stop() # <-- ESTO DETIENE TODO AQUÍ SI NO ESTÁ LOGUEADO
+    st.stop()
 
+# 2. PANTALLA DE SPLASH (Entrada/Salida)
 elif not st.session_state.splash_completado:
     with placeholder.container():
-        # Animación de Splash
-        t_splash = "Cerrando sistema..." if st.session_state.motivo_splash == "logout" else f"Bienvenid@ {st.session_state.usuario_actual}..."
+        t_splash = "Cerrando sistema de forma segura..." if st.session_state.motivo_splash == "logout" else f"Bienvenid@ {st.session_state.usuario_actual}, inicializando módulos..."
+        color_caja_splash = "#FF4B4B" if st.session_state.motivo_splash == "logout" else "#d2a679"
+        
         st.markdown(f"""
             <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 80vh;">
-                <div class="scene"><div class="cube" style="width:100px; height:100px;"><div class="cube-face" style="width:100px; height:100px;"></div><div class="cube-face" style="width:100px; height:100px; transform: rotateY(180deg) translateZ(50px);"></div></div></div>
-                <div style="color:white; font-family:'Courier Prime'; margin-top:50px;">{t_splash}</div>
+                <div class="scene">
+                    <div class="cube" style="width:100px; height:100px;">
+                        <div class="cube-face" style="width:100px; height:100px; background:{color_caja_splash}; transform: rotateY(0deg) translateZ(50px);"></div>
+                        <div class="cube-face" style="width:100px; height:100px; background:{color_caja_splash}; transform: rotateY(180deg) translateZ(50px);"></div>
+                        <div class="cube-face" style="width:100px; height:100px; background:{color_caja_splash}; transform: rotateY(90deg) translateZ(50px);"></div>
+                        <div class="cube-face" style="width:100px; height:100px; background:{color_caja_splash}; transform: rotateY(-90deg) translateZ(50px);"></div>
+                        <div class="cube-face" style="width:100px; height:110px; background:#e3bc94; transform: rotateX(90deg) translateZ(50px);"></div>
+                    </div>
+                </div>
+                <div style="color:white; font-family:'Courier Prime'; margin-top:50px; text-transform: uppercase; letter-spacing: 2px;">{t_splash}</div>
             </div>
         """, unsafe_allow_html=True)
+        
         time.sleep(2.5)
         
         if st.session_state.motivo_splash == "logout":
@@ -108,59 +128,43 @@ elif not st.session_state.splash_completado:
         
         st.session_state.splash_completado = True
         st.rerun()
-    st.stop() # <-- ESTO EVITA QUE SE VEA EL LOGIN MIENTRAS CARGA EL DASHBOARD
+    st.stop()
 
-# --------------------------------------------------
-# INICIO DEL CONTENIDO PRIVADO (SI ESTÁ LOGUEADO)
-# --------------------------------------------------
+# 3. CONTENIDO PRIVADO (DASHBOARD)
 else:
-         
-    # --------------------------------------------------
-    # 📊 MOTOR DE CARGA DE DATOS (Optimizado con Cache)
-    # --------------------------------------------------
+    # --- MOTOR DE DATOS ---
     @st.cache_data
     def cargar_datos():
-        # Carga del CSV
         df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
-        
-        # Limpieza de nombres de columnas
         df.columns = df.columns.str.strip().str.upper()
-    
-        # Formateo de columnas críticas
         df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.strip()
         df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors="coerce", dayfirst=True)
         df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
         df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
-    
+        
         hoy = pd.Timestamp.today().normalize()
-    
-        # Lógica de Estatus Calculado
         def calcular_estatus(row):
-            if pd.notna(row["FECHA DE ENTREGA REAL"]):
-                return "ENTREGADO"
-            if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy:
-                return "RETRASADO"
+            if pd.notna(row["FECHA DE ENTREGA REAL"]): return "ENTREGADO"
+            if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy: return "RETRASADO"
             return "EN TRANSITO"
-    
+        
         df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
         return df
-    
-    # Ejecutamos la carga (Disponible para todas las páginas)
+
     df = cargar_datos()
-    
-    # --------------------------------------------------
-    # BOTÓN DE CIERRE DE SESIÓN EN LA BARRA LATERAL
-    # --------------------------------------------------
+
     # BARRA LATERAL
-else:
-    st.sidebar.markdown(f"### 👤 {st.session_state.usuario_actual}")
-    if st.sidebar.button("Cerrar Sesión"):
-        st.session_state.splash_completado = False
+    st.sidebar.markdown(f'### 👤 Sesión: <span style="color:#00FFAA;">{st.session_state.usuario_actual}</span>', unsafe_allow_html=True)
+    
+    if st.sidebar.button("Cerrar Sesión", use_container_width=True):
+        st.session_state.splash_completado = False 
         st.session_state.motivo_splash = "logout"
         st.rerun()
-    
+
+    # CUERPO DEL DASHBOARD
     st.title("📦 Sistema de Logística")
-    st.write("Has ingresado correctamente.")
+    st.write(f"Bienvenido al panel de control, {st.session_state.usuario_actual}.")
+    st.dataframe(df.head()) # Muestra los primeros datos para confirmar carga
     
     
     # --------------------------------------------------
@@ -802,6 +806,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
