@@ -33,10 +33,10 @@ if "ultimo_movimiento" not in st.session_state:
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (V8 – EXORCISMO TOTAL)
+# LOGIN V9 – MUERTE ABSOLUTA DEL BORDE FANTASMA
 # --------------------------------------------------
-import time
 import streamlit as st
+import time
 
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
@@ -44,130 +44,124 @@ if "logueado" not in st.session_state:
 if not st.session_state.logueado:
 
     st.markdown("""
-        <style>
-        /* --------------------------------------------------
-           1. ELIMINAR INTERFAZ NATIVA STREAMLIT
-        -------------------------------------------------- */
-        header, footer,
-        [data-testid="stHeader"],
-        [data-testid="stStatusWidget"] {
-            display: none !important;
-        }
+    <style>
 
-        .stApp {
-            background-color: #000000 !important;
-        }
+    /* ============================================
+       1. RESET TOTAL
+    ============================================ */
+    html, body, .stApp {
+        background: #000000 !important;
+    }
 
-        /* --------------------------------------------------
-           2. 💀 EXORCISMO CONTENEDORES FANTASMA
-        -------------------------------------------------- */
+    header, footer,
+    [data-testid="stHeader"],
+    [data-testid="stStatusWidget"] {
+        display: none !important;
+    }
 
-        /* El contenedor vacío con borde */
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(> div:empty) {
-            display: none !important;
-        }
+    /* ============================================
+       2. ☠️ CONTENEDOR FANTASMA REAL
+       ESTE ES EL QUE VES EN TU IMAGEN
+    ============================================ */
 
-        /* Ningún wrapper puede tener borde */
-        div[data-testid="stVerticalBlockBorderWrapper"],
-        div[data-testid="stVerticalBlock"],
-        section.main > div:first-child,
-        .element-container {
-            border: none !important;
-            box-shadow: none !important;
-            background: transparent !important;
-        }
+    section.main > div:first-child {
+        display: none !important;
+    }
 
-        /* --------------------------------------------------
-           3. CAJA DE LOGIN
-        -------------------------------------------------- */
-        .login-box {
-            background-color: #000000;
-            padding: 30px;
-            border-radius: 14px;
-            border: 1px solid #1a1a1a;
-            max-width: 360px;
-            margin: auto;
-            margin-top: 15vh;
-        }
+    /* ============================================
+       3. EVITAR QUE STREAMLIT REGENERE BORDES
+    ============================================ */
+    div[data-testid="stVerticalBlockBorderWrapper"],
+    div[data-testid="stVerticalBlock"],
+    .element-container {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
 
-        /* --------------------------------------------------
-           4. INPUTS + OJITO (BASEWEB)
-        -------------------------------------------------- */
-        div[data-baseweb="input"],
-        div[data-baseweb="base-input"],
-        div[data-baseweb="input"] > div {
-            background-color: #111111 !important;
-            border: 1px solid #333333 !important;
-            color: white !important;
-            border-radius: 8px;
-        }
+    /* ============================================
+       4. LOGIN BOX
+    ============================================ */
+    .login-box {
+        background: #000000;
+        padding: 32px;
+        border-radius: 14px;
+        border: 1px solid #1a1a1a;
+        max-width: 360px;
+        margin: 16vh auto 0 auto;
+    }
 
-        input {
-            background-color: transparent !important;
-            color: white !important;
-            border: none !important;
-        }
+    /* ============================================
+       5. INPUTS + OJITO
+    ============================================ */
+    div[data-baseweb="input"] {
+        background: #111111 !important;
+        border: 1px solid #333333 !important;
+        border-radius: 8px !important;
+    }
 
-        /* OJITO */
-        button[aria-label="Show password"],
-        button[aria-label="Hide password"],
-        [data-testid="stInputActionButton"] {
-            background-color: transparent !important;
-            border: none !important;
-            color: white !important;
-            box-shadow: none !important;
-        }
+    input {
+        background: transparent !important;
+        color: white !important;
+        border: none !important;
+    }
 
-        /* --------------------------------------------------
-           5. BOTÓN INGRESAR
-        -------------------------------------------------- */
-        .stButton > button {
-            background-color: #00FFAA !important;
-            color: #000000 !important;
-            font-weight: bold !important;
-            border: none !important;
-            width: 100%;
-            margin-top: 20px;
-            border-radius: 10px;
-            height: 46px;
-        }
+    button[aria-label],
+    [data-testid="stInputActionButton"] {
+        background: transparent !important;
+        border: none !important;
+        color: white !important;
+        box-shadow: none !important;
+    }
 
-        label {
-            color: #888888 !important;
-        }
+    /* ============================================
+       6. BOTÓN
+    ============================================ */
+    .stButton > button {
+        background: #00FFAA !important;
+        color: #000 !important;
+        font-weight: bold;
+        border-radius: 10px;
+        height: 46px;
+        border: none;
+        margin-top: 20px;
+    }
 
-        </style>
+    label {
+        color: #888 !important;
+    }
+
+    </style>
     """, unsafe_allow_html=True)
 
-    # --------------------------------------------------
-    # 6. CONTENEDOR CENTRADO
-    # --------------------------------------------------
-    _, center_col, _ = st.columns([1, 1.4, 1])
+    # ============================================
+    # CONTENIDO REAL
+    # ============================================
+    _, center, _ = st.columns([1, 1.4, 1])
 
-    with center_col:
+    with center:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
 
         st.markdown(
-            '<h2 style="text-align:center; color:#00FFAA; font-size:20px;">🔐 Acceso al Sistema</h2>',
+            '<h2 style="text-align:center;color:#00FFAA;font-size:20px;">🔐 Acceso al Sistema</h2>',
             unsafe_allow_html=True
         )
 
-        with st.form("login_definitivo_v8", clear_on_submit=False):
+        with st.form("login_v9"):
             usuario = st.text_input("Usuario", placeholder="Usuario")
-            password = st.text_input("Contraseña", type="password", placeholder="Contraseña")
-            submit = st.form_submit_button("INGRESAR", use_container_width=True)
+            clave = st.text_input("Contraseña", type="password", placeholder="Contraseña")
+            entrar = st.form_submit_button("INGRESAR", use_container_width=True)
 
-        if submit:
+        if entrar:
             usuarios = st.secrets.get("usuarios", {})
-            if usuario in usuarios and usuarios[usuario] == password:
+            if usuario in usuarios and usuarios[usuario] == clave:
                 st.session_state.logueado = True
                 st.session_state.usuario_actual = usuario
                 st.session_state.ultimo_movimiento = time.time()
-                st.session_state.splash_visto = False
                 st.rerun()
             else:
                 st.markdown(
-                    '<p style="color:#ff4b4b; text-align:center; font-size:12px; margin-top:10px;">⚠️ Datos incorrectos</p>',
+                    '<p style="color:#ff4b4b;text-align:center;font-size:12px;">⚠️ Datos incorrectos</p>',
                     unsafe_allow_html=True
                 )
 
@@ -962,6 +956,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
