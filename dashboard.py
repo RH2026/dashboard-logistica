@@ -137,22 +137,25 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# CASO B: SPLASH SCREEN (Bloqueo visual total)
+# CASO B: SPLASH SCREEN (BLOQUEO VISUAL TOTAL Y CAJA SELLADA)
 elif not st.session_state.splash_completado:
     with placeholder.container():
-        t_splash = "Cerrando sistema de forma segura..." if st.session_state.motivo_splash == "logout" else f"Bienvenid@ {st.session_state.usuario_actual}, inicializando módulos..."
+        t_splash = "Cerrando sistema..." if st.session_state.motivo_splash == "logout" else f"Bienvenid@ {st.session_state.usuario_actual}..."
         color_caja_splash = "#FF4B4B" if st.session_state.motivo_splash == "logout" else "#d2a679"
         
         st.markdown(f"""
             <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0e1117; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                 <div class="scene">
-                    <div class="cube" style="width:100px; height:100px; animation: move-pkg 2s infinite linear;">
-                        <div class="cube-face" style="width:100px; height:100px; background:{color_caja_splash}; transform: rotateY(0deg) translateZ(50px);"></div>
-                        <div class="cube-face" style="width:100px; height:100px; background:{color_caja_splash}; transform: rotateY(180deg) translateZ(50px);"></div>
-                        <div class="cube-face" style="width:100px; height:110px; background:#e3bc94; transform: rotateX(90deg) translateZ(50px);"></div>
+                    <div class="cube" style="width:80px; height:80px; animation: move-pkg 3s infinite linear;">
+                        <div class="cube-face front"  style="width:80px; height:80px; background:{color_caja_splash}; transform: rotateY(  0deg) translateZ(40px);"></div>
+                        <div class="cube-face back"   style="width:80px; height:80px; background:{color_caja_splash}; transform: rotateY(180deg) translateZ(40px);"></div>
+                        <div class="cube-face right"  style="width:80px; height:80px; background:{color_caja_splash}; transform: rotateY( 90deg) translateZ(40px);"></div>
+                        <div class="cube-face left"   style="width:80px; height:80px; background:{color_caja_splash}; transform: rotateY(-90deg) translateZ(40px);"></div>
+                        <div class="cube-face top"    style="width:80px; height:80px; background:#e3bc94; transform: rotateX( 90deg) translateZ(40px);"></div>
+                        <div class="cube-face bottom" style="width:80px; height:80px; background:#b08d5c; transform: rotateX(-90deg) translateZ(40px);"></div>
                     </div>
                 </div>
-                <div style="color:white; font-family:'Courier Prime'; margin-top:60px; text-transform: uppercase; letter-spacing: 2px;">{t_splash}</div>
+                <div style="color:white; font-family:'Courier Prime'; margin-top:60px; letter-spacing:2px; text-transform: uppercase;">{t_splash}</div>
             </div>
         """, unsafe_allow_html=True)
         
@@ -161,7 +164,6 @@ elif not st.session_state.splash_completado:
         if st.session_state.motivo_splash == "logout":
             st.session_state.logueado = False
             st.session_state.usuario_actual = None
-            st.session_state.pagina = "principal"
             st.session_state.motivo_splash = "inicio"
         
         st.session_state.splash_completado = True
@@ -839,6 +841,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
