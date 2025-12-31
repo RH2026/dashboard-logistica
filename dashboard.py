@@ -4,6 +4,7 @@ import altair as alt
 import time
 import base64
 import textwrap
+import plotly.graph_objects as go
 
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
@@ -887,12 +888,12 @@ else:
         st.info("💡 Esta es tu nueva página de KPIs. Aquí puedes agregar análisis gerenciales profundos.")
 
         # --------------------------------------------------
-        # BLOQUE: CHATBOT ANALISTA MAESTRO + BUSCADOR
+        # BLOQUE: CHATBOT ANALISTA MAESTRO (VERSION FINAL)
         # --------------------------------------------------
         st.divider()
         st.subheader("🤖 Asistente Analítico Maestro")
         
-        # Mostrar historial de chat con gráficos guardados
+        # Mostrar historial de chat
         for m in st.session_state.chat_history:
             with st.chat_message(m["role"]):
                 st.markdown(m["content"])
@@ -901,7 +902,6 @@ else:
         
         # Entrada de usuario
         if prompt := st.chat_input("Ej: ¿Qué pasó con el pedido 232134? o ¿Quién es mi mejor fletera?"):
-            # Agregar mensaje del usuario al historial
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
@@ -912,15 +912,17 @@ else:
                 fig_to_show = None
                 hoy = pd.Timestamp.now().normalize()
                 
+                # Limpieza rápida de columnas para asegurar que 'DIAS_RETRASO' no falle
+                df.columns = [c.strip() for c in df.columns]
+                
                 try:
-                    # --- LÓGICA DE BÚSQUEDA POR NÚMERO DE PEDIDO O GUÍA ---
+                    # --- LÓGICA DE BÚSQUEDA POR NÚMERO DE PEDIDO ---
+                    # Si el usuario escribe un número o "pedido X"
                     palabras = p.split()
                     hallazgo = pd.DataFrame()
                     for palabra in palabras:
-                        match = df[
-                            (df['NÚMERO DE PEDIDO'].astype(str).str.lower() == palabra) |
-                            (df['NÚMERO DE GUÍA'].astype(str).str.lower() == palabra)
-                        ]
+                        # Buscamos en 'NÚMERO DE PEDIDO' o 'NÚMERO DE GUÍA'
+                        match = df[df['NÚMERO DE PEDIDO'].astype(str).str.contains(palabra, na=False)]
                         if not match.empty:
                             hallazgo = match
                             break
@@ -928,64 +930,69 @@ else:
                     if not hallazgo.empty:
                         row = hallazgo.iloc[0]
                         entregado = pd.notna(row['FECHA DE ENTREGA REAL'])
-                        status = "✅ ENTREGADO" if entregado else "🚚 EN CAMINO"
+                        status = "✅ ENTREGADO" if entregado else "🚚 EN CAMINO (CON RETRASO)" if row['DIAS_RETRASO'] > 0 else "🚚 EN CAMINO"
+                        
                         response_text = f"""
                         ### 📍 Ficha de Rastreo: {row['NÚMERO DE PEDIDO']}
                         * **Estatus:** {status}
                         * **Cliente:** {row['NOMBRE DEL CLIENTE']}
-                        * **Fletera:** {row['FLETERA']} (Guía: {row['NÚMERO DE GUÍA']})
+                        * **Fletera:** {row['FLETERA']}
                         * **Destino:** {row['DESTINO']}
-                        * **Días de Retraso:** {row['DIAS_RETRASO']}
+                        * **Días de Retraso:** {int(row['DIAS_RETRASO'])} días
                         """
                         if entregado:
-                            response_text += f"\n* **Fecha Real:** {row['FECHA DE ENTREGA REAL'].strftime('%d/%m/%Y')}"
+                            response_text += f"\n* **Fecha Real:** {pd.to_datetime(row['FECHA DE ENTREGA REAL']).strftime('%d/%m/%Y')}"
                         else:
-                            response_text += f"\n* **Promesa:** {row['PROMESA DE ENTREGA'].strftime('%d/%m/%Y')}"
+                            response_text += f"\n* **Promesa:** {pd.to_datetime(row['PROMESA DE ENTREGA']).strftime('%d/%m/%Y')}"
         
-                    # --- LÓGICA DE ANÁLISIS DE FLETERAS (QUIÉN ES BUENO/MALO) ---
-                    elif any(word in p for word in ["mejor", "peor", "fletera", "bueno", "malo", "ranking"]):
+                    # --- LÓGICA DE MEJOR/PEOR FLETERA ---
+                    elif any(word in p for word in ["mejor", "peor", "buena", "mala", "fletera"]):
+                        # Agrupamos por FLETERA usando los nombres exactos de tu tabla
                         ranking = df.groupby("FLETERA").agg({"DIAS_RETRASO": "mean", "COSTO DE LA GUÍA": "sum"}).reset_index()
-                        mejor = ranking.sort_values("DIAS_RETRASO").iloc[0]
-                        peor = ranking.sort_values("DIAS_RETRASO", ascending=False).iloc[0]
+                        ranking = ranking.sort_values("DIAS_RETRASO")
                         
-                        response_text = f"### 📊 Reporte de Desempeño\n"
-                        response_text += f"El transportista más confiable es **{mejor['FLETERA']}**. \n"
-                        response_text += f"Por el contrario, **{peor['FLETERA']}** presenta los mayores tiempos de demora."
+                        mejor = ranking.iloc[0]['FLETERA']
+                        peor = ranking.iloc[-1]['FLETERA']
                         
-                        fig_to_show = px.bar(ranking, x="FLETERA", y="DIAS_RETRASO", color="DIAS_RETRASO",
-                                           title="Promedio de Días de Retraso por Fletera",
-                                           color_continuous_scale='RdYlGn_r', template="plotly_dark")
+                        response_text = f"### 📊 Análisis de Socios Logísticos\n"
+                        response_text += f"Basado en los datos, **{mejor}** es tu mejor fletera (menos retrasos). \n"
+                        response_text += f"Por otro lado, **{peor}** es la que presenta mayores demoras en promedio."
+                        
+                        fig_to_show = px.bar(ranking, x="FLETERA", y="DIAS_RETRASO", 
+                                           title="Días de Retraso Promedio",
+                                           color="DIAS_RETRASO", color_continuous_scale='RdYlGn_r')
         
-                    # --- LÓGICA DE URGENCIA Y RETRASOS ---
-                    elif any(word in p for word in ["retraso", "urgente", "demora", "atrasado"]):
-                        pendientes = df[(df['FECHA DE ENTREGA REAL'].isna()) & (df['PROMESA DE ENTREGA'] < hoy)]
-                        if not pendientes.empty:
-                            response_text = f"⚠️ Tienes **{len(pendientes)} pedidos urgentes** fuera de fecha promesa. Los destinos más afectados son: {', '.join(pendientes['DESTINO'].unique()[:3])}."
-                            fig_to_show = px.pie(names=['En Retraso', 'Al Corriente'], 
-                                               values=[len(pendientes), len(df)-len(pendientes)], 
-                                               hole=0.5, title="Salud de Entregas Actual")
+                    # --- LÓGICA DE RETRASOS GENERALES ---
+                    elif "retraso" in p or "atrasado" in p or "urgente" in p:
+                        retrasados = df[df['DIAS_RETRASO'] > 0]
+                        if not retrasados.empty:
+                            response_text = f"⚠️ He detectado **{len(retrasados)} pedidos con retraso**. El promedio de demora general es de **{retrasados['DIAS_RETRASO'].mean():.1f} días**."
+                            fig_to_show = px.pie(names=['Con Retraso', 'A Tiempo'], 
+                                               values=[len(retrasados), len(df)-len(retrasados)], 
+                                               hole=0.4, title="Salud de Pedidos",
+                                               color_discrete_sequence=['#FF4B4B', '#00FFAA'])
                         else:
-                            response_text = "✅ ¡Excelente! No hay pedidos con retraso acumulado según la fecha promesa."
+                            response_text = "✅ No se detectan pedidos con retraso en la base de datos actual."
         
-                    # --- EXPLICACIÓN DE COSTOS (POR QUÉ) ---
-                    elif any(word in p for word in ["porque", "explica", "razon", "analiza"]):
-                        costo_mty = df[df['DESTINO'] == 'MONTERREY']['COSTO DE LA GUÍA'].mean() # Ejemplo
-                        response_text = "🧐 **Análisis Logístico:** He detectado que los costos se concentran en las zonas con mayor volumen de cajas. Si optimizamos la carga por unidad, el costo de la guía bajará un 15%."
-                        fig_to_show = px.scatter(df, x="CANTIDAD DE CAJAS", y="COSTO DE LA GUÍA", color="FLETERA",
-                                               title="Correlación: Cantidad de Cajas vs Costo de Guía")
+                    # --- COSTO DE FLETE ---
+                    elif "costo" in p or "flete" in p or "guía" in p:
+                        total_gasto = df["COSTO DE LA GUÍA"].sum()
+                        response_text = f"El gasto total en fletes (Costo de la Guía) asciende a **${total_gasto:,.2f}**."
+                        fig_to_show = px.area(df.groupby("FECHA DE ENVÍO")["COSTO DE LA GUÍA"].sum().reset_index(), 
+                                            x="FECHA DE ENVÍO", y="COSTO DE LA GUÍA", title="Tendencia de Gastos")
         
                     else:
-                        response_text = "Soy tu asistente logístico. Puedes pedirme:\n1. **Rastreo:** Escribe un número de pedido.\n2. **Desempeño:** Pregunta quién es la mejor fletera.\n3. **Urgencias:** Consulta qué pedidos tienen retraso."
+                        response_text = "Soy tu asistente logístico. Puedes pedirme:\n1. **Rastreo:** Dame un número de pedido (ej: 232134).\n2. **Desempeño:** ¿Quién es la mejor fletera?\n3. **Urgencias:** ¿Qué pedidos tienen retraso?\n4. **Costos:** ¿Cuánto hemos gastado en fletes?"
         
                 except Exception as e:
-                    response_text = f"❌ Error al procesar: {e}"
+                    response_text = f"❌ Error al procesar: {str(e)}"
         
-                # Mostrar respuesta y gráfico
+                # Renderizar respuesta
                 st.markdown(response_text)
                 if fig_to_show:
                     st.plotly_chart(fig_to_show, use_container_width=True)
                 
-                # Guardar respuesta en el historial
+                # Guardar en historial
                 st.session_state.chat_history.append({"role": "assistant", "content": response_text, "fig": fig_to_show})
         
         # Botón para regresar
@@ -994,6 +1001,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
