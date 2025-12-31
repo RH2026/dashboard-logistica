@@ -103,7 +103,7 @@ if not st.session_state.logueado:
             background-color: #000000 !important;
             padding: 40px;
             border-radius: 20px;
-            border: 2px solid {verde_id} !important;
+            border: 2px solid #333333 !important;
             box-shadow: 0 0 15px rgba(0, 255, 0, 0.1);
         }}
 
@@ -174,10 +174,10 @@ if not st.session_state.logueado:
                 </div>
             ''', unsafe_allow_html=True)
             
-            st.markdown('<div class="login-header">ACCESO RESTRINGIDO</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-header">ACCESO AL SISTEMA</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
-            submit = st.form_submit_button("INGRESAR AL SISTEMA", use_container_width=True)
+            submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
             if submit:
                 usuarios = st.secrets["usuarios"]
@@ -870,6 +870,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
