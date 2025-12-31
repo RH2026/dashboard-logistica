@@ -161,12 +161,7 @@ else:
         st.session_state.motivo_splash = "logout"
         st.rerun()
 
-    # CUERPO DEL DASHBOARD
-    st.title("📦 Sistema de Logística")
-    st.write(f"Bienvenido al panel de control, {st.session_state.usuario_actual}.")
-    st.dataframe(df.head()) # Muestra los primeros datos para confirmar carga
-    
-    
+        
     # --------------------------------------------------
     # 🛣️ INICIO DE LA LÓGICA DE NAVEGACIÓN
     # --------------------------------------------------
@@ -175,7 +170,7 @@ else:
         # --------------------------------------------------
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
-        st.markdown("<h1 style='text-align:center;'>Control de Embarques</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align:center;'>📦Control de Embarques</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;'>Logística – Enero 2026</p>", unsafe_allow_html=True)
         st.divider()
            
@@ -806,6 +801,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
