@@ -456,7 +456,12 @@ else:
         with c4:
             st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Retrasados</div>", unsafe_allow_html=True)
             st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
-        
+                     
+              
+        # --------------------------------------------------
+        # TABLA DE ENVÍOS – DISEÑO PERSONALIZADO
+        # --------------------------------------------------
+                
         # 1. BOTONES DE CONTROL (Justo arriba de la tabla)
         col_btn1, col_btn2, _ = st.columns([1, 1, 4])
         
@@ -488,10 +493,7 @@ else:
             """, unsafe_allow_html=True)
             h_dinamica = 450
         
-               
-        # --------------------------------------------------
-        # TABLA DE ENVÍOS – DISEÑO PERSONALIZADO
-        # --------------------------------------------------
+        #EMPIEZA TABLA--------------------------
         st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Lista de envíos</div></div>""", unsafe_allow_html=True)
     
         hoy_t = pd.Timestamp.today().normalize()
@@ -856,6 +858,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
