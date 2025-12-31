@@ -463,21 +463,22 @@ else:
         # --------------------------------------------------
                 
         # 1. BOTONES DE CONTROL (Justo arriba de la tabla)
-        col_btn1, col_btn2, _ = st.columns([1, 1, 4])
+        # Ajustamos los pesos [1, 1, 5] para que los botones queden pegaditos
+        col_btn1, col_btn2, col_vacia = st.columns([1, 1, 5])
         
         with col_btn1:
-            if st.button("↔️ Pantalla Completa"):
+            # use_container_width hace que el botón llene su pequeña columna
+            if st.button("↔️ Pantalla Completa", use_container_width=True):
                 st.session_state.tabla_expandida = True
                 st.rerun()
         
         with col_btn2:
-            if st.button("⬅️ Vista Normal"):
+            if st.button("⬅️ Vista Normal", use_container_width=True):
                 st.session_state.tabla_expandida = False
                 st.rerun()
         
         # 2. LÓGICA DE MÁRGENES DINÁMICOS
         if st.session_state.tabla_expandida:
-            # Margen mínimo para que cubra todo el monitor de 24"
             st.markdown("""
                 <style>
                     .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
@@ -485,7 +486,6 @@ else:
             """, unsafe_allow_html=True)
             h_dinamica = 850
         else:
-            # Margen elegante de 3rem que te gustó
             st.markdown("""
                 <style>
                     .block-container { padding-left: 3rem !important; padding-right: 3rem !important; }
@@ -493,8 +493,8 @@ else:
             """, unsafe_allow_html=True)
             h_dinamica = 450
         
-        #EMPIEZA TABLA--------------------------
-        st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Lista de envíos</div></div>""", unsafe_allow_html=True)
+        # --- TÍTULO Y TABLA ---
+        st.markdown("""<div style="text-align:right;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Lista de envíos</div></div>""", unsafe_allow_html=True)
     
         hoy_t = pd.Timestamp.today().normalize()
         df_mostrar = df_filtrado.copy()
@@ -858,6 +858,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
