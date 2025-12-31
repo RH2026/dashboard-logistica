@@ -22,59 +22,47 @@ if "pagina" not in st.session_state:
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
 
-# 1. CONFIGURACIÓN
-st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
-
-# 2. SESIÓN
-if "logueado" not in st.session_state: st.session_state.logueado = False
-if "splash_completado" not in st.session_state: st.session_state.splash_completado = False
-if "motivo_splash" not in st.session_state: st.session_state.motivo_splash = "inicio"
-if "usuario_actual" not in st.session_state: st.session_state.usuario_actual = None
-
 # Colores
 color_fondo_nativo = "#0e1117" 
 color_blanco = "#FFFFFF"
 color_verde = "#00FF00" 
 color_borde_gris = "#333333"
 
-# --- ESTILOS CSS UNIFICADOS ---
-CSS_TODO = f"""
+# --------------------------------------------------
+# 3. ESTILOS CSS (Caja 3D y Fuentes)
+# --------------------------------------------------
+st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
     .stApp {{ background-color: {color_fondo_nativo} !important; }}
+    header, footer {{ visibility: hidden !important; }}
     
-    /* Caja 3D */
+    /* Animación Caja 3D */
     .scene {{ width: 100%; height: 120px; perspective: 600px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }}
     .cube {{ width: 60px; height: 50px; position: relative; transform-style: preserve-3d; transform: rotateX(-20deg) rotateY(45deg); animation: move-pkg 6s infinite ease-in-out; }}
-    .cube-face {{ position: absolute; width: 60px; height: 50px; background: #d2a679; border: 1px solid #b08d5c; box-shadow: inset 0 0 15px rgba(0,0,0,0.1); }}
-    .cube-face::after {{ content: ''; position: absolute; top: 40%; width: 100%; height: 8px; background: rgba(0,0,0,0.08); }}
-    
+    .cube-face {{ position: absolute; width: 60px; height: 50px; background: #d2a679; border: 1px solid #b08d5c; }}
     .front  {{ transform: rotateY(0deg) translateZ(30px); }}
     .back   {{ transform: rotateY(180deg) translateZ(30px); }}
     .right  {{ transform: rotateY(90deg) translateZ(30px); }}
     .left   {{ transform: rotateY(-90deg) translateZ(30px); }}
     .top    {{ width: 60px; height: 60px; transform: rotateX(90deg) translateZ(25px); background: #e3bc94; }}
     .bottom {{ width: 60px; height: 60px; transform: rotateX(-90deg) translateZ(25px); }}
-    
     @keyframes move-pkg {{ 0%, 100% {{ transform: translateY(0px) rotateX(-20deg) rotateY(45deg); }} 50% {{ transform: translateY(-15px) rotateX(-25deg) rotateY(225deg); }} }}
     
-    /* Login Form */
-    .stForm {{ background-color: {color_fondo_nativo} !important; border: 1.5px solid {color_borde_gris} !important; border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
-    .login-header {{ text-align: center; color: white; font-family: sans-serif; font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 2px; }}
-    input {{ font-family: 'Courier Prime', monospace !important; color: white !important; }}
-    div[data-testid="stTextInputRootElement"] {{ background-color: #1a1c24 !important; border-radius: 10px !important; }}
-    
-    header, footer {{ visibility: hidden; }}
+    /* Formulario Login */
+    .stForm {{ background-color: {color_fondo_nativo} !important; border: 1.5px solid {color_borde_gris} !important; border-radius: 20px; padding: 40px; }}
+    .login-header {{ text-align: center; color: white; font-family: sans-serif; font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; }}
+    input {{ font-family: 'Courier Prime', monospace !important; }}
 </style>
-"""
-st.markdown(CSS_TODO, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# Contenedor para evitar saltos visuales
 placeholder = st.empty()
 
-# --- LÓGICA DE FLUJO PRINCIPAL ---
+# --------------------------------------------------
+# 4. FLUJO DE PANTALLAS (ORDENADO)
+# --------------------------------------------------
 
-# 1. PANTALLA DE LOGIN
+# PRIORIDAD A: SI NO ESTÁ LOGUEADO (LOGIN)
 if not st.session_state.logueado:
     with placeholder.container():
         col1, col2, col3 = st.columns([1, 1.2, 1])
@@ -85,7 +73,6 @@ if not st.session_state.logueado:
                 st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
                 u_input = st.text_input("Usuario")
                 c_input = st.text_input("Contraseña", type="password")
-                
                 if st.form_submit_button("INGRESAR", use_container_width=True):
                     usuarios = st.secrets["usuarios"]
                     if u_input in usuarios and str(usuarios[u_input]) == str(c_input):
@@ -98,27 +85,23 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# 2. PANTALLA DE SPLASH (Entrada/Salida)
+# PRIORIDAD B: SPLASH SCREEN (BLOQUEO VISUAL TOTAL)
 elif not st.session_state.splash_completado:
     with placeholder.container():
-        t_splash = "Cerrando sistema de forma segura..." if st.session_state.motivo_splash == "logout" else f"Bienvenid@ {st.session_state.usuario_actual}, inicializando módulos..."
-        color_caja_splash = "#FF4B4B" if st.session_state.motivo_splash == "logout" else "#d2a679"
-        
+        t_splash = "Cerrando sistema..." if st.session_state.motivo_splash == "logout" else f"Bienvenid@ {st.session_state.usuario_actual}..."
+        # El Splash se dibuja encima de todo con z-index
         st.markdown(f"""
-            <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 80vh;">
+            <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0e1117; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                 <div class="scene">
-                    <div class="cube" style="width:100px; height:100px;">
-                        <div class="cube-face" style="width:100px; height:100px; background:{color_caja_splash}; transform: rotateY(0deg) translateZ(50px);"></div>
-                        <div class="cube-face" style="width:100px; height:100px; background:{color_caja_splash}; transform: rotateY(180deg) translateZ(50px);"></div>
-                        <div class="cube-face" style="width:100px; height:100px; background:{color_caja_splash}; transform: rotateY(90deg) translateZ(50px);"></div>
-                        <div class="cube-face" style="width:100px; height:100px; background:{color_caja_splash}; transform: rotateY(-90deg) translateZ(50px);"></div>
-                        <div class="cube-face" style="width:100px; height:110px; background:#e3bc94; transform: rotateX(90deg) translateZ(50px);"></div>
+                    <div class="cube" style="width:80px; height:80px;">
+                        <div class="cube-face" style="width:80px; height:80px; background:#d2a679; transform: rotateY(0deg) translateZ(40px);"></div>
+                        <div class="cube-face" style="width:80px; height:80px; background:#d2a679; transform: rotateY(180deg) translateZ(40px);"></div>
+                        <div class="cube-face" style="width:80px; height:80px; background:#e3bc94; transform: rotateX(90deg) translateZ(40px);"></div>
                     </div>
                 </div>
-                <div style="color:white; font-family:'Courier Prime'; margin-top:50px; text-transform: uppercase; letter-spacing: 2px;">{t_splash}</div>
+                <div style="color:white; font-family:'Courier Prime'; margin-top:50px; letter-spacing:2px;">{t_splash}</div>
             </div>
         """, unsafe_allow_html=True)
-        
         time.sleep(2.5)
         
         if st.session_state.motivo_splash == "logout":
@@ -154,10 +137,9 @@ else:
     df = cargar_datos()
 
     # BARRA LATERAL
-    st.sidebar.markdown(f'### 👤 Sesión: <span style="color:#00FFAA;">{st.session_state.usuario_actual}</span>', unsafe_allow_html=True)
-    
-    if st.sidebar.button("Cerrar Sesión", use_container_width=True):
-        st.session_state.splash_completado = False 
+    t.sidebar.markdown(f"### 👤 {st.session_state.usuario_actual}")
+    if st.sidebar.button("Cerrar Sesión"):
+        st.session_state.splash_completado = False
         st.session_state.motivo_splash = "logout"
         st.rerun()
 
@@ -801,6 +783,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
