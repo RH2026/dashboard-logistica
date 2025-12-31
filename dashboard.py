@@ -32,91 +32,79 @@ if "ultimo_movimiento" not in st.session_state:
 # 1. CONFIGURACIÓN DE PÁGINA (DEBE SER LO PRIMERO)
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. ESTILO GLOBAL PARA MATAR EL ERROR ROJO
-# Ponemos esto fuera de cualquier IF para que actúe desde el segundo cero
-st.markdown("""
-    <style>
-    /* Ocultar CUALQUIER mensaje de error o excepción de Streamlit */
-    div[data-testid="stException"], 
-    div[data-testid="stNotification"], 
-    .stAlert, 
-    div.element-container:has(div.stException) {
-        display: none !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# 2. ESTILO GLOBAL Y LÓGICA DE LOGIN (BLOQUE UNIFICADO ANTI-BORDES)
+# --------------------------------------------------
+# 3. LÓGICA DE LOGIN (BLOQUE DEFINITIVO ANTI-BORDE)
+# --------------------------------------------------
 if not st.session_state.logueado:
-    st.markdown(f"""
+    st.markdown("""
         <style>
-        /* 1. LIMPIEZA TOTAL DE INTERFAZ */
-        header[data-testid="stHeader"], [data-testid="stStatusWidget"], footer {{
-            display: none !important;
-        }}
+        /* 1. LIMPIEZA TOTAL */
+        header, [data-testid="stHeader"], footer { display: none !important; }
         
-        .stApp {{
+        .stApp {
             background-color: #000000 !important;
-        }}
+        }
 
-        .main .block-container {{
-            padding-top: 0rem !important;
-        }}
-
-        /* 2. ELIMINACIÓN RADICAL DE LA CAJA FANTASMA (CONTENEDORES OCULTOS) */
-        /* Atacamos todos los posibles contenedores que Streamlit usa para errores/alertas */
-        div[data-testid="stException"], 
-        div[data-testid="stNotification"], 
+        /* 2. ELIMINACIÓN QUIRÚRGICA DEL BORDE DE LA CAJA FANTASMA */
+        /* Atacamos el contenedor del formulario y cualquier alerta oculta */
+        [data-testid="stForm"], 
+        [data-testid="stNotification"], 
         .stAlert,
-        [data-testid="stForm"] {{
+        [data-testid="stFormElementContainer"] {
             border: none !important;
+            border-width: 0px !important;
+            outline: none !important;
             box-shadow: none !important;
             background-color: transparent !important;
-        }}
+        }
 
-        /* Matamos el borde del contenedor de bloque de Streamlit */
-        div.element-container, div.stVerticalBlock {{
+        /* Bloqueamos el contenedor que genera el borde gris/azul de Streamlit */
+        div[class*="st-key-"] > div {
             border: none !important;
-        }}
+        }
 
         /* 3. CAJA DE LOGIN COMPACTA */
-        .login-box {{
+        .login-box {
             background-color: #000000;
             padding: 30px;
             border-radius: 12px;
             border: 1px solid #1a1a1a;
             max-width: 320px;
             margin: auto;
-            margin-top: 20vh;
-        }}
+            margin-top: 15vh;
+        }
 
-        /* 4. INPUTS Y OJITO (FONDO UNIFICADO) */
+        /* 4. INPUTS Y UNIFICACIÓN TOTAL DEL OJITO */
+        /* Forzamos el mismo color exacto en todos los componentes del input */
         div[data-baseweb="input"], 
         div[data-baseweb="input"] > div,
+        div[data-baseweb="base-input"],
         input[type="text"], 
         input[type="password"],
         button[aria-label="Show password"],
-        button[aria-label="Hide password"] {{
+        button[aria-label="Hide password"] {
             background-color: #111111 !important;
             color: white !important;
             border: none !important;
             box-shadow: none !important;
-        }}
+        }
         
-        div[data-baseweb="input"] {{
+        /* Borde sutil solo para la caja de entrada */
+        div[data-baseweb="input"] {
             border: 1px solid #333333 !important;
-        }}
+        }
 
         /* 5. BOTÓN ENTRAR */
-        .stButton > button {{
+        .stButton > button {
             background-color: #00FFAA !important;
             color: #000000 !important;
             font-weight: bold !important;
             border: none !important;
             margin-top: 15px;
-        }}
+            height: 40px;
+        }
 
-        label {{ color: #888888 !important; }}
+        label { color: #888888 !important; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -124,10 +112,10 @@ if not st.session_state.logueado:
     
     with center_col:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<h2 style="text-align:center; color:#00FFAA; font-size:18px;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 style="text-align:center; color:#00FFAA; font-size:18px; font-weight: bold;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
         
-        # Usamos un contenedor vacío para el form para aislarlo de estilos externos
-        with st.form(key="login_final_boss_v4"):
+        # El formulario ahora tiene un ID específico para el CSS
+        with st.form(key="login_final_boss_v5"):
             u_input = st.text_input("Usuario", placeholder="Usuario")
             c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
             submit = st.form_submit_button("ENTRAR", use_container_width=True)
@@ -141,7 +129,7 @@ if not st.session_state.logueado:
                 st.session_state.splash_visto = False
                 st.rerun()
             else:
-                # Usamos HTML puro para el error, así Streamlit no genera su caja de alerta
+                # Usamos HTML para que no aparezca la caja de error de Streamlit
                 st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:12px; margin-top:10px;">⚠️ Datos incorrectos</p>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
@@ -935,6 +923,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
