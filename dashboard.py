@@ -175,7 +175,7 @@ else:
         # --------------------------------------------------
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
-        st.markdown("<h2 style='text-align:center;display:flex;align-items:center;justify-content:center;gap:14px;color:#FFFFFF;font-weight:600;'><svg width='34' height='34' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 7L12 2L21 7L12 12L3 7Z' stroke='#00FFAA' stroke-width='1.5' stroke-linejoin='round'/><path d='M3 7V17L12 22L21 17V7' stroke='#00FFAA' stroke-width='1.5' stroke-linejoin='round'/><path d='M12 12V22' stroke='#00FFAA' stroke-width='1.5'/><path d='M7.5 4.8L16.5 9.3' stroke='#00FFAA' stroke-width='1.1' opacity='0.6'/></svg>Control de Embarques</h2>", unsafe_allow_html=True)
+        st.markdown("<style>@keyframes floatBox{0%{transform:translateY(0);}50%{transform:translateY(-4px);}100%{transform:translateY(0);}}@keyframes textIn{0%{opacity:0;transform:translateY(6px);}100%{opacity:1;transform:translateY(0);}}@keyframes shimmer{0%{background-position:-200%;}100%{background-position:200%;}}</style><h2 style='text-align:center;display:flex;align-items:center;justify-content:center;gap:14px;font-weight:600;'><svg style='animation:floatBox 3.2s ease-in-out infinite;' width='34' height='34' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 7L12 2L21 7L12 12L3 7Z' stroke='#00FFAA' stroke-width='1.5' stroke-linejoin='round'/><path d='M3 7V17L12 22L21 17V7' stroke='#00FFAA' stroke-width='1.5' stroke-linejoin='round'/><path d='M12 12V22' stroke='#00FFAA' stroke-width='1.5'/><path d='M7.5 4.8L16.5 9.3' stroke='#00FFAA' stroke-width='1.1' opacity='0.6'/></svg><span style='animation:textIn 0.9s ease-out forwards;background:linear-gradient(90deg,#FFFFFF,#00FFAA,#FFFFFF);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation: textIn 0.9s ease-out forwards, shimmer 3.5s ease-in-out 1;'>Control de Embarques</span></h2>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;'>Logística – Enero 2026</p>", unsafe_allow_html=True)
         st.divider()
            
@@ -806,6 +806,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
