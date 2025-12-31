@@ -128,7 +128,7 @@ if not st.session_state.logueado:
         /* TÍTULO Y ETIQUETAS */
         .login-header {
             text-align: center; 
-            color: #00FFAA; 
+            color: #FFFFFF; 
             font-size: 28px; 
             font-weight: bold; 
             margin-bottom: 30px;
@@ -148,7 +148,7 @@ if not st.session_state.logueado:
     with col2:
         st.markdown('<div style="height:15vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
-            st.markdown('<div class="login-header">ACCESO SISTEMA</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-header">ACCESO AL SISTEMA</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
@@ -844,6 +844,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
