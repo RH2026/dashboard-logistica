@@ -180,16 +180,16 @@ else:
     # --------------------------------------------------
     st.sidebar.markdown(f'### 👤 Sesión Activa: {st.session_state.usuario_actual}')
         
-        # Usamos la línea compacta en lugar de st.divider() o st.markdown("---")
-        st.markdown("<hr>", unsafe_allow_html=True)
+    # Usamos la línea compacta en lugar de st.divider() o st.markdown("---")
+    st.markdown("<hr>", unsafe_allow_html=True)
         
         if st.sidebar.button("Cerrar Sesión", use_container_width=True, key="logout_sidebar"):
         # IMPORTANTE: No pongas logueado = False aquí, deja que el Splash lo haga al terminar
         st.session_state.splash_completado = False 
         st.session_state.motivo_splash = "logout"
         st.rerun()
-    
-        st.markdown("<hr>", unsafe_allow_html=True)
+
+    st.markdown("<hr>", unsafe_allow_html=True)
     
     # --------------------------------------------------
     # 🛣️ INICIO DE LA LÓGICA DE NAVEGACIÓN
@@ -802,6 +802,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
