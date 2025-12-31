@@ -127,21 +127,7 @@ if not st.session_state.splash_completado:
 # INICIO DEL CONTENIDO PRIVADO (SI ESTÁ LOGUEADO)
 # --------------------------------------------------
 else:
-  
-    # --------------------------------------------------
-    # 👋 SALUDO PERSONALIZADO
-    # --------------------------------------------------
-    saludos = {"Rigoberto": "Bienvenido", "Cynthia": "Bienvenida", "Brenda": "Bienvenida"}
-    saludo = saludos.get(st.session_state.usuario_actual, "Bienvenid@")
-    
-    st.markdown(f"""
-        <div style="text-align:center; margin-top:10px;">
-            <div style="font-size:16px; color:#00FFAA;">
-                {saludo}, {st.session_state.usuario_actual} 💚
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-    
+         
     # --------------------------------------------------
     # 📊 MOTOR DE CARGA DE DATOS (Optimizado con Cache)
     # --------------------------------------------------
@@ -803,6 +789,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
