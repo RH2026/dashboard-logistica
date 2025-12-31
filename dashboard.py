@@ -47,10 +47,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (VERSIÓN COMPACTA - FONDO NEGRO)
+# 3. LÓGICA DE LOGIN (FONDO NEGRO Y CAMUFLAJE TOTAL)
 # --------------------------------------------------
 if not st.session_state.logueado:
-    # Eliminamos el procesamiento de imagen y ponemos fondo negro total
     st.markdown(f"""
         <style>
         /* 1. FONDO NEGRO TOTAL Y ELIMINAR HEADER */
@@ -61,57 +60,62 @@ if not st.session_state.logueado:
             background-image: none !important;
         }}
         
-        .main .block-container {{ 
-            padding-top: 5rem !important; 
-        }}
-
-        /* 2. CAMUFLAJE TOTAL DE CAJAS FANTASMA (NEGRO SOBRE NEGRO) */
+        /* 2. CAMUFLAJE DE LA CAJA FANTASMA (NEGRO SIN BORDES) */
+        /* Quitamos borde, fondo y sombras a cualquier alerta o excepción */
         div[data-testid="stNotification"], 
         div[data-testid="stException"],
         .stAlert,
-        div.element-container:has(div.stAlert) {{
+        div.element-container:has(div.stAlert),
+        div.element-container:has(div.stException) {{
             background-color: #000000 !important;
             border: none !important;
-            color: #000000 !important;
+            box-shadow: none !important;
             display: none !important;
         }}
 
-        /* 3. CAJA DE LOGIN MÁS PEQUEÑA Y COMPACTA */
+        /* 3. CAJA DE LOGIN COMPACTA */
         .login-box {{
-            background-color: #111111; /* Gris casi negro */
-            padding: 25px;
+            background-color: #000000; /* Negro total para fundirse con el fondo */
+            padding: 20px;
             border-radius: 12px;
-            border: 1px solid #333333;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            max-width: 350px; /* Caja más estrecha */
+            border: 1px solid #1a1a1a; /* Borde muy sutil */
+            max-width: 320px;
             margin: auto;
+            margin-top: 10vh;
         }}
         
-        /* HACER LOS INPUTS MÁS PEQUEÑOS */
+        /* INPUTS MÁS PEQUEÑOS */
         .stTextInput > div > div > input {{
-            padding: 5px 10px !important;
-            font-size: 14px !important;
+            background-color: #111111 !important;
+            color: white !important;
+            padding: 4px 10px !important;
+            font-size: 13px !important;
+            border: 1px solid #333333 !important;
         }}
         
-        /* BOTÓN MÁS PEQUEÑO */
+        /* BOTÓN COMPACTO */
         .stButton > button {{
-            padding: 5px !important;
-            font-size: 14px !important;
-            height: auto !important;
+            background-color: #00FFAA !important;
+            color: #000000 !important;
+            font-weight: bold !important;
+            padding: 2px !important;
+            font-size: 13px !important;
+            border: none !important;
         }}
 
-        label {{ color: #cccccc !important; font-size: 13px !important; }}
+        label {{ color: #888888 !important; font-size: 12px !important; }}
         </style>
     """, unsafe_allow_html=True)
 
-    # Columnas para centrar la caja pequeña
-    _, center_col, _ = st.columns([1, 1.2, 1])
+    # Centrado
+    _, center_col, _ = st.columns([1, 1.5, 1])
     
     with center_col:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<h3 style="text-align:center; color:#00FFAA; margin-bottom:15px; font-size:18px;">🔐 ACCESO</h3>', unsafe_allow_html=True)
+        # Texto solicitado
+        st.markdown('<h3 style="text-align:center; color:#00FFAA; margin-bottom:15px; font-size:16px;">🔐 Acceso al Sistema</h3>', unsafe_allow_html=True)
         
-        with st.form(key="login_compacto"):
+        with st.form(key="login_final_black"):
             u_input = st.text_input("Usuario", placeholder="Usuario")
             c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
             submit = st.form_submit_button("ENTRAR", use_container_width=True)
@@ -125,7 +129,7 @@ if not st.session_state.logueado:
                 st.session_state.splash_visto = False
                 st.rerun()
             else:
-                st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:12px; margin-top:10px;">⚠️ Datos incorrectos</p>', unsafe_allow_html=True)
+                st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:12px; margin-top:5px;">Datos incorrectos</p>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -918,6 +922,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
