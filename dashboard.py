@@ -157,31 +157,7 @@ else:
     df = cargar_datos()
 
     # BARRA LATERAL
-    st.sidebar.markdown(f"""
-    <div style="
-        display:flex;
-        align-items:center;
-        gap:10px;
-        margin-top:10px;
-        margin-bottom:6px;
-    ">
-        <svg width="18" height="18" viewBox="0 0 24 24"
-             fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="8" r="4"
-                    stroke="#00FFAA" stroke-width="1.8"/>
-            <path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6"
-                  stroke="#00FFAA" stroke-width="1.8"
-                  stroke-linecap="round"/>
-        </svg>
-    
-        <span style="color:#999;font-size:14px;">
-            Sesión:
-            <span style="color:#00FFAA;font-weight:500;">
-                {st.session_state.usuario_actual}
-            </span>
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
+    st.sidebar.markdown(f'<div style="display:flex;align-items:center;gap:10px;margin-top:10px;"><svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" stroke="#00FFAA" stroke-width="1.8"/><path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6" stroke="#00FFAA" stroke-width="1.8" stroke-linecap="round"/></svg><span style="color:#999;font-size:14px;">Sesión: <span style="color:#00FFAA;font-weight:500;">{st.session_state.usuario_actual}</span></span></div>', unsafe_allow_html=True)
     
     st.sidebar.divider()
             
@@ -830,6 +806,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
