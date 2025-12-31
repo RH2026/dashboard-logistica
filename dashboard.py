@@ -27,14 +27,6 @@ if "pagina" not in st.session_state:
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time()
 
-Para que todo el sistema sea visualmente coherente, he actualizado el Splash Screen con el color nativo de Streamlit (#0e1117).
-
-También aproveché para intensificar la animación del cargador y ajustar el diseño para que se vea mejor en dispositivos móviles, centrando el contenido y usando el color verde que ya traemos en el resto de la app.
-
-Aquí tienes el código modificado:
-
-Python
-
 # --------------------------------------------------
 # 3. SPLASH SCREEN (ESTILO NATIVO Y OPTIMIZADO)
 # --------------------------------------------------
@@ -896,6 +888,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
