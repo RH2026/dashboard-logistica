@@ -8,7 +8,7 @@ import textwrap
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. ESTADOS DE SESIÓN (Inicialización segura)
+# 2. ESTADOS DE SESIÓN
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
 if "splash_completado" not in st.session_state:
@@ -21,7 +21,7 @@ if "pagina" not in st.session_state:
     st.session_state.pagina = "principal"  # Controla qué sección del dashboard se ve
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
-
+    
 # Colores Globales
 color_fondo_nativo = "#0e1117" 
 color_blanco = "#FFFFFF"
@@ -29,7 +29,7 @@ color_verde = "#00FF00"
 color_borde_gris = "#333333"
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (Se muestra si no está logueado y NO hay un logout en curso)
+# 3. LÓGICA DE LOGIN
 # --------------------------------------------------
 if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
     st.markdown(f"""
@@ -68,9 +68,7 @@ if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
             if submit:
-                # Acceso a st.secrets["usuarios"]
                 usuarios = st.secrets["usuarios"]
-                # Validación: comparamos usuario y contraseña (convertida a string por si acaso)
                 if u_input in usuarios and str(usuarios[u_input]) == str(c_input):
                     st.session_state.logueado = True
                     st.session_state.usuario_actual = u_input
@@ -78,7 +76,7 @@ if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
                     st.session_state.motivo_splash = "inicio"
                     st.rerun()
                 else:
-                    st.error("Acceso Denegado: Usuario o Contraseña incorrectos")
+                    st.error("Acceso Denegado")
     st.stop()
 
 # --------------------------------------------------
@@ -87,10 +85,10 @@ if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
 if not st.session_state.splash_completado:
     if st.session_state.motivo_splash == "logout":
         texto_splash = "Cerrando sesión de forma segura..."
-        color_loader = "#FF4B4B" # Rojo
+        color_loader = "#FF4B4B"
     else:
         texto_splash = f"Bienvenido {st.session_state.usuario_actual}, inicializando módulos..."
-        color_loader = "#00FF00" # Verde
+        color_loader = "#00FF00"
 
     st.markdown(f"""
     <style>
@@ -106,29 +104,41 @@ if not st.session_state.splash_completado:
     }}
     @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
     .splash-text {{ color: #FFFFFF; font-size: 16px; font-family: sans-serif; letter-spacing: 1px; opacity: 0.8; }}
-    header, footer {{visibility: hidden;}}
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown(f'''
-        <div class="splash-container">
-            <div class="loader"></div>
-            <div class="splash-text">{texto_splash}</div>
-        </div>
-    ''', unsafe_allow_html=True)
+    st.markdown(f'<div class="splash-container"><div class="loader"></div><div class="splash-text">{texto_splash}</div></div>', unsafe_allow_html=True)
     
-    time.sleep(2.5)
+    time.sleep(2)
     
     if st.session_state.motivo_splash == "logout":
-        # Resetear estados manualmente en lugar de .clear() para no perder configuraciones críticas
+        # --- SOLUCIÓN AL PROBLEMA DE KPIS ---
         st.session_state.logueado = False
         st.session_state.usuario_actual = None
+        st.session_state.pagina = "principal" # <--- RESETEAMOS LA PÁGINA AQUÍ
         st.session_state.splash_completado = True
         st.session_state.motivo_splash = "inicio"
         st.rerun()
     else:
         st.session_state.splash_completado = True
         st.rerun()
+
+# --------------------------------------------------
+# 5. DASHBOARD (Ejemplo de navegación)
+# --------------------------------------------------
+# Aquí es donde usas st.session_state.pagina para decidir qué mostrar
+if st.session_state.pagina == "principal":
+    st.title("Página Principal")
+    st.write("Bienvenido al inicio.")
+elif st.session_state.pagina == "KPIS":
+    st.title("Panel de KPIS")
+    st.write("Datos de rendimiento.")
+
+# Botón de cierre
+if st.sidebar.button("Cerrar Sesión"):
+    st.session_state.splash_completado = False 
+    st.session_state.motivo_splash = "logout"
+    st.rerun()
 
 # --------------------------------------------------
 # INICIO DEL CONTENIDO PRIVADO (SI ESTÁ LOGUEADO)
@@ -810,6 +820,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
