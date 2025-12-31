@@ -46,44 +46,40 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --------------------------------------------------
-# 3. LÓGICA DE LOGIN (BORRADO TOTAL DE BORDES Y CAJAS)
-# --------------------------------------------------
+# 2. ESTILO GLOBAL Y LÓGICA DE LOGIN (BLOQUE UNIFICADO ANTI-BORDES)
 if not st.session_state.logueado:
     st.markdown(f"""
         <style>
-        /* 1. LIMPIEZA TOTAL DEL ENTORNO */
-        header[data-testid="stHeader"], 
-        [data-testid="stStatusWidget"],
-        footer {{
+        /* 1. LIMPIEZA TOTAL DE INTERFAZ */
+        header[data-testid="stHeader"], [data-testid="stStatusWidget"], footer {{
             display: none !important;
         }}
         
+        .stApp {{
+            background-color: #000000 !important;
+        }}
+
         .main .block-container {{
             padding-top: 0rem !important;
         }}
 
-        /* 2. ELIMINAR CUALQUIER BORDE FANTASMA (EL "MISIL" CSS) */
-        /* Aplicamos transparencia y borrado de bordes a todos los contenedores de alerta */
-        [data-testid="stNotification"], 
-        [data-testid="stException"],
+        /* 2. ELIMINACIÓN RADICAL DE LA CAJA FANTASMA (CONTENEDORES OCULTOS) */
+        /* Atacamos todos los posibles contenedores que Streamlit usa para errores/alertas */
+        div[data-testid="stException"], 
+        div[data-testid="stNotification"], 
         .stAlert,
-        div[class*="st-key-"],
-        div[data-baseweb="notification"],
-        .element-container:has(.stAlert),
-        .element-container:has([data-testid="stException"]) {{
-            display: none !important;
+        [data-testid="stForm"] {{
             border: none !important;
-            border-width: 0px !important;
             box-shadow: none !important;
             background-color: transparent !important;
         }}
 
-        /* 3. FONDO NEGRO Y CAJA DE LOGIN */
-        .stApp {{
-            background-color: #000000 !important;
+        /* Matamos el borde del contenedor de bloque de Streamlit */
+        div.element-container, div.stVerticalBlock {{
+            border: none !important;
         }}
-        
+
+        /* 3. CAJA DE LOGIN COMPACTA */
         .login-box {{
             background-color: #000000;
             padding: 30px;
@@ -94,7 +90,7 @@ if not st.session_state.logueado:
             margin-top: 20vh;
         }}
 
-        /* 4. UNIFICACIÓN DE INPUTS Y EL FAMOSO OJITO */
+        /* 4. INPUTS Y OJITO (FONDO UNIFICADO) */
         div[data-baseweb="input"], 
         div[data-baseweb="input"] > div,
         input[type="text"], 
@@ -107,7 +103,6 @@ if not st.session_state.logueado:
             box-shadow: none !important;
         }}
         
-        /* Solo un borde sutil para el cuadro de texto */
         div[data-baseweb="input"] {{
             border: 1px solid #333333 !important;
         }}
@@ -131,7 +126,8 @@ if not st.session_state.logueado:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
         st.markdown('<h2 style="text-align:center; color:#00FFAA; font-size:18px;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
         
-        with st.form(key="login_final_boss_v3"):
+        # Usamos un contenedor vacío para el form para aislarlo de estilos externos
+        with st.form(key="login_final_boss_v4"):
             u_input = st.text_input("Usuario", placeholder="Usuario")
             c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
             submit = st.form_submit_button("ENTRAR", use_container_width=True)
@@ -145,7 +141,7 @@ if not st.session_state.logueado:
                 st.session_state.splash_visto = False
                 st.rerun()
             else:
-                # Texto simple para no disparar la caja fantasma
+                # Usamos HTML puro para el error, así Streamlit no genera su caja de alerta
                 st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:12px; margin-top:10px;">⚠️ Datos incorrectos</p>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
@@ -939,6 +935,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
