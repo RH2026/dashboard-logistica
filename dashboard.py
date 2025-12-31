@@ -106,7 +106,7 @@ if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
             font-size: 24px; 
             font-weight: bold; 
             margin-bottom: 25px; 
-            font-family: 'Courier Prime', monospace;
+            font-family: sans-serif;
             letter-spacing: 2px; 
             text-transform: uppercase; 
         }}
@@ -890,6 +890,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
