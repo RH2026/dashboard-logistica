@@ -21,9 +21,7 @@ if "pagina" not in st.session_state:
     st.session_state.pagina = "principal"  # Controla qué sección del dashboard se ve
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-
+    
 # Colores Globales
 color_fondo_nativo = "#0e1117" 
 color_blanco = "#FFFFFF"
@@ -31,69 +29,12 @@ color_verde = "#00FF00"
 color_borde_gris = "#333333"
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN CON CAJA 3D (PAQUETERÍA)
+# 3. LÓGICA DE LOGIN
 # --------------------------------------------------
 if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
     st.markdown(f"""
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
-
         .stApp {{ background-color: {color_fondo_nativo} !important; }}
-        
-        /* CONTENEDOR DE LA CAJA 3D */
-        .scene {{
-            width: 100%;
-            height: 120px;
-            perspective: 600px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 20px;
-        }}
-
-        .cube {{
-            width: 60px;
-            height: 50px;
-            position: relative;
-            transform-style: preserve-3d;
-            transform: rotateX(-20deg) rotateY(45deg);
-            animation: move-package 6s infinite ease-in-out;
-        }}
-
-        /* CARAS DE CARTÓN DE LA CAJA */
-        .cube-face {{
-            position: absolute;
-            width: 60px;
-            height: 50px;
-            background: #d2a679; /* Color Cartón */
-            border: 1px solid #b08d5c;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
-        }}
-
-        /* Cinta de embalaje sutil */
-        .cube-face::after {{
-            content: '';
-            position: absolute;
-            top: 40%;
-            width: 100%;
-            height: 8px;
-            background: rgba(0,0,0,0.08);
-        }}
-
-        .front  {{ transform: rotateY(  0deg) translateZ(30px); }}
-        .back   {{ transform: rotateY(180deg) translateZ(30px); }}
-        .right  {{ transform: rotateY( 90deg) translateZ(30px); }}
-        .left   {{ transform: rotateY(-90deg) translateZ(30px); }}
-        .top    {{ width: 60px; height: 60px; transform: rotateX( 90deg) translateZ(25px); background: #e3bc94; border-bottom: 2px solid rgba(0,0,0,0.1); }}
-        .bottom {{ width: 60px; height: 60px; transform: rotateX(-90deg) translateZ(25px); }}
-
-        @keyframes move-package {{
-            0% {{ transform: translateY(0px) rotateX(-20deg) rotateY(45deg); }}
-            50% {{ transform: translateY(-15px) rotateX(-25deg) rotateY(225deg); }}
-            100% {{ transform: translateY(0px) rotateX(-20deg) rotateY(405deg); }}
-        }}
-
-        /* ESTILO DEL FORMULARIO */
         .stForm {{
             background-color: {color_fondo_nativo} !important;
             padding: 40px; border-radius: 20px;
@@ -101,23 +42,17 @@ if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             margin-top: -30px;
         }}
-        
-        .login-header {{ 
-            text-align: center; 
-            color: {color_blanco}; 
-            font-size: 24px; 
-            font-weight: bold; 
-            margin-bottom: 25px; 
-            font-family: sans-serif;
-            letter-spacing: 2px; 
-            text-transform: uppercase; 
+        @keyframes pulse-intense {{
+            0% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
+            50% {{ transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.6)); }}
+            100% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
         }}
-
+        .animated-icon {{ animation: pulse-intense 2s infinite ease-in-out; display: flex; justify-content: center; margin-bottom: 20px; }}
         div[data-testid="stTextInputRootElement"] {{ background-color: #1a1c24 !important; border: 1px solid #30333d !important; border-radius: 10px !important; }}
         div[data-testid="stTextInputRootElement"] > div {{ background-color: transparent !important; }}
-        input {{ color: white !important; font-family: 'Courier Prime', monospace; }}
+        input {{ color: white !important; }}
         div[data-testid="stTextInputRootElement"] button {{ color: {color_verde} !important; }}
-        
+        .login-header {{ text-align: center; color: {color_blanco}; font-size: 24px; font-weight: bold; margin-bottom: 25px; letter-spacing: 2px; text-transform: uppercase; }}
         header, footer {{visibility: hidden;}}
         </style>
     """, unsafe_allow_html=True)
@@ -126,27 +61,13 @@ if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
     with col2:
         st.markdown('<div style="height:5vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
-            # Caja 3D Flotante
-            st.markdown('''
-                <div class="scene">
-                    <div class="cube">
-                        <div class="cube-face front"></div>
-                        <div class="cube-face back"></div>
-                        <div class="cube-face right"></div>
-                        <div class="cube-face left"></div>
-                        <div class="cube-face top"></div>
-                        <div class="cube-face bottom"></div>
-                    </div>
-                </div>
-            ''', unsafe_allow_html=True)
-            
+            st.markdown(f'''<div class="animated-icon"><svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="{color_blanco}" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><circle cx="12" cy="11" r="3" fill="{color_blanco}" fill-opacity="0.2"></circle><path d="M12 11v4"></path></svg></div>''', unsafe_allow_html=True)
             st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
             if submit:
-                # REINSTALADA TU LÓGICA ORIGINAL DE SECRETS
                 usuarios = st.secrets["usuarios"]
                 if u_input in usuarios and str(usuarios[u_input]) == str(c_input):
                     st.session_state.logueado = True
@@ -156,7 +77,6 @@ if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
                     st.rerun()
                 else:
                     st.error("Acceso Denegado")
-                    
     st.stop()
 
 # --------------------------------------------------
@@ -885,133 +805,13 @@ else:
     
         st.write("##")
         st.info("💡 Esta es tu nueva página de KPIs. Aquí puedes agregar análisis gerenciales profundos.")
-
-        # --------------------------------------------------
-        # BLOQUE: CHATBOT ANALISTA MAESTRO (VERSION FINAL)
-        # --------------------------------------------------
-        st.divider()
-        st.subheader("🤖 Asistente Analítico Maestro")
-        
-        # Mostrar historial de chat
-        for m in st.session_state.chat_history:
-            with st.chat_message(m["role"]):
-                st.markdown(m["content"])
-                if "fig" in m and m["fig"] is not None:
-                    st.plotly_chart(m["fig"], use_container_width=True)
-        
-        # Entrada de usuario
-        if prompt := st.chat_input("Ej: ¿Qué pasó con el pedido 232134? o ¿Quién es mi mejor fletera?"):
-            st.session_state.chat_history.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
-        
-            with st.chat_message("assistant"):
-                p = prompt.lower().strip()
-                response_text = ""
-                fig_to_show = None
-                hoy = pd.Timestamp.now().normalize()
-                
-                # Limpieza rápida de columnas para asegurar que 'DIAS_RETRASO' no falle
-                df.columns = [c.strip() for c in df.columns]
-                
-                try:
-                    # --- LÓGICA DE BÚSQUEDA POR NÚMERO DE PEDIDO ---
-                    # Si el usuario escribe un número o "pedido X"
-                    palabras = p.split()
-                    hallazgo = pd.DataFrame()
-                    for palabra in palabras:
-                        # Buscamos en 'NÚMERO DE PEDIDO' o 'NÚMERO DE GUÍA'
-                        match = df[df['NÚMERO DE PEDIDO'].astype(str).str.contains(palabra, na=False)]
-                        if not match.empty:
-                            hallazgo = match
-                            break
-        
-                    if not hallazgo.empty:
-                        row = hallazgo.iloc[0]
-                        entregado = pd.notna(row['FECHA DE ENTREGA REAL'])
-                        status = "✅ ENTREGADO" if entregado else "🚚 EN CAMINO (CON RETRASO)" if row['DIAS_RETRASO'] > 0 else "🚚 EN CAMINO"
-                        
-                        response_text = f"""
-                        ### 📍 Ficha de Rastreo: {row['NÚMERO DE PEDIDO']}
-                        * **Estatus:** {status}
-                        * **Cliente:** {row['NOMBRE DEL CLIENTE']}
-                        * **Fletera:** {row['FLETERA']}
-                        * **Destino:** {row['DESTINO']}
-                        * **Días de Retraso:** {int(row['DIAS_RETRASO'])} días
-                        """
-                        if entregado:
-                            response_text += f"\n* **Fecha Real:** {pd.to_datetime(row['FECHA DE ENTREGA REAL']).strftime('%d/%m/%Y')}"
-                        else:
-                            response_text += f"\n* **Promesa:** {pd.to_datetime(row['PROMESA DE ENTREGA']).strftime('%d/%m/%Y')}"
-        
-                    # --- LÓGICA DE MEJOR/PEOR FLETERA ---
-                    elif any(word in p for word in ["mejor", "peor", "buena", "mala", "fletera"]):
-                        # Agrupamos por FLETERA usando los nombres exactos de tu tabla
-                        ranking = df.groupby("FLETERA").agg({"DIAS_RETRASO": "mean", "COSTO DE LA GUÍA": "sum"}).reset_index()
-                        ranking = ranking.sort_values("DIAS_RETRASO")
-                        
-                        mejor = ranking.iloc[0]['FLETERA']
-                        peor = ranking.iloc[-1]['FLETERA']
-                        
-                        response_text = f"### 📊 Análisis de Socios Logísticos\n"
-                        response_text += f"Basado en los datos, **{mejor}** es tu mejor fletera (menos retrasos). \n"
-                        response_text += f"Por otro lado, **{peor}** es la que presenta mayores demoras en promedio."
-                        
-                        fig_to_show = px.bar(ranking, x="FLETERA", y="DIAS_RETRASO", 
-                                           title="Días de Retraso Promedio",
-                                           color="DIAS_RETRASO", color_continuous_scale='RdYlGn_r')
-        
-                    # --- LÓGICA DE RETRASOS GENERALES ---
-                    elif "retraso" in p or "atrasado" in p or "urgente" in p:
-                        retrasados = df[df['DIAS_RETRASO'] > 0]
-                        if not retrasados.empty:
-                            response_text = f"⚠️ He detectado **{len(retrasados)} pedidos con retraso**. El promedio de demora general es de **{retrasados['DIAS_RETRASO'].mean():.1f} días**."
-                            fig_to_show = px.pie(names=['Con Retraso', 'A Tiempo'], 
-                                               values=[len(retrasados), len(df)-len(retrasados)], 
-                                               hole=0.4, title="Salud de Pedidos",
-                                               color_discrete_sequence=['#FF4B4B', '#00FFAA'])
-                        else:
-                            response_text = "✅ No se detectan pedidos con retraso en la base de datos actual."
-        
-                    # --- COSTO DE FLETE ---
-                    elif "costo" in p or "flete" in p or "guía" in p:
-                        total_gasto = df["COSTO DE LA GUÍA"].sum()
-                        response_text = f"El gasto total en fletes (Costo de la Guía) asciende a **${total_gasto:,.2f}**."
-                        fig_to_show = px.area(df.groupby("FECHA DE ENVÍO")["COSTO DE LA GUÍA"].sum().reset_index(), 
-                                            x="FECHA DE ENVÍO", y="COSTO DE LA GUÍA", title="Tendencia de Gastos")
-        
-                    else:
-                        response_text = "Soy tu asistente logístico. Puedes pedirme:\n1. **Rastreo:** Dame un número de pedido (ej: 232134).\n2. **Desempeño:** ¿Quién es la mejor fletera?\n3. **Urgencias:** ¿Qué pedidos tienen retraso?\n4. **Costos:** ¿Cuánto hemos gastado en fletes?"
-        
-                except Exception as e:
-                    response_text = f"❌ Error al procesar: {str(e)}"
-        
-                # Renderizar respuesta
-                st.markdown(response_text)
-                if fig_to_show:
-                    st.plotly_chart(fig_to_show, use_container_width=True)
-                
-                # Guardar en historial
-                st.session_state.chat_history.append({"role": "assistant", "content": response_text, "fig": fig_to_show})
-        
+    
         # Botón para regresar
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
