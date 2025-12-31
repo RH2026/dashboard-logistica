@@ -33,60 +33,83 @@ if "ultimo_movimiento" not in st.session_state:
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (ELIMINACIÓN TOTAL Y OJITO)
+# 3. LÓGICA DE LOGIN (V8 – EXORCISMO TOTAL)
 # --------------------------------------------------
+import time
+import streamlit as st
+
+if "logueado" not in st.session_state:
+    st.session_state.logueado = False
+
 if not st.session_state.logueado:
+
     st.markdown("""
         <style>
-        /* 1. ELIMINAR CUALQUIER RASTRO DE INTERFAZ DE STREAMLIT */
-        header, [data-testid="stHeader"], footer, [data-testid="stStatusWidget"] {
+        /* --------------------------------------------------
+           1. ELIMINAR INTERFAZ NATIVA STREAMLIT
+        -------------------------------------------------- */
+        header, footer,
+        [data-testid="stHeader"],
+        [data-testid="stStatusWidget"] {
             display: none !important;
         }
-        
+
         .stApp {
             background-color: #000000 !important;
         }
 
-        /* 2. MATAR LA CAJA FANTASMA (CONTENEDOR DE BLOQUE Y FORMULARIO) */
-        /* Este es el culpable del borde: el BorderWrapper */
-        [data-testid="stVerticalBlockBorderWrapper"],
-        [data-testid="stForm"],
-        [data-testid="stVerticalBlock"],
+        /* --------------------------------------------------
+           2. 💀 EXORCISMO CONTENEDORES FANTASMA
+        -------------------------------------------------- */
+
+        /* El contenedor vacío con borde */
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(> div:empty) {
+            display: none !important;
+        }
+
+        /* Ningún wrapper puede tener borde */
+        div[data-testid="stVerticalBlockBorderWrapper"],
+        div[data-testid="stVerticalBlock"],
+        section.main > div:first-child,
         .element-container {
             border: none !important;
             box-shadow: none !important;
-            background-color: transparent !important;
+            background: transparent !important;
         }
 
-        /* 3. CAJA DE LOGIN (DISEÑO LIMPIO) */
+        /* --------------------------------------------------
+           3. CAJA DE LOGIN
+        -------------------------------------------------- */
         .login-box {
             background-color: #000000;
             padding: 30px;
-            border-radius: 12px;
+            border-radius: 14px;
             border: 1px solid #1a1a1a;
-            max-width: 350px;
+            max-width: 360px;
             margin: auto;
             margin-top: 15vh;
         }
 
-        /* 4. INPUTS Y OJITO (UNIFICACIÓN TOTAL SIN BORDES) */
-        /* Atacamos el contenedor de BaseWeb para el ojito */
-        div[data-baseweb="input"], 
+        /* --------------------------------------------------
+           4. INPUTS + OJITO (BASEWEB)
+        -------------------------------------------------- */
+        div[data-baseweb="input"],
         div[data-baseweb="base-input"],
         div[data-baseweb="input"] > div {
             background-color: #111111 !important;
             border: 1px solid #333333 !important;
             color: white !important;
+            border-radius: 8px;
         }
-        
+
         input {
             background-color: transparent !important;
             color: white !important;
             border: none !important;
         }
 
-        /* BOTÓN DEL OJITO: Forzamos el mismo fondo que el input */
-        button[aria-label="Show password"], 
+        /* OJITO */
+        button[aria-label="Show password"],
         button[aria-label="Hide password"],
         [data-testid="stInputActionButton"] {
             background-color: transparent !important;
@@ -95,7 +118,9 @@ if not st.session_state.logueado:
             box-shadow: none !important;
         }
 
-        /* 5. BOTÓN ENTRAR */
+        /* --------------------------------------------------
+           5. BOTÓN INGRESAR
+        -------------------------------------------------- */
         .stButton > button {
             background-color: #00FFAA !important;
             color: #000000 !important;
@@ -103,39 +128,51 @@ if not st.session_state.logueado:
             border: none !important;
             width: 100%;
             margin-top: 20px;
-            border-radius: 8px;
-            height: 45px;
+            border-radius: 10px;
+            height: 46px;
         }
 
-        label { color: #888888 !important; }
+        label {
+            color: #888888 !important;
+        }
+
         </style>
     """, unsafe_allow_html=True)
 
-    _, center_col, _ = st.columns([1, 1.5, 1])
-    
+    # --------------------------------------------------
+    # 6. CONTENEDOR CENTRADO
+    # --------------------------------------------------
+    _, center_col, _ = st.columns([1, 1.4, 1])
+
     with center_col:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<h2 style="text-align:center; color:#00FFAA; font-size:20px;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
-        
-        # Regresamos al formulario pero con el CSS que mata su borde
-        with st.form(key="login_definitivo_v7"):
-            u_input = st.text_input("Usuario", placeholder="Usuario")
-            c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
+
+        st.markdown(
+            '<h2 style="text-align:center; color:#00FFAA; font-size:20px;">🔐 Acceso al Sistema</h2>',
+            unsafe_allow_html=True
+        )
+
+        with st.form("login_definitivo_v8", clear_on_submit=False):
+            usuario = st.text_input("Usuario", placeholder="Usuario")
+            password = st.text_input("Contraseña", type="password", placeholder="Contraseña")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
         if submit:
-            usuarios_dict = st.secrets.get("usuarios", {})
-            if u_input in usuarios_dict and usuarios_dict[u_input] == c_input:
+            usuarios = st.secrets.get("usuarios", {})
+            if usuario in usuarios and usuarios[usuario] == password:
                 st.session_state.logueado = True
-                st.session_state.usuario_actual = u_input
+                st.session_state.usuario_actual = usuario
                 st.session_state.ultimo_movimiento = time.time()
                 st.session_state.splash_visto = False
                 st.rerun()
             else:
-                st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:12px; margin-top:10px;">⚠️ Datos incorrectos</p>', unsafe_allow_html=True)
-        
+                st.markdown(
+                    '<p style="color:#ff4b4b; text-align:center; font-size:12px; margin-top:10px;">⚠️ Datos incorrectos</p>',
+                    unsafe_allow_html=True
+                )
+
         st.markdown('</div>', unsafe_allow_html=True)
-    
+
     st.stop()
 # --------------------------------------------------
 # INICIO DEL CONTENIDO PRIVADO (SI ESTÁ LOGUEADO)
@@ -925,6 +962,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
