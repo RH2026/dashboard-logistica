@@ -5,7 +5,7 @@ import time
 import base64
 import textwrap
 
-# 1. CONFIGURACIÓN DE PÁGINA (Debe ir al inicio)
+# 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
 # 2. ESTADOS DE SESIÓN
@@ -22,15 +22,16 @@ if "pagina" not in st.session_state:
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
 
-# --------------------------------------------------
-# 3. LÓGICA DE LOGIN (Primero en ejecutarse)
-# --------------------------------------------------
-if not st.session_state.logueado:
-    color_fondo_nativo = "#0e1117" 
-    color_blanco = "#FFFFFF"
-    color_verde = "#00FF00" 
-    color_borde_gris = "#333333"
+# --- COLORES GLOBALES ---
+color_fondo_nativo = "#0e1117" 
+color_blanco = "#FFFFFF"
+color_verde = "#00FF00" 
+color_borde_gris = "#333333"
 
+# --------------------------------------------------
+# 3. LÓGICA DE LOGIN
+# --------------------------------------------------
+if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
     st.markdown(f"""
         <style>
         .stApp {{ background-color: {color_fondo_nativo} !important; }}
@@ -71,21 +72,23 @@ if not st.session_state.logueado:
                 if u_input in usuarios and usuarios[u_input] == c_input:
                     st.session_state.logueado = True
                     st.session_state.usuario_actual = u_input
-                    # Al loguear, reseteamos el splash para que se muestre una vez
-                    st.session_state.splash_completado = False 
+                    st.session_state.splash_completado = False
+                    st.session_state.motivo_splash = "inicio"
                     st.rerun()
                 else:
                     st.error("Acceso Denegado")
     st.stop()
 
 # --------------------------------------------------
-# 4. SPLASH SCREEN (Se activa DESPUÉS del login)
+# 4. SPLASH SCREEN (Entrada y Salida)
 # --------------------------------------------------
 if not st.session_state.splash_completado:
-    if st.session_state.get('motivo_splash') == "logout":
+    if st.session_state.motivo_splash == "logout":
         texto_splash = "Cerrando sesión de forma segura..."
+        color_loader = "#FF4B4B" # Rojo para salida
     else:
         texto_splash = f"Bienvenido {st.session_state.usuario_actual}, inicializando módulos..."
+        color_loader = "#00FF00" # Verde para entrada
 
     st.markdown(f"""
     <style>
@@ -95,12 +98,13 @@ if not st.session_state.splash_completado:
         top: 0; left: 0; width: 100%; z-index: 9999;
     }}
     .loader {{ 
-        border: 6px solid #1a1c24; border-top: 6px solid #00FF00; border-radius: 50%; 
+        border: 6px solid #1a1c24; border-top: 6px solid {color_loader}; border-radius: 50%; 
         width: 80px; height: 80px; animation: spin 0.8s linear infinite; 
-        margin-bottom: 25px; filter: drop-shadow(0 0 10px rgba(0, 255, 0, 0.2));
+        margin-bottom: 25px; filter: drop-shadow(0 0 10px {color_loader}66);
     }}
     @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
     .splash-text {{ color: #FFFFFF; font-size: 14px; font-family: sans-serif; letter-spacing: 1px; opacity: 0.8; }}
+    header, footer {{visibility: hidden;}}
     </style>
     """, unsafe_allow_html=True)
     
@@ -111,9 +115,15 @@ if not st.session_state.splash_completado:
         </div>
     ''', unsafe_allow_html=True)
     
-    time.sleep(2.5) # Tiempo de carga
-    st.session_state.splash_completado = True
-    st.rerun()
+    time.sleep(2.5)
+    
+    if st.session_state.motivo_splash == "logout":
+        # Limpieza real después de la animación
+        st.session_state.clear()
+        st.rerun()
+    else:
+        st.session_state.splash_completado = True
+        st.rerun()
 
 # --------------------------------------------------
 # INICIO DEL CONTENIDO PRIVADO (SI ESTÁ LOGUEADO)
@@ -795,6 +805,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
