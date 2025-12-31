@@ -99,11 +99,11 @@ if not st.session_state.splash_completado:
     }}
     .loader {{ 
         border: 6px solid #1a1c24; border-top: 6px solid {color_loader}; border-radius: 50%; 
-        width: 80px; height: 80px; animation: spin 0.8s linear infinite; 
+        width: 120px; height: 120px; animation: spin 0.8s linear infinite; 
         margin-bottom: 25px; filter: drop-shadow(0 0 10px {color_loader}66);
     }}
     @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
-    .splash-text {{ color: #FFFFFF; font-size: 14px; font-family: sans-serif; letter-spacing: 1px; opacity: 0.8; }}
+    .splash-text {{ color: #FFFFFF; font-size: 12px; font-family: Share Tech Mono; letter-spacing: 1px; opacity: 0.8; }}
     </style>
     """, unsafe_allow_html=True)
     
@@ -812,6 +812,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
