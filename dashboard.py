@@ -285,6 +285,19 @@ else:
         # --------------------------------------------------
         # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
         # --------------------------------------------------
+        
+        # --- COPIAR ESTO ARRIBA DE LA BÚSQUEDA ---
+        st.markdown("""
+        <style>
+        @keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+        @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+        @keyframes p-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        .dot-green { border-radius: 50%; animation: p-green 2s infinite; }
+        .dot-blue { border-radius: 50%; animation: p-blue 2s infinite; }
+        .dot-red { border-radius: 50%; animation: p-red 2s infinite; }
+        </style>
+        """, unsafe_allow_html=True)
+        
         pedido_buscar = st.text_input(
             "Buscar por Número de Factura",
             value="",
@@ -319,28 +332,36 @@ else:
                 for index, row in df_busqueda.iterrows():
                     st.markdown(f'<p style="font-size:14px; font-weight:bold; color:Yellow; margin-bottom:-10px;">Estatus de Factura: {row["NÚMERO DE PEDIDO"]}</p>', unsafe_allow_html=True)
                     
-                    # Preparación de Fechas para el Timeline
+                    # --- Lógica Original Recuperada con Animaciones ---
                     f_envio_dt = pd.to_datetime(row.get("FECHA DE ENVÍO"), errors='coerce')
                     f_promesa_dt = pd.to_datetime(row.get("PROMESA DE ENTREGA"), errors='coerce')
                     f_real_dt = pd.to_datetime(row.get("FECHA DE ENTREGA REAL"), errors='coerce')
                     hoy_dt = pd.Timestamp.now().normalize()
                     
-                    txt_f_envio = f_envio_dt.strftime('%d/%m/%Y') if pd.notna(f_envio_dt) else "S/D"
-                    txt_f_actual = hoy_dt.strftime('%d/%m/%Y')
-                    txt_f_promesa = f_promesa_dt.strftime('%d/%m/%Y') if pd.notna(f_promesa_dt) else "S/D"
-                    txt_f_real = f_real_dt.strftime('%d/%m/%Y') if pd.notna(f_real_dt) else ""
-                    
-                    # Lógica de colores del Timeline
                     entregado = pd.notna(f_real_dt)
+                    
                     if entregado:
                         t_fin, c_fin = "ENTREGADO", "#22c55e"
-                        t_medio, c_medio = ("ENTREGADA EN TIEMPO", "#22c55e") if f_real_dt <= f_promesa_dt else ("ENTREGADA CON RETRASO", "#ef4444")
+                        if f_real_dt <= f_promesa_dt:
+                            t_medio, c_medio, anim_medio = "ENTREGADA EN TIEMPO", "#22c55e", "dot-green"
+                        else:
+                            t_medio, c_medio, anim_medio = "ENTREGADA CON RETRASO", "#ef4444", "dot-red"
                     else:
                         t_fin, c_fin = "EN ESPERA", "#374151"
-                        t_medio, c_medio = ("RETRASO", "#f97316") if pd.notna(f_promesa_dt) and f_promesa_dt < hoy_dt else ("EN TRÁNSITO", "#3b82f6")
-    
-                    # HTML del Timeline
-                    html_timeline = f'<div style="background:#111827;padding:25px;border-radius:12px;border:1px solid #374151;margin-top:15px;margin-bottom:20px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;width:100%;"><div style="position:absolute;top:20px;left:10%;right:10%;height:6px;background:#374151;z-index:0;"></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:40px;height:40px;border-radius:50%;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">ENVIADO</div><div style="color:gray;font-size:10px;">{txt_f_envio}</div></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:40px;height:40px;border-radius:50%;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">FECHA ACTUAL</div><div style="color:gray;font-size:10px;">{txt_f_actual}</div></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:40px;height:40px;border-radius:50%;background:{c_medio};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_medio}</div><div style="color:gray;font-size:10px;"><span style="color:#22c55e;">PROMESA</span> {txt_f_promesa}</div></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:40px;height:40px;border-radius:50%;background:{c_fin};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_fin}</div><div style="color:gray;font-size:10px;">FECHA REAL: {txt_f_real}</div></div></div></div>'
+                        if pd.notna(f_promesa_dt) and f_promesa_dt < hoy_dt:
+                            t_medio, c_medio, anim_medio = "RETRASO", "#f97316", "dot-orange"
+                        else:
+                            t_medio, c_medio, anim_medio = "EN TRÁNSITO", "#3b82f6", "dot-blue"
+            
+                    # Formateo de fechas para el HTML
+                    txt_f_envio = f_envio_dt.strftime('%d/%m/%Y') if pd.notna(f_envio_dt) else "S/D"
+                    txt_f_promesa = f_promesa_dt.strftime('%d/%m/%Y') if pd.notna(f_promesa_dt) else "S/D"
+                    txt_f_real = f_real_dt.strftime('%d/%m/%Y') if entregado else "PENDIENTE"
+                    txt_f_actual = hoy_dt.strftime('%d/%m/%Y')
+            
+                    # HTML del Timeline en una sola línea con tu lógica original
+                    html_timeline = f'<div style="background:#111827;padding:25px;border-radius:12px;border:1px solid #374151;margin-top:15px;margin-bottom:20px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;width:100%;"><div style="position:absolute;top:20px;left:10%;right:10%;height:6px;background:#374151;z-index:0;"></div><div style="text-align:center;z-index:1;width:25%;"><div class="dot-green" style="width:40px;height:40px;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">ENVIADO</div><div style="color:gray;font-size:10px;">{txt_f_envio}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="dot-green" style="width:40px;height:40px;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">FECHA ACTUAL</div><div style="color:gray;font-size:10px;">{txt_f_actual}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="{anim_medio}" style="width:40px;height:40px;background:{c_medio};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_medio}</div><div style="color:gray;font-size:10px;"><span style="color:#22c55e;">PROMESA</span> {txt_f_promesa}</div></div><div style="text-align:center;z-index:1;width:25%;"><div style="width:40px;height:40px;border-radius:50%;background:{c_fin};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_fin}</div><div style="color:gray;font-size:10px;">FECHA REAL: {txt_f_real}</div></div></div></div>'
+                    
                     st.markdown(html_timeline, unsafe_allow_html=True)
                     
                     # Tarjetas Informativas
@@ -785,6 +806,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
