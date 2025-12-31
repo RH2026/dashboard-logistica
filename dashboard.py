@@ -65,7 +65,7 @@ if not st.session_state.get('splash_visto', False):
     
     .splash-text {{
         color: #FFFFFF; 
-        font-size: 10px; 
+        font-size: 14px; 
         font-family: sans-serif;
         letter-spacing: 1px;
         opacity: 0.8;
@@ -870,6 +870,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
