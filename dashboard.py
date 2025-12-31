@@ -47,64 +47,75 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (ELIMINACIÓN DE CAJA POR CAMUFLAJE)
+# 3. LÓGICA DE LOGIN (VERSIÓN COMPACTA - FONDO NEGRO)
 # --------------------------------------------------
 if not st.session_state.logueado:
-    img_base64 = get_base64_image("1.jpg")
-    
+    # Eliminamos el procesamiento de imagen y ponemos fondo negro total
     st.markdown(f"""
         <style>
-        /* 1. ELIMINAR HEADER Y PADDING SUPERIOR */
+        /* 1. FONDO NEGRO TOTAL Y ELIMINAR HEADER */
         header[data-testid="stHeader"] {{ display: none !important; }}
-        .main .block-container {{ padding-top: 3rem !important; }}
+        
+        .stApp {{
+            background-color: #000000 !important;
+            background-image: none !important;
+        }}
+        
+        .main .block-container {{ 
+            padding-top: 5rem !important; 
+        }}
 
-        /* 2. CAMUFLAJE TOTAL DE LA CAJA (CONTENEDOR DE ALERTAS) */
-        /* Esto hace que si la caja existe, sea 100% invisible y no tenga bordes */
+        /* 2. CAMUFLAJE TOTAL DE CAJAS FANTASMA (NEGRO SOBRE NEGRO) */
         div[data-testid="stNotification"], 
         div[data-testid="stException"],
         .stAlert,
         div.element-container:has(div.stAlert) {{
-            background-color: transparent !important;
+            background-color: #000000 !important;
             border: none !important;
-            color: transparent !important;
+            color: #000000 !important;
             display: none !important;
         }}
 
-        /* 3. FONDO Y CAJA DE LOGIN */
-        .stApp {{
-            background-image: url("data:image/jpg;base64,{img_base64}");
-            background-size: cover;
-            background-position: center;
-        }}
-        
+        /* 3. CAJA DE LOGIN MÁS PEQUEÑA Y COMPACTA */
         .login-box {{
-            background-color: rgba(15, 23, 42, 0.95);
-            padding: 35px;
-            border-radius: 15px;
-            border: 1px solid #00FFAA;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            color: white;
+            background-color: #111111; /* Gris casi negro */
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #333333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            max-width: 350px; /* Caja más estrecha */
+            margin: auto;
         }}
         
-        /* Asegurar visibilidad de etiquetas */
-        label {{ color: white !important; font-weight: bold; }}
+        /* HACER LOS INPUTS MÁS PEQUEÑOS */
+        .stTextInput > div > div > input {{
+            padding: 5px 10px !important;
+            font-size: 14px !important;
+        }}
+        
+        /* BOTÓN MÁS PEQUEÑO */
+        .stButton > button {{
+            padding: 5px !important;
+            font-size: 14px !important;
+            height: auto !important;
+        }}
+
+        label {{ color: #cccccc !important; font-size: 13px !important; }}
         </style>
     """, unsafe_allow_html=True)
 
-    # Usamos columnas normales para mantener el diseño original
-    _, center_col, _ = st.columns([1, 2, 1])
+    # Columnas para centrar la caja pequeña
+    _, center_col, _ = st.columns([1, 1.2, 1])
     
     with center_col:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<h2 style="text-align:center; color:#00FFAA;">🔐 ACCESO AL SISTEMA</h2>', unsafe_allow_html=True)
+        st.markdown('<h3 style="text-align:center; color:#00FFAA; margin-bottom:15px; font-size:18px;">🔐 ACCESO</h3>', unsafe_allow_html=True)
         
-        # Formulario
-        with st.form(key="login_final_ajustado"):
-            u_input = st.text_input("Usuario", placeholder="Escriba su usuario...")
-            c_input = st.text_input("Contraseña", type="password", placeholder="Escriba su contraseña...")
-            submit = st.form_submit_button("INGRESAR", use_container_width=True)
+        with st.form(key="login_compacto"):
+            u_input = st.text_input("Usuario", placeholder="Usuario")
+            c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
+            submit = st.form_submit_button("ENTRAR", use_container_width=True)
 
-        # Lógica fuera del form para evitar doble clic
         if submit:
             usuarios_dict = st.secrets.get("usuarios", {})
             if u_input in usuarios_dict and usuarios_dict[u_input] == c_input:
@@ -112,11 +123,9 @@ if not st.session_state.logueado:
                 st.session_state.usuario_actual = u_input
                 st.session_state.ultimo_movimiento = time.time()
                 st.session_state.splash_visto = False
-                st.session_state.motivo_splash = "inicio"
                 st.rerun()
             else:
-                # Error en HTML puro para que NO aparezca la caja azul/roja
-                st.markdown('<p style="color:#ff4b4b; text-align:center; font-weight:bold; margin-top:10px;">⚠️ Datos incorrectos</p>', unsafe_allow_html=True)
+                st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:12px; margin-top:10px;">⚠️ Datos incorrectos</p>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -909,6 +918,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
