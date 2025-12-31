@@ -175,7 +175,7 @@ else:
         # --------------------------------------------------
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
-        st.markdown("<style>@keyframes boxLife{0%{transform:translate(0,0);opacity:1;}25%{transform:translate(0,-6px);opacity:1;}50%{transform:translate(0,0);opacity:1;}65%{transform:translate(0,-6px);opacity:1;}72%{transform:translate(-260px,-6px);opacity:1;}73%{opacity:0;}74%{transform:translate(0,0);opacity:0;}75%{opacity:1;}100%{transform:translate(0,0);opacity:1;}}</style><h2 style='text-align:center;display:flex;align-items:center;justify-content:center;gap:14px;font-weight:600;color:#FFFFFF;'><svg style='animation:boxLife 8s infinite;animation-timing-function:linear;animation-timing-function:linear, steps(1);' width='34' height='34' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 7L12 2L21 7L12 12L3 7Z' stroke='#00FFAA' stroke-width='1.5' stroke-linejoin='round'/><path d='M3 7V17L12 22L21 17V7' stroke='#00FFAA' stroke-width='1.5' stroke-linejoin='round'/><path d='M12 12V22' stroke='#00FFAA' stroke-width='1.5'/><path d='M7.5 4.8L16.5 9.3' stroke='#00FFAA' stroke-width='1.1' opacity='0.6'/></svg><span>Control de Embarques</span></h2>", unsafe_allow_html=True)
+        st.markdown("<style>@keyframes floatBox{0%{transform:translateY(0);}50%{transform:translateY(-5px);}100%{transform:translateY(0);}}@keyframes lidOpen{0%,80%{transform:rotateX(0deg);}85%{transform:rotateX(35deg);}90%{transform:rotateX(0deg);}100%{transform:rotateX(0deg);}}</style><h2 style='text-align:center;display:flex;align-items:center;justify-content:center;gap:14px;font-weight:600;color:#FFFFFF;'><svg style='animation:floatBox 3s ease-in-out infinite;' width='36' height='36' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><g style='transform-origin:12px 7px;animation:lidOpen 10s ease-in-out infinite;'><path d='M3 7L12 2L21 7L12 12L3 7Z' stroke='#00FFAA' stroke-width='1.5' stroke-linejoin='round'/></g><path d='M3 7V17L12 22L21 17V7' stroke='#00FFAA' stroke-width='1.5' stroke-linejoin='round'/><path d='M12 12V22' stroke='#00FFAA' stroke-width='1.5'/><path d='M7.5 4.8L16.5 9.3' stroke='#00FFAA' stroke-width='1.1' opacity='0.5'/></svg><span>Control de Embarques</span></h2>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;'>Logística – Enero 2026</p>", unsafe_allow_html=True)
        
         st.divider()
@@ -807,6 +807,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
