@@ -33,12 +33,12 @@ if "ultimo_movimiento" not in st.session_state:
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (CAMUFLAJE TOTAL: BORDE NEGRO)
+# 3. LÓGICA DE LOGIN (TÉCNICA DEL VACÍO)
 # --------------------------------------------------
 if not st.session_state.logueado:
     st.markdown("""
         <style>
-        /* 1. ELIMINAR INTERFAZ NATIVA */
+        /* 1. LIMPIEZA TOTAL */
         header, [data-testid="stHeader"], footer, [data-testid="stStatusWidget"] {
             display: none !important;
         }
@@ -47,16 +47,20 @@ if not st.session_state.logueado:
             background-color: #000000 !important;
         }
 
-        /* 2. SI NO PUEDES CON EL ENEMIGO, PÍNTALO DE NEGRO */
-        /* Forzamos que cualquier borde de contenedor sea negro y sin sombra */
+        /* 2. ANIQUILACIÓN DE BORDES Y SOMBRAS (ELIMINAR LA CAJITA) */
+        /* Forzamos a que todo contenedor de Streamlit sea invisible y no ocupe espacio extra */
         [data-testid="stVerticalBlockBorderWrapper"],
         [data-testid="stForm"],
         [data-testid="stVerticalBlock"],
         div[class*="st-key-"],
         .element-container {
-            border: 1px solid #000000 !important; /* Borde negro sobre fondo negro */
+            border: none !important;
+            border-width: 0px !important;
             box-shadow: none !important;
-            background-color: #000000 !important;
+            outline: none !important;
+            background-color: transparent !important;
+            margin-bottom: 0px !important;
+            margin-top: 0px !important;
         }
 
         /* 3. CAJA DE LOGIN (NUESTRO DISEÑO) */
@@ -64,35 +68,38 @@ if not st.session_state.logueado:
             background-color: #000000;
             padding: 30px;
             border-radius: 12px;
-            border: 1px solid #1a1a1a; /* Este es el único borde que queremos ver */
+            border: 1px solid #1a1a1a; /* Borde muy sutil casi invisible */
             max-width: 350px;
             margin: auto;
             margin-top: 15vh;
         }
 
         /* 4. UNIFICACIÓN DE INPUTS Y OJITO */
+        /* Atacamos el fondo del input y el botón del ojito al mismo tiempo */
         div[data-baseweb="input"], 
         div[data-baseweb="base-input"],
-        div[data-baseweb="input"] > div {
+        div[data-baseweb="input"] > div,
+        input {
             background-color: #111111 !important;
-            border: 1px solid #333333 !important;
             color: white !important;
+            border: none !important;
+            box-shadow: none !important;
         }
         
-        input {
-            background-color: transparent !important;
-            color: white !important;
-            border: none !important;
+        /* Borde sutil solo para que se vean los campos */
+        div[data-baseweb="input"] {
+            border: 1px solid #333333 !important;
         }
 
-        /* El botón del ojito camuflado al fondo del input */
+        /* OJITO: Camuflaje total del botón de visibilidad */
         button[aria-label="Show password"], 
         button[aria-label="Hide password"],
-        [data-testid="stInputActionButton"] {
-            background-color: transparent !important;
+        [data-testid="stInputActionButton"],
+        button[kind="tertiary"] {
+            background-color: #111111 !important;
             border: none !important;
-            color: #555555 !important; /* Color gris suave para el icono */
             box-shadow: none !important;
+            color: #555555 !important;
         }
 
         /* 5. BOTÓN ENTRAR */
@@ -117,7 +124,7 @@ if not st.session_state.logueado:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
         st.markdown('<h2 style="text-align:center; color:#00FFAA; font-size:20px;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
         
-        with st.form(key="login_camuflado"):
+        with st.form(key="login_final_v10"):
             u_input = st.text_input("Usuario", placeholder="Usuario")
             c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
@@ -924,6 +931,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
