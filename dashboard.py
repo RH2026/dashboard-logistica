@@ -6,7 +6,7 @@ import base64
 import textwrap
 
 # 1. CONFIGURACIÓN DE PÁGINA
-st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
 
 # 2. ESTADOS DE SESIÓN
 if "logueado" not in st.session_state:
@@ -847,6 +847,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
