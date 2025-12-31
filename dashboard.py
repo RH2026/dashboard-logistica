@@ -488,13 +488,7 @@ else:
             """, unsafe_allow_html=True)
             h_dinamica = 450
         
-        # 3. LA TABLA (Usa los valores configurados arriba)
-        st.dataframe(
-            df, 
-            use_container_width=True, 
-            height=h_dinamica
-        )
-        
+               
         # --------------------------------------------------
         # TABLA DE ENVÍOS – DISEÑO PERSONALIZADO
         # --------------------------------------------------
@@ -862,6 +856,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
