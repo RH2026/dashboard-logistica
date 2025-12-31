@@ -85,7 +85,7 @@ if not st.session_state.get('splash_visto', False):
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# DISEÑO ESTILO NATIVO STREAMLIT (ANIMACIÓN INTENSIFICADA)
+# DISEÑO ESTILO NATIVO STREAMLIT (CAJA POSICIONADA MÁS ARRIBA)
 # --------------------------------------------------
 if not st.session_state.logueado:
     color_fondo_nativo = "#0e1117" 
@@ -105,29 +105,17 @@ if not st.session_state.logueado:
             border-radius: 20px;
             border: 1.5px solid {color_borde_gris} !important;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-top: -30px; /* Ajuste fino para subir la caja aún más */
         }}
 
-        /* ANIMACIÓN INTENSIFICADA */
         @keyframes pulse-intense {{
-            0% {{ 
-                transform: scale(1); 
-                opacity: 0.7; 
-                filter: drop-shadow(0 0 2px rgba(255,255,255,0));
-            }}
-            50% {{ 
-                transform: scale(1.15); /* Aumento de tamaño más notable */
-                opacity: 1; 
-                filter: drop-shadow(0 0 15px rgba(255,255,255,0.6)); /* Brillo más fuerte */
-            }}
-            100% {{ 
-                transform: scale(1); 
-                opacity: 0.7; 
-                filter: drop-shadow(0 0 2px rgba(255,255,255,0));
-            }}
+            0% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
+            50% {{ transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.6)); }}
+            100% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
         }}
         
         .animated-icon {{
-            animation: pulse-intense 2s infinite ease-in-out; /* Ciclo más rápido */
+            animation: pulse-intense 2s infinite ease-in-out;
             display: flex;
             justify-content: center;
             margin-bottom: 20px;
@@ -164,9 +152,9 @@ if not st.session_state.logueado:
 
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
-        st.markdown('<div style="height:12vh"></div>', unsafe_allow_html=True)
+        # CAMBIO: Reducimos de 12vh a 5vh para subir la caja
+        st.markdown('<div style="height:5vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
-            # ESCUDO CON SVG REFORZADO
             st.markdown(f'''
                 <div class="animated-icon">
                     <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="{color_blanco}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -870,6 +858,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
