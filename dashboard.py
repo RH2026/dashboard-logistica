@@ -33,37 +33,35 @@ if "ultimo_movimiento" not in st.session_state:
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (BLOQUE DEFINITIVO ANTI-BORDE)
+# 3. LÓGICA DE LOGIN (ANULACIÓN TOTAL DE BORDES)
 # --------------------------------------------------
 if not st.session_state.logueado:
     st.markdown("""
         <style>
-        /* 1. LIMPIEZA TOTAL */
-        header, [data-testid="stHeader"], footer { display: none !important; }
+        /* 1. LIMPIEZA RADICAL DE STREAMLIT */
+        header, [data-testid="stHeader"], footer, [data-testid="stStatusWidget"] {
+            display: none !important;
+        }
         
         .stApp {
             background-color: #000000 !important;
         }
 
-        /* 2. ELIMINACIÓN QUIRÚRGICA DEL BORDE DE LA CAJA FANTASMA */
-        /* Atacamos el contenedor del formulario y cualquier alerta oculta */
-        [data-testid="stForm"], 
-        [data-testid="stNotification"], 
-        .stAlert,
-        [data-testid="stFormElementContainer"] {
+        /* 2. ELIMINACIÓN DE TODOS LOS BORDES DE CONTENEDORES INTERNOS */
+        /* Forzamos a que CUALQUIER divisor o bloque de Streamlit pierda bordes y sombras */
+        div[data-testid="stVerticalBlock"],
+        div[data-testid="stVerticalBlockBorderWrapper"],
+        div[data-testid="stForm"],
+        div.element-container,
+        div.stChatMessage,
+        div[class*="st-key-"] {
             border: none !important;
             border-width: 0px !important;
-            outline: none !important;
             box-shadow: none !important;
-            background-color: transparent !important;
+            outline: none !important;
         }
 
-        /* Bloqueamos el contenedor que genera el borde gris/azul de Streamlit */
-        div[class*="st-key-"] > div {
-            border: none !important;
-        }
-
-        /* 3. CAJA DE LOGIN COMPACTA */
+        /* 3. CAJA DE LOGIN (ESTA SÍ TIENE BORDE SUTIL) */
         .login-box {
             background-color: #000000;
             padding: 30px;
@@ -74,24 +72,30 @@ if not st.session_state.logueado:
             margin-top: 15vh;
         }
 
-        /* 4. INPUTS Y UNIFICACIÓN TOTAL DEL OJITO */
-        /* Forzamos el mismo color exacto en todos los componentes del input */
-        div[data-baseweb="input"], 
-        div[data-baseweb="input"] > div,
-        div[data-baseweb="base-input"],
-        input[type="text"], 
-        input[type="password"],
-        button[aria-label="Show password"],
-        button[aria-label="Hide password"] {
+        /* 4. INPUTS Y OJITO (UNIFICACIÓN TOTAL) */
+        /* Atacamos el contenedor de BaseWeb para que no haya fugas de color */
+        [data-baseweb="input"], 
+        [data-baseweb="base-input"],
+        [data-baseweb="input"] > div,
+        input {
             background-color: #111111 !important;
             color: white !important;
             border: none !important;
             box-shadow: none !important;
         }
         
-        /* Borde sutil solo para la caja de entrada */
+        /* El borde sutil solo para que se vea el campo */
         div[data-baseweb="input"] {
             border: 1px solid #333333 !important;
+        }
+
+        /* EL OJITO: Forzamos el fondo del botón de visibilidad */
+        button[aria-label="Show password"],
+        button[aria-label="Hide password"],
+        button[kind="tertiary"] {
+            background-color: #111111 !important;
+            border: none !important;
+            box-shadow: none !important;
         }
 
         /* 5. BOTÓN ENTRAR */
@@ -101,7 +105,6 @@ if not st.session_state.logueado:
             font-weight: bold !important;
             border: none !important;
             margin-top: 15px;
-            height: 40px;
         }
 
         label { color: #888888 !important; }
@@ -112,10 +115,10 @@ if not st.session_state.logueado:
     
     with center_col:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<h2 style="text-align:center; color:#00FFAA; font-size:18px; font-weight: bold;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 style="text-align:center; color:#00FFAA; font-size:18px;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
         
-        # El formulario ahora tiene un ID específico para el CSS
-        with st.form(key="login_final_boss_v5"):
+        # Formulario sin borde (atacado por el CSS de arriba)
+        with st.form(key="login_final_boss_v6"):
             u_input = st.text_input("Usuario", placeholder="Usuario")
             c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
             submit = st.form_submit_button("ENTRAR", use_container_width=True)
@@ -129,7 +132,6 @@ if not st.session_state.logueado:
                 st.session_state.splash_visto = False
                 st.rerun()
             else:
-                # Usamos HTML para que no aparezca la caja de error de Streamlit
                 st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:12px; margin-top:10px;">⚠️ Datos incorrectos</p>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
@@ -923,6 +925,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
