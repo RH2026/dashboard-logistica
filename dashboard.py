@@ -87,7 +87,7 @@ if not st.session_state.splash_completado:
         texto_splash = "Cerrando sesión de forma segura..."
         color_loader = "#FF4B4B"
     else:
-        texto_splash = f"Bienvenido {st.session_state.usuario_actual}, inicializando módulos..."
+        texto_splash = f"Bienvenid@ {st.session_state.usuario_actual}, inicializando módulos..."
         color_loader = "#00FF00"
 
     st.markdown(f"""
@@ -785,6 +785,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
