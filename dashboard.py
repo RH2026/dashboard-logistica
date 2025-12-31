@@ -27,246 +27,137 @@ if "pagina" not in st.session_state:
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time()
 
+# --------------------------------------------------
+# 3. SPLASH SCREEN (CORREGIDO PARA LOGOUT)
+# --------------------------------------------------
+# Usamos .get para que si la sesión está vacía no marque error
+if not st.session_state.get('splash_visto', False):
+    # Definir el mensaje según el motivo
+    if st.session_state.get('motivo_splash') == "logout":
+        texto_splash = "Bye, cerrando sistema…"
+    else:
+        texto_splash = "Inicializando módulos logísticos…"
 
+    # Renderizado del CSS y HTML del Splash
+    st.markdown("""
+    <style>
+    .splash-container { 
+        display: flex; 
+        flex-direction: column; 
+        justify-content: flex-start; 
+        align-items: center; 
+        height: 100vh; 
+        padding-top: 350px; 
+        background-color: #0e1117; 
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 9999;
+    }
+    .loader { 
+        border: 6px solid #2a2a2a; 
+        border-top: 6px solid #00FFAA; 
+        border-radius: 50%; 
+        width: 120px; 
+        height: 120px; 
+        animation: spin 1s linear infinite; 
+        margin-bottom: 20px; 
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown(f'''
+        <div class="splash-container">
+            <div class="loader"></div>
+            <div style="color:#aaa; font-size:14px; font-family:sans-serif;">{texto_splash}</div>
+        </div>
+    ''', unsafe_allow_html=True)
+    
+    time.sleep(2)
+    
+    # --- LÓGICA DE SALIDA O REINICIO ---
+    if st.session_state.get('motivo_splash') == "logout":
+        # 1. Limpiamos toda la memoria
+        st.session_state.clear()
+        
+        # 2. IMPORTANTE: Re-inicializamos los estados para que el Login y Sidebar funcionen
+        st.session_state['autenticado'] = False
+        st.session_state['splash_visto'] = True
+        st.session_state['motivo_splash'] = "inicio"
+    else:
+        # Flujo de inicio normal
+        st.session_state['splash_visto'] = True
+        st.session_state['motivo_splash'] = "inicio"
+    
+    st.rerun()
 
-# 1. CONFIGURACIÓN DE PÁGINA (DEBE SER LO PRIMERO)
+# 4. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (BLINDAJE ABSOLUTO NIVEL KERNEL)
+# FONDO DE PANTALLA SOLO PARA LOGIN
 # --------------------------------------------------
 if not st.session_state.logueado:
-    st.markdown("""
+    img_base64 = get_base64_image("1.jpg")
+    st.markdown(f"""
         <style>
-        /* 1. ELIMINACIÓN DE CABECERAS Y MARCOS DE SISTEMA */
-        header, [data-testid="stHeader"], footer, [data-testid="stStatusWidget"] {
-            display: none !important;
-            height: 0px !important;
-        }
-        
-        .stApp {
-            background-color: #000000 !important;
-        }
-
-        /* 2. EL MARTILLO: ELIMINACIÓN UNIVERSAL DE BORDES, SOMBRAS Y OUTLINES */
-        /* Aplicamos a CUALQUIER div que Streamlit use para envolver el contenido */
-        div[data-testid="stVerticalBlockBorderWrapper"],
-        div[data-testid="stVerticalBlock"],
-        div[data-testid="stForm"],
-        div[class*="st-key-"],
-        div[class*="st-emotion-cache"],
-        .element-container,
-        .stMarkdown {
-            border: none !important;
-            border-width: 0px !important;
-            outline: none !important;
-            box-shadow: none !important;
-            background-color: transparent !important;
-        }
-
-        /* 3. CAJA DE LOGIN (TU DISEÑO BLINDADO) */
-        .login-box {
-            background-color: #000000 !important;
-            padding: 35px;
+        .stApp {{
+            background-image: url("data:image/jpg;base64,{img_base64}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }}
+        /* CAJA DE LOGIN */
+        .stForm {{
+            background-color: #1e293b;
+            padding: 25px;
             border-radius: 15px;
-            border: 1px solid #1a1a1a !important; /* El único borde permitido */
-            max-width: 360px;
-            margin: auto;
-            margin-top: 15vh;
-            box-shadow: 0px 0px 20px rgba(0,0,0,1) !important;
-        }
-
-        /* 4. UNIFICACIÓN QUIRÚRGICA DEL INPUT Y EL OJITO */
-        /* Forzamos el color de fondo en la raíz del componente BaseWeb */
-        [data-baseweb="input"], 
-        [data-baseweb="base-input"],
-        [data-baseweb="input"] > div,
-        [data-baseweb="input"] * {
-            background-color: #111111 !important;
+            border: 1px solid #334151;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }}
+        /* UNIFICACIÓN DE COLOR INPUTS */
+        div[data-testid="stTextInputRootElement"], 
+        div[data-testid="stTextInputRootElement"] *, 
+        .stForm input {{
+            background-color: #475569 !important;
             color: white !important;
             border: none !important;
-            box-shadow: none !important;
-        }
-        
-        /* Definimos el borde del input manualmente para que no lo herede del sistema */
-        div[data-baseweb="input"] {
-            border: 1px solid #333333 !important;
-            border-radius: 8px !important;
-        }
-
-        /* El botón del ojito (Icono) */
-        button[aria-label="Show password"], 
-        button[aria-label="Hide password"],
-        [data-testid="stInputActionButton"] {
-            background-color: transparent !important;
-            color: #666666 !important;
-            border: none !important;
         }}
-
-        /* 5. BOTÓN ENTRAR (NEÓN LOGÍSTICO) */
-        .stButton > button {
-            background-color: #00FFAA !important;
-            color: #000000 !important;
-            font-weight: bold !important;
-            border: none !important;
-            width: 100%;
-            height: 48px;
-            margin-top: 25px;
-            border-radius: 8px;
-            transition: 0.3s;
-        }
-        
-        .stButton > button:hover {
-            background-color: #00cc88 !important;
-            box-shadow: 0px 0px 15px rgba(0, 255, 170, 0.4) !important;
-        }
-
-        label { color: #aaaaaa !important; font-size: 14px !important; }
+        .login-header {{
+            text-align: center; color: white; font-size: 24px; font-weight: bold; margin-bottom: 20px;
+        }}
         </style>
     """, unsafe_allow_html=True)
 
-    # Columnas para centrado perfecto
-    _, center_col, _ = st.columns([1, 2, 1])
-    
-    with center_col:
-        # Iniciamos nuestro contenedor HTML personalizado
-        st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<h2 style="text-align:center; color:#00FFAA; font-size:22px; margin-bottom:25px;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
-        
-        # El formulario (su borde ha sido asesinado por el CSS de arriba)
-        with st.form(key="login_shield_final"):
-            u_input = st.text_input("Usuario", placeholder="Usuario")
-            c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
-            submit = st.form_submit_button("INGRESAR")
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        with st.form("login_form"):
+            st.markdown('<div class="login-header">🔐 Acceso</div>', unsafe_allow_html=True)
+            u_input = st.text_input("Usuario")
+            c_input = st.text_input("Contraseña", type="password")
+            submit = st.form_submit_button("Ingresar", use_container_width=True)
 
             if submit:
-                usuarios_dict = st.secrets.get("usuarios", {})
-                if u_input in usuarios_dict and usuarios_dict[u_input] == c_input:
+                # Usamos los secretos guardados en Streamlit Cloud
+                usuarios = st.secrets["usuarios"]
+                if u_input in usuarios and usuarios[u_input] == c_input:
                     st.session_state.logueado = True
                     st.session_state.usuario_actual = u_input
                     st.session_state.ultimo_movimiento = time.time()
-                    st.session_state.splash_visto = False
                     st.rerun()
                 else:
-                    st.markdown('<p style="color:#ff4b4b; text-align:center; font-size:13px; margin-top:15px;">⚠️ Credenciales no válidas</p>', unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+                    st.error("Usuario o contraseña incorrectos")
     
+    # Detenemos la ejecución aquí si no está logueado
     st.stop()
+
 # --------------------------------------------------
 # INICIO DEL CONTENIDO PRIVADO (SI ESTÁ LOGUEADO)
 # --------------------------------------------------
 else:
-
-    # --------------------------------------------------
-    # 3. SPLASH SCREEN (CORREGIDO PARA LOGOUT)
-    # --------------------------------------------------
-    # Usamos .get para que si la sesión está vacía no marque error
-    # --- BLOQUE DE SPLASH SCREEN: RUTA LOGÍSTICA PREMIUM (CORREGIDO) ---
-    if not st.session_state.get('splash_visto', False):
-        placeholder = st.empty()
-        
-        # 1. Definimos el texto antes del contenedor para evitar errores de variable
-        if st.session_state.get('motivo_splash') == "logout":
-            texto_splash = "Sincronizando flota y cerrando sesión..."
-        else:
-            texto_splash = "Optimizando rutas de transporte..."
-    
-        with placeholder.container():
-            st.markdown("""
-            <style>
-            .splash-container { 
-                display: flex; flex-direction: column; justify-content: center; align-items: center; 
-                height: 100vh; background-color: #05070a; position: fixed; top: 0; left: 0; width: 100%; z-index: 99999;
-                background-image: radial-gradient(rgba(0, 255, 170, 0.1) 1px, transparent 1px);
-                background-size: 40px 40px;
-            }
-    
-            .map-scene {
-                position: relative; width: 400px; height: 200px; margin-top: -10vh; margin-bottom: 50px;
-            }
-    
-            .path-guide {
-                position: absolute; width: 380px; height: 180px; bottom: 10px; left: 10px;
-                border: 1px solid rgba(0, 255, 170, 0.1); border-radius: 0 100% 0 0;
-                border-color: transparent rgba(0, 255, 170, 0.2) transparent transparent;
-                transform: rotate(-5deg);
-            }
-    
-            .point {
-                position: absolute; width: 16px; height: 16px; background-color: #00FFAA;
-                border-radius: 50%; box-shadow: 0 0 20px #00FFAA; z-index: 10;
-            }
-    
-            .point::before, .point::after {
-                content: ""; position: absolute; width: 100%; height: 100%;
-                background-color: #00FFAA; border-radius: 50%; animation: pulse-ring 2.5s infinite;
-            }
-            .point::after { animation-delay: 1.2s; }
-    
-            @keyframes pulse-ring {
-                0% { transform: scale(1); opacity: 0.8; }
-                100% { transform: scale(4); opacity: 0; }
-            }
-    
-            .point.origin { bottom: 0; left: 0; background-color: #00FFAA; }
-            .point.destination { top: 0; right: 0; background-color: #fff; box-shadow: 0 0 20px #fff; }
-    
-            .delivery-node {
-                position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%;
-                box-shadow: 0 0 30px 10px rgba(0, 255, 170, 0.6);
-                offset-path: path('M 10 190 Q 200 190 390 10'); 
-                animation: travel-v2 2.5s infinite cubic-bezier(0.45, 0, 0.55, 1);
-                z-index: 20;
-            }
-    
-            @keyframes travel-v2 {
-                0% { offset-distance: 0%; opacity: 0; filter: blur(2px); }
-                10% { opacity: 1; filter: blur(0px); }
-                90% { opacity: 1; filter: blur(0px); }
-                100% { offset-distance: 100%; opacity: 0; filter: blur(5px); }
-            }
-    
-            .loading-text {
-                color: #fff; font-family: 'Courier New', monospace; font-size: 14px;
-                letter-spacing: 6px; text-transform: uppercase; text-shadow: 0 0 10px #00FFAA;
-                animation: text-glow 2s ease-in-out infinite alternate;
-            }
-    
-            @keyframes text-glow {
-                from { opacity: 0.6; transform: scale(0.98); }
-                to { opacity: 1; transform: scale(1); }
-            }
-            </style>
-            """, unsafe_allow_html=True)
-    
-            st.markdown(f'''
-                <div class="splash-container">
-                    <div class="map-scene">
-                        <div class="path-guide"></div>
-                        <div class="point origin"></div>
-                        <div class="point destination"></div>
-                        <div class="delivery-node"></div>
-                    </div>
-                    <div class="loading-text">{texto_splash}</div>
-                </div>
-            ''', unsafe_allow_html=True)
-            
-            time.sleep(2.5)
-    
-        # 2. Lógica de finalización UNIFICADA (Sin duplicados)
-        if st.session_state.get('motivo_splash') == "logout":
-            st.session_state.clear()
-            st.session_state['logueado'] = False  # Aseguramos que el login se resetee
-            st.session_state['splash_visto'] = True
-            st.session_state['motivo_splash'] = "inicio"
-        else:
-            st.session_state['splash_visto'] = True
-            st.session_state['motivo_splash'] = "inicio"
-        
-        placeholder.empty()
-        st.rerun() # Un solo rerun al final de todo
-    
+  
     # --------------------------------------------------
     # 👋 SALUDO PERSONALIZADO
     # --------------------------------------------------
@@ -941,47 +832,6 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
