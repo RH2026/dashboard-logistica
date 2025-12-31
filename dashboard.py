@@ -22,129 +22,60 @@ if "pagina" not in st.session_state:
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
 
+# 1. CONFIGURACIÓN DE PÁGINA
+st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
+
+# 2. ESTADOS DE SESIÓN (Respetando tus originales)
+if "logueado" not in st.session_state: st.session_state.logueado = False
+if "splash_completado" not in st.session_state: st.session_state.splash_completado = False
+if "motivo_splash" not in st.session_state: st.session_state.motivo_splash = "inicio"
+if "usuario_actual" not in st.session_state: st.session_state.usuario_actual = None
+if "pagina" not in st.session_state: st.session_state.pagina = "principal"
+
 # Colores Globales
 color_fondo_nativo = "#0e1117" 
 color_blanco = "#FFFFFF"
 color_verde = "#00FF00" 
 color_borde_gris = "#333333"
 
-# --------------------------------------------------
-# 3. LÓGICA DE LOGIN CON CAJA 3D (PAQUETERÍA)
-# --------------------------------------------------
-if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
+# --- LÓGICA DE FLUJO ---
+
+# CASO A: LOGIN (Si no está logueado)
+if not st.session_state.logueado:
     st.markdown(f"""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
-
         .stApp {{ background-color: {color_fondo_nativo} !important; }}
-        
-        /* CONTENEDOR DE LA CAJA 3D */
-        .scene {{
-            width: 100%;
-            height: 120px;
-            perspective: 600px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 20px;
-        }}
-
-        .cube {{
-            width: 60px;
-            height: 50px;
-            position: relative;
-            transform-style: preserve-3d;
-            transform: rotateX(-20deg) rotateY(45deg);
-            animation: move-package 6s infinite ease-in-out;
-        }}
-
-        /* CARAS DE CARTÓN DE LA CAJA */
-        .cube-face {{
-            position: absolute;
-            width: 60px;
-            height: 50px;
-            background: #d2a679; /* Color Cartón */
-            border: 1px solid #b08d5c;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
-        }}
-
-        /* Cinta de embalaje sutil */
-        .cube-face::after {{
-            content: '';
-            position: absolute;
-            top: 40%;
-            width: 100%;
-            height: 8px;
-            background: rgba(0,0,0,0.08);
-        }}
-
-        .front  {{ transform: rotateY(  0deg) translateZ(30px); }}
+        .scene {{ width: 100%; height: 120px; perspective: 600px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }}
+        .cube {{ width: 60px; height: 50px; position: relative; transform-style: preserve-3d; transform: rotateX(-20deg) rotateY(45deg); animation: move-package 6s infinite ease-in-out; }}
+        .cube-face {{ position: absolute; width: 60px; height: 50px; background: #d2a679; border: 1px solid #b08d5c; box-shadow: inset 0 0 15px rgba(0,0,0,0.1); }}
+        .cube-face::after {{ content: ''; position: absolute; top: 40%; width: 100%; height: 8px; background: rgba(0,0,0,0.08); }}
+        .front  {{ transform: rotateY(0deg) translateZ(30px); }}
         .back   {{ transform: rotateY(180deg) translateZ(30px); }}
-        .right  {{ transform: rotateY( 90deg) translateZ(30px); }}
+        .right  {{ transform: rotateY(90deg) translateZ(30px); }}
         .left   {{ transform: rotateY(-90deg) translateZ(30px); }}
-        .top    {{ width: 60px; height: 60px; transform: rotateX( 90deg) translateZ(25px); background: #e3bc94; border-bottom: 2px solid rgba(0,0,0,0.1); }}
+        .top    {{ width: 60px; height: 60px; transform: rotateX(90deg) translateZ(25px); background: #e3bc94; }}
         .bottom {{ width: 60px; height: 60px; transform: rotateX(-90deg) translateZ(25px); }}
-
-        @keyframes move-package {{
-            0% {{ transform: translateY(0px) rotateX(-20deg) rotateY(45deg); }}
-            50% {{ transform: translateY(-15px) rotateX(-25deg) rotateY(225deg); }}
-            100% {{ transform: translateY(0px) rotateX(-20deg) rotateY(405deg); }}
-        }}
-
-        /* ESTILO DEL FORMULARIO */
-        .stForm {{
-            background-color: {color_fondo_nativo} !important;
-            padding: 40px; border-radius: 20px;
-            border: 1.5px solid {color_borde_gris} !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-top: -30px;
-        }}
-        
-        .login-header {{ 
-            text-align: center; 
-            color: {color_blanco}; 
-            font-size: 24px; 
-            font-weight: bold; 
-            margin-bottom: 25px; 
-            font-family: sans-serif;
-            letter-spacing: 2px; 
-            text-transform: uppercase; 
-        }}
-
+        @keyframes move-package {{ 0%, 100% {{ transform: translateY(0px) rotateX(-20deg) rotateY(45deg); }} 50% {{ transform: translateY(-15px) rotateX(-25deg) rotateY(225deg); }} }}
+        .stForm {{ background-color: {color_fondo_nativo} !important; padding: 40px; border-radius: 20px; border: 1.5px solid {color_borde_gris} !important; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-top: -30px; }}
+        .login-header {{ text-align: center; color: {color_blanco}; font-size: 24px; font-weight: bold; margin-bottom: 25px; font-family: sans-serif; letter-spacing: 2px; text-transform: uppercase; }}
         div[data-testid="stTextInputRootElement"] {{ background-color: #1a1c24 !important; border: 1px solid #30333d !important; border-radius: 10px !important; }}
-        div[data-testid="stTextInputRootElement"] > div {{ background-color: transparent !important; }}
         input {{ color: white !important; font-family: 'Courier Prime', monospace; }}
-        div[data-testid="stTextInputRootElement"] button {{ color: {color_verde} !important; }}
-        
-        header, footer {{visibility: hidden;}}
+        header, footer {{ visibility: hidden; }}
         </style>
     """, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
-        st.markdown('<div style="height:5vh"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:8vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
-            # Caja 3D Flotante
-            st.markdown('''
-                <div class="scene">
-                    <div class="cube">
-                        <div class="cube-face front"></div>
-                        <div class="cube-face back"></div>
-                        <div class="cube-face right"></div>
-                        <div class="cube-face left"></div>
-                        <div class="cube-face top"></div>
-                        <div class="cube-face bottom"></div>
-                    </div>
-                </div>
-            ''', unsafe_allow_html=True)
-            
+            st.markdown('<div class="scene"><div class="cube"><div class="cube-face front"></div><div class="cube-face back"></div><div class="cube-face right"></div><div class="cube-face left"></div><div class="cube-face top"></div><div class="cube-face bottom"></div></div></div>', unsafe_allow_html=True)
             st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
             u_input = st.text_input("Usuario")
             c_input = st.text_input("Contraseña", type="password")
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
             if submit:
-                # REINSTALADA TU LÓGICA ORIGINAL DE SECRETS
                 usuarios = st.secrets["usuarios"]
                 if u_input in usuarios and str(usuarios[u_input]) == str(c_input):
                     st.session_state.logueado = True
@@ -154,113 +85,53 @@ if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
                     st.rerun()
                 else:
                     st.error("Acceso Denegado")
-                    
-    st.stop()
 
-# --------------------------------------------------
-# 4. SPLASH SCREEN (Efecto de Paquetería 3D)
-# --------------------------------------------------
-if not st.session_state.splash_completado:
+# CASO B: SPLASH SCREEN (Si está logueado pero el splash está pendiente)
+elif not st.session_state.splash_completado:
     if st.session_state.motivo_splash == "logout":
         texto_splash = "Cerrando sesión de forma segura y sellando paquetes..."
-        color_caja = "#FF4B4B"  # Rojo para salida
+        color_caja = "#FF4B4B"
         color_cinta = "#8b0000"
     else:
-        # Usamos el usuario actual si existe, si no, un texto genérico
         user = st.session_state.get('usuario_actual', 'Usuario')
         texto_splash = f"Bienvenid@ {user}, inicializando módulos de logística..."
-        color_caja = "#d2a679"  # Color cartón para entrada
+        color_caja = "#d2a679"
         color_cinta = "#b08d5c"
 
     st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
-
-    .splash-container {{ 
-        display: flex; flex-direction: column; justify-content: center; align-items: center; 
-        height: 100vh; background-color: #0e1117; position: fixed;
-        top: 0; left: 0; width: 100%; z-index: 9999;
-    }}
-
-    /* ESCENA DE LA CAJA 3D */
-    .splash-scene {{
-        width: 150px; height: 150px;
-        perspective: 800px; margin-bottom: 40px;
-        display: flex; justify-content: center; align-items: center;
-    }}
-
-    .splash-cube {{
-        width: 80px; height: 70px;
-        position: relative;
-        transform-style: preserve-3d;
-        transform: rotateX(-20deg) rotateY(45deg);
-        animation: rotate-splash 3s infinite linear;
-    }}
-
-    .splash-face {{
-        position: absolute;
-        width: 80px; height: 70px;
-        background: {color_caja};
-        border: 2px solid {color_cinta};
-        opacity: 0.95;
-    }}
-
-    /* Cinta de embalaje */
-    .splash-face::after {{
-        content: ''; position: absolute;
-        top: 40%; width: 100%; height: 12px;
-        background: rgba(0,0,0,0.1);
-    }}
-
-    .s-front  {{ transform: rotateY(  0deg) translateZ(40px); }}
+    .splash-container {{ display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background-color: #0e1117; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; }}
+    .splash-scene {{ width: 150px; height: 150px; perspective: 800px; margin-bottom: 40px; display: flex; justify-content: center; align-items: center; }}
+    .splash-cube {{ width: 80px; height: 70px; position: relative; transform-style: preserve-3d; animation: rotate-splash 3s infinite linear; }}
+    .splash-face {{ position: absolute; width: 80px; height: 70px; background: {color_caja}; border: 2px solid {color_cinta}; opacity: 0.95; }}
+    .splash-face::after {{ content: ''; position: absolute; top: 40%; width: 100%; height: 12px; background: rgba(0,0,0,0.1); }}
+    .s-front  {{ transform: rotateY(0deg) translateZ(40px); }}
     .s-back   {{ transform: rotateY(180deg) translateZ(40px); }}
-    .s-right  {{ transform: rotateY( 90deg) translateZ(40px); }}
+    .s-right  {{ transform: rotateY(90deg) translateZ(40px); }}
     .s-left   {{ transform: rotateY(-90deg) translateZ(40px); }}
-    .s-top    {{ width: 80px; height: 80px; transform: rotateX( 90deg) translateZ(35px); background: #e3bc94; }}
+    .s-top    {{ width: 80px; height: 80px; transform: rotateX(90deg) translateZ(35px); background: #e3bc94; }}
     .s-bottom {{ width: 80px; height: 80px; transform: rotateX(-90deg) translateZ(35px); }}
-
-    @keyframes rotate-splash {{
-        0% {{ transform: scale(1) rotateX(-20deg) rotateY(0deg); }}
-        50% {{ transform: scale(1.1) rotateX(-20deg) rotateY(180deg); }}
-        100% {{ transform: scale(1) rotateX(-20deg) rotateY(360deg); }}
-    }}
-
-    .splash-text {{ 
-        color: #FFFFFF; font-size: 14px; 
-        font-family: 'Courier Prime', monospace; 
-        letter-spacing: 2px; text-align: center;
-        text-transform: uppercase; opacity: 0.8;
-    }}
+    @keyframes rotate-splash {{ 0% {{ transform: scale(1) rotateX(-20deg) rotateY(0deg); }} 50% {{ transform: scale(1.1) rotateX(-20deg) rotateY(180deg); }} 100% {{ transform: scale(1) rotateX(-20deg) rotateY(360deg); }} }}
+    .splash-text {{ color: #FFFFFF; font-size: 14px; font-family: 'Courier Prime', monospace; letter-spacing: 2px; text-align: center; text-transform: uppercase; opacity: 0.8; }}
     </style>
-
     <div class="splash-container">
-        <div class="splash-scene">
-            <div class="splash-cube">
-                <div class="splash-face s-front"></div>
-                <div class="splash-face s-back"></div>
-                <div class="splash-face s-right"></div>
-                <div class="splash-face s-left"></div>
-                <div class="splash-face s-top"></div>
-                <div class="splash-face s-bottom"></div>
-            </div>
-        </div>
+        <div class="splash-scene"><div class="splash-cube"><div class="splash-face s-front"></div><div class="splash-face s-back"></div><div class="splash-face s-right"></div><div class="splash-face s-left"></div><div class="splash-face s-top"></div><div class="splash-face s-bottom"></div></div></div>
         <div class="splash-text">{texto_splash}</div>
     </div>
     """, unsafe_allow_html=True)
     
-    time.sleep(2.5) # Tiempo para que se vea la animación
+    time.sleep(2.5)
     
     if st.session_state.motivo_splash == "logout":
-        # --- TU LÓGICA DE RESETEO ORIGINAL ---
         st.session_state.logueado = False
         st.session_state.usuario_actual = None
         st.session_state.pagina = "principal"
         st.session_state.splash_completado = True
         st.session_state.motivo_splash = "inicio"
-        st.rerun()
     else:
         st.session_state.splash_completado = True
-        st.rerun()
+    st.rerun()
 
 # --------------------------------------------------
 # INICIO DEL CONTENIDO PRIVADO (SI ESTÁ LOGUEADO)
@@ -303,14 +174,16 @@ else:
     # --------------------------------------------------
     # BOTÓN DE CIERRE DE SESIÓN EN LA BARRA LATERAL
     # --------------------------------------------------
+    # BARRA LATERAL
     st.sidebar.markdown(f'### 👤 Sesión: <span style="color:#00FFAA;">{st.session_state.usuario_actual}</span>', unsafe_allow_html=True)
     
-        
     if st.sidebar.button("Cerrar Sesión", use_container_width=True, key="logout_sidebar"):
-        # IMPORTANTE: No pongas logueado = False aquí, deja que el Splash lo haga al terminar
         st.session_state.splash_completado = False 
         st.session_state.motivo_splash = "logout"
         st.rerun()
+
+    st.title("📦 Dashboard de Logística")
+    st.write("Datos cargados correctamente.")
     
     
     # --------------------------------------------------
@@ -952,6 +825,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
