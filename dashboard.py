@@ -33,12 +33,12 @@ if "ultimo_movimiento" not in st.session_state:
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (VERSIÓN NUCLEAR: SIN ST.FORM)
+# 3. LÓGICA DE LOGIN (ELIMINACIÓN TOTAL Y OJITO)
 # --------------------------------------------------
 if not st.session_state.logueado:
     st.markdown("""
         <style>
-        /* 1. LIMPIEZA TOTAL */
+        /* 1. ELIMINAR CUALQUIER RASTRO DE INTERFAZ DE STREAMLIT */
         header, [data-testid="stHeader"], footer, [data-testid="stStatusWidget"] {
             display: none !important;
         }
@@ -47,17 +47,18 @@ if not st.session_state.logueado:
             background-color: #000000 !important;
         }
 
-        /* 2. MATAR CUALQUIER CONTENEDOR DE STREAMLIT QUE TENGA BORDES */
-        [data-testid="stVerticalBlockBorderWrapper"], 
+        /* 2. MATAR LA CAJA FANTASMA (CONTENEDOR DE BLOQUE Y FORMULARIO) */
+        /* Este es el culpable del borde: el BorderWrapper */
+        [data-testid="stVerticalBlockBorderWrapper"],
+        [data-testid="stForm"],
         [data-testid="stVerticalBlock"],
-        div.element-container,
-        .stMultiSelect,
-        div[class*="st-key-"] {
+        .element-container {
             border: none !important;
             box-shadow: none !important;
+            background-color: transparent !important;
         }
 
-        /* 3. CAJA DE LOGIN (DISEÑO PROPIO) */
+        /* 3. CAJA DE LOGIN (DISEÑO LIMPIO) */
         .login-box {
             background-color: #000000;
             padding: 30px;
@@ -65,44 +66,45 @@ if not st.session_state.logueado:
             border: 1px solid #1a1a1a;
             max-width: 350px;
             margin: auto;
-            margin-top: 20vh;
+            margin-top: 15vh;
         }
 
-        /* 4. INPUTS Y OJITO (UNIFICACIÓN TOTAL) */
-        div[data-baseweb="input"] {
+        /* 4. INPUTS Y OJITO (UNIFICACIÓN TOTAL SIN BORDES) */
+        /* Atacamos el contenedor de BaseWeb para el ojito */
+        div[data-baseweb="input"], 
+        div[data-baseweb="base-input"],
+        div[data-baseweb="input"] > div {
             background-color: #111111 !important;
             border: 1px solid #333333 !important;
-            border-radius: 8px !important;
+            color: white !important;
         }
         
         input {
-            background-color: #111111 !important;
+            background-color: transparent !important;
             color: white !important;
             border: none !important;
         }
 
-        /* Botón del ojito */
+        /* BOTÓN DEL OJITO: Forzamos el mismo fondo que el input */
         button[aria-label="Show password"], 
-        button[aria-label="Hide password"] {
+        button[aria-label="Hide password"],
+        [data-testid="stInputActionButton"] {
             background-color: transparent !important;
             border: none !important;
             color: white !important;
+            box-shadow: none !important;
         }
 
-        /* 5. BOTÓN ENTRAR PERSONALIZADO */
-        div.stButton > button {
+        /* 5. BOTÓN ENTRAR */
+        .stButton > button {
             background-color: #00FFAA !important;
             color: #000000 !important;
             font-weight: bold !important;
             border: none !important;
             width: 100%;
-            margin-top: 10px;
+            margin-top: 20px;
             border-radius: 8px;
-        }
-        
-        div.stButton > button:hover {
-            background-color: #00e699 !important;
-            color: #000000 !important;
+            height: 45px;
         }
 
         label { color: #888888 !important; }
@@ -115,12 +117,13 @@ if not st.session_state.logueado:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
         st.markdown('<h2 style="text-align:center; color:#00FFAA; font-size:20px;">🔐 Acceso al Sistema</h2>', unsafe_allow_html=True)
         
-        # USAMOS INPUTS NORMALES (SIN ST.FORM) PARA QUE NO EXISTA LA CAJA GRIS
-        u_input = st.text_input("Usuario", placeholder="Tu usuario", key="user_input")
-        c_input = st.text_input("Contraseña", type="password", placeholder="Tu contraseña", key="pass_input")
-        
-        # Botón manual
-        if st.button("INGRESAR"):
+        # Regresamos al formulario pero con el CSS que mata su borde
+        with st.form(key="login_definitivo_v7"):
+            u_input = st.text_input("Usuario", placeholder="Usuario")
+            c_input = st.text_input("Contraseña", type="password", placeholder="Contraseña")
+            submit = st.form_submit_button("INGRESAR", use_container_width=True)
+
+        if submit:
             usuarios_dict = st.secrets.get("usuarios", {})
             if u_input in usuarios_dict and usuarios_dict[u_input] == c_input:
                 st.session_state.logueado = True
@@ -922,6 +925,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
