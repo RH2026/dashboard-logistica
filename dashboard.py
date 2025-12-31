@@ -85,23 +85,20 @@ if not st.session_state.get('splash_visto', False):
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
 
 # --------------------------------------------------
-# DISEÑO ESTILO NATIVO STREAMLIT (FONDO #0e1117)
+# DISEÑO ESTILO NATIVO STREAMLIT (ANIMACIÓN INTENSIFICADA)
 # --------------------------------------------------
 if not st.session_state.logueado:
-    # Definición de colores
-    color_fondo_nativo = "#0e1117"  # El color de tus capturas
+    color_fondo_nativo = "#0e1117" 
     color_blanco = "#FFFFFF"
     color_verde = "#00FF00" 
     color_borde_gris = "#333333"
 
     st.markdown(f"""
         <style>
-        /* FONDO GENERAL NATIVO */
         .stApp {{
             background-color: {color_fondo_nativo} !important;
         }}
         
-        /* CAJA DE LOGIN */
         .stForm {{
             background-color: {color_fondo_nativo} !important;
             padding: 40px;
@@ -110,22 +107,34 @@ if not st.session_state.logueado:
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }}
 
-        /* ANIMACIÓN DE PULSO PARA EL ESCUDO BLANCO */
-        @keyframes pulse-white {{
-            0% {{ transform: scale(1); opacity: 0.8; }}
-            50% {{ transform: scale(1.03); opacity: 1; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }}
-            100% {{ transform: scale(1); opacity: 0.8; }}
+        /* ANIMACIÓN INTENSIFICADA */
+        @keyframes pulse-intense {{
+            0% {{ 
+                transform: scale(1); 
+                opacity: 0.7; 
+                filter: drop-shadow(0 0 2px rgba(255,255,255,0));
+            }}
+            50% {{ 
+                transform: scale(1.15); /* Aumento de tamaño más notable */
+                opacity: 1; 
+                filter: drop-shadow(0 0 15px rgba(255,255,255,0.6)); /* Brillo más fuerte */
+            }}
+            100% {{ 
+                transform: scale(1); 
+                opacity: 0.7; 
+                filter: drop-shadow(0 0 2px rgba(255,255,255,0));
+            }}
         }}
+        
         .animated-icon {{
-            animation: pulse-white 4s infinite ease-in-out;
+            animation: pulse-intense 2s infinite ease-in-out; /* Ciclo más rápido */
             display: flex;
             justify-content: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }}
 
-        /* FIX INPUTS (Se integran con el fondo nativo) */
         div[data-testid="stTextInputRootElement"] {{
-            background-color: #1a1c24 !important; /* Un poco más claro que el fondo para contraste */
+            background-color: #1a1c24 !important;
             border: 1px solid #30333d !important;
             border-radius: 10px !important;
         }}
@@ -134,13 +143,11 @@ if not st.session_state.logueado:
             background-color: transparent !important;
         }}
 
-        /* Texto e icono del ojito */
         input {{ color: white !important; }}
         div[data-testid="stTextInputRootElement"] button {{
             color: {color_verde} !important;
         }}
 
-        /* TÍTULO EN BLANCO */
         .login-header {{
             text-align: center; 
             color: {color_blanco}; 
@@ -159,12 +166,12 @@ if not st.session_state.logueado:
     with col2:
         st.markdown('<div style="height:12vh"></div>', unsafe_allow_html=True)
         with st.form("login_form"):
-            # ESCUDO EN BLANCO
+            # ESCUDO CON SVG REFORZADO
             st.markdown(f'''
                 <div class="animated-icon">
-                    <svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="{color_blanco}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="{color_blanco}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        <circle cx="12" cy="11" r="3" fill="{color_blanco}" fill-opacity="0.1"></circle>
+                        <circle cx="12" cy="11" r="3" fill="{color_blanco}" fill-opacity="0.2"></circle>
                         <path d="M12 11v4"></path>
                     </svg>
                 </div>
@@ -176,7 +183,6 @@ if not st.session_state.logueado:
             submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
             if submit:
-                # Tu lógica de login aquí
                 usuarios = st.secrets["usuarios"]
                 if u_input in usuarios and usuarios[u_input] == c_input:
                     st.session_state.logueado = True
@@ -864,6 +870,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
