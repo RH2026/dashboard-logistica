@@ -103,7 +103,7 @@ if not st.session_state.splash_completado:
         margin-bottom: 25px; filter: drop-shadow(0 0 10px {color_loader}66);
     }}
     @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
-    .splash-text {{ color: #FFFFFF; font-size: 16px; font-family: sans-serif; letter-spacing: 1px; opacity: 0.8; }}
+    .splash-text {{ color: #FFFFFF; font-size: 14px; font-family: sans-serif; letter-spacing: 1px; opacity: 0.8; }}
     </style>
     """, unsafe_allow_html=True)
     
@@ -785,6 +785,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
