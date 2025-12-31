@@ -124,23 +124,6 @@ if not st.session_state.splash_completado:
         st.rerun()
 
 # --------------------------------------------------
-# 5. DASHBOARD (Ejemplo de navegación)
-# --------------------------------------------------
-# Aquí es donde usas st.session_state.pagina para decidir qué mostrar
-if st.session_state.pagina == "principal":
-    st.title("Página Principal")
-    st.write("Bienvenido al inicio.")
-elif st.session_state.pagina == "KPIS":
-    st.title("Panel de KPIS")
-    st.write("Datos de rendimiento.")
-
-# Botón de cierre
-if st.sidebar.button("Cerrar Sesión"):
-    st.session_state.splash_completado = False 
-    st.session_state.motivo_splash = "logout"
-    st.rerun()
-
-# --------------------------------------------------
 # INICIO DEL CONTENIDO PRIVADO (SI ESTÁ LOGUEADO)
 # --------------------------------------------------
 else:
@@ -820,6 +803,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
