@@ -158,42 +158,103 @@ if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
     st.stop()
 
 # --------------------------------------------------
-# 4. SPLASH SCREEN (Entrada y Salida)
+# 4. SPLASH SCREEN (Efecto de Paquetería 3D)
 # --------------------------------------------------
 if not st.session_state.splash_completado:
     if st.session_state.motivo_splash == "logout":
-        texto_splash = "Cerrando sesión de forma segura..."
-        color_loader = "#FF4B4B"
+        texto_splash = "Cerrando sesión de forma segura y sellando paquetes..."
+        color_caja = "#FF4B4B"  # Rojo para salida
+        color_cinta = "#8b0000"
     else:
-        texto_splash = f"Bienvenid@ {st.session_state.usuario_actual}, inicializando módulos..."
-        color_loader = "#00FF00"
+        # Usamos el usuario actual si existe, si no, un texto genérico
+        user = st.session_state.get('usuario_actual', 'Usuario')
+        texto_splash = f"Bienvenid@ {user}, inicializando módulos de logística..."
+        color_caja = "#d2a679"  # Color cartón para entrada
+        color_cinta = "#b08d5c"
 
     st.markdown(f"""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
+
     .splash-container {{ 
         display: flex; flex-direction: column; justify-content: center; align-items: center; 
         height: 100vh; background-color: #0e1117; position: fixed;
         top: 0; left: 0; width: 100%; z-index: 9999;
     }}
-    .loader {{ 
-        border: 6px solid #1a1c24; border-top: 6px solid {color_loader}; border-radius: 50%; 
-        width: 120px; height: 120px; animation: spin 0.8s linear infinite; 
-        margin-bottom: 25px; filter: drop-shadow(0 0 10px {color_loader}66);
+
+    /* ESCENA DE LA CAJA 3D */
+    .splash-scene {{
+        width: 150px; height: 150px;
+        perspective: 800px; margin-bottom: 40px;
+        display: flex; justify-content: center; align-items: center;
     }}
-    @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
-    .splash-text {{ color: #FFFFFF; font-size: 12px; font-family: Share Tech Mono; letter-spacing: 1px; opacity: 0.8; }}
+
+    .splash-cube {{
+        width: 80px; height: 70px;
+        position: relative;
+        transform-style: preserve-3d;
+        transform: rotateX(-20deg) rotateY(45deg);
+        animation: rotate-splash 3s infinite linear;
+    }}
+
+    .splash-face {{
+        position: absolute;
+        width: 80px; height: 70px;
+        background: {color_caja};
+        border: 2px solid {color_cinta};
+        opacity: 0.95;
+    }}
+
+    /* Cinta de embalaje */
+    .splash-face::after {{
+        content: ''; position: absolute;
+        top: 40%; width: 100%; height: 12px;
+        background: rgba(0,0,0,0.1);
+    }}
+
+    .s-front  {{ transform: rotateY(  0deg) translateZ(40px); }}
+    .s-back   {{ transform: rotateY(180deg) translateZ(40px); }}
+    .s-right  {{ transform: rotateY( 90deg) translateZ(40px); }}
+    .s-left   {{ transform: rotateY(-90deg) translateZ(40px); }}
+    .s-top    {{ width: 80px; height: 80px; transform: rotateX( 90deg) translateZ(35px); background: #e3bc94; }}
+    .s-bottom {{ width: 80px; height: 80px; transform: rotateX(-90deg) translateZ(35px); }}
+
+    @keyframes rotate-splash {{
+        0% {{ transform: scale(1) rotateX(-20deg) rotateY(0deg); }}
+        50% {{ transform: scale(1.1) rotateX(-20deg) rotateY(180deg); }}
+        100% {{ transform: scale(1) rotateX(-20deg) rotateY(360deg); }}
+    }}
+
+    .splash-text {{ 
+        color: #FFFFFF; font-size: 14px; 
+        font-family: 'Courier Prime', monospace; 
+        letter-spacing: 2px; text-align: center;
+        text-transform: uppercase; opacity: 0.8;
+    }}
     </style>
+
+    <div class="splash-container">
+        <div class="splash-scene">
+            <div class="splash-cube">
+                <div class="splash-face s-front"></div>
+                <div class="splash-face s-back"></div>
+                <div class="splash-face s-right"></div>
+                <div class="splash-face s-left"></div>
+                <div class="splash-face s-top"></div>
+                <div class="splash-face s-bottom"></div>
+            </div>
+        </div>
+        <div class="splash-text">{texto_splash}</div>
+    </div>
     """, unsafe_allow_html=True)
     
-    st.markdown(f'<div class="splash-container"><div class="loader"></div><div class="splash-text">{texto_splash}</div></div>', unsafe_allow_html=True)
-    
-    time.sleep(2)
+    time.sleep(2.5) # Tiempo para que se vea la animación
     
     if st.session_state.motivo_splash == "logout":
-        # --- SOLUCIÓN AL PROBLEMA DE KPIS ---
+        # --- TU LÓGICA DE RESETEO ORIGINAL ---
         st.session_state.logueado = False
         st.session_state.usuario_actual = None
-        st.session_state.pagina = "principal" # <--- RESETEAMOS LA PÁGINA AQUÍ
+        st.session_state.pagina = "principal"
         st.session_state.splash_completado = True
         st.session_state.motivo_splash = "inicio"
         st.rerun()
@@ -891,6 +952,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
