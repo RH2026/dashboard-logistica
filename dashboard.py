@@ -176,9 +176,10 @@ else:
         # Usamos la línea compacta en lugar de st.divider() o st.markdown("---")
         st.markdown("<hr>", unsafe_allow_html=True)
         
-        if st.button("Cerrar Sesión", use_container_width=True):
-            st.session_state.splash_visto = False
-            st.session_state.motivo_splash = "logout"
+        if st.sidebar.button("Cerrar Sesión"):
+            st.session_state.logueado = False         # Quitamos el acceso
+            st.session_state.splash_completado = False # Activamos el splash
+            st.session_state.motivo_splash = "logout"  # Definimos que es de salida
             st.rerun()
     
         st.markdown("<hr>", unsafe_allow_html=True)
@@ -794,6 +795,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
