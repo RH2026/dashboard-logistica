@@ -35,6 +35,8 @@ if "pagina" not in st.session_state:
     st.session_state.pagina = "principal"  # Controla qué sección del dashboard se ve
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
+if "tabla_expandida" not in st.session_state:
+    st.session_state.tabla_expandida = False
 
 # Colores
 color_fondo_nativo = "#0e1117" 
@@ -455,6 +457,44 @@ else:
             st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Retrasados</div>", unsafe_allow_html=True)
             st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
         
+        # 1. BOTONES DE CONTROL (Justo arriba de la tabla)
+        col_btn1, col_btn2, _ = st.columns([1, 1, 4])
+        
+        with col_btn1:
+            if st.button("↔️ Pantalla Completa"):
+                st.session_state.tabla_expandida = True
+                st.rerun()
+        
+        with col_btn2:
+            if st.button("⬅️ Vista Normal"):
+                st.session_state.tabla_expandida = False
+                st.rerun()
+        
+        # 2. LÓGICA DE MÁRGENES DINÁMICOS
+        if st.session_state.tabla_expandida:
+            # Margen mínimo para que cubra todo el monitor de 24"
+            st.markdown("""
+                <style>
+                    .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
+                </style>
+            """, unsafe_allow_html=True)
+            h_dinamica = 850
+        else:
+            # Margen elegante de 3rem que te gustó
+            st.markdown("""
+                <style>
+                    .block-container { padding-left: 3rem !important; padding-right: 3rem !important; }
+                </style>
+            """, unsafe_allow_html=True)
+            h_dinamica = 450
+        
+        # 3. LA TABLA (Usa los valores configurados arriba)
+        st.dataframe(
+            df, 
+            use_container_width=True, 
+            height=h_dinamica
+        )
+        
         # --------------------------------------------------
         # TABLA DE ENVÍOS – DISEÑO PERSONALIZADO
         # --------------------------------------------------
@@ -821,6 +861,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
