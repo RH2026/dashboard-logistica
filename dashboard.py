@@ -34,27 +34,68 @@ color_blanco = "#FFFFFF"
 color_verde = "#00FF00"
 color_borde_gris = "#333333"
 
-# --- 3. ESTILOS CSS UNIFICADOS ---
+# --- 3. ESTILOS CSS UNIFICADOS (CORREGIDO Y SELLADO) ---
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
     .stApp {{ background-color: {color_fondo_nativo} !important; }}
     
-    /* Caja 3D Logística */
-    .scene {{ width: 100%; height: 120px; perspective: 600px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }}
-    .cube {{ width: 60px; height: 50px; position: relative; transform-style: preserve-3d; transform: rotateX(-20deg) rotateY(45deg); animation: move-pkg 6s infinite ease-in-out; }}
-    .cube-face {{ position: absolute; width: 60px; height: 50px; background: #d2a679; border: 1px solid #b08d5c; box-shadow: inset 0 0 15px rgba(0,0,0,0.1); }}
-    .cube-face::after {{ content: ''; position: absolute; top: 40%; width: 100%; height: 8px; background: rgba(0,0,0,0.08); }}
-    
-    .front  {{ transform: rotateY(0deg) translateZ(30px); }}
+    /* Contenedor principal */
+    .scene {{ 
+        width: 100%; 
+        height: 150px; 
+        perspective: 600px; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        margin-bottom: 20px; 
+    }}
+
+    /* El cuerpo de la caja */
+    .cube {{ 
+        width: 60px; 
+        height: 60px; 
+        position: relative; 
+        transform-style: preserve-3d; 
+        transform: rotateX(-20deg) rotateY(45deg); 
+        animation: move-pkg 6s infinite ease-in-out; 
+    }}
+
+    /* Estilo común de todas las caras */
+    .cube-face {{ 
+        position: absolute; 
+        width: 60px; 
+        height: 60px; 
+        background: #d2a679; /* Color cartón */
+        border: 1px solid #b08d5c; 
+        box-shadow: inset 0 0 15px rgba(0,0,0,0.1); 
+    }}
+
+    /* Cinta de embalaje sutil */
+    .cube-face::after {{ 
+        content: ''; 
+        position: absolute; 
+        top: 45%; 
+        width: 100%; 
+        height: 8px; 
+        background: rgba(0,0,0,0.1); 
+    }}
+
+    /* POSICIONAMIENTO MATEMÁTICO PARA SELLAR LA CAJA */
+    /* Todas se mueven 30px porque la caja mide 60px de ancho (la mitad) */
+    .front  {{ transform: rotateY(  0deg) translateZ(30px); }}
     .back   {{ transform: rotateY(180deg) translateZ(30px); }}
-    .right  {{ transform: rotateY(90deg) translateZ(30px); }}
+    .right  {{ transform: rotateY( 90deg) translateZ(30px); }}
     .left   {{ transform: rotateY(-90deg) translateZ(30px); }}
-    .top    {{ width: 60px; height: 60px; transform: rotateX(90deg) translateZ(25px); background: #e3bc94; }}
-    .bottom {{ width: 60px; height: 60px; transform: rotateX(-90deg) translateZ(25px); }}
-    
-    @keyframes move-pkg {{ 0%, 100% {{ transform: translateY(0px) rotateX(-20deg) rotateY(45deg); }} 50% {{ transform: translateY(-15px) rotateX(-25deg) rotateY(225deg); }} }}
-    
+    .top    {{ transform: rotateX( 90deg) translateZ(30px); background: #e3bc94; }} /* Tapa */
+    .bottom {{ transform: rotateX(-90deg) translateZ(30px); background: #b08d5c; }} /* Suelo */
+
+    /* Animación de flotado y rotación */
+    @keyframes move-pkg {{ 
+        0%, 100% {{ transform: translateY(0px) rotateX(-20deg) rotateY(45deg); }} 
+        50% {{ transform: translateY(-20px) rotateX(-20deg) rotateY(225deg); }} 
+    }}
+
     /* Estilos de Formulario y Texto */
     .stForm {{ background-color: {color_fondo_nativo} !important; border: 1.5px solid {color_borde_gris} !important; border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
     .login-header {{ text-align: center; color: white; font-family: sans-serif; font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 2px; }}
@@ -798,6 +839,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
