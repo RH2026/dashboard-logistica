@@ -152,15 +152,15 @@ else:
     # BOTÓN DE CIERRE DE SESIÓN EN LA BARRA LATERAL
     # --------------------------------------------------
     # BARRA LATERAL
-    else:
-        st.sidebar.markdown(f"### 👤 {st.session_state.usuario_actual}")
-        if st.sidebar.button("Cerrar Sesión"):
-            st.session_state.splash_completado = False
-            st.session_state.motivo_splash = "logout"
-            st.rerun()
-        
-        st.title("📦 Sistema de Logística")
-        st.write("Has ingresado correctamente.")
+else:
+    st.sidebar.markdown(f"### 👤 {st.session_state.usuario_actual}")
+    if st.sidebar.button("Cerrar Sesión"):
+        st.session_state.splash_completado = False
+        st.session_state.motivo_splash = "logout"
+        st.rerun()
+    
+    st.title("📦 Sistema de Logística")
+    st.write("Has ingresado correctamente.")
     
     
     # --------------------------------------------------
@@ -802,6 +802,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
