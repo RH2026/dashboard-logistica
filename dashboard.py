@@ -14,8 +14,8 @@ st.markdown("""
         .block-container {
             padding-top: 0rem !important;
             padding-bottom: 0rem !important;
-            padding-left: 0.5rem !important;
-            padding-right: 0.5rem !important;
+            padding-left: 3rem !important;
+            padding-right: 3rem !important;
         }
         header {visibility: hidden;}
         footer {visibility: hidden;}
@@ -821,6 +821,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
