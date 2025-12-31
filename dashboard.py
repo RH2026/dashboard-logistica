@@ -32,25 +32,25 @@ if "ultimo_movimiento" not in st.session_state:
 # 1. CONFIGURACIÓN DE PÁGINA (DEBE SER LO PRIMERO)
 st.set_page_config(page_title="Control de Envíos – Enero 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --------------------------------------------------
-# LOGIN V9 – MUERTE ABSOLUTA DEL BORDE FANTASMA
-# --------------------------------------------------
-import streamlit as st
-import time
-
+# -------------------------------
+# ESTADO
+# -------------------------------
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
 
 if not st.session_state.logueado:
 
+    # 🔥 ABSORBER EL BLOQUE FANTASMA
+    ghost = st.empty()
+    ghost.container()  # <- ocupa el primer nodo que Streamlit crea
+
+    # -------------------------------
+    # CSS LIMPIO
+    # -------------------------------
     st.markdown("""
     <style>
-
-    /* ============================================
-       1. RESET TOTAL
-    ============================================ */
     html, body, .stApp {
-        background: #000000 !important;
+        background-color: #000000 !important;
     }
 
     header, footer,
@@ -59,45 +59,19 @@ if not st.session_state.logueado:
         display: none !important;
     }
 
-    /* ============================================
-       2. ☠️ CONTENEDOR FANTASMA REAL
-       ESTE ES EL QUE VES EN TU IMAGEN
-    ============================================ */
-
-    section.main > div:first-child {
-        display: none !important;
-    }
-
-    /* ============================================
-       3. EVITAR QUE STREAMLIT REGENERE BORDES
-    ============================================ */
-    div[data-testid="stVerticalBlockBorderWrapper"],
-    div[data-testid="stVerticalBlock"],
-    .element-container {
-        border: none !important;
-        box-shadow: none !important;
-        background: transparent !important;
-    }
-
-    /* ============================================
-       4. LOGIN BOX
-    ============================================ */
     .login-box {
-        background: #000000;
+        background: #000;
         padding: 32px;
         border-radius: 14px;
         border: 1px solid #1a1a1a;
         max-width: 360px;
-        margin: 16vh auto 0 auto;
+        margin: 15vh auto 0 auto;
     }
 
-    /* ============================================
-       5. INPUTS + OJITO
-    ============================================ */
     div[data-baseweb="input"] {
-        background: #111111 !important;
-        border: 1px solid #333333 !important;
-        border-radius: 8px !important;
+        background: #111 !important;
+        border: 1px solid #333 !important;
+        border-radius: 8px;
     }
 
     input {
@@ -114,9 +88,6 @@ if not st.session_state.logueado:
         box-shadow: none !important;
     }
 
-    /* ============================================
-       6. BOTÓN
-    ============================================ */
     .stButton > button {
         background: #00FFAA !important;
         color: #000 !important;
@@ -130,26 +101,24 @@ if not st.session_state.logueado:
     label {
         color: #888 !important;
     }
-
     </style>
     """, unsafe_allow_html=True)
 
-    # ============================================
-    # CONTENIDO REAL
-    # ============================================
+    # -------------------------------
+    # LOGIN
+    # -------------------------------
     _, center, _ = st.columns([1, 1.4, 1])
 
     with center:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-
         st.markdown(
             '<h2 style="text-align:center;color:#00FFAA;font-size:20px;">🔐 Acceso al Sistema</h2>',
             unsafe_allow_html=True
         )
 
-        with st.form("login_v9"):
-            usuario = st.text_input("Usuario", placeholder="Usuario")
-            clave = st.text_input("Contraseña", type="password", placeholder="Contraseña")
+        with st.form("login_v10"):
+            usuario = st.text_input("Usuario")
+            clave = st.text_input("Contraseña", type="password")
             entrar = st.form_submit_button("INGRESAR", use_container_width=True)
 
         if entrar:
@@ -956,6 +925,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
