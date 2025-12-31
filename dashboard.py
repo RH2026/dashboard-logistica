@@ -175,7 +175,7 @@ else:
         # --------------------------------------------------
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
-        st.markdown("<style>@keyframes floatSpin{0%{transform:translateY(0) rotateY(0deg);}25%{transform:translateY(-6px) rotateY(90deg);}50%{transform:translateY(0) rotateY(180deg);}75%{transform:translateY(6px) rotateY(270deg);}100%{transform:translateY(0) rotateY(360deg);}}</style><h2 style='text-align:center;display:flex;align-items:center;justify-content:center;gap:14px;font-weight:600;color:#FFFFFF;'><svg style='animation:floatSpin 4.5s ease-in-out infinite;transform-origin:center;' width='38' height='38' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 7L12 2L21 7L12 12L3 7Z' stroke='#00FFAA' stroke-width='1.6' stroke-linejoin='round'/><path d='M3 7V17L12 22L21 17V7' stroke='#00FFAA' stroke-width='1.6' stroke-linejoin='round'/><path d=
+        st.markdown("<style>@keyframes floatSpin{0%{transform:translateY(0) rotateY(0deg);}25%{transform:translateY(-6px) rotateY(90deg);}50%{transform:translateY(0) rotateY(180deg);}75%{transform:translateY(6px) rotateY(270deg);}100%{transform:translateY(0) rotateY(360deg);}}</style><h2 style='text-align:center;display:flex;align-items:center;justify-content:center;gap:14px;font-weight:600;color:#FFFFFF;'><svg style='animation:floatSpin 4.5s ease-in-out infinite;transform-origin:center;' width='38' height='38' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 7L12 2L21 7L12 12L3 7Z' stroke='#00FFAA' stroke-width='1.6' stroke-linejoin='round'/><path d='M3 7V17L12 22L21 17V7' stroke='#00FFAA' stroke-width='1.6' stroke-linejoin='round'/><path d='M12 12V22' stroke='#00FFAA' stroke-width='1.6'/></svg><span>Control de Embarques</span></h2>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;'>Logística – Enero 2026</p>", unsafe_allow_html=True)
        
         st.divider()
@@ -807,6 +807,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
