@@ -47,85 +47,88 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# 3. LÓGICA DE LOGIN (VERSIÓN FINAL: CERO CAJAS, TODO VISIBLE)
+# 3. LÓGICA DE LOGIN (VERSIÓN FINAL: POSICIONAMIENTO ABSOLUTO)
 # --------------------------------------------------
 if not st.session_state.logueado:
     img_base64 = get_base64_image("1.jpg")
     
     st.markdown(f"""
         <style>
-        /* 1. ELIMINAR EL HEADER Y EL PADDING MUERTO */
-        header[data-testid="stHeader"] {{
+        /* 1. ELIMINAR TODO EL CONTORNO DE STREAMLIT */
+        header[data-testid="stHeader"], 
+        [data-testid="stStatusWidget"],
+        footer {{
             display: none !important;
         }}
         
         .main .block-container {{
-            padding-top: 1rem !important;
-            padding-bottom: 0rem !important;
+            padding: 0 !important;
+            max-width: 100% !important;
         }}
 
-        /* 2. OCULTAR SOLO LA CAJA DE ERROR/NOTIFICACIÓN (SIN BORRAR INPUTS) */
-        /* Apuntamos específicamente al contenedor de alertas y excepciones */
+        /* 2. OCULTAR ERRORES SIN DEJAR ESPACIO */
         div[data-testid="stNotification"], 
         div[data-testid="stException"],
         .stAlert {{
             display: none !important;
-            height: 0px !important;
-            margin: 0px !important;
-            padding: 0px !important;
+            position: absolute !important;
         }}
 
-        /* 3. FONDO Y CAJA DE LOGIN */
+        /* 3. FONDO DE PANTALLA */
         .stApp {{
             background-image: url("data:image/jpg;base64,{img_base64}");
             background-size: cover;
             background-position: center;
-            background-attachment: fixed;
         }}
         
+        /* 4. LA CAJA DE LOGIN: AHORA CON POSICIÓN FIJA PARA IGNORAR LA CAJITA DE ARRIBA */
         .login-box {{
-            background-color: rgba(15, 23, 42, 0.9);
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(15, 23, 42, 0.95);
             padding: 40px;
             border-radius: 20px;
-            border: 1px solid rgba(0, 255, 170, 0.3);
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            margin-top: 10vh;
+            border: 1px solid #00FFAA;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            width: 400px;
+            z-index: 999999;
         }}
 
-        /* Forzar que las etiquetas sean blancas */
-        label {{
+        /* Aseguramos que los textos internos se vean */
+        .login-box h2, .login-box label {{
             color: white !important;
+            text-align: center;
         }}
         </style>
     """, unsafe_allow_html=True)
 
-    _, center_col, _ = st.columns([1, 2, 1])
+    # Creamos un contenedor vacío para la lógica de fondo
+    st.markdown('<div class="login-box">', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:#00FFAA;">🔐 ACCESO AL SISTEMA</h2>', unsafe_allow_html=True)
     
-    with center_col:
-        st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<h2 style="text-align:center; color:#00FFAA; margin-bottom:20px;">🔐 ACCESO AL SISTEMA</h2>', unsafe_allow_html=True)
-        
-        # Formulario
-        with st.form(key="login_estable"):
-            u_input = st.text_input("Usuario", placeholder="Ingrese su usuario")
-            c_input = st.text_input("Contraseña", type="password", placeholder="Ingrese su contraseña")
-            submit = st.form_submit_button("INGRESAR AL DASHBOARD", use_container_width=True)
+    # Formulario con llave única
+    # Nota: No usamos columnas aquí para que el CSS 'fixed' controle todo
+    with st.form(key="login_final_boss"):
+        u_input = st.text_input("Usuario", placeholder="Tu usuario...")
+        c_input = st.text_input("Contraseña", type="password", placeholder="Tu contraseña...")
+        submit = st.form_submit_button("INGRESAR", use_container_width=True)
 
-        # Lógica fuera del formulario para el "clic único"
-        if submit:
-            # Obtención silenciosa de secretos
-            usuarios_dict = st.secrets.get("usuarios", {})
-            if u_input in usuarios_dict and usuarios_dict[u_input] == c_input:
-                st.session_state.logueado = True
-                st.session_state.usuario_actual = u_input
-                st.session_state.ultimo_movimiento = time.time()
-                st.session_state.splash_visto = False
-                st.session_state.motivo_splash = "inicio"
-                st.rerun()
-            else:
-                st.markdown('<p style="color:#ff4b4b; text-align:center; font-weight:bold; margin-top:15px;">⚠️ Credenciales Inválidas</p>', unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+    if submit:
+        # Validación silenciosa
+        usuarios_dict = st.secrets.get("usuarios", {})
+        if u_input in usuarios_dict and usuarios_dict[u_input] == c_input:
+            st.session_state.logueado = True
+            st.session_state.usuario_actual = u_input
+            st.session_state.ultimo_movimiento = time.time()
+            st.session_state.splash_visto = False
+            st.session_state.motivo_splash = "inicio"
+            st.rerun()
+        else:
+            st.markdown('<p style="color:#ff4b4b; text-align:center; margin-top:10px;">⚠️ Datos incorrectos</p>', unsafe_allow_html=True)
+            
+    st.markdown('</div>', unsafe_allow_html=True)
     
     st.stop()
 # --------------------------------------------------
@@ -916,6 +919,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
