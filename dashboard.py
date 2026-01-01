@@ -8,27 +8,27 @@ import textwrap
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
 
-# --- 2. LÓGICA DE MÁRGENES Y ALTURA (Pegados a la tabla) ---
-# Configuramos el ancho total (1rem) para ambas vistas
+# --- 2. LÓGICA DE MÁRGENES Y ALTURA ---
+# Configuramos el ancho total (1rem) y eliminamos espacios vacíos
 st.markdown("""
     <style>
         .block-container {
             padding-top: 0.5rem !important;
             padding-bottom: 0rem !important;
-            padding-left: 1rem !important;   /* Ancho total a la izquierda */
-            padding-right: 1rem !important;  /* Ancho total a la derecha */
+            padding-left: 1rem !important;   /* Siempre ancho total */
+            padding-right: 1rem !important;  /* Siempre ancho total */
         }
         header {visibility: hidden;}
         footer {visibility: hidden;}
         
-        /* Esto elimina el espacio vacío entre los botones y la tabla */
+        /* Elimina el espacio entre botones y tabla */
         div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
             margin-bottom: -1.5rem !important;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# Definimos la altura dinámica según el estado
+# Altura dinámica según el botón presionado
 if st.session_state.tabla_expandida:
     h_dinamica = 850
 else:
@@ -885,6 +885,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
