@@ -8,6 +8,21 @@ import textwrap
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
 
+# Pega el CSS aquí mismo para limpiar la pantalla de barras blancas
+st.markdown("""
+    <style>
+        .block-container {
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+            /* Cambia estos valores para ajustar el margen lateral */
+            padding-left: 3rem !important;   /* Aumenta este número para más margen izquierdo */
+            padding-right: 3rem !important;  /* Aumenta este número para más margen derecho */
+        }
+        header {visibility: hidden;}
+        footer {visibility: hidden;}
+    </style>
+""", unsafe_allow_html=True)
+
 # 2. ESTADOS DE SESIÓN
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
@@ -444,8 +459,47 @@ else:
         # --------------------------------------------------
         # TABLA DE ENVÍOS – DISEÑO PERSONALIZADO
         # --------------------------------------------------
-        st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Lista de envíos</div></div>""", unsafe_allow_html=True)
-    
+        # 1. Definimos 3 columnas: [Botones, Título al Centro, Espacio para equilibrar]
+        # El peso [2, 3, 2] asegura que el centro sea la parte más ancha
+        col_izq, col_centro, col_der = st.columns([2, 3, 2])
+        
+        with col_izq:
+            # Usamos una sub-columna interna para pegar los botones entre sí
+            btn_c1, btn_c2 = st.columns(2)
+            with btn_c1:
+                if st.button("↔️ Pantalla Completa", use_container_width=True):
+                    st.session_state.tabla_expandida = True
+                    st.rerun()
+            with btn_c2:
+                if st.button("⬅️ Vista Normal", use_container_width=True):
+                    st.session_state.tabla_expandida = False
+                    st.rerun()
+        
+        with col_centro:
+            # El título con margin:0 para que no se desplace hacia abajo
+            st.markdown("""
+                <div style="text-align:center;">
+                    <div style="color:white; font-size:26px; font-weight:700; margin:0; line-height:1.5;">
+                        Lista de envíos
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        with col_der:
+            # Columna vacía para que el título no se cargue a la derecha
+            st.write("")
+        
+        # --- 2. LÓGICA DE MÁRGENES (Igual que antes) ---
+        if st.session_state.tabla_expandida:
+            st.markdown("<style>.block-container { padding-left: 1rem !important; padding-right: 1rem !important; }</style>", unsafe_allow_html=True)
+            h_dinamica = 850
+        else:
+            st.markdown("<style>.block-container { padding-left: 3rem !important; padding-right: 3rem !important; }</style>", unsafe_allow_html=True)
+            h_dinamica = 450
+
+        #:::::::::::::::::::::::::::::::::::::::::::::::::::
+        #INICIA TABLA NORMAL
+        #:::::::::::::::::::::::::::::::::::::::::::::::::::
         hoy_t = pd.Timestamp.today().normalize()
         df_mostrar = df_filtrado.copy()
     
@@ -473,16 +527,16 @@ else:
             color = '#0E1117' if row.name % 2 == 0 else '#1A1E25'
             return [f'background-color: {color}; color: white;' for _ in row]
     
-        # Renderizado de la tabla con los estilos aplicados
+        # --- RENDERIZADO DE LA TABLA CON ESTILOS ---
         st.dataframe(
             df_mostrar.style.apply(zebra_filas, axis=1)
                             .applymap(colorear_retraso, subset=["DIAS_RETRASO"])
                             .set_table_styles([
-                {'selector': 'th', 'props': [('background-color', 'orange'), ('color', 'white'), ('font-weight','bold'), ('font-size','14px')]},
-                {'selector': 'td', 'props': [('padding', '12px')]}
-            ]),
+                                {'selector': 'th', 'props': [('background-color', 'orange'), ('color', 'white'), ('font-weight','bold'), ('font-size','14px')]},
+                                {'selector': 'td', 'props': [('padding', '12px')]}
+                            ]),
             use_container_width=True,
-            height=520
+            height=h_dinamica  # Usa la variable de los botones
         )
     
         # --------------------------------------------------
@@ -807,6 +861,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
