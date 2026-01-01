@@ -29,7 +29,7 @@ if "tabla_expandida" not in st.session_state:
 st.markdown("""
     <style>
         .block-container {
-            padding-top: 0.8rem !important;
+            padding-top: 1rem !important;
             padding-bottom: 1rem !important;
             padding-left: 1rem !important;   /* Siempre ancho total */
             padding-right: 1rem !important;  /* Siempre ancho total */
@@ -39,7 +39,7 @@ st.markdown("""
         
         /* Elimina el espacio entre botones y tabla */
         div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
-            margin-bottom: -2rem !important;
+            margin-bottom: -1rem !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -887,6 +887,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
