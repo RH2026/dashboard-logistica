@@ -337,7 +337,7 @@ else:
             value="",
             help="Ingresa un número de pedido para mostrar solo esos registros"
         )
-    
+        st.divider()
         df_busqueda = pd.DataFrame() # Blindaje inicial
     
         if pedido_buscar.strip() != "":
@@ -352,9 +352,7 @@ else:
                 st.warning("No se encontró ningún pedido con ese número.")
             else:
                 hoy = pd.Timestamp.today().normalize()
-                
-                st.divider()
-                
+                                             
                 # Cálculos de tiempo para las tarjetas
                 df_busqueda["DIAS_TRANSCURRIDOS"] = (
                     (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["FECHA DE ENVÍO"]).dt.days
@@ -906,6 +904,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
