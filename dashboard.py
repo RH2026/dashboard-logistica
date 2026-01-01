@@ -456,30 +456,30 @@ else:
         with c4:
             st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Retrasados</div>", unsafe_allow_html=True)
             st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
-                     
               
-        # --------------------------------------------------
-        # 1. CÁLCULOS LÓGICOS (Importante hacerlo antes de formatear fechas)
-        # --------------------------------------------------
+            
+       
+        # 1. PREPARACIÓN DE DATOS Y CÁLCULOS (Lógica de Negocio)
+        # -------------------------------------------------------------------------
         hoy_t = pd.Timestamp.today().normalize()
-        df_mostrar = df_filtrado.copy()
+        df_calculos = df_filtrado.copy()
         
-        # Asegurar que las columnas sean de tipo fecha para poder restar
-        df_mostrar["FECHA DE ENVÍO"] = pd.to_datetime(df_mostrar["FECHA DE ENVÍO"])
-        df_mostrar["PROMESA DE ENTREGA"] = pd.to_datetime(df_mostrar["PROMESA DE ENTREGA"])
-        df_mostrar["FECHA DE ENTREGA REAL"] = pd.to_datetime(df_mostrar["FECHA DE ENTREGA REAL"])
+        # Asegurar que las columnas sean tipos de fecha reales para cálculos
+        df_calculos["FECHA DE ENVÍO"] = pd.to_datetime(df_calculos["FECHA DE ENVÍO"], errors='coerce')
+        df_calculos["PROMESA DE ENTREGA"] = pd.to_datetime(df_calculos["PROMESA DE ENTREGA"], errors='coerce')
+        df_calculos["FECHA DE ENTREGA REAL"] = pd.to_datetime(df_calculos["FECHA DE ENTREGA REAL"], errors='coerce')
         
-        # Cálculo de días y retrasos
-        df_mostrar["DIAS_TRANSCURRIDOS"] = (
-            (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_mostrar["FECHA DE ENVÍO"]).dt.days
+        # Cálculo de Días Transcurridos y Retraso
+        df_calculos["DIAS_TRANSCURRIDOS"] = (
+            (df_calculos["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_calculos["FECHA DE ENVÍO"]).dt.days
         )
-        df_mostrar["DIAS_RETRASO"] = (
-            (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_mostrar["PROMESA DE ENTREGA"]).dt.days
+        df_calculos["DIAS_RETRASO"] = (
+            (df_calculos["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_calculos["PROMESA DE ENTREGA"]).dt.days
         )
-        df_mostrar["DIAS_RETRASO"] = df_mostrar["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
+        df_calculos["DIAS_RETRASO"] = df_calculos["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
         
-        # RE-CALCULAR ESTATUS_CALCULADO (Para asegurar que los gráficos lo lean bien)
-        def definir_estatus(row):
+        # FUNCIÓN CRÍTICA: Definir Estatus para que los gráficos funcionen
+        def definir_estatus_logico(row):
             if pd.notna(row["FECHA DE ENTREGA REAL"]):
                 return "ENTREGADO"
             elif row["DIAS_RETRASO"] > 0:
@@ -487,18 +487,16 @@ else:
             else:
                 return "EN TRANSITO"
         
-        df_mostrar["ESTATUS_CALCULADO"] = df_mostrar.apply(definir_estatus, axis=1)
+        df_calculos["ESTATUS_CALCULADO"] = df_calculos.apply(definir_estatus_logico, axis=1)
         
-        # Guardamos una copia para los gráficos antes de convertir fechas a texto
-        df_para_graficos = df_mostrar.copy()
-        
-        # Ahora sí, formateamos fechas solo para mostrar en la tabla (se vuelven texto)
+        # Crear versión para mostrar en tabla (convertir fechas a texto DD/MM/YYYY)
+        df_tabla_visual = df_calculos.copy()
         for col in ["FECHA DE ENTREGA REAL", "FECHA DE ENVÍO", "PROMESA DE ENTREGA"]:
-            df_mostrar[col] = df_mostrar[col].dt.strftime('%d/%m/%Y').replace('NaT', '').fillna('')
+            df_tabla_visual[col] = df_tabla_visual[col].dt.strftime('%d/%m/%Y').replace('NaT', '')
         
-        # --------------------------------------------------
-        # 2. DISEÑO SUPERIOR (BOTONES Y TÍTULO)
-        # --------------------------------------------------
+        # -------------------------------------------------------------------------
+        # 2. CABECERA: BOTONES Y TÍTULO ALINEADOS
+        # -------------------------------------------------------------------------
         col_izq, col_centro, col_der = st.columns([2, 3, 2])
         
         with col_izq:
@@ -522,16 +520,16 @@ else:
             """, unsafe_allow_html=True)
         
         # Lógica de márgenes dinámicos
-        if st.session_state.tabla_expandida:
+        if st.session_state.get('tabla_expandida', False):
             st.markdown("<style>.block-container { padding-left: 1rem !important; padding-right: 1rem !important; }</style>", unsafe_allow_html=True)
-            h_dinamica = 850
+            h_dinamica = 800
         else:
             st.markdown("<style>.block-container { padding-left: 3rem !important; padding-right: 3rem !important; }</style>", unsafe_allow_html=True)
-            h_dinamica = 450
+            h_dinamica = 400
         
-        # --------------------------------------------------
-        # 3. RENDERIZADO DE TABLA
-        # --------------------------------------------------
+        # -------------------------------------------------------------------------
+        # 3. RENDERIZADO DE LA TABLA
+        # -------------------------------------------------------------------------
         def colorear_retraso(val):
             return 'background-color: #ff4d4d; color: black; font-weight: bold;' if val > 0 else ''
         
@@ -540,7 +538,7 @@ else:
             return [f'background-color: {color}; color: white;' for _ in row]
         
         st.dataframe(
-            df_mostrar.style.apply(zebra_filas, axis=1)
+            df_tabla_visual.style.apply(zebra_filas, axis=1)
                             .applymap(colorear_retraso, subset=["DIAS_RETRASO"])
                             .set_table_styles([
                                 {'selector': 'th', 'props': [('background-color', 'orange'), ('color', 'white'), ('font-weight','bold')]}
@@ -548,59 +546,47 @@ else:
             use_container_width=True,
             height=h_dinamica
         )
-                   
+        
         # -------------------------------------------------------------------------
-        # 2. ANÁLISIS POR PAQUETERÍA (LOS DOS GRÁFICOS JUNTOS)
+        # 4. ANÁLISIS POR PAQUETERÍA (GRÁFICOS RESTAURADOS)
         # -------------------------------------------------------------------------
         st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:20px; font-weight:700; margin:30px 0 10px 0;">Análisis por Paquetería</div></div>""", unsafe_allow_html=True)
         
-        # Creamos las dos columnas para los gráficos
         g1, g2 = st.columns(2)
         
-        # --- GRÁFICO 1: EN TRÁNSITO / EN TIEMPO (EL QUE SE TE BORRÓ) ---
-        # Filtramos por el estatus exacto de tu tabla
-        df_t = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
+        # GRÁFICO 1: EN TRÁNSITO / EN TIEMPO
+        df_t = df_calculos[df_calculos["ESTATUS_CALCULADO"] == "EN TRANSITO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
         
-        if not df_t.empty:
-            with g1:
-                st.markdown("<h5 style='text-align:center; color:#FFC107;'>En tránsito / En tiempo</h5>", unsafe_allow_html=True)
-                
-                base_t = alt.Chart(df_t).encode(
+        with g1:
+            st.markdown("<h5 style='text-align:center; color:#FFC107;'>En tránsito / En tiempo</h5>", unsafe_allow_html=True)
+            if not df_t.empty:
+                chart_t = alt.Chart(df_t).mark_bar(color="#FFC107", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
                     x=alt.X("FLETERA:N", title="Paquetería", sort='-y'),
                     y=alt.Y("CANTIDAD:Q", title="Pedidos"),
                     tooltip=["FLETERA", "CANTIDAD"]
-                )
+                ).properties(height=300)
                 
-                # Barras Amarillas
-                chart_t = base_t.mark_bar(color="#FFC107", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).properties(height=300)
-                # Etiquetas
-                text_t = base_t.mark_text(align='center', baseline='bottom', dy=-10, fontSize=14, fontWeight='bold', color='white').encode(text=alt.Text("CANTIDAD:Q"))
-                
-                st.altair_chart((chart_t + text_t), use_container_width=True)
-        else:
-            g1.info("No hay datos 'En Tránsito' para mostrar.")
+                text_t = chart_t.mark_text(align='center', baseline='bottom', dy=-10, color='white').encode(text="CANTIDAD:Q")
+                st.altair_chart(chart_t + text_t, use_container_width=True)
+            else:
+                st.info("No hay pedidos en tránsito.")
         
-        # --- GRÁFICO 2: SIN ENTREGAR CON RETRASO ---
-        df_r = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
+        # GRÁFICO 2: RETRASADOS
+        df_r = df_calculos[df_calculos["ESTATUS_CALCULADO"] == "RETRASADO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
         
-        if not df_r.empty:
-            with g2:
-                st.markdown("<h5 style='text-align:center; color:#F44336;'>Sin entregar con retraso</h5>", unsafe_allow_html=True)
-                
-                base_r = alt.Chart(df_r).encode(
+        with g2:
+            st.markdown("<h5 style='text-align:center; color:#F44336;'>Sin entregar con retraso</h5>", unsafe_allow_html=True)
+            if not df_r.empty:
+                chart_r = alt.Chart(df_r).mark_bar(color="#F44336", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
                     x=alt.X("FLETERA:N", title="Paquetería", sort='-y'),
                     y=alt.Y("CANTIDAD:Q", title="Pedidos"),
                     tooltip=["FLETERA", "CANTIDAD"]
-                )
+                ).properties(height=300)
                 
-                # Barras Rojas
-                chart_r = base_r.mark_bar(color="#F44336", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).properties(height=300)
-                # Etiquetas
-                text_r = base_r.mark_text(align='center', baseline='bottom', dy=-10, fontSize=14, fontWeight='bold', color='white').encode(text=alt.Text("CANTIDAD:Q"))
-                
-                st.altair_chart((chart_r + text_r), use_container_width=True)
-        else:
-            g2.info("No hay datos 'Retrasados' para mostrar.")    
+                text_r = chart_r.mark_text(align='center', baseline='bottom', dy=-10, color='white').encode(text="CANTIDAD:Q")
+                st.altair_chart(chart_r + text_r, use_container_width=True)
+            else:
+                st.info("No hay pedidos retrasados.")   
     
         # --------------------------------------------------
         # GRÁFICO: CONTEO DE PEDIDOS ENTREGADOS CON RETRASO (COLOR ROJO)
@@ -875,6 +861,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
