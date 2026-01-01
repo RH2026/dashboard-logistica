@@ -31,15 +31,15 @@ st.markdown("""
         .block-container {
             padding-top: 2rem !important;
             padding-bottom: 2rem !important;
-            padding-left: 2rem !important;   /* Siempre ancho total */
-            padding-right: 2rem !important;  /* Siempre ancho total */
+            padding-left: 1rem !important;   /* Siempre ancho total */
+            padding-right: 1rem !important;  /* Siempre ancho total */
         }
         header {visibility: hidden;}
         footer {visibility: hidden;}
         
         /* Elimina el espacio entre botones y tabla */
         div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
-            margin-bottom: -2rem !important;
+            margin-bottom: 1rem !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -887,6 +887,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
