@@ -29,17 +29,17 @@ if "tabla_expandida" not in st.session_state:
 st.markdown("""
     <style>
         .block-container {
-            padding-top: 1rem !important;
+            padding-top: 1.5rem !important;
             padding-bottom: 1rem !important;
-            padding-left: 1rem !important;   /* Siempre ancho total */
-            padding-right: 1rem !important;  /* Siempre ancho total */
+            padding-left: 1.5rem !important;   /* Siempre ancho total */
+            padding-right: 1.5rem !important;  /* Siempre ancho total */
         }
         header {visibility: hidden;}
         footer {visibility: hidden;}
         
         /* Elimina el espacio entre botones y tabla */
         div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
-            margin-bottom: -2.5rem !important;
+            margin-bottom: -0.5rem !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -887,6 +887,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
