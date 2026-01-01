@@ -492,12 +492,23 @@ else:
             st.write("")
         
         # --- 2. LÓGICA DE MÁRGENES (Igual que antes) ---
+        # --- AJUSTE DE ANCHO CONSTANTE Y ALTURA DINÁMICA ---
         if st.session_state.tabla_expandida:
-            st.markdown("<style>.block-container { padding-left: 1rem !important; padding-right: 1rem !important; }</style>", unsafe_allow_html=True)
-            h_dinamica = 850
+            # VISTA COMPLETA: Ancho total y mucha altura
+            st.markdown("""
+                <style>
+                    .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
+                </style>
+            """, unsafe_allow_html=True)
+            h_dinamica = 850  # Cubre casi toda la pantalla hacia abajo
         else:
-            st.markdown("<style>.block-container { padding-left: 3rem !important; padding-right: 3rem !important; }</style>", unsafe_allow_html=True)
-            h_dinamica = 450
+            # VISTA NORMAL: Mismo ancho total pero altura pequeña
+            st.markdown("""
+                <style>
+                    .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
+                </style>
+            """, unsafe_allow_html=True)
+            h_dinamica = 400  # Altura reducida para ver los gráficos abajo
 
         #:::::::::::::::::::::::::::::::::::::::::::::::::::
         #INICIA TABLA NORMAL
@@ -863,6 +874,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
