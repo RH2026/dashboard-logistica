@@ -539,12 +539,59 @@ else:
             height=h_dinamica
             
         )
-    
+                   
         # -------------------------------------------------------------------------
         # 2. ANÁLISIS POR PAQUETERÍA (LOS DOS GRÁFICOS JUNTOS)
         # -------------------------------------------------------------------------
+        st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:20px; font-weight:700; margin:30px 0 10px 0;">Análisis por Paquetería</div></div>""", unsafe_allow_html=True)
         
-            
+        # Creamos las dos columnas para los gráficos
+        g1, g2 = st.columns(2)
+        
+        # --- GRÁFICO 1: EN TRÁNSITO / EN TIEMPO (EL QUE SE TE BORRÓ) ---
+        # Filtramos por el estatus exacto de tu tabla
+        df_t = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
+        
+        if not df_t.empty:
+            with g1:
+                st.markdown("<h5 style='text-align:center; color:#FFC107;'>En tránsito / En tiempo</h5>", unsafe_allow_html=True)
+                
+                base_t = alt.Chart(df_t).encode(
+                    x=alt.X("FLETERA:N", title="Paquetería", sort='-y'),
+                    y=alt.Y("CANTIDAD:Q", title="Pedidos"),
+                    tooltip=["FLETERA", "CANTIDAD"]
+                )
+                
+                # Barras Amarillas
+                chart_t = base_t.mark_bar(color="#FFC107", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).properties(height=300)
+                # Etiquetas
+                text_t = base_t.mark_text(align='center', baseline='bottom', dy=-10, fontSize=14, fontWeight='bold', color='white').encode(text=alt.Text("CANTIDAD:Q"))
+                
+                st.altair_chart((chart_t + text_t), use_container_width=True)
+        else:
+            g1.info("No hay datos 'En Tránsito' para mostrar.")
+        
+        # --- GRÁFICO 2: SIN ENTREGAR CON RETRASO ---
+        df_r = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
+        
+        if not df_r.empty:
+            with g2:
+                st.markdown("<h5 style='text-align:center; color:#F44336;'>Sin entregar con retraso</h5>", unsafe_allow_html=True)
+                
+                base_r = alt.Chart(df_r).encode(
+                    x=alt.X("FLETERA:N", title="Paquetería", sort='-y'),
+                    y=alt.Y("CANTIDAD:Q", title="Pedidos"),
+                    tooltip=["FLETERA", "CANTIDAD"]
+                )
+                
+                # Barras Rojas
+                chart_r = base_r.mark_bar(color="#F44336", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).properties(height=300)
+                # Etiquetas
+                text_r = base_r.mark_text(align='center', baseline='bottom', dy=-10, fontSize=14, fontWeight='bold', color='white').encode(text=alt.Text("CANTIDAD:Q"))
+                
+                st.altair_chart((chart_r + text_r), use_container_width=True)
+        else:
+            g2.info("No hay datos 'Retrasados' para mostrar.")    
     
         # --------------------------------------------------
         # GRÁFICO: CONTEO DE PEDIDOS ENTREGADOS CON RETRASO (COLOR ROJO)
@@ -819,6 +866,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
