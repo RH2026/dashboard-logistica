@@ -24,9 +24,10 @@ if "ultimo_movimiento" not in st.session_state:
 if "tabla_expandida" not in st.session_state:
     st.session_state.tabla_expandida = False
 
-# --- 2. LÓGICA DE MÁRGENES Y ALTURA ---
+# --- 2. LÓGICA DE MÁRGENES Y ALTURA (Flecha visible y espacios respetados) ---
 st.markdown("""
     <style>
+        /* Margen general del dashboard */
         .block-container {
             padding-top: 1.5rem !important;
             padding-bottom: 1rem !important;
@@ -34,35 +35,26 @@ st.markdown("""
             padding-right: 1.5rem !important;
         }
 
-        /* OCULTAR ELEMENTOS DEL HEADER SIN BORRAR LA FLECHA */
-        /* Oculta el fondo del header y los botones de la derecha (3 puntos) */
-        [data-testid="stHeader"] {
-            background-color: rgba(0,0,0,0);
-            color: transparent;
-        }
-        [data-testid="stHeader"] > div:first-child {
-            visibility: hidden;
-        }
-        /* MANTENER LA FLECHA VISIBLE */
-        [data-testid="stSidebarCollapse"] {
-            visibility: visible !important;
-            color: white !important;
-            background-color: transparent !important;
-        }
-
+        /* Ocultamos solo el footer (la marca de Streamlit) */
         footer {visibility: hidden;}
         
-        /* Elimina el espacio entre botones y tabla */
+        /* ESPACIO DE BOTONES: Mantiene la cercanía profesional a la tabla */
         div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
             margin-bottom: -0.5rem !important;
         }
         
-        /* Espaciado para las donitas (La línea que mencionamos antes) */
+        /* ESPACIO DE DONITAS: Mantiene el despegue de los indicadores */
         div[data-testid="stHorizontalBlock"]:has(div[style*="text-align:center"]) {
             margin-bottom: 2rem !important;
         }
     </style>
 """, unsafe_allow_html=True)
+
+# Altura dinámica según el botón presionado (Esto no cambia)
+if st.session_state.tabla_expandida:
+    h_dinamica = 850
+else:
+    h_dinamica = 400
 
 #---------------------------------------------------
 
@@ -909,6 +901,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
