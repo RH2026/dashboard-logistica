@@ -581,7 +581,8 @@ else:
             use_container_width=True,
             height=h_dinamica  # Usa la variable de los botones
         )
-    
+
+        st.divider()
         # --------------------------------------------------
         # GRÁFICOS DE BARRAS POR PAQUETERÍA (CON ETIQUETAS)
         # --------------------------------------------------
@@ -904,6 +905,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
