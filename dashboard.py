@@ -8,6 +8,22 @@ import textwrap
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
 
+# 2. ESTADOS DE SESIÓN
+if "logueado" not in st.session_state:
+    st.session_state.logueado = False
+if "splash_completado" not in st.session_state:
+    st.session_state.splash_completado = False
+if "motivo_splash" not in st.session_state:
+    st.session_state.motivo_splash = "inicio"
+if "usuario_actual" not in st.session_state:
+    st.session_state.usuario_actual = None
+if "pagina" not in st.session_state:
+    st.session_state.pagina = "principal"  # Controla qué sección del dashboard se ve
+if "ultimo_movimiento" not in st.session_state:
+    st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
+if "tabla_expandida" not in st.session_state:
+    st.session_state.tabla_expandida = False
+
 # --- 2. LÓGICA DE MÁRGENES Y ALTURA ---
 # Configuramos el ancho total (1rem) y eliminamos espacios vacíos
 st.markdown("""
@@ -34,21 +50,7 @@ if st.session_state.tabla_expandida:
 else:
     h_dinamica = 400
 
-# 2. ESTADOS DE SESIÓN
-if "logueado" not in st.session_state:
-    st.session_state.logueado = False
-if "splash_completado" not in st.session_state:
-    st.session_state.splash_completado = False
-if "motivo_splash" not in st.session_state:
-    st.session_state.motivo_splash = "inicio"
-if "usuario_actual" not in st.session_state:
-    st.session_state.usuario_actual = None
-if "pagina" not in st.session_state:
-    st.session_state.pagina = "principal"  # Controla qué sección del dashboard se ve
-if "ultimo_movimiento" not in st.session_state:
-    st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
-if "tabla_expandida" not in st.session_state:
-    st.session_state.tabla_expandida = False
+#---------------------------------------------------
 
 # Colores
 color_fondo_nativo = "#0e1117" 
@@ -885,6 +887,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
