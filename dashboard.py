@@ -470,6 +470,14 @@ else:
         with c4:
             st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Retrasados</div>", unsafe_allow_html=True)
             st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
+
+        st.markdown("""
+            <style>
+                div[data-testid="stHorizontalBlock"]:has(div[style*="text-align:center"]) {
+                    margin-bottom: 2rem !important;
+                }
+            </style>
+        """, unsafe_allow_html=True)
         
         # --------------------------------------------------
         # TABLA DE ENVÍOS – DISEÑO PERSONALIZADO
@@ -887,6 +895,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
