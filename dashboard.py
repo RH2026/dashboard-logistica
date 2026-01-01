@@ -54,7 +54,7 @@ st.markdown("""
 if st.session_state.tabla_expandida:
     h_dinamica = 850
 else:
-    h_dinamica = 400
+    h_dinamica = 200
 
 #---------------------------------------------------
 
@@ -496,11 +496,11 @@ else:
             # Usamos una sub-columna interna para pegar los botones entre sí
             btn_c1, btn_c2 = st.columns(2)
             with btn_c1:
-                if st.button("↔️ Pantalla Completa", use_container_width=True):
+                if st.button("BD Completa", use_container_width=True):
                     st.session_state.tabla_expandida = True
                     st.rerun()
             with btn_c2:
-                if st.button("⬅️ Vista Normal", use_container_width=True):
+                if st.button("BD Vista Normal", use_container_width=True):
                     st.session_state.tabla_expandida = False
                     st.rerun()
         
@@ -535,7 +535,7 @@ else:
                     .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
                 </style>
             """, unsafe_allow_html=True)
-            h_dinamica = 400  # Altura reducida para ver los gráficos abajo
+            h_dinamica = 300  # Altura reducida para ver los gráficos abajo
 
         #:::::::::::::::::::::::::::::::::::::::::::::::::::
         #INICIA TABLA NORMAL
@@ -901,6 +901,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
