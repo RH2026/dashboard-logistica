@@ -316,8 +316,7 @@ else:
         # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
         # --------------------------------------------------
 
-        st.divider()
-        
+              
         st.markdown("""
         <style>
         /* Animaciones con radio de borde corregido para que siempre sean círculos */
@@ -353,6 +352,8 @@ else:
                 st.warning("No se encontró ningún pedido con ese número.")
             else:
                 hoy = pd.Timestamp.today().normalize()
+                
+                st.divider()
                 
                 # Cálculos de tiempo para las tarjetas
                 df_busqueda["DIAS_TRANSCURRIDOS"] = (
@@ -905,6 +906,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
