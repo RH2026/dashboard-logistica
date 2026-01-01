@@ -8,20 +8,31 @@ import textwrap
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
 
-# Pega el CSS aquí mismo para limpiar la pantalla de barras blancas
+# --- 2. LÓGICA DE MÁRGENES Y ALTURA (Pegados a la tabla) ---
+# Configuramos el ancho total (1rem) para ambas vistas
 st.markdown("""
     <style>
         .block-container {
-            padding-top: 0rem !important;
+            padding-top: 0.5rem !important;
             padding-bottom: 0rem !important;
-            /* Cambia estos valores para ajustar el margen lateral */
-            padding-left: 3rem !important;   /* Aumenta este número para más margen izquierdo */
-            padding-right: 3rem !important;  /* Aumenta este número para más margen derecho */
+            padding-left: 1rem !important;   /* Ancho total a la izquierda */
+            padding-right: 1rem !important;  /* Ancho total a la derecha */
         }
         header {visibility: hidden;}
         footer {visibility: hidden;}
+        
+        /* Esto elimina el espacio vacío entre los botones y la tabla */
+        div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
+            margin-bottom: -1.5rem !important;
+        }
     </style>
 """, unsafe_allow_html=True)
+
+# Definimos la altura dinámica según el estado
+if st.session_state.tabla_expandida:
+    h_dinamica = 850
+else:
+    h_dinamica = 400
 
 # 2. ESTADOS DE SESIÓN
 if "logueado" not in st.session_state:
@@ -874,6 +885,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
