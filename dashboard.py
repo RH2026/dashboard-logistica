@@ -138,7 +138,7 @@ if not st.session_state.logueado:
 # CASO B: SPLASH SCREEN
 elif not st.session_state.splash_completado:
     with placeholder.container():
-        t_splash = "Cerrando sistema..." if st.session_state.motivo_splash == "logout" else f"Bienvenid@ {st.session_state.usuario_actual}..."
+        t_splash = "Cerrando sistema..." if st.session_state.motivo_splash == "logout" else f"Hola {st.session_state.usuario_actual}..."
         c_caja = "#FF4B4B" if st.session_state.motivo_splash == "logout" else "#d2a679"
         
         st.markdown(f"""
@@ -906,6 +906,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
