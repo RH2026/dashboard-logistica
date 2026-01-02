@@ -900,79 +900,59 @@ else:
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
     
     # ------------------------------------------------------------------
-    # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL ACTUALIZADA)
+    # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL - CÁLCULOS EN MEMORIA)
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "KPIs":
         st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📊 Panel de Control Gerencial</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center; color:gray;'>Análisis de Riesgos, Costos y Pendientes</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:gray;'>Análisis de Riesgos y Costos Unitarios</p>", unsafe_allow_html=True)
         st.divider()
 
-        # --- LÓGICA DE DATOS PARA ESTA PÁGINA ---
+        # --- LÓGICA DE DATOS (Solo en memoria RAM) ---
         hoy = pd.Timestamp.today().normalize()
-        df_entregados = df[df["FECHA DE ENTREGA REAL"].notna()].copy()
-        df_retrasados = df[df["ESTATUS_CALCULADO"] == "RETRASADO"].copy()
-        # Pendientes: Todo lo que NO tiene fecha de entrega real
-        df_pendientes_total = df[df["FECHA DE ENTREGA REAL"].isna()].copy()
+        
+        # Creamos el dataframe de trabajo para KPIs
+        df_kpi = df.copy()
+        
+        # Limpieza técnica para el cálculo
+        df_kpi["COSTO DE LA GUÍA"] = pd.to_numeric(df_kpi["COSTO DE LA GUÍA"], errors='coerce').fillna(0)
+        df_kpi["CANTIDAD DE CAJAS"] = pd.to_numeric(df_kpi["CANTIDAD DE CAJAS"], errors='coerce').fillna(1)
+        df_kpi["CANTIDAD DE CAJAS"] = df_kpi["CANTIDAD DE CAJAS"].replace(0, 1)
+        
+        # Este cálculo solo existe aquí dentro
+        df_kpi["COSTO_UNITARIO_MEMORIA"] = df_kpi["COSTO DE LA GUÍA"] / df_kpi["CANTIDAD DE CAJAS"]
+
+        df_entregados = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()]
+        df_retrasados = df_kpi[df_kpi["ESTATUS_CALCULADO"] == "RETRASADO"]
+        df_pendientes = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].isna()]
 
         # --------------------------------------------------
-        # 1. INDICADORES DE ALTO IMPACTO (Ahora 5 columnas)
+        # 1. INDICADORES (Métrica corregida en memoria)
         # --------------------------------------------------
         m1, m2, m3, m4, m5 = st.columns(5)
         
         with m1:
-            eficiencia = (len(df_entregados) / len(df) * 100) if len(df) > 0 else 0
+            eficiencia = (len(df_entregados) / len(df_kpi) * 100) if len(df_kpi) > 0 else 0
             st.metric("Cumplimiento", f"{eficiencia:.1f}%")
         
         with m2:
-            valor_riesgo = df_retrasados["COSTO DE LA GUÍA"].sum() if "COSTO DE LA GUÍA" in df_retrasados.columns else 0
-            st.metric("Costo en Riesgo", f"${valor_riesgo:,.2f}")
+            st.metric("Costo en Riesgo", f"${df_retrasados['COSTO DE LA GUÍA'].sum():,.2f}")
         
         with m3:
-            # NUEVA MÉTRICA: COSTO PROMEDIO POR CAJA (GUÍA)
-            if not df.empty:
-                costo_promedio = df["COSTO DE LA GUÍA"].mean()
-            else:
-                costo_promedio = 0
-            st.metric("Costo Prom. Caja", f"${costo_promedio:,.2f}")
+            # Usamos la columna que vive en memoria
+            costo_caja_prom = df_kpi["COSTO_UNITARIO_MEMORIA"].mean()
+            st.metric("Costo Prom. Caja", f"${costo_caja_prom:,.2f}")
             
         with m4:
-            if not df_retrasados.empty:
-                dias_atraso_prom = (hoy - df_retrasados["PROMESA DE ENTREGA"]).dt.days.mean()
-            else:
-                dias_atraso_prom = 0
-            st.metric("Retraso Prom.", f"{dias_atraso_prom:.1f} días")
+            dias_atraso = (hoy - df_retrasados["PROMESA DE ENTREGA"]).dt.days.mean() if not df_retrasados.empty else 0
+            st.metric("Retraso Prom.", f"{dias_atraso:.1f} días")
             
         with m5:
-            st.metric("Total Pendientes", len(df_pendientes_total))
+            st.metric("Total Pendientes", len(df_pendientes))
 
+        # --------------------------------------------------
+        # 2. SECCIÓN DE TABLAS (Sin mostrar la columna de memoria)
+        # --------------------------------------------------
         st.write("##")
-
-        # --------------------------------------------------
-        # 2. GRÁFICAS GERENCIALES
-        # --------------------------------------------------
-        c1, c2 = st.columns(2)
-
-        with c1:
-            st.markdown("#### 📅 Volumen de Envíos vs Tiempo")
-            df_volumen = df.groupby(df["FECHA DE ENVÍO"].dt.date).size().reset_index(name="PEDIDOS")
-            chart_vol = alt.Chart(df_volumen).mark_area(
-                line={'color':'#00FFAA'},
-                color=alt.Gradient(gradient='linear', stops=[alt.GradientStop(color='#00FFAA', offset=0), alt.GradientStop(color='transparent', offset=1)], x1=1, x2=1, y1=1, y2=0)
-            ).encode(x=alt.X('FECHA DE ENVÍO:T', title="Días"), y=alt.Y('PEDIDOS:Q', title="Pedidos"), tooltip=['FECHA DE ENVÍO', 'PEDIDOS']).properties(height=300)
-            st.altair_chart(chart_vol, use_container_width=True)
-
-        with c2:
-            st.markdown("#### 🏆 Eficiencia Real por Fletera")
-            if not df_entregados.empty:
-                df_entregados["A_TIEMPO"] = df_entregados["FECHA DE ENTREGA REAL"] <= df_entregados["PROMESA DE ENTREGA"]
-                df_perf = df_entregados.groupby("FLETERA")["A_TIEMPO"].mean().reset_index()
-                df_perf["A_TIEMPO"] *= 100
-                chart_perf = alt.Chart(df_perf).mark_bar().encode(x=alt.X('A_TIEMPO:Q', title="Eficiencia (%)", scale=alt.Scale(domain=[0, 100])), y=alt.Y('FLETERA:N', sort='-x', title=None), color=alt.Color('A_TIEMPO:Q', scale=alt.Scale(scheme='redyellowgreen'), legend=None)).properties(height=300)
-                st.altair_chart(chart_perf, use_container_width=True)
-
-        # --------------------------------------------------
-        # 3. SECCIÓN DE TABLAS DETALLADAS
-        # --------------------------------------------------
         t1, t2 = st.columns(2)
 
         with t1:
@@ -981,27 +961,25 @@ else:
             df_graves["DIAS_MORO"] = (hoy - df_graves["PROMESA DE ENTREGA"]).dt.days
             df_graves = df_graves[df_graves["DIAS_MORO"] > 3].sort_values("DIAS_MORO", ascending=False)
             if not df_graves.empty:
+                # Solo columnas originales
                 st.dataframe(df_graves[["NÚMERO DE PEDIDO", "FLETERA", "DIAS_MORO", "NO CLIENTE"]], use_container_width=True, hide_index=True)
             else:
                 st.success("Sin retrasos críticos.")
 
         with t2:
             st.markdown("#### 📦 Lista de Pedidos Pendientes")
-            # NUEVA TABLA: Muestra lo que está en tránsito o retrasado sin entregar
-            if not df_pendientes_total.empty:
-                df_pend_view = df_pendientes_total.sort_values("PROMESA DE ENTREGA")
-                st.dataframe(df_pend_view[["NÚMERO DE PEDIDO", "FLETERA", "PROMESA DE ENTREGA", "ESTATUS_CALCULADO"]], use_container_width=True, hide_index=True)
+            if not df_pendientes.empty:
+                df_p_view = df_pendientes.sort_values("PROMESA DE ENTREGA")
+                # Solo columnas originales
+                st.dataframe(df_p_view[["NÚMERO DE PEDIDO", "FLETERA", "PROMESA DE ENTREGA", "ESTATUS_CALCULADO"]], use_container_width=True, hide_index=True)
             else:
-                st.success("¡Todo ha sido entregado!")
+                st.success("¡Todo entregado!")
 
         st.write("##")
-        
-        # Botón para regresar
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
-    
-        st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Inteligencia Logística - Reporte Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
