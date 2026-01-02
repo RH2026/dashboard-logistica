@@ -955,110 +955,108 @@ else:
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
        
     # ------------------------------------------------------------------
-    # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL REDISEÑADA)
+    # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL REDISEÑADA - PRECISIÓN VISUAL)
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "KPIs":
-        st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📊 Panel de Control Gerencial</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align:center; color:#FFFFFF;'>Panel de Control Gerencial</h2>", unsafe_allow_html=True)
         st.divider()
 
-        # --- 1. LÓGICA DE DATOS (EN MEMORIA) ---
+        # --- 1. LÓGICA DE DATOS ---
         hoy = pd.Timestamp.today().normalize()
         df_kpi = df.copy()
-        
-        # Cálculos de costos y fechas
         df_kpi["COSTO DE LA GUÍA"] = pd.to_numeric(df_kpi["COSTO DE LA GUÍA"], errors='coerce').fillna(0)
         df_kpi["CANTIDAD DE CAJAS"] = pd.to_numeric(df_kpi["CANTIDAD DE CAJAS"], errors='coerce').fillna(1).replace(0, 1)
         df_kpi["COSTO_UNITARIO"] = df_kpi["COSTO DE LA GUÍA"] / df_kpi["CANTIDAD DE CAJAS"]
         
-        # Filtro de pedidos SIN ENTREGAR (Pendientes)
         df_sin_entregar = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].isna()].copy()
         df_sin_entregar["DIAS_ATRASO_KPI"] = (hoy - df_sin_entregar["PROMESA DE ENTREGA"]).dt.days
         df_sin_entregar["DIAS_ATRASO_KPI"] = df_sin_entregar["DIAS_ATRASO_KPI"].apply(lambda x: x if x > 0 else 0)
         df_sin_entregar["DIAS_TRANS"] = (hoy - df_sin_entregar["FECHA DE ENVÍO"]).dt.days
 
-        # --- 2. CÁLCULO DE MÉTRICAS ---
-        # Fila 1
+        # --- 2. CÁLCULOS ---
         total_pedidos = len(df_kpi)
         pendientes_total = len(df_sin_entregar)
         eficiencia_val = (len(df_kpi[df_kpi['ESTATUS_CALCULADO'] == 'ENTREGADO']) / total_pedidos * 100) if total_pedidos > 0 else 0
         costo_caja_prom = df_kpi["COSTO_UNITARIO"].mean()
 
-        # Fila 2 (Solo de los pendientes)
         atraso_1d = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] == 1])
         atraso_2d = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] == 2])
         atraso_5d = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] >= 5])
 
-        # --- 3. ESTILOS ---
-        estilo_kpi_card = "background-color:#11141C; padding:20px; border-radius:15px; border:1px solid #2D333F; text-align:center; min-height:140px; display:flex; flex-direction:column; justify-content:center;"
-        estilo_titulo = "color:white; font-size:12px; font-weight:bold; margin-bottom:10px; text-transform:uppercase; border-bottom:1px solid #2D333F; padding-bottom:5px;"
+        # --- 3. ESTILOS PERSONALIZADOS ---
+        # Estilo Tarjetas Principales
+        estilo_main = "background-color:#11141C; padding:20px; border-radius:15px; border: 1px solid #2D333F; text-align:center; min-height:140px;"
+        titulo_main = "color:yellow; font-size:13px; font-weight:bold; margin-bottom:10px; text-transform:uppercase; border-bottom:1px solid #2D333F; padding-bottom:5px;"
+        
+        # Estilo Alertas (Con barra lateral de color)
+        def estilo_alerta(color):
+            return f"background-color:#161B22; padding:20px; border-radius:10px; border-left: 5px solid {color}; border-top:1px solid #2D333F; border-right:1px solid #2D333F; border-bottom:1px solid #2D333F; text-align:center; min-height:120px;"
+        
+        titulo_alerta = "color:#9CA3AF; font-size:11px; font-weight:bold; text-transform:uppercase; margin-bottom:10px;"
         color_costo = "#FF4B4B" if costo_caja_prom > 60 else "#00FFAA"
 
-        # --- 4. RENDERIZADO FILA 1 (PRINCIPALES) ---
+        # --- 4. RENDERIZADO FILA 1 (PRINCIPALES EN AMARILLO) ---
         m1, m2, m3, m4 = st.columns(4)
         with m1:
-            st.markdown(f"<div style='{estilo_kpi_card}'><div style='{estilo_titulo}'>Pedidos Totales</div><div style='color:white; font-size:26px; font-weight:bold;'>{total_pedidos}</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='{estilo_main}'><div style='{titulo_main}'>Pedidos Totales</div><div style='color:white; font-size:26px; font-weight:bold;'>{total_pedidos}</div></div>", unsafe_allow_html=True)
         with m2:
-            st.markdown(f"<div style='{estilo_kpi_card}'><div style='{estilo_titulo}'>Sin Entregar</div><div style='color:#38bdf8; font-size:26px; font-weight:bold;'>{pendientes_total}</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='{estilo_main}'><div style='{titulo_main}'>Sin Entregar</div><div style='color:#38bdf8; font-size:26px; font-weight:bold;'>{pendientes_total}</div></div>", unsafe_allow_html=True)
         with m3:
-            st.markdown(f"<div style='{estilo_kpi_card}'><div style='{estilo_titulo}'>Eficiencia</div><div style='color:#00FFAA; font-size:26px; font-weight:bold;'>{eficiencia_val:.1f}%</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='{estilo_main}'><div style='{titulo_main}'>Eficiencia</div><div style='color:#00FFAA; font-size:26px; font-weight:bold;'>{eficiencia_val:.1f}%</div></div>", unsafe_allow_html=True)
         with m4:
-            st.markdown(f"<div style='{estilo_kpi_card}'><div style='{estilo_titulo}'>Costo/Caja</div><div style='color:{color_costo}; font-size:26px; font-weight:bold;'>${costo_caja_prom:,.2f}</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='{estilo_main}'><div style='{titulo_main}'>Costo/Caja</div><div style='color:{color_costo}; font-size:26px; font-weight:bold;'>${costo_caja_prom:,.2f}</div></div>", unsafe_allow_html=True)
 
         st.write("##")
         
-        # --- 5. RENDERIZADO FILA 2 (ALERTAS PENDIENTES) ---
-        st.markdown("<p style='color:gray; font-size:14px; font-weight:bold;'>ALERTAS DE ATRASO EN PENDIENTES</p>", unsafe_allow_html=True)
+        # --- 5. RENDERIZADO FILA 2 (ALERTAS CON TOQUE DISTINTO) ---
+        st.markdown("<p style='color:#9CA3AF; font-size:12px; font-weight:bold; letter-spacing:1px;'>⚠️ MONITOREO DE ATRASOS (SOLO PENDIENTES)</p>", unsafe_allow_html=True)
         a1, a2, a3 = st.columns(3)
         with a1:
-            st.markdown(f"<div style='{estilo_kpi_card}'><div style='{estilo_titulo}'>1 Día Retraso</div><div style='color:yellow; font-size:26px; font-weight:bold;'>{atraso_1d}</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='{estilo_alerta('yellow')}'><div style='{titulo_alerta}'>1 Día Retraso</div><div style='color:white; font-size:30px; font-weight:bold;'>{atraso_1d}</div></div>", unsafe_allow_html=True)
         with a2:
-            st.markdown(f"<div style='{estilo_kpi_card}'><div style='{estilo_titulo}'>2 Días Retraso</div><div style='color:#f97316; font-size:26px; font-weight:bold;'>{atraso_2d}</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='{estilo_alerta('#f97316')}'><div style='{titulo_alerta}'>2 Días Retraso</div><div style='color:white; font-size:30px; font-weight:bold;'>{atraso_2d}</div></div>", unsafe_allow_html=True)
         with a3:
-            st.markdown(f"<div style='{estilo_kpi_card}'><div style='{estilo_titulo}'>+5 Días Retraso</div><div style='color:#FF4B4B; font-size:26px; font-weight:bold;'>{atraso_5d}</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='{estilo_alerta('#FF4B4B')}'><div style='{titulo_alerta}'>+5 Días Retraso</div><div style='color:white; font-size:30px; font-weight:bold;'>{atraso_5d}</div></div>", unsafe_allow_html=True)
 
         st.write("##")
 
-        # --- 6. LISTA DE TODOS LOS PEDIDOS SIN ENTREGAR ---
+        # --- 6. TABLA ALINEADA A LA IZQUIERDA ---
         st.markdown("<p style='color:white; font-size:18px; font-weight:bold;'>📦 Detalle de Pedidos Sin Entregar</p>", unsafe_allow_html=True)
         
-        # Formateo de fechas para vista de tabla
         df_tabla_pend = df_sin_entregar.copy()
         df_tabla_pend["FECHA DE ENVÍO"] = df_tabla_pend["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
         df_tabla_pend["PROMESA DE ENTREGA"] = df_tabla_pend["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y')
         
-        # Selección de columnas solicitadas
-        cols_mostrar = [
-            "NÚMERO DE PEDIDO", "NOMBRE DEL CLIENTE", "FLETERA", 
-            "FECHA DE ENVÍO", "PROMESA DE ENTREGA", "NÚMERO DE GUÍA", 
-            "DIAS_TRANS", "DIAS_ATRASO_KPI"
-        ]
-        
+        cols_mostrar = ["NÚMERO DE PEDIDO", "NOMBRE DEL CLIENTE", "FLETERA", "FECHA DE ENVÍO", "PROMESA DE ENTREGA", "NÚMERO DE GUÍA", "DIAS_TRANS", "DIAS_ATRASO_KPI"]
+        df_final = df_tabla_pend[cols_mostrar].rename(columns={"DIAS_ATRASO_KPI":"DÍAS ATRASO", "DIAS_TRANS":"DÍAS TRANS."})
+
+        # Estilo para alinear a la izquierda (Standard Streamlit dataframe alignment)
         st.dataframe(
-            df_tabla_pend[cols_mostrar].rename(columns={"DIAS_ATRASO_KPI":"DÍAS ATRASO", "DIAS_TRANS":"DÍAS TRANS."}),
+            df_final,
             use_container_width=True,
             hide_index=True
         )
 
         st.divider()
 
-        # --- 7. GRÁFICOS (Mantenidos del bloque anterior) ---
+        # --- 7. GRÁFICOS ---
         g1, g2 = st.columns(2)
         with g1:
-            st.markdown("<p style='color:yellow; font-weight:bold;'>Volumen de Envíos Histórico</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color:yellow; font-weight:bold; font-size:14px;'>Volumen de Envíos Histórico</p>", unsafe_allow_html=True)
             df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="P")
             st.altair_chart(alt.Chart(df_vol).mark_area(line={'color':'#00FFAA'}, color=alt.Gradient(gradient='linear', stops=[alt.GradientStop(color='#00FFAA', offset=0), alt.GradientStop(color='transparent', offset=1)], x1=1, x2=1, y1=1, y2=0)).encode(x='FECHA DE ENVÍO:T', y='P:Q').properties(height=250), use_container_width=True)
         with g2:
-            st.markdown("<p style='color:yellow; font-weight:bold;'>Eficiencia Real por Fletera</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color:yellow; font-weight:bold; font-size:14px;'>Eficiencia Real por Fletera</p>", unsafe_allow_html=True)
             df_ent = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
             if not df_ent.empty:
                 df_ent["AT"] = df_ent["FECHA DE ENTREGA REAL"] <= df_ent["PROMESA DE ENTREGA"]
                 df_p = (df_ent.groupby("FLETERA")["AT"].mean() * 100).reset_index()
                 st.altair_chart(alt.Chart(df_p).mark_bar().encode(x=alt.X('AT:Q', scale=alt.Scale(domain=[0,100])), y=alt.Y('FLETERA:N', sort='-x'), color=alt.Color('AT:Q', scale=alt.Scale(scheme='redyellowgreen'))).properties(height=250), use_container_width=True)
 
-        # Botón Volver
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
+
 
 
 
