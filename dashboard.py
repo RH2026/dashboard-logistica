@@ -102,7 +102,7 @@ st.markdown(f"""
     /* Login Form */
     .stForm {{ background-color: {color_fondo_nativo} !important; border: 1.5px solid {color_borde_gris} !important; border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
     .login-header {{ text-align: center; color: white; font-family: sans-serif; font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; }}
-    input {{ font-family: 'Courier Prime', monospace !important; color: white !important; }}
+    input {{ font-family: 'Arial', monospace !important; color: white !important; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -906,6 +906,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
