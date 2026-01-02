@@ -6,7 +6,7 @@ import base64
 import textwrap
 
 # 1. CONFIGURACIÓN DE PÁGINA
-st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
 
 # 2. ESTADOS DE SESIÓN
 if "logueado" not in st.session_state:
@@ -21,159 +21,188 @@ if "pagina" not in st.session_state:
     st.session_state.pagina = "principal"  # Controla qué sección del dashboard se ve
 if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
-    
-# Colores Globales
+if "tabla_expandida" not in st.session_state:
+    st.session_state.tabla_expandida = False
+
+# --- 2. LÓGICA DE MÁRGENES Y ALTURA (Flecha visible y espacios respetados) ---
+st.markdown("""
+    <style>
+        /* Margen general del dashboard */
+        .block-container {
+            padding-top: 1.5rem !important;
+            padding-bottom: 1rem !important;
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+        }
+
+        /* Ocultamos solo el footer (la marca de Streamlit) */
+        footer {visibility: hidden;}
+        
+        /* ESPACIO DE BOTONES: Mantiene la cercanía profesional a la tabla */
+        div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
+            margin-bottom: -0.5rem !important;
+        }
+        
+        /* ESPACIO DE DONITAS: Mantiene el despegue de los indicadores */
+        div[data-testid="stHorizontalBlock"]:has(div[style*="text-align:center"]) {
+            margin-bottom: 2rem !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Altura dinámica según el botón presionado (Esto no cambia)
+if st.session_state.tabla_expandida:
+    h_dinamica = 850
+else:
+    h_dinamica = 200
+
+#---------------------------------------------------
+
+# Colores
 color_fondo_nativo = "#0e1117" 
 color_blanco = "#FFFFFF"
 color_verde = "#00FF00" 
 color_borde_gris = "#333333"
 
-# --------------------------------------------------
-# 3. LÓGICA DE LOGIN
-# --------------------------------------------------
-if not st.session_state.logueado and st.session_state.motivo_splash != "logout":
-    st.markdown(f"""
-        <style>
-        .stApp {{ background-color: {color_fondo_nativo} !important; }}
-        .stForm {{
-            background-color: {color_fondo_nativo} !important;
-            padding: 40px; border-radius: 20px;
-            border: 1.5px solid {color_borde_gris} !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-top: -30px;
-        }}
-        @keyframes pulse-intense {{
-            0% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
-            50% {{ transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.6)); }}
-            100% {{ transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0)); }}
-        }}
-        .animated-icon {{ animation: pulse-intense 2s infinite ease-in-out; display: flex; justify-content: center; margin-bottom: 20px; }}
-        div[data-testid="stTextInputRootElement"] {{ background-color: #1a1c24 !important; border: 1px solid #30333d !important; border-radius: 10px !important; }}
-        div[data-testid="stTextInputRootElement"] > div {{ background-color: transparent !important; }}
-        input {{ color: white !important; }}
-        div[data-testid="stTextInputRootElement"] button {{ color: {color_verde} !important; }}
-        .login-header {{ text-align: center; color: {color_blanco}; font-size: 24px; font-weight: bold; margin-bottom: 25px; letter-spacing: 2px; text-transform: uppercase; }}
-        header, footer {{visibility: hidden;}}
-        </style>
-    """, unsafe_allow_html=True)
+# Colores Globales
+color_fondo_nativo = "#0e1117"
+color_blanco = "#FFFFFF"
+color_verde = "#00FF00"
+color_borde_gris = "#333333"
 
-    col1, col2, col3 = st.columns([1, 1.2, 1])
-    with col2:
-        st.markdown('<div style="height:5vh"></div>', unsafe_allow_html=True)
-        with st.form("login_form"):
-            st.markdown(f'''<div class="animated-icon"><svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="{color_blanco}" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><circle cx="12" cy="11" r="3" fill="{color_blanco}" fill-opacity="0.2"></circle><path d="M12 11v4"></path></svg></div>''', unsafe_allow_html=True)
-            st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
-            u_input = st.text_input("Usuario")
-            c_input = st.text_input("Contraseña", type="password")
-            submit = st.form_submit_button("INGRESAR", use_container_width=True)
+# --------------------------------------------------
+# 3. ESTILOS CSS (Corregido para NO ocultar la flecha)
+# --------------------------------------------------
+st.markdown(f"""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
+    
+    .stApp {{ background-color: {color_fondo_nativo} !important; }}
+    
+    /* Mostrar flecha de sidebar pero ocultar decoradores innecesarios */
+    header[data-testid="stHeader"] {{ background: rgba(0,0,0,0) !important; }}
+    footer {{ visibility: hidden !important; }}
+    div[data-testid="stDecoration"] {{ display: none !important; }}
 
-            if submit:
-                usuarios = st.secrets["usuarios"]
-                if u_input in usuarios and str(usuarios[u_input]) == str(c_input):
-                    st.session_state.logueado = True
-                    st.session_state.usuario_actual = u_input
-                    st.session_state.splash_completado = False
-                    st.session_state.motivo_splash = "inicio"
-                    st.rerun()
-                else:
-                    st.error("Acceso Denegado")
+    /* Caja 3D Logística Sellada */
+    .scene {{ width: 100%; height: 120px; perspective: 600px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }}
+    .cube {{ width: 60px; height: 60px; position: relative; transform-style: preserve-3d; transform: rotateX(-20deg) rotateY(45deg); animation: move-pkg 6s infinite ease-in-out; }}
+    .cube-face {{ position: absolute; width: 60px; height: 60px; background: #d2a679; border: 1.5px solid #b08d5c; box-shadow: inset 0 0 15px rgba(0,0,0,0.1); }}
+    .cube-face::after {{ content: ''; position: absolute; top: 45%; width: 100%; height: 6px; background: rgba(0,0,0,0.15); }}
+    
+    .front  {{ transform: rotateY(0deg) translateZ(30px); }}
+    .back   {{ transform: rotateY(180deg) translateZ(30px); }}
+    .right  {{ transform: rotateY(90deg) translateZ(30px); }}
+    .left   {{ transform: rotateY(-90deg) translateZ(30px); }}
+    .top    {{ transform: rotateX(90deg) translateZ(30px); background: #e3bc94; }}
+    .bottom {{ transform: rotateX(-90deg) translateZ(30px); background: #b08d5c; }}
+    
+    @keyframes move-pkg {{ 0%, 100% {{ transform: translateY(0px) rotateX(-20deg) rotateY(45deg); }} 50% {{ transform: translateY(-15px) rotateX(-20deg) rotateY(225deg); }} }}
+    
+    /* Login Form */
+    .stForm {{ background-color: {color_fondo_nativo} !important; border: 1.5px solid {color_borde_gris} !important; border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
+    .login-header {{ text-align: center; color: white; font-family: Arial; font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; }}
+    input {{ font-family: 'Arial', monospace !important; color: white !important; }}
+</style>
+""", unsafe_allow_html=True)
+
+placeholder = st.empty()
+
+# --------------------------------------------------
+# 4. FLUJO DE PANTALLAS
+# --------------------------------------------------
+
+# CASO A: LOGIN
+if not st.session_state.logueado:
+    with placeholder.container():
+        col1, col2, col3 = st.columns([1, 1.2, 1])
+        with col2:
+            st.markdown('<div style="height:10vh"></div>', unsafe_allow_html=True)
+            with st.form("login_form"):
+                st.markdown('<div class="scene"><div class="cube"><div class="cube-face front"></div><div class="cube-face back"></div><div class="cube-face right"></div><div class="cube-face left"></div><div class="cube-face top"></div><div class="cube-face bottom"></div></div></div>', unsafe_allow_html=True)
+                st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
+                u_input = st.text_input("Usuario")
+                c_input = st.text_input("Contraseña", type="password")
+                if st.form_submit_button("INGRESAR", use_container_width=True):
+                    usuarios = st.secrets["usuarios"]
+                    if u_input in usuarios and str(usuarios[u_input]) == str(c_input):
+                        st.session_state.logueado = True
+                        st.session_state.usuario_actual = u_input
+                        st.session_state.splash_completado = False
+                        st.session_state.motivo_splash = "inicio"
+                        st.rerun()
+                    else:
+                        st.error("Acceso Denegado")
     st.stop()
 
-# --------------------------------------------------
-# 4. SPLASH SCREEN (Entrada y Salida)
-# --------------------------------------------------
-if not st.session_state.splash_completado:
-    if st.session_state.motivo_splash == "logout":
-        texto_splash = "Cerrando sesión de forma segura..."
-        color_loader = "#FF4B4B"
-    else:
-        texto_splash = f"Bienvenid@ {st.session_state.usuario_actual}, inicializando módulos..."
-        color_loader = "#00FF00"
-
-    st.markdown(f"""
-    <style>
-    .splash-container {{ 
-        display: flex; flex-direction: column; justify-content: center; align-items: center; 
-        height: 100vh; background-color: #0e1117; position: fixed;
-        top: 0; left: 0; width: 100%; z-index: 9999;
-    }}
-    .loader {{ 
-        border: 6px solid #1a1c24; border-top: 6px solid {color_loader}; border-radius: 50%; 
-        width: 120px; height: 120px; animation: spin 0.8s linear infinite; 
-        margin-bottom: 25px; filter: drop-shadow(0 0 10px {color_loader}66);
-    }}
-    @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
-    .splash-text {{ color: #FFFFFF; font-size: 12px; font-family: Share Tech Mono; letter-spacing: 1px; opacity: 0.8; }}
-    </style>
-    """, unsafe_allow_html=True)
-    
-    st.markdown(f'<div class="splash-container"><div class="loader"></div><div class="splash-text">{texto_splash}</div></div>', unsafe_allow_html=True)
-    
-    time.sleep(2)
-    
-    if st.session_state.motivo_splash == "logout":
-        # --- SOLUCIÓN AL PROBLEMA DE KPIS ---
-        st.session_state.logueado = False
-        st.session_state.usuario_actual = None
-        st.session_state.pagina = "principal" # <--- RESETEAMOS LA PÁGINA AQUÍ
-        st.session_state.splash_completado = True
-        st.session_state.motivo_splash = "inicio"
-        st.rerun()
-    else:
+# CASO B: SPLASH SCREEN
+elif not st.session_state.splash_completado:
+    with placeholder.container():
+        t_splash = "Cerrando sistema..." if st.session_state.motivo_splash == "logout" else f"Hola {st.session_state.usuario_actual}..."
+        c_caja = "#FF4B4B" if st.session_state.motivo_splash == "logout" else "#d2a679"
+        
+        st.markdown(f"""
+            <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0e1117; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <div class="scene">
+                    <div class="cube" style="width:80px; height:80px; animation: move-pkg 3s infinite linear;">
+                        <div class="cube-face front"  style="width:80px; height:80px; background:{c_caja}; transform: rotateY(0deg) translateZ(40px);"></div>
+                        <div class="cube-face back"   style="width:80px; height:80px; background:{c_caja}; transform: rotateY(180deg) translateZ(40px);"></div>
+                        <div class="cube-face right"  style="width:80px; height:80px; background:{c_caja}; transform: rotateY(90deg) translateZ(40px);"></div>
+                        <div class="cube-face left"   style="width:80px; height:80px; background:{c_caja}; transform: rotateY(-90deg) translateZ(40px);"></div>
+                        <div class="cube-face top"    style="width:80px; height:80px; background:#e3bc94; transform: rotateX(90deg) translateZ(40px);"></div>
+                        <div class="cube-face bottom" style="width:80px; height:80px; background:#b08d5c; transform: rotateX(-90deg) translateZ(40px);"></div>
+                    </div>
+                </div>
+                <div style="color:yellow; font-family:'Arial'; margin-top:25px; letter-spacing:2px; text-transform:none; font-size: 14px;">{t_splash}</div>
+            </div>
+        """, unsafe_allow_html=True)
+        time.sleep(2.5)
+        
+        if st.session_state.motivo_splash == "logout":
+            st.session_state.logueado = False
+            st.session_state.usuario_actual = None
+            st.session_state.pagina = "principal" # Reseteo de página
+            st.session_state.motivo_splash = "inicio"
+            st.cache_data.clear()
+        
         st.session_state.splash_completado = True
         st.rerun()
+    st.stop()
 
-# --------------------------------------------------
-# INICIO DEL CONTENIDO PRIVADO (SI ESTÁ LOGUEADO)
-# --------------------------------------------------
+# 3. CONTENIDO PRIVADO (DASHBOARD)
 else:
-         
-    # --------------------------------------------------
-    # 📊 MOTOR DE CARGA DE DATOS (Optimizado con Cache)
-    # --------------------------------------------------
+    # --- MOTOR DE DATOS ---
     @st.cache_data
     def cargar_datos():
-        # Carga del CSV
         df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
-        
-        # Limpieza de nombres de columnas
         df.columns = df.columns.str.strip().str.upper()
-    
-        # Formateo de columnas críticas
         df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.strip()
         df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors="coerce", dayfirst=True)
         df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
         df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
-    
+        
         hoy = pd.Timestamp.today().normalize()
-    
-        # Lógica de Estatus Calculado
         def calcular_estatus(row):
-            if pd.notna(row["FECHA DE ENTREGA REAL"]):
-                return "ENTREGADO"
-            if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy:
-                return "RETRASADO"
+            if pd.notna(row["FECHA DE ENTREGA REAL"]): return "ENTREGADO"
+            if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy: return "RETRASADO"
             return "EN TRANSITO"
-    
+        
         df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
         return df
-    
-    # Ejecutamos la carga (Disponible para todas las páginas)
+
     df = cargar_datos()
+
+    # BARRA LATERAL
+    st.sidebar.markdown(f'<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;margin-left:-8px;"><svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" stroke="#00FFAA" stroke-width="1.8"/><path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6" stroke="#00FFAA" stroke-width="1.8" stroke-linecap="round"/></svg><span style="color:#999;font-size:16px;">Sesión: <span style="color:#00FFAA;font-weight:500;">{st.session_state.usuario_actual}</span></span></div>', unsafe_allow_html=True)
     
-    # --------------------------------------------------
-    # BOTÓN DE CIERRE DE SESIÓN EN LA BARRA LATERAL
-    # --------------------------------------------------
-    st.sidebar.markdown(f'### 👤 Sesión: <span style="color:#00FFAA;">{st.session_state.usuario_actual}</span>', unsafe_allow_html=True)
+    st.sidebar.markdown("---")
     
-        
-    if st.sidebar.button("Cerrar Sesión", use_container_width=True, key="logout_sidebar"):
-        # IMPORTANTE: No pongas logueado = False aquí, deja que el Splash lo haga al terminar
+    if st.sidebar.button("Cerrar Sesión", use_container_width=True):
         st.session_state.splash_completado = False 
         st.session_state.motivo_splash = "logout"
         st.rerun()
-    
-    
+
+        
     # --------------------------------------------------
     # 🛣️ INICIO DE LA LÓGICA DE NAVEGACIÓN
     # --------------------------------------------------
@@ -182,8 +211,9 @@ else:
         # --------------------------------------------------
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
-        st.markdown("<h1 style='text-align:center;'>Control de Embarques</h1>", unsafe_allow_html=True)
+        st.markdown("<style>@keyframes floatBox{0%{transform:translateY(0px);}50%{transform:translateY(-4px);}100%{transform:translateY(0px);}}@keyframes fadeInText{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}</style><h2 style='text-align:center;display:flex;align-items:center;justify-content:center;gap:14px;color:#FFFFFF;font-weight:600;'><svg style='animation:floatBox 3.2s ease-in-out infinite;' width='34' height='34' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 7L12 2L21 7L12 12L3 7Z' stroke='#00FFAA' stroke-width='1.5' stroke-linejoin='round'/><path d='M3 7V17L12 22L21 17V7' stroke='#00FFAA' stroke-width='1.5' stroke-linejoin='round'/><path d='M12 12V22' stroke='#00FFAA' stroke-width='1.5'/><path d='M7.5 4.8L16.5 9.3' stroke='#00FFAA' stroke-width='1.1' opacity='0.6'/></svg><span style='animation:fadeInText 1.2s ease-out forwards;'>Control de Embarques</span></h2>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;'>Logística – Enero 2026</p>", unsafe_allow_html=True)
+       
         st.divider()
            
         # 1. FUNCIÓN DE LIMPIEZA
@@ -200,21 +230,7 @@ else:
             limpiar_filtros()
     
         st.sidebar.markdown("---")
-    
-        # 2. BUSCADOR (CLIENTE O GUÍA)
-        if "filtro_cliente_actual" not in st.session_state:
-            st.session_state.filtro_cliente_actual = ""
-    
-        def actualizar_filtro():
-            st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente_input
-    
-        st.sidebar.text_input(
-            "No. Cliente o Número de Guía",
-            value=st.session_state.filtro_cliente_actual,
-            key="filtro_cliente_input",
-            on_change=actualizar_filtro
-        )
-    
+                
         # 3. CALENDARIO
         f_min_data = df["FECHA DE ENVÍO"].min()
         f_max_data = df["FECHA DE ENVÍO"].max()
@@ -229,6 +245,20 @@ else:
             key="fecha_filtro"
         )
     
+         # 2. BUSCADOR (CLIENTE O GUÍA)
+        if "filtro_cliente_actual" not in st.session_state:
+            st.session_state.filtro_cliente_actual = ""
+    
+        def actualizar_filtro():
+            st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente_input
+    
+        st.sidebar.text_input(
+            "No. Cliente o Número de Guía",
+            value=st.session_state.filtro_cliente_actual,
+            key="filtro_cliente_input",
+            on_change=actualizar_filtro
+        )
+                
         # 4. SELECTOR DE FLETERA
         fletera_sel = st.sidebar.selectbox(
             "Selecciona Fletera",
@@ -285,7 +315,8 @@ else:
         # --------------------------------------------------
         # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
         # --------------------------------------------------
-        
+
+              
         st.markdown("""
         <style>
         /* Animaciones con radio de borde corregido para que siempre sean círculos */
@@ -306,7 +337,7 @@ else:
             value="",
             help="Ingresa un número de pedido para mostrar solo esos registros"
         )
-    
+        
         df_busqueda = pd.DataFrame() # Blindaje inicial
     
         if pedido_buscar.strip() != "":
@@ -321,7 +352,7 @@ else:
                 st.warning("No se encontró ningún pedido con ese número.")
             else:
                 hoy = pd.Timestamp.today().normalize()
-                
+                                             
                 # Cálculos de tiempo para las tarjetas
                 df_busqueda["DIAS_TRANSCURRIDOS"] = (
                     (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["FECHA DE ENVÍO"]).dt.days
@@ -446,12 +477,72 @@ else:
         with c4:
             st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Retrasados</div>", unsafe_allow_html=True)
             st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
+
+        st.markdown("""
+            <style>
+                div[data-testid="stHorizontalBlock"]:has(div[style*="text-align:center"]) {
+                    margin-bottom: 2rem !important;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
+        st.divider()
         
         # --------------------------------------------------
         # TABLA DE ENVÍOS – DISEÑO PERSONALIZADO
         # --------------------------------------------------
-        st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Lista de envíos</div></div>""", unsafe_allow_html=True)
-    
+        # 1. Definimos 3 columnas: [Botones, Título al Centro, Espacio para equilibrar]
+        # El peso [2, 3, 2] asegura que el centro sea la parte más ancha
+        col_izq, col_centro, col_der = st.columns([2, 3, 2])
+        
+        with col_izq:
+            # Usamos una sub-columna interna para pegar los botones entre sí
+            btn_c1, btn_c2 = st.columns(2)
+            with btn_c1:
+                if st.button("BD Completa", use_container_width=True):
+                    st.session_state.tabla_expandida = True
+                    st.rerun()
+            with btn_c2:
+                if st.button("BD Vista Normal", use_container_width=True):
+                    st.session_state.tabla_expandida = False
+                    st.rerun()
+        
+        with col_centro:
+            # El título con margin:0 para que no se desplace hacia abajo
+            st.markdown("""
+                <div style="text-align:center;">
+                    <div style="color:white; font-size:26px; font-weight:700; margin:0; line-height:1.5;">
+                        Lista de envíos
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        with col_der:
+            # Columna vacía para que el título no se cargue a la derecha
+            st.write("")
+        
+        # --- 2. LÓGICA DE MÁRGENES (Igual que antes) ---
+        # --- AJUSTE DE ANCHO CONSTANTE Y ALTURA DINÁMICA ---
+        if st.session_state.tabla_expandida:
+            # VISTA COMPLETA: Ancho total y mucha altura
+            st.markdown("""
+                <style>
+                    .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
+                </style>
+            """, unsafe_allow_html=True)
+            h_dinamica = 850  # Cubre casi toda la pantalla hacia abajo
+        else:
+            # VISTA NORMAL: Mismo ancho total pero altura pequeña
+            st.markdown("""
+                <style>
+                    .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
+                </style>
+            """, unsafe_allow_html=True)
+            h_dinamica = 300  # Altura reducida para ver los gráficos abajo
+
+        #:::::::::::::::::::::::::::::::::::::::::::::::::::
+        #INICIA TABLA NORMAL
+        #:::::::::::::::::::::::::::::::::::::::::::::::::::
         hoy_t = pd.Timestamp.today().normalize()
         df_mostrar = df_filtrado.copy()
     
@@ -479,18 +570,19 @@ else:
             color = '#0E1117' if row.name % 2 == 0 else '#1A1E25'
             return [f'background-color: {color}; color: white;' for _ in row]
     
-        # Renderizado de la tabla con los estilos aplicados
+        # --- RENDERIZADO DE LA TABLA CON ESTILOS ---
         st.dataframe(
             df_mostrar.style.apply(zebra_filas, axis=1)
                             .applymap(colorear_retraso, subset=["DIAS_RETRASO"])
                             .set_table_styles([
-                {'selector': 'th', 'props': [('background-color', 'orange'), ('color', 'white'), ('font-weight','bold'), ('font-size','14px')]},
-                {'selector': 'td', 'props': [('padding', '12px')]}
-            ]),
+                                {'selector': 'th', 'props': [('background-color', 'orange'), ('color', 'white'), ('font-weight','bold'), ('font-size','14px')]},
+                                {'selector': 'td', 'props': [('padding', '12px')]}
+                            ]),
             use_container_width=True,
-            height=520
+            height=h_dinamica  # Usa la variable de los botones
         )
-    
+
+        st.divider()
         # --------------------------------------------------
         # GRÁFICOS DE BARRAS POR PAQUETERÍA (CON ETIQUETAS)
         # --------------------------------------------------
@@ -539,7 +631,8 @@ else:
             
             g2.markdown("<h5 style='text-align:center; color:#F44336;'>Sin entregar con retraso</h5>", unsafe_allow_html=True)
             g2.altair_chart((chart_r + text_r), use_container_width=True)
-    
+
+        st.divider()    
         # --------------------------------------------------
         # GRÁFICO: CONTEO DE PEDIDOS ENTREGADOS CON RETRASO (COLOR ROJO)
         # --------------------------------------------------
@@ -805,13 +898,125 @@ else:
     
         st.write("##")
         st.info("💡 Esta es tu nueva página de KPIs. Aquí puedes agregar análisis gerenciales profundos.")
-    
+
+               
         # Botón para regresar
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
