@@ -981,56 +981,53 @@ else:
         df_sin_entregar["DIAS_ATRASO_KPI"] = df_sin_entregar["DIAS_ATRASO_KPI"].apply(lambda x: x if x > 0 else 0)
         df_sin_entregar["DIAS_TRANS"] = (hoy - df_sin_entregar["FECHA DE ENVÍO"]).dt.days
 
-        # --- 3. FILTRO DINÁMICO DE RETRASOS CRÍTICOS (SOLO PENDIENTES VENCIDOS) ---
+        # --- 3. FILTRO DINÁMICO DE RETRASOS CRÍTICOS ---
         st.markdown("<h3 style='color:#FF4B4B;'>🚨 Rastreador de Retrasos Críticos</h3>", unsafe_allow_html=True)
         
-        # Filtrar: Sin entrega REAL y con ATRASO > 0
         df_criticos = df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] > 0].copy()
         paqueterias_con_retraso = sorted(df_criticos["FLETERA"].unique())
         
         if len(paqueterias_con_retraso) > 0:
             seleccion = st.multiselect(
                 "Selecciona paqueterías con pedidos vencidos:", 
-                options=paqueterias_con_retraso,
-                placeholder="Selecciona para ver el detalle..."
+                options=paqueterias_con_retraso
             )
             
             if seleccion:
                 df_ver = df_criticos[df_criticos["FLETERA"].isin(seleccion)].copy()
                 
-                # Seleccionamos y renombramos exactamente las columnas que pediste
+                # Formatear fechas como texto antes de mostrar para asegurar alineación izquierda
+                df_ver["FECHA DE ENVÍO"] = df_ver["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
+                df_ver["PROMESA DE ENTREGA"] = df_ver["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y')
+                
                 columnas_finales = [
-                    "NÚMERO DE PEDIDO", 
-                    "NOMBRE DEL CLIENTE", 
-                    "FLETERA", 
-                    "FECHA DE ENVÍO", 
-                    "PROMESA DE ENTREGA", 
-                    "NÚMERO DE GUÍA", 
-                    "DIAS_TRANS", 
-                    "DIAS_ATRASO_KPI"
+                    "NÚMERO DE PEDIDO", "NOMBRE DEL CLIENTE", "FLETERA", 
+                    "FECHA DE ENVÍO", "PROMESA DE ENTREGA", "NÚMERO DE GUÍA", 
+                    "DIAS_TRANS", "DIAS_ATRASO_KPI"
                 ]
                 
-                # Formateo de nombres para la vista de tabla
                 df_tabla_ver = df_ver[columnas_finales].rename(columns={
                     "DIAS_ATRASO_KPI": "DÍAS ATRASO",
                     "DIAS_TRANS": "DÍAS TRANS."
                 })
-                
-                # Renderizado con alineación a la izquierda
+
+                # CONFIGURACIÓN MAESTRA DE ALINEACIÓN
                 st.dataframe(
                     df_tabla_ver.sort_values("DÍAS ATRASO", ascending=False),
                     use_container_width=True,
                     hide_index=True,
                     column_config={
-                        "FECHA DE ENVÍO": st.column_config.DateColumn("Envío", format="DD/MM/YYYY"),
-                        "PROMESA DE ENTREGA": st.column_config.DateColumn("Promesa", format="DD/MM/YYYY"),
-                        "DÍAS ATRASO": st.column_config.NumberColumn("Atraso ⚠️", format="%d"),
-                        "NOMBRE DEL CLIENTE": st.column_config.TextColumn(width="large")
+                        "NÚMERO DE PEDIDO": st.column_config.TextColumn("NÚMERO DE PEDIDO"),
+                        "NOMBRE DEL CLIENTE": st.column_config.TextColumn("NOMBRE DEL CLIENTE", width="large"),
+                        "FLETERA": st.column_config.TextColumn("FLETERA"),
+                        "FECHA DE ENVÍO": st.column_config.TextColumn("FECHA DE ENVÍO"),
+                        "PROMESA DE ENTREGA": st.column_config.TextColumn("PROMESA DE ENTREGA"),
+                        "NÚMERO DE GUÍA": st.column_config.TextColumn("NÚMERO DE GUÍA"),
+                        "DÍAS TRANS.": st.column_config.TextColumn("DÍAS TRANS."),
+                        "DÍAS ATRASO": st.column_config.TextColumn("DÍAS ATRASO ⚠️")
                     }
                 )
                 st.divider()
-        else:
-            st.success("✅ ¡Excelente! No hay pedidos con retraso en este momento.")
 
         # --- 4. CÁLCULO DE MÉTRICAS Y TARJETAS ---
         total_p = len(df_kpi)
@@ -1088,6 +1085,7 @@ else:
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
+
 
 
 
