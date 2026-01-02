@@ -9,8 +9,6 @@ import streamlit.components.v1 as components
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
 
-st.markdown("<div id='top'></div>", unsafe_allow_html=True)
-
 
 # 2. ESTADOS DE SESIÓN
 if "logueado" not in st.session_state:
@@ -28,20 +26,20 @@ if "ultimo_movimiento" not in st.session_state:
 if "tabla_expandida" not in st.session_state:
     st.session_state.tabla_expandida = False
 
-# =============================
-# FUNCIONES AUXILIARES
-# =============================
-def scroll_top():
-    components.html(
-        """
-        <script>
-            const el = window.parent.document.getElementById("top");
-            if (el) { el.scrollIntoView({behavior: "instant"}); }
-        </script>
-        """,
-        height=0,
-    )
+def render_principal():
+    st.title("Página principal")
+    st.write("Contenido corto")
 
+def render_kpis():
+    st.title("KPIs")
+    for i in range(50):
+        st.write("fila", i)
+
+if st.session_state.pagina == "principal":
+    render_principal()
+
+if st.session_state.pagina == "KPIs":
+    render_kpis()
 
 # --- 2. LÓGICA DE MÁRGENES Y ALTURA (Flecha visible y espacios respetados) ---
 st.markdown("""
@@ -969,7 +967,7 @@ else:
         with col_btn:
             if st.button("Ver KPIs Detallados", use_container_width=True):
                 st.session_state.pagina = "KPIs"
-                scroll_top()
+                
                 st.rerun()
         
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
@@ -1082,8 +1080,9 @@ else:
         
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
-            scroll_top()
+            
             st.rerun()        
+
 
 
 
