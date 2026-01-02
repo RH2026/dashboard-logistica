@@ -1086,6 +1086,61 @@ else:
             chart_perf = alt.Chart(df_p).mark_bar().encode(x=alt.X('AT:Q', scale=alt.Scale(domain=[0,100])), y=alt.Y('FLETERA:N', sort='-x', axis=alt.Axis(labelLimit=400)), color=alt.Color('AT:Q', scale=alt.Scale(scheme='redyellowgreen'), legend=None)).properties(height=400)
             st.altair_chart(chart_perf, use_container_width=True)
 
+        # --- NAVEGACIÓN DESDE KPIs ---
+        st.divider()
+        col_nav1, col_nav2 = st.columns(2)
+        
+        with col_nav1:
+            if st.button("🏠 Volver al Inicio", use_container_width=True):
+                st.session_state.pagina = "principal"
+                st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+                st.rerun()
+                
+        with col_nav2:
+            if st.button("📅 Ir a Reporte Mensual", use_container_width=True):
+                st.session_state.pagina = "Reporte"
+                st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+                st.rerun()
+
+        # Pie de página
+        st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística - Vista Gerencial</div>", unsafe_allow_html=True)
+    # ------------------------------------------------------------------
+    # BLOQUE 10: REPORTE MENSUAL
+    # ------------------------------------------------------------------
+    elif st.session_state.pagina == "Reporte":
+        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+        st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📅 Reporte Logístico Mensual</h2>", unsafe_allow_html=True)
+        st.divider()
+
+        # --- LÓGICA DE DATOS MENSUALES ---
+        df_mes = df.copy()
+        df_mes['MES'] = df_mes['FECHA DE ENVÍO'].dt.strftime('%B %Y')
+        
+        # Selector de Mes
+        meses_disponibles = df_mes['MES'].unique()
+        mes_sel = st.selectbox("Selecciona el mes a analizar:", meses_disponibles)
+        
+        df_filtrado_mes = df_mes[df_mes['MES'] == mes_sel]
+
+        # --- CONTENIDO DEL REPORTE ---
+        col_a, col_b = st.columns(2)
+        
+        with col_a:
+            st.info(f"**Total Pedidos en {mes_sel}:** {len(df_filtrado_mes)}")
+            # Aquí puedes poner un resumen de costos del mes
+            costo_total_mes = df_filtrado_mes["COSTO DE LA GUÍA"].sum()
+            st.metric("Inversión en Fletes", f"${costo_total_mes:,.2f}")
+
+        with col_b:
+            # Gráfico de barras: Entregados vs Retrasados en el mes
+            resumen_estatus = df_filtrado_mes.groupby("ESTATUS_CALCULADO").size().reset_index(name="Total")
+            st.altair_chart(alt.Chart(resumen_estatus).mark_bar().encode(
+                x='Total:Q',
+                y='ESTATUS_CALCULADO:N',
+                color='ESTATUS_CALCULADO:N'
+            ).properties(height=200), use_container_width=True)
+
+        # Botón para volver
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
