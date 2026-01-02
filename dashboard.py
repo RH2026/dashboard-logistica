@@ -407,7 +407,7 @@ else:
                     
                     with c1:
                         costo_mxn = f"${float(row.get('COSTO DE LA GUÍA', 0)):,.2f}"
-                        st.markdown(f"<div style='{estilo_card}'><div style='color:yellow; font-weight:bold; text-align:center;'>Información Cliente</div><b>NO CLIENTE:</b> {row.get('NO CLIENTE')}<br><b>NOMBRE:</b> {row.get('NOMBRE DEL CLIENTE')}<br><b>DESTINO:</b> {row.get('DESTINO')}<br><b>FLETERA:</b> {row.get('FLETERA')}<br><b>COSTO:</b> <span style='color:#22c55e;'>{costo_mxn}</span></div>", unsafe_allow_html=True)
+                        st.markdown(f"<div style='{estilo_card}'><div style='color:yellow;font-weight:bold;text-align:center;'>Información Cliente</div><b>NO CLIENTE:</b> {row.get('NO CLIENTE')}<br><b>NOMBRE:</b> {row.get('NOMBRE DEL CLIENTE')}<br><b>DESTINO:</b> {row.get('DESTINO')}<br><b>FLETERA:</b> {row.get('FLETERA')}<br><b>NÚMERO DE GUÍA:</b> <span style='color:#38bdf8;font-weight:bold;'>{row.get('NÚMERO DE GUÍA','—')}</span><br><b>COSTO:</b> <span style='color:#22c55e;'>{costo_mxn}</span></div>", unsafe_allow_html=True)
                     with c2:
                         retraso = row.get('DIAS_RETRASO', 0)
                         st.markdown(f"<div style='{estilo_card}'><div style='color:yellow; font-weight:bold; text-align:center;'>Seguimiento</div><b>ENVÍO:</b> {txt_f_envio}<br><b>PROMESA:</b> {txt_f_promesa}<br><b>REAL:</b> {txt_f_real if txt_f_real else 'PENDIENTE'}<br><b>DÍAS TRANS:</b> {row.get('DIAS_TRANSCURRIDOS')}<br><b>RETRASO:</b> <span style='color:{'red' if retraso > 0 else 'white'};'>{retraso}</span></div>", unsafe_allow_html=True)
@@ -906,6 +906,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
