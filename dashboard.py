@@ -115,7 +115,7 @@ placeholder = st.empty()
 # CASO A: LOGIN
 if not st.session_state.logueado:
     with placeholder.container():
-        col1, col2, col3 = st.columns([1, 1.2, 1])
+        col1, col2, col3 = st.columns([1.5, 1, 1.5])
         with col2:
             st.markdown('<div style="height:10vh"></div>', unsafe_allow_html=True)
             with st.form("login_form"):
@@ -906,6 +906,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
