@@ -899,120 +899,121 @@ else:
     
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
     
-        # ------------------------------------------------------------------
-        # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL)
-        # ------------------------------------------------------------------
-        elif st.session_state.pagina == "KPIs":
-            st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📊 Panel de Control Gerencial</h2>", unsafe_allow_html=True)
-            st.markdown("<p style='text-align:center; color:gray;'>Análisis de Riesgos y Desempeño de Proveedores</p>", unsafe_allow_html=True)
-            st.divider()
-    
-            # --- LÓGICA DE DATOS PARA ESTA PÁGINA ---
-            hoy = pd.Timestamp.today().normalize()
-            df_entregados = df[df["FECHA DE ENTREGA REAL"].notna()].copy()
-            df_retrasados = df[df["ESTATUS_CALCULADO"] == "RETRASADO"].copy()
-    
-            # --------------------------------------------------
-            # 1. INDICADORES DE ALTO IMPACTO
-            # --------------------------------------------------
-            m1, m2, m3, m4 = st.columns(4)
-            
-            with m1:
-                eficiencia = (len(df[df['ESTATUS_CALCULADO'] == 'ENTREGADO']) / len(df) * 100) if len(df)>0 else 0
-                st.metric("Cumplimiento Global", f"{eficiencia:.1f}%")
-            
-            with m2:
-                # Valor de pedidos que están retrasados actualmente
-                valor_riesgo = df_retrasados["COSTO DE LA GUÍA"].sum() if "COSTO DE LA GUÍA" in df_retrasados.columns else 0
-                st.metric("Costo en Riesgo", f"${valor_riesgo:,.2f}", delta="Retrasos Actuales", delta_color="inverse")
-            
-            with m3:
-                # Promedio de días de retraso de lo que NO se ha entregado
-                if not df_retrasados.empty:
-                    dias_atraso_prom = (hoy - df_retrasados["PROMESA DE ENTREGA"]).dt.days.mean()
-                else:
-                    dias_atraso_prom = 0
-                st.metric("Retraso Promedio", f"{dias_atraso_prom:.1f} días")
-                
-            with m4:
-                # Fletera con más fallos
-                if not df_retrasados.empty:
-                    peor_f = df_retrasados["FLETERA"].value_counts().idxmax()
-                    st.metric("Foco Rojo", peor_f)
-                else:
-                    st.metric("Foco Rojo", "Ninguno")
-    
-            st.write("##")
-    
-            # --------------------------------------------------
-            # 2. GRÁFICAS GERENCIALES
-            # --------------------------------------------------
-            c1, c2 = st.columns(2)
-    
-            with c1:
-                st.markdown("#### 📅 Volumen de Envíos vs Capacidad")
-                # Agrupamos por fecha de envío para ver saturación
-                df_volumen = df.groupby(df["FECHA DE ENVÍO"].dt.date).size().reset_index(name="PEDIDOS")
-                chart_vol = alt.Chart(df_volumen).mark_area(
-                    line={'color':'#00FFAA'},
-                    color=alt.Gradient(
-                        gradient='linear',
-                        stops=[alt.GradientStop(color='#00FFAA', offset=0),
-                               alt.GradientStop(color='transparent', offset=1)],
-                        x1=1, x2=1, y1=1, y2=0
-                    )
-                ).encode(
-                    x=alt.X('FECHA DE ENVÍO:T', title="Días del Mes"),
-                    y=alt.Y('PEDIDOS:Q', title="Total Envíos"),
-                    tooltip=['FECHA DE ENVÍO', 'PEDIDOS']
-                ).properties(height=300)
-                st.altair_chart(chart_vol, use_container_width=True)
-    
-            with c2:
-                st.markdown("#### 🏆 Eficiencia Real por Fletera")
-                # % de pedidos entregados a tiempo vs total por fletera
-                if not df_entregados.empty:
-                    df_entregados["A_TIEMPO"] = df_entregados["FECHA DE ENTREGA REAL"] <= df_entregados["PROMESA DE ENTREGA"]
-                    df_perf = df_entregados.groupby("FLETERA")["A_TIEMPO"].mean().reset_index()
-                    df_perf["A_TIEMPO"] *= 100
-                    
-                    chart_perf = alt.Chart(df_perf).mark_bar().encode(
-                        x=alt.X('A_TIEMPO:Q', title="Eficiencia (%)", scale=alt.Scale(domain=[0, 100])),
-                        y=alt.Y('FLETERA:N', sort='-x', title=None),
-                        color=alt.Color('A_TIEMPO:Q', scale=alt.Scale(scheme='redyellowgreen'), legend=None),
-                        tooltip=[alt.Tooltip('A_TIEMPO', format='.1f')]
-                    ).properties(height=300)
-                    st.altair_chart(chart_perf, use_container_width=True)
-    
-            # --------------------------------------------------
-            # 3. TABLA DE PRIORIDAD GERENCIAL (SLA VIOLATIONS)
-            # --------------------------------------------------
-            st.write("##")
-            st.markdown("#### 🚨 Alertas de Incumplimiento Grave (SLA)")
-            st.write("Pedidos con más de 3 días de retraso que requieren escalamiento inmediato.")
-            
-            # Filtro de casos graves
-            df_graves = df_retrasados.copy()
-            df_graves["DIAS_MOROSIDAD"] = (hoy - df_graves["PROMESA DE ENTREGA"]).dt.days
-            df_graves = df_graves[df_graves["DIAS_MOROSIDAD"] > 3].sort_values("DIAS_MOROSIDAD", ascending=False)
-            
-            if not df_graves.empty:
-                st.dataframe(
-                    df_graves[["NÚMERO DE PEDIDO", "FLETERA", "DIAS_MOROSIDAD", "NO CLIENTE", "DESTINO"]],
-                    use_container_width=True,
-                    hide_index=True
-                )
-            else:
-                st.success("✅ No existen pedidos con retraso crítico mayor a 3 días.")
-    
-            st.write("##")
-            
-            # Botón para regresar
-            if st.button("⬅ Volver al Inicio", use_container_width=True):
-                st.session_state.pagina = "principal"
-                st.rerun()
+    # ------------------------------------------------------------------
+    # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL)
+    # ------------------------------------------------------------------
+    elif st.session_state.pagina == "KPIs":
+        st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📊 Panel de Control Gerencial</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:gray;'>Análisis de Riesgos y Desempeño de Proveedores</p>", unsafe_allow_html=True)
+        st.divider()
+
+        # --- LÓGICA DE DATOS PARA ESTA PÁGINA ---
+        hoy = pd.Timestamp.today().normalize()
+        df_entregados = df[df["FECHA DE ENTREGA REAL"].notna()].copy()
+        df_retrasados = df[df["ESTATUS_CALCULADO"] == "RETRASADO"].copy()
+
+        # --------------------------------------------------
+        # 1. INDICADORES DE ALTO IMPACTO
+        # --------------------------------------------------
+        m1, m2, m3, m4 = st.columns(4)
         
-            st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Inteligencia Logística - Reporte Gerencial</div>", unsafe_allow_html=True)
+        with m1:
+            eficiencia = (len(df[df['ESTATUS_CALCULADO'] == 'ENTREGADO']) / len(df) * 100) if len(df)>0 else 0
+            st.metric("Cumplimiento Global", f"{eficiencia:.1f}%")
+        
+        with m2:
+            # Valor de pedidos que están retrasados actualmente
+            valor_riesgo = df_retrasados["COSTO DE LA GUÍA"].sum() if "COSTO DE LA GUÍA" in df_retrasados.columns else 0
+            st.metric("Costo en Riesgo", f"${valor_riesgo:,.2f}", delta="Retrasos Actuales", delta_color="inverse")
+        
+        with m3:
+            # Promedio de días de retraso de lo que NO se ha entregado
+            if not df_retrasados.empty:
+                dias_atraso_prom = (hoy - df_retrasados["PROMESA DE ENTREGA"]).dt.days.mean()
+            else:
+                dias_atraso_prom = 0
+            st.metric("Retraso Promedio", f"{dias_atraso_prom:.1f} días")
+            
+        with m4:
+            # Fletera con más fallos
+            if not df_retrasados.empty:
+                peor_f = df_retrasados["FLETERA"].value_counts().idxmax()
+                st.metric("Foco Rojo", peor_f)
+            else:
+                st.metric("Foco Rojo", "Ninguno")
+
+        st.write("##")
+
+        # --------------------------------------------------
+        # 2. GRÁFICAS GERENCIALES
+        # --------------------------------------------------
+        c1, c2 = st.columns(2)
+
+        with c1:
+            st.markdown("#### 📅 Volumen de Envíos vs Capacidad")
+            # Agrupamos por fecha de envío para ver saturación
+            df_volumen = df.groupby(df["FECHA DE ENVÍO"].dt.date).size().reset_index(name="PEDIDOS")
+            chart_vol = alt.Chart(df_volumen).mark_area(
+                line={'color':'#00FFAA'},
+                color=alt.Gradient(
+                    gradient='linear',
+                    stops=[alt.GradientStop(color='#00FFAA', offset=0),
+                           alt.GradientStop(color='transparent', offset=1)],
+                    x1=1, x2=1, y1=1, y2=0
+                )
+            ).encode(
+                x=alt.X('FECHA DE ENVÍO:T', title="Días del Mes"),
+                y=alt.Y('PEDIDOS:Q', title="Total Envíos"),
+                tooltip=['FECHA DE ENVÍO', 'PEDIDOS']
+            ).properties(height=300)
+            st.altair_chart(chart_vol, use_container_width=True)
+
+        with c2:
+            st.markdown("#### 🏆 Eficiencia Real por Fletera")
+            # % de pedidos entregados a tiempo vs total por fletera
+            if not df_entregados.empty:
+                df_entregados["A_TIEMPO"] = df_entregados["FECHA DE ENTREGA REAL"] <= df_entregados["PROMESA DE ENTREGA"]
+                df_perf = df_entregados.groupby("FLETERA")["A_TIEMPO"].mean().reset_index()
+                df_perf["A_TIEMPO"] *= 100
+                
+                chart_perf = alt.Chart(df_perf).mark_bar().encode(
+                    x=alt.X('A_TIEMPO:Q', title="Eficiencia (%)", scale=alt.Scale(domain=[0, 100])),
+                    y=alt.Y('FLETERA:N', sort='-x', title=None),
+                    color=alt.Color('A_TIEMPO:Q', scale=alt.Scale(scheme='redyellowgreen'), legend=None),
+                    tooltip=[alt.Tooltip('A_TIEMPO', format='.1f')]
+                ).properties(height=300)
+                st.altair_chart(chart_perf, use_container_width=True)
+
+        # --------------------------------------------------
+        # 3. TABLA DE PRIORIDAD GERENCIAL (SLA VIOLATIONS)
+        # --------------------------------------------------
+        st.write("##")
+        st.markdown("#### 🚨 Alertas de Incumplimiento Grave (SLA)")
+        st.write("Pedidos con más de 3 días de retraso que requieren escalamiento inmediato.")
+        
+        # Filtro de casos graves
+        df_graves = df_retrasados.copy()
+        df_graves["DIAS_MOROSIDAD"] = (hoy - df_graves["PROMESA DE ENTREGA"]).dt.days
+        df_graves = df_graves[df_graves["DIAS_MOROSIDAD"] > 3].sort_values("DIAS_MOROSIDAD", ascending=False)
+        
+        if not df_graves.empty:
+            st.dataframe(
+                df_graves[["NÚMERO DE PEDIDO", "FLETERA", "DIAS_MOROSIDAD", "NO CLIENTE", "DESTINO"]],
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            st.success("✅ No existen pedidos con retraso crítico mayor a 3 días.")
+
+        st.write("##")
+        
+        # Botón para regresar
+        if st.button("⬅ Volver al Inicio", use_container_width=True):
+            st.session_state.pagina = "principal"
+            st.rerun()
+    
+        st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Inteligencia Logística - Reporte Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
