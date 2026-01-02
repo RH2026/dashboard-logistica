@@ -420,18 +420,73 @@ else:
                     
                     st.markdown(html_timeline, unsafe_allow_html=True)
                     
-                    # Tarjetas Informativas
+                    # --- Tarjetas Informativas con Diseño Premium ---
                     c1, c2, c3 = st.columns(3)
-                    estilo_card = "background-color:#1A1E25; padding:15px; border-radius:10px; border: 1px solid #374151; min-height: 270px;"
+                    
+                    # Estilo refinado: Fondo más oscuro y bordes consistentes con tu diseño
+                    estilo_card = "background-color:#11141C; padding:20px; border-radius:12px; border: 1px solid #2D333F; min-height: 280px;"
+                    # Estilo para el título de la tarjeta
+                    estilo_titulo = "color:yellow; font-weight:bold; text-align:center; border-bottom:1px solid #2D333F; margin-bottom:12px; padding-bottom:8px; text-transform:uppercase; font-size:14px;"
                     
                     with c1:
-                        costo_mxn = f"${float(row.get('COSTO DE LA GUÍA', 0)):,.2f}"
-                        st.markdown(f"<div style='{estilo_card}'><div style='color:yellow;font-weight:bold;text-align:center;'>Información Cliente</div><b>NO CLIENTE:</b> {row.get('NO CLIENTE')}<br><b>NOMBRE:</b> {row.get('NOMBRE DEL CLIENTE')}<br><b>DESTINO:</b> {row.get('DESTINO')}<br><b>FLETERA:</b> {row.get('FLETERA')}<br><b>NÚMERO DE GUÍA:</b> <span style='color:#38bdf8;font-weight:bold;'>{row.get('NÚMERO DE GUÍA','—')}</span><br><b>COSTO:</b> <span style='color:#22c55e;'>{costo_mxn}</span></div>", unsafe_allow_html=True)
+                        # Cálculo de costo protegido
+                        try:
+                            c_val = row.get('COSTO DE LA GUÍA', 0)
+                            costo_mxn = f"${float(c_val):,.2f}"
+                        except:
+                            costo_mxn = "$0.00"
+                            
+                        st.markdown(f"""
+                            <div style='{estilo_card}'>
+                                <div style='{estilo_titulo}'>Información Cliente</div>
+                                <div style='line-height:1.8;'>
+                                    <b>NO CLIENTE:</b> {row.get('NO CLIENTE', '—')}<br>
+                                    <b>NOMBRE:</b> {row.get('NOMBRE DEL CLIENTE', '—')}<br>
+                                    <b>DESTINO:</b> {row.get('DESTINO', '—')}<br>
+                                    <b>FLETERA:</b> {row.get('FLETERA', '—')}<br>
+                                    <b>NÚMERO DE GUÍA:</b> <span style='color:#38bdf8; font-weight:bold;'>{row.get('NÚMERO DE GUÍA','—')}</span><br>
+                                    <b>COSTO:</b> <span style='color:#22c55e; font-weight:bold;'>{costo_mxn}</span>
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+    
                     with c2:
-                        retraso = row.get('DIAS_RETRASO', 0)
-                        st.markdown(f"<div style='{estilo_card}'><div style='color:yellow; font-weight:bold; text-align:center;'>Seguimiento</div><b>ENVÍO:</b> {txt_f_envio}<br><b>PROMESA:</b> {txt_f_promesa}<br><b>REAL:</b> {txt_f_real if txt_f_real else 'PENDIENTE'}<br><b>DÍAS TRANS:</b> {row.get('DIAS_TRANSCURRIDOS')}<br><b>RETRASO:</b> <span style='color:{'red' if retraso > 0 else 'white'};'>{retraso}</span></div>", unsafe_allow_html=True)
+                        retraso_num = row.get('DIAS_RETRASO', 0)
+                        color_retraso = "#FF4B4B" if retraso_num > 0 else "#FFFFFF"
+                        
+                        st.markdown(f"""
+                            <div style='{estilo_card}'>
+                                <div style='{estilo_titulo}'>Seguimiento</div>
+                                <div style='line-height:1.8;'>
+                                    <b>ENVÍO:</b> {txt_f_envio}<br>
+                                    <b>PROMESA:</b> {txt_f_promesa}<br>
+                                    <b>REAL:</b> <span style='color:{"#22c55e" if txt_f_real != "PENDIENTE" else "#9CA3AF"};'>{txt_f_real}</span><br>
+                                    <b>DÍAS TRANS:</b> {row.get('DIAS_TRANSCURRIDOS', 0)}<br>
+                                    <b>RETRASO:</b> <span style='color:{color_retraso}; font-weight:bold;'>{retraso_num} DÍAS</span>
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+    
                     with c3:
-                        st.markdown(f"<div style='{estilo_card}'><div style='color:yellow; font-weight:bold; text-align:center;'>Observaciones</div><b>ESTATUS:</b> {row.get('ESTATUS_CALCULADO')}<br><b>PRIORIDAD:</b> {row.get('PRIORIDAD')}<br><b>COMENTARIOS:</b><br><small>{row.get('COMENTARIOS', 'Sin comentarios')}</small></div>", unsafe_allow_html=True)
+                        # Color dinámico para el estatus
+                        estatus_val = row.get('ESTATUS_CALCULADO', '—')
+                        color_estatus = "#22c55e" if estatus_val == "ENTREGADO" else "#3b82f6"
+                        if estatus_val == "RETRASADO": color_estatus = "#FF4B4B"
+    
+                        st.markdown(f"""
+                            <div style='{estilo_card}'>
+                                <div style='{estilo_titulo}'>Observaciones</div>
+                                <div style='line-height:1.8;'>
+                                    <b>ESTATUS:</b> <span style='color:{color_estatus}; font-weight:bold;'>{estatus_val}</span><br>
+                                    <b>PRIORIDAD:</b> {row.get('PRIORIDAD', 'NORMAL')}<br>
+                                    <b>COMENTARIOS:</b><br>
+                                    <div style='background:rgba(255,255,255,0.03); padding:8px; border-radius:5px; border-left:3px solid yellow; font-size:13px; color:#D1D5DB;'>
+                                        {row.get('COMENTARIOS', 'Sin comentarios adicionales.')}
+                                    </div>
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    
                     st.divider()
         
         # --------------------------------------------------
@@ -981,6 +1036,7 @@ else:
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
+
 
 
 
