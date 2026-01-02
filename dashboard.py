@@ -324,9 +324,9 @@ else:
         en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
         retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
         
-                # Si el usuario buscó un pedido, mostrar el Timeline inmediatamente
-                if pedido_buscar != "" and not df_filtrado.empty:
-                    for index, row in df_filtrado.iterrows():
+        # Si el usuario buscó un pedido, mostrar el Timeline inmediatamente
+        if pedido_buscar != "" and not df_filtrado.empty:
+            for index, row in df_filtrado.iterrows():
         
         # --------------------------------------------------
         # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
@@ -915,6 +915,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
