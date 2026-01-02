@@ -169,7 +169,7 @@ elif not st.session_state.splash_completado:
                             <div class="cube-face bottom" style="width:80px; height:80px; background:#b08d5c; transform: rotateX(-90deg) translateZ(40px);"></div>
                         </div>
                     </div>
-                    <div style="color:yellow; font-family:'Arial'; margin-top:25px; letter-spacing:2px; text-transform:none; font-size: 16px; font-weight: bold;">{msg}</div>
+                    <div style="color:yellow; font-family:'Arial'; margin-top:25px; letter-spacing:2px; text-transform:none; font-size: 15px; font-weight: normal;">{msg}</div>
                 </div>
             """, unsafe_allow_html=True)
             
@@ -925,6 +925,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
