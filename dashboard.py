@@ -949,11 +949,11 @@ else:
         with col_btn:
             # Este es el botón que cambia el estado para ir a la otra página
             if st.button("📊 Ver KPIs Detallados", use_container_width=True):
-                st.session_state.pagina = "KPIs"
+            st.session_state.pagina = "KPIs"
             # Esta línea extra ayuda a limpiar el foco antes de saltar
             st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
-                
-                st.rerun()
+            
+            st.rerun()
     
             st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
        
@@ -1062,6 +1062,7 @@ else:
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
+
 
 
 
