@@ -954,6 +954,20 @@ else:
     
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
        
+    
+    # ------------------------------------------------------------------
+    # BLOQUE 9: PÁGINA DE KPIs
+    # ------------------------------------------------------------------
+    elif st.session_state.pagina == "KPIs":
+        # COMPONENTE DE AUTOSCROLL: Fuerza la página al inicio al cargar
+        st.markdown("""
+            <script>
+                window.scrollTo(0, 0);
+                parent.window.scrollTo(0, 0);
+            </script>
+        """, unsafe_allow_html=True)
+
+    
     # ------------------------------------------------------------------
     # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL REDISEÑADA - PRECISIÓN VISUAL)
     # ------------------------------------------------------------------
@@ -1056,6 +1070,7 @@ else:
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
+
 
 
 
