@@ -948,11 +948,17 @@ else:
         # FINAL DE PÁGINA Y BOTÓN A KPIs
         # --------------------------------------------------
         st.divider()
-        col_esp, col_btn = st.columns([4, 1])
-        with col_btn:
-            if st.button("Ver KPIs Detallados", use_container_width=True):
+        # --- FINAL DE PÁGINA PRINCIPAL (Añadir nuevo botón) ---
+        col_btn1, col_btn2 = st.columns(2)
+        
+        with col_btn1:
+            if st.button("📊 Ver KPIs Detallados", use_container_width=True):
                 st.session_state.pagina = "KPIs"
-                st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+                st.rerun()
+                
+        with col_btn2:
+            if st.button("📅 Reporte Mensual", use_container_width=True):
+                st.session_state.pagina = "Reporte"
                 st.rerun()
         
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
@@ -1083,6 +1089,7 @@ else:
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
+
 
 
 
