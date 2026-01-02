@@ -138,30 +138,49 @@ if not st.session_state.logueado:
 # CASO B: SPLASH SCREEN
 elif not st.session_state.splash_completado:
     with placeholder.container():
-        t_splash = "Cerrando sistema..." if st.session_state.motivo_splash == "logout" else f"Hola {st.session_state.usuario_actual}..."
-        c_caja = "#FF4B4B" if st.session_state.motivo_splash == "logout" else "#d2a679"
-        
-        st.markdown(f"""
-            <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0e1117; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                <div class="scene">
-                    <div class="cube" style="width:80px; height:80px; animation: move-pkg 3s infinite linear;">
-                        <div class="cube-face front"  style="width:80px; height:80px; background:{c_caja}; transform: rotateY(0deg) translateZ(40px);"></div>
-                        <div class="cube-face back"   style="width:80px; height:80px; background:{c_caja}; transform: rotateY(180deg) translateZ(40px);"></div>
-                        <div class="cube-face right"  style="width:80px; height:80px; background:{c_caja}; transform: rotateY(90deg) translateZ(40px);"></div>
-                        <div class="cube-face left"   style="width:80px; height:80px; background:{c_caja}; transform: rotateY(-90deg) translateZ(40px);"></div>
-                        <div class="cube-face top"    style="width:80px; height:80px; background:#e3bc94; transform: rotateX(90deg) translateZ(40px);"></div>
-                        <div class="cube-face bottom" style="width:80px; height:80px; background:#b08d5c; transform: rotateX(-90deg) translateZ(40px);"></div>
+        # Definición de mensajes según el motivo
+        if st.session_state.motivo_splash == "logout":
+            mensajes = ["Cerrando sesión...", "Guardando cambios...", "Sesión finalizada."]
+            c_caja = "#FF4B4B"
+        else:
+            # Mensajes dinámicos de bienvenida
+            usuario = st.session_state.usuario_actual.capitalize() if st.session_state.usuario_actual else "Usuario"
+            mensajes = [
+                f"¡Hola de vuelta, {usuario}!",
+                "Actualizando base de datos...",
+                "Sincronizando estatus de envíos...",
+                "Accediendo al sistema..."
+            ]
+            c_caja = "#d2a679"
+
+        # Contenedor vacío para actualizar el texto sin refrescar toda la página
+        splash_placeholder = st.empty()
+
+        for i, msg in enumerate(mensajes):
+            splash_placeholder.markdown(f"""
+                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0e1117; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <div class="scene">
+                        <div class="cube" style="width:80px; height:80px; animation: move-pkg 3s infinite linear;">
+                            <div class="cube-face front"  style="width:80px; height:80px; background:{c_caja}; transform: rotateY(0deg) translateZ(40px);"></div>
+                            <div class="cube-face back"   style="width:80px; height:80px; background:{c_caja}; transform: rotateY(180deg) translateZ(40px);"></div>
+                            <div class="cube-face right"  style="width:80px; height:80px; background:{c_caja}; transform: rotateY(90deg) translateZ(40px);"></div>
+                            <div class="cube-face left"   style="width:80px; height:80px; background:{c_caja}; transform: rotateY(-90deg) translateZ(40px);"></div>
+                            <div class="cube-face top"    style="width:80px; height:80px; background:#e3bc94; transform: rotateX(90deg) translateZ(40px);"></div>
+                            <div class="cube-face bottom" style="width:80px; height:80px; background:#b08d5c; transform: rotateX(-90deg) translateZ(40px);"></div>
+                        </div>
                     </div>
+                    <div style="color:yellow; font-family:'Arial'; margin-top:25px; letter-spacing:2px; text-transform:none; font-size: 16px; font-weight: bold;">{msg}</div>
                 </div>
-                <div style="color:yellow; font-family:'Arial'; margin-top:25px; letter-spacing:2px; text-transform:none; font-size: 14px;">{t_splash}</div>
-            </div>
-        """, unsafe_allow_html=True)
-        time.sleep(2.5)
+            """, unsafe_allow_html=True)
+            
+            # Tiempo entre cada mensaje (ajustable)
+            time.sleep(0.8 if i < len(mensajes)-1 else 1.0)
         
+        # Lógica de cierre de sesión
         if st.session_state.motivo_splash == "logout":
             st.session_state.logueado = False
             st.session_state.usuario_actual = None
-            st.session_state.pagina = "principal" # Reseteo de página
+            st.session_state.pagina = "principal"
             st.session_state.motivo_splash = "inicio"
             st.cache_data.clear()
         
@@ -906,6 +925,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
