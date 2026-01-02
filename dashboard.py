@@ -4,6 +4,7 @@ import altair as alt
 import time
 import base64
 import textwrap
+import streamlit.components.v1 as components
 
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
@@ -1083,6 +1084,7 @@ else:
             st.session_state.pagina = "principal"
             scroll_top()
             st.rerun()        
+
 
 
 
