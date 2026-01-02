@@ -8,6 +8,9 @@ import textwrap
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
 
+st.markdown("<div id='top'></div>", unsafe_allow_html=True)
+
+
 # 2. ESTADOS DE SESIÓN
 if "logueado" not in st.session_state:
     st.session_state.logueado = False
@@ -28,9 +31,14 @@ if "tabla_expandida" not in st.session_state:
 # FUNCIONES AUXILIARES
 # =============================
 def scroll_top():
-    st.markdown(
-        "<script>window.scrollTo({ top: 0, behavior: 'instant' });</script>",
-        unsafe_allow_html=True
+    components.html(
+        """
+        <script>
+            const el = window.parent.document.getElementById("top");
+            if (el) { el.scrollIntoView({behavior: "instant"}); }
+        </script>
+        """,
+        height=0,
     )
 
 
@@ -1075,6 +1083,7 @@ else:
             st.session_state.pagina = "principal"
             scroll_top()
             st.rerun()        
+
 
 
 
