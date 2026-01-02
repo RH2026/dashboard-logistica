@@ -1105,59 +1105,64 @@ else:
         # Pie de página
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística - Vista Gerencial</div>", unsafe_allow_html=True)
     # ------------------------------------------------------------------
-    # BLOQUE 10: REPORTE MENSUAL (CONEXIÓN GITHUB)
+    # BLOQUE 10: REPORTE MENSUAL (CARGA LOCAL)
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "Reporte":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📅 Reporte Logístico Mensual</h2>", unsafe_allow_html=True)
         st.divider()
 
-        # URL RAW EXACTA (Corregida según tu captura de GitHub)
-        URL_MATRIZ = "https://raw.githubusercontent.com/Zetina97/Logistica/main/matriz_mensual.csv"
-
-        @st.cache_data(ttl=300)
-        def cargar_matriz_mensual(url):
+        # --- MOTOR DE DATOS DEL REPORTE ---
+        @st.cache_data
+        def cargar_matriz_reporte():
             try:
-                # Cargamos el CSV de GitHub
-                df_rep = pd.read_csv(url)
+                # Al estar en el mismo directorio que dashboard.py, se carga así:
+                df_r = pd.read_csv("matriz_mensual.csv", encoding="utf-8")
                 
-                # Estandarizamos nombres para evitar errores de espacios o mayúsculas
-                df_rep.columns = [c.upper().strip() for c in df_rep.columns]
+                # Estandarizar columnas a MAYÚSCULAS y quitar espacios
+                df_r.columns = [c.upper().strip() for c in df_r.columns]
                 
-                # Limpieza de datos numéricos
-                df_rep["COSTO DE GUIA"] = pd.to_numeric(df_rep["COSTO DE GUIA"], errors='coerce').fillna(0)
-                df_rep["VALOR FACTURA"] = pd.to_numeric(df_rep["VALOR FACTURA"], errors='coerce').fillna(0)
+                # Asegurar que los valores para el cálculo sean numéricos
+                df_r["COSTO DE GUIA"] = pd.to_numeric(df_r["COSTO DE GUIA"], errors='coerce').fillna(0)
+                df_r["VALOR FACTURA"] = pd.to_numeric(df_r["VALOR FACTURA"], errors='coerce').fillna(0)
                 
-                # CÁLCULO: Porcentaje Logístico (Flete vs Venta)
-                df_rep["% LOGÍSTICO"] = (df_rep["COSTO DE GUIA"] / df_rep["VALOR FACTURA"]) * 100
-                df_rep["% LOGÍSTICO"] = df_rep["% LOGÍSTICO"].replace([float('inf'), -float('inf')], 0).fillna(0)
+                # CÁLCULO: Porcentaje Logístico (Costo Flete / Valor Factura * 100)
+                df_r["% LOGÍSTICO"] = 0.0
+                # Solo calcular donde la factura sea mayor a 0 para evitar error de división
+                mask = df_r["VALOR FACTURA"] > 0
+                df_r.loc[mask, "% LOGÍSTICO"] = (df_r["COSTO DE GUIA"] / df_r["VALOR FACTURA"]) * 100
                 
-                return df_rep
+                return df_r
+            except FileNotFoundError:
+                st.error("❌ No se encontró 'matriz_mensual.csv' en el directorio del proyecto.")
+                return None
             except Exception as e:
+                st.error(f"❌ Error al procesar el reporte: {e}")
                 return None
 
-        df_m = cargar_matriz_mensual(URL_MATRIZ)
+        df_m = cargar_matriz_reporte()
 
         if df_m is not None:
-            # --- MÉTRICAS DE IMPACTO ---
-            total_flete = df_m["COSTO DE GUIA"].sum()
-            total_venta = df_m["VALOR FACTURA"].sum()
-            prom_log = (total_flete / total_venta * 100) if total_venta > 0 else 0
+            # --- MÉTRICAS GENERALES ---
+            t_flete = df_m["COSTO DE GUIA"].sum()
+            t_venta = df_m["VALOR FACTURA"].sum()
+            p_log_global = (t_flete / t_venta * 100) if t_venta > 0 else 0
 
-            m1, m2, m3 = st.columns(3)
-            m1.metric("Inversión Fletes", f"${total_flete:,.2f}")
-            m2.metric("Venta Total", f"${total_venta:,.2f}")
-            m3.metric("Impacto Logístico", f"{prom_log:.2f}%")
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Inversión en Fletes", f"${t_flete:,.2f}")
+            col2.metric("Venta Total Mes", f"${t_venta:,.2f}")
+            col3.metric("Impacto Logístico", f"{p_log_global:.2f}%")
 
             st.write("##")
 
-            # --- TABLA DE ANÁLISIS ---
+            # --- TABLA DE DETALLE ---
             st.markdown("### 📋 Análisis de Costos por Factura")
-            with st.expander("Ver desglose completo de la Matriz"):
-                # Mostramos columnas clave
-                columnas = ["FACTURA", "RAZON SOCIAL", "FLETERA", "COSTO DE GUIA", "VALOR FACTURA", "% LOGÍSTICO"]
+            with st.expander("Ver desglose completo de la Matriz Mensual"):
+                # Columnas sugeridas para la vista rápida
+                columnas_vista = ["FACTURA", "RAZON SOCIAL", "FLETERA", "COSTO DE GUIA", "VALOR FACTURA", "% LOGÍSTICO"]
+                
                 st.dataframe(
-                    df_m[columnas].sort_values("% LOGÍSTICO", ascending=False),
+                    df_m[columnas_vista].sort_values("% LOGÍSTICO", ascending=False),
                     use_container_width=True,
                     hide_index=True,
                     column_config={
@@ -1166,20 +1171,19 @@ else:
                         "% LOGÍSTICO": st.column_config.NumberColumn("Impacto %", format="%.2f%%")
                     }
                 )
-        else:
-            st.error("No se pudo cargar 'matriz_mensual.csv'. Verifica que el repositorio sea público.")
 
-        # --- NAVEGACIÓN ---
+        # --- NAVEGACIÓN (BOTONES A INICIO Y KPIs) ---
         st.divider()
-        nav_a, nav_b = st.columns(2)
-        with nav_a:
-            if st.button("🏠 Inicio", use_container_width=True):
+        n1, n2 = st.columns(2)
+        with n1:
+            if st.button("🏠 Volver al Inicio", use_container_width=True):
                 st.session_state.pagina = "principal"
                 st.rerun()
-        with nav_b:
-            if st.button("📊 KPIs Gerenciales", use_container_width=True):
+        with n2:
+            if st.button("📊 Ir a KPIs Gerenciales", use_container_width=True):
                 st.session_state.pagina = "KPIs"
                 st.rerun()
+
 
 
 
