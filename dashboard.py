@@ -1105,90 +1105,82 @@ else:
         # Pie de página
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística - Vista Gerencial</div>", unsafe_allow_html=True)
     # ------------------------------------------------------------------
-    # BLOQUE 10: REPORTE MENSUAL (DATOS DE GITHUB)
+    # BLOQUE 10: REPORTE MENSUAL (CONEXIÓN GITHUB)
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "Reporte":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📅 Reporte Logístico Mensual</h2>", unsafe_allow_html=True)
         st.divider()
 
-        # 1. URL DE GITHUB (MATRIZ MENSUAL)
-        URL_MATRIZ = "https://raw.githubusercontent.com/Zetina97/Logistica/refs/heads/main/matriz_mensual.csv"
+        # URL RAW EXACTA (Corregida según tu captura de GitHub)
+        URL_MATRIZ = "https://raw.githubusercontent.com/Zetina97/Logistica/main/matriz_mensual.csv"
 
-        @st.cache_data
-        def cargar_reporte_mensual(url):
+        @st.cache_data(ttl=300)
+        def cargar_matriz_mensual(url):
             try:
                 # Cargamos el CSV de GitHub
                 df_rep = pd.read_csv(url)
                 
-                # --- LIMPIEZA Y CÁLCULOS ---
-                # Aseguramos que los valores sean numéricos
+                # Estandarizamos nombres para evitar errores de espacios o mayúsculas
+                df_rep.columns = [c.upper().strip() for c in df_rep.columns]
+                
+                # Limpieza de datos numéricos
                 df_rep["COSTO DE GUIA"] = pd.to_numeric(df_rep["COSTO DE GUIA"], errors='coerce').fillna(0)
                 df_rep["VALOR FACTURA"] = pd.to_numeric(df_rep["VALOR FACTURA"], errors='coerce').fillna(0)
                 
-                # CÁLCULO: Porcentaje Logístico (Costo Flete / Valor Factura)
-                # Usamos una condición para evitar división por cero si la factura es 0
-                df_rep["PORC_LOGISTICO"] = (df_rep["COSTO DE GUIA"] / df_rep["VALOR FACTURA"]) * 100
-                df_rep["PORC_LOGISTICO"] = df_rep["PORC_LOGISTICO"].replace([float('inf'), -float('inf')], 0).fillna(0)
+                # CÁLCULO: Porcentaje Logístico (Flete vs Venta)
+                df_rep["% LOGÍSTICO"] = (df_rep["COSTO DE GUIA"] / df_rep["VALOR FACTURA"]) * 100
+                df_rep["% LOGÍSTICO"] = df_rep["% LOGÍSTICO"].replace([float('inf'), -float('inf')], 0).fillna(0)
                 
                 return df_rep
             except Exception as e:
-                st.error(f"Error al cargar matriz_mensual.csv: {e}")
                 return None
 
-        df_matriz = cargar_reporte_mensual(URL_MATRIZ)
+        df_m = cargar_matriz_mensual(URL_MATRIZ)
 
-        if df_matriz is not None:
-            # --- 2. TARJETAS DE MÉTRICAS DEL REPORTE ---
-            total_costo_flete = df_matriz["COSTO DE GUIA"].sum()
-            total_venta = df_matriz["VALOR FACTURA"].sum()
-            promedio_logistico = (total_costo_flete / total_venta * 100) if total_venta > 0 else 0
+        if df_m is not None:
+            # --- MÉTRICAS DE IMPACTO ---
+            total_flete = df_m["COSTO DE GUIA"].sum()
+            total_venta = df_m["VALOR FACTURA"].sum()
+            prom_log = (total_flete / total_venta * 100) if total_venta > 0 else 0
 
-            c1, c2, c3 = st.columns(3)
-            
-            with c1:
-                st.metric("Inversión Total Fletes", f"${total_costo_flete:,.2f}")
-            with c2:
-                st.metric("Valor Total Facturado", f"${total_venta:,.2f}")
-            with c3:
-                # Color dinámico: si el flete supera el 3% de la venta, ponerlo en rojo
-                color_p = "normal" if promedio_logistico < 3 else "inverse"
-                st.metric("Gasto Logístico Promedio", f"{promedio_logistico:.2f}%", delta_color=color_p)
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Inversión Fletes", f"${total_flete:,.2f}")
+            m2.metric("Venta Total", f"${total_venta:,.2f}")
+            m3.metric("Impacto Logístico", f"{prom_log:.2f}%")
 
             st.write("##")
 
-            # --- 3. TABLA DE DETALLE (CON EL NUEVO CÁLCULO) ---
-            st.markdown("### 📋 Desglose de Facturación y Logística")
-            
-            with st.expander("Ver tabla completa de Matriz Mensual"):
-                # Mostramos las columnas más importantes incluyendo el nuevo cálculo
-                cols_mostrar = [
-                    "FACTURA", "RAZON SOCIAL", "FLETERA", 
-                    "COSTO DE GUIA", "VALOR FACTURA", "PORC_LOGISTICO"
-                ]
-                
+            # --- TABLA DE ANÁLISIS ---
+            st.markdown("### 📋 Análisis de Costos por Factura")
+            with st.expander("Ver desglose completo de la Matriz"):
+                # Mostramos columnas clave
+                columnas = ["FACTURA", "RAZON SOCIAL", "FLETERA", "COSTO DE GUIA", "VALOR FACTURA", "% LOGÍSTICO"]
                 st.dataframe(
-                    df_matriz[cols_mostrar].sort_values("PORC_LOGISTICO", ascending=False),
+                    df_m[columnas].sort_values("% LOGÍSTICO", ascending=False),
                     use_container_width=True,
                     hide_index=True,
                     column_config={
-                        "COSTO DE GUIA": st.column_config.NumberColumn("Costo Flete", format="$%.2f"),
-                        "VALOR FACTURA": st.column_config.NumberColumn("Valor Factura", format="$%.2f"),
-                        "PORC_LOGISTICO": st.column_config.NumberColumn("% Logístico", format="%.2f%%")
+                        "COSTO DE GUIA": st.column_config.NumberColumn("Flete", format="$%.2f"),
+                        "VALOR FACTURA": st.column_config.NumberColumn("Venta", format="$%.2f"),
+                        "% LOGÍSTICO": st.column_config.NumberColumn("Impacto %", format="%.2f%%")
                     }
                 )
+        else:
+            st.error("No se pudo cargar 'matriz_mensual.csv'. Verifica que el repositorio sea público.")
 
         # --- NAVEGACIÓN ---
         st.divider()
-        nav1, nav2 = st.columns(2)
-        with nav1:
+        nav_a, nav_b = st.columns(2)
+        with nav_a:
             if st.button("🏠 Inicio", use_container_width=True):
                 st.session_state.pagina = "principal"
                 st.rerun()
-        with nav2:
-            if st.button("📊 KPIs", use_container_width=True):
+        with nav_b:
+            if st.button("📊 KPIs Gerenciales", use_container_width=True):
                 st.session_state.pagina = "KPIs"
                 st.rerun()
+
 
 
 
