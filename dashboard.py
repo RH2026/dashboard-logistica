@@ -1,4 +1,4 @@
-owimport streamlit as st
+import streamlit as st
 import pandas as pd
 import altair as alt
 import time
@@ -906,6 +906,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
