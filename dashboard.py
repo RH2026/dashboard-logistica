@@ -1034,8 +1034,8 @@ else:
 
         st.write("##")
 
-        # --- 6. TABLA ALINEADA A LA IZQUIERDA ---
-        st.markdown("<p style='color:white; font-size:18px; font-weight:bold;'>📦 Detalle de Pedidos Sin Entregar</p>", unsafe_allow_html=True)
+        # --- 6. TABLA ALINEADA A LA IZQUIERDA CON CONFIGURACIÓN ---
+        st.markdown("<p style='color:white; font-size:18px; font-weight:bold;'>Detalle de Pedidos Sin Entregar</p>", unsafe_allow_html=True)
         
         df_tabla_pend = df_sin_entregar.copy()
         df_tabla_pend["FECHA DE ENVÍO"] = df_tabla_pend["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
@@ -1044,14 +1044,19 @@ else:
         cols_mostrar = ["NÚMERO DE PEDIDO", "NOMBRE DEL CLIENTE", "FLETERA", "FECHA DE ENVÍO", "PROMESA DE ENTREGA", "NÚMERO DE GUÍA", "DIAS_TRANS", "DIAS_ATRASO_KPI"]
         df_final = df_tabla_pend[cols_mostrar].rename(columns={"DIAS_ATRASO_KPI":"DÍAS ATRASO", "DIAS_TRANS":"DÍAS TRANS."})
 
-        # Estilo para alinear a la izquierda (Standard Streamlit dataframe alignment)
+        # Renderizado con configuración de alineación manual
         st.dataframe(
             df_final,
             use_container_width=True,
-            hide_index=True
+            hide_index=True,
+            column_config={
+                "NÚMERO DE PEDIDO": st.column_config.TextColumn(required=True, width="medium"),
+                "NOMBRE DEL CLIENTE": st.column_config.TextColumn(width="large"),
+                "FLETERA": st.column_config.TextColumn(width="small"),
+                "DÍAS ATRASO": st.column_config.NumberColumn(format="%d", help="Días pasados de la promesa"),
+                "DÍAS TRANS.": st.column_config.NumberColumn(format="%d", help="Días desde el envío")
+            }
         )
-
-        st.divider()
 
         # --- 7. GRÁFICOS ---
         g1, g2 = st.columns(2)
@@ -1070,6 +1075,7 @@ else:
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
+
 
 
 
