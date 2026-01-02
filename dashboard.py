@@ -953,89 +953,97 @@ else:
                 st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
-    
+       
     # ------------------------------------------------------------------
-    # BLOQUE 9: PÁGINA DE KPIs (DISEÑO PREMIUM DE TARJETAS)
+    # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL CON TARJETAS PREMIUM)
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "KPIs":
         st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📊 Panel de Control Gerencial</h2>", unsafe_allow_html=True)
         st.divider()
 
-        # --- LÓGICA DE DATOS ---
+        # --- LÓGICA DE DATOS EN MEMORIA ---
         hoy = pd.Timestamp.today().normalize()
         df_kpi = df.copy()
-        
-        # Cálculos de Costo en Memoria
         df_kpi["COSTO DE LA GUÍA"] = pd.to_numeric(df_kpi["COSTO DE LA GUÍA"], errors='coerce').fillna(0)
         df_kpi["CANTIDAD DE CAJAS"] = pd.to_numeric(df_kpi["CANTIDAD DE CAJAS"], errors='coerce').fillna(1).replace(0, 1)
         df_kpi["COSTO_UNITARIO"] = df_kpi["COSTO DE LA GUÍA"] / df_kpi["CANTIDAD DE CAJAS"]
 
-        df_entregados = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
-        df_retrasados = df_kpi[df_kpi["ESTATUS_CALCULADO"] == "RETRASADO"].copy()
-        df_pendientes = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].isna()].copy()
+        # Variables para las tarjetas
+        eficiencia_val = (len(df[df['ESTATUS_CALCULADO'] == 'ENTREGADO']) / len(df) * 100) if len(df)>0 else 0
+        riesgo_val = df[df["ESTATUS_CALCULADO"] == "RETRASADO"]["COSTO DE LA GUÍA"].sum()
+        costo_caja_prom = df_kpi["COSTO_UNITARIO"].mean()
+        retraso_prom_val = (hoy - df[df["ESTATUS_CALCULADO"] == "RETRASADO"]["PROMESA DE ENTREGA"]).dt.days.mean() if not df[df["ESTATUS_CALCULADO"] == "RETRASADO"].empty else 0
+        pendientes_val = len(df[df["FECHA DE ENTREGA REAL"].isna()])
 
-        # --------------------------------------------------
-        # 1. MÉTRICAS SUPERIORES
-        # --------------------------------------------------
+        # --- ESTILOS DE LAS TARJETAS (IGUAL A TU DISEÑO) ---
+        estilo_kpi_card = """
+            background-color: #11141C; 
+            padding: 20px; 
+            border-radius: 15px; 
+            border: 1px solid #2D333F; 
+            text-align: center;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        """
+        estilo_titulo_kpi = "color: white; font-size: 14px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; border-bottom: 1px solid #2D333F; padding-bottom: 8px;"
+        
+        # Lógica de color para Costo/Caja (Rojo si > 60)
+        color_costo_caja = "#FF4B4B" if costo_caja_prom > 60 else "#00FFAA"
+
+        # --- RENDERIZADO DE FILA DE INDICADORES ---
         m1, m2, m3, m4, m5 = st.columns(5)
-        m1.metric("Cumplimiento", f"{(len(df_entregados)/len(df_kpi)*100):.1f}%")
-        m2.metric("Riesgo $", f"${df_retrasados['COSTO DE LA GUÍA'].sum():,.0f}")
-        m3.metric("Costo/Caja", f"${df_kpi['COSTO_UNITARIO'].mean():,.2f}")
-        m4.metric("Retraso Prom.", f"{(hoy - df_retrasados['PROMESA DE ENTREGA']).dt.days.mean() if not df_retrasados.empty else 0:.1f} d")
-        m5.metric("Pendientes", len(df_pendientes))
+        
+        with m1:
+            st.markdown(f"<div style='{estilo_kpi_card}'><div style='{estilo_titulo_kpi}'>Cumplimiento</div><div style='color:#00FFAA; font-size:28px; font-weight:bold;'>{eficiencia_val:.1f}%</div></div>", unsafe_allow_html=True)
+        with m2:
+            st.markdown(f"<div style='{estilo_kpi_card}'><div style='{estilo_titulo_kpi}'>Riesgo $</div><div style='color:#00FFAA; font-size:28px; font-weight:bold;'>${riesgo_val:,.0f}</div></div>", unsafe_allow_html=True)
+        with m3:
+            st.markdown(f"<div style='{estilo_kpi_card}'><div style='{estilo_titulo_kpi}'>Costo/Caja</div><div style='color:{color_costo_caja}; font-size:28px; font-weight:bold;'>${costo_caja_prom:,.2f}</div></div>", unsafe_allow_html=True)
+        with m4:
+            st.markdown(f"<div style='{estilo_kpi_card}'><div style='{estilo_titulo_kpi}'>Retraso Prom.</div><div style='color:#00FFAA; font-size:28px; font-weight:bold;'>{retraso_prom_val:.1f} d</div></div>", unsafe_allow_html=True)
+        with m5:
+            st.markdown(f"<div style='{estilo_kpi_card}'><div style='{estilo_titulo_kpi}'>Pendientes</div><div style='color:white; font-size:28px; font-weight:bold;'>{pendientes_val}</div></div>", unsafe_allow_html=True)
 
-        # --------------------------------------------------
-        # 2. GRÁFICAS (Mantenemos tu análisis visual)
-        # --------------------------------------------------
         st.write("##")
-        g1, g2 = st.columns(2)
-        with g1:
+
+        # --- GRÁFICAS GERENCIALES ---
+        c1, c2 = st.columns(2)
+        with c1:
             st.markdown("<p style='color:yellow; font-weight:bold;'>Volumen de Envíos</p>", unsafe_allow_html=True)
             df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="P")
             st.altair_chart(alt.Chart(df_vol).mark_area(line={'color':'#00FFAA'}, color=alt.Gradient(gradient='linear', stops=[alt.GradientStop(color='#00FFAA', offset=0), alt.GradientStop(color='transparent', offset=1)], x1=1, x2=1, y1=1, y2=0)).encode(x='FECHA DE ENVÍO:T', y='P:Q').properties(height=250), use_container_width=True)
-        with g2:
+        with c2:
             st.markdown("<p style='color:yellow; font-weight:bold;'>Eficiencia por Fletera</p>", unsafe_allow_html=True)
-            if not df_entregados.empty:
-                df_entregados["AT"] = df_entregados["FECHA DE ENTREGA REAL"] <= df_entregados["PROMESA DE ENTREGA"]
-                df_p = (df_entregados.groupby("FLETERA")["AT"].mean() * 100).reset_index()
+            df_ent = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
+            if not df_ent.empty:
+                df_ent["AT"] = df_ent["FECHA DE ENTREGA REAL"] <= df_ent["PROMESA DE ENTREGA"]
+                df_p = (df_ent.groupby("FLETERA")["AT"].mean() * 100).reset_index()
                 st.altair_chart(alt.Chart(df_p).mark_bar().encode(x=alt.X('AT:Q', scale=alt.Scale(domain=[0,100])), y=alt.Y('FLETERA:N', sort='-x'), color=alt.Color('AT:Q', scale=alt.Scale(scheme='redyellowgreen'))).properties(height=250), use_container_width=True)
 
-        # --------------------------------------------------
-        # 3. TARJETAS PRESENTABLES (ESTILO TU DISEÑO)
-        # --------------------------------------------------
+        # --- TABLAS DE ACCIÓN (ESTILO PREMIUM) ---
         st.write("##")
-        st.markdown("<h4 style='color:white;'>📋 Gestión de Casos Críticos</h4>", unsafe_allow_html=True)
-        
-        # Estilo de Card de tu imagen
-        estilo_card = "background-color:#11141C; padding:20px; border-radius:10px; border: 1px solid #2D333F; margin-bottom:15px; min-height:180px;"
+        t1, t2 = st.columns(2)
+        estilo_tabla_card = "background-color:#11141C; padding:15px; border-radius:10px; border: 1px solid #2D333F;"
 
-        # Filtro de casos graves (>3 días)
-        df_graves = df_retrasados.copy()
-        df_graves["D_M"] = (hoy - df_graves["PROMESA DE ENTREGA"]).dt.days
-        df_graves = df_graves[df_graves["D_M"] > 3].sort_values("D_M", ascending=False).head(6) # Mostramos top 6
+        with t1:
+            st.markdown(f"<div style='{estilo_tabla_card}'><p style='color:yellow; font-weight:bold; text-align:center;'>Retrasos Críticos (>3 días)</p></div>", unsafe_allow_html=True)
+            df_graves = df[df["ESTATUS_CALCULADO"] == "RETRASADO"].copy()
+            df_graves["D_M"] = (hoy - df_graves["PROMESA DE ENTREGA"]).dt.days
+            df_graves = df_graves[df_graves["D_M"] > 3].sort_values("D_M", ascending=False)
+            st.dataframe(df_graves[["NÚMERO DE PEDIDO", "FLETERA", "D_M"]].rename(columns={"D_M":"Días"}), use_container_width=True, hide_index=True)
 
-        if not df_graves.empty:
-            # Mostramos en rejilla de 2 columnas para que se vean como tarjetas grandes
-            cols = st.columns(2)
-            for idx, (_, row) in enumerate(df_graves.iterrows()):
-                with cols[idx % 2]:
-                    st.markdown(f"""
-                        <div style='{estilo_card}'>
-                            <div style='color:yellow; font-weight:bold; text-align:center; border-bottom:1px solid #2D333F; margin-bottom:10px; padding-bottom:5px;'>Alerta de Retraso Crítico</div>
-                            <b>PEDIDO:</b> {row['NÚMERO DE PEDIDO']}<br>
-                            <b>CLIENTE:</b> {row['NOMBRE DEL CLIENTE']}<br>
-                            <b>FLETERA:</b> {row['FLETERA']}<br>
-                            <b>RETRASO:</b> <span style='color:#FF4B4B; font-weight:bold;'>{row['D_M']} DÍAS</span><br>
-                            <b>GUÍA:</b> <span style='color:#38bdf8;'>{row.get('NÚMERO DE GUÍA','—')}</span>
-                        </div>
-                    """, unsafe_allow_html=True)
-        else:
-            st.success("✅ No hay retrasos mayores a 3 días.")
+        with t2:
+            st.markdown(f"<div style='{estilo_tabla_card}'><p style='color:yellow; font-weight:bold; text-align:center;'>Pedidos Pendientes</p></div>", unsafe_allow_html=True)
+            df_pen = df[df["FECHA DE ENTREGA REAL"].isna()].sort_values("PROMESA DE ENTREGA")
+            st.dataframe(df_pen[["NÚMERO DE PEDIDO", "FLETERA", "PROMESA DE ENTREGA"]], use_container_width=True, hide_index=True)
 
         st.write("##")
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
+
 
 
 
