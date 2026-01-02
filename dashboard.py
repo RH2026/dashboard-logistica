@@ -318,7 +318,7 @@ else:
         # --------------------------------------------------
         # 3. ACTUALIZACIÓN DE MÉTRICAS Y RENDERIZADO
         # --------------------------------------------------
-        # Calculamos métricas sobre el DataFrame ya filtrado (sea por pedido o por filtros normales)
+        # Cálculo de métricas generales
         total = len(df_filtrado)
         entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
         en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
@@ -337,15 +337,15 @@ else:
         if pedido_buscar != "" and not df_filtrado.empty:
             hoy = pd.Timestamp.today().normalize()
             
-            # Cálculos de tiempo para las tarjetas de búsqueda
+            # Cálculos de tiempo para las tarjetas (dentro del IF para evitar errores)
             df_filtrado["DIAS_TRANSCURRIDOS"] = (df_filtrado["FECHA DE ENTREGA REAL"].fillna(hoy) - df_filtrado["FECHA DE ENVÍO"]).dt.days
             df_filtrado["DIAS_RETRASO"] = (df_filtrado["FECHA DE ENTREGA REAL"].fillna(hoy) - df_filtrado["PROMESA DE ENTREGA"]).dt.days
             df_filtrado["DIAS_RETRASO"] = df_filtrado["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
 
-            # Estilos CSS de animaciones (En una sola línea para evitar errores de renderizado)
+            # Estilos CSS de animaciones (Una sola línea)
             st.markdown("""<style>@keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } } @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } } @keyframes p-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } } @keyframes p-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } } .dot-green { border-radius: 50% !important; animation: p-green 2s infinite; } .dot-blue { border-radius: 50% !important; animation: p-blue 2s infinite; } .dot-orange { border-radius: 50% !important; animation: p-orange 2s infinite; } .dot-red { border-radius: 50% !important; animation: p-red 2s infinite; }</style>""", unsafe_allow_html=True)
 
-            # INICIO DEL CICLO: Todo lo de abajo usa 'row' y debe estar indentado
+            # --- INICIA EL BUCLE FOR (Asegura la indentación de todo lo que sigue) ---
             for index, row in df_filtrado.iterrows():
                 st.markdown(f'<p style="font-size:14px; font-weight:bold; color:Yellow; margin-bottom:-10px;">Estatus de Factura: {row["NÚMERO DE PEDIDO"]}</p>', unsafe_allow_html=True)
                 
@@ -368,7 +368,7 @@ else:
                 txt_f_real = f_real_dt.strftime('%d/%m/%Y') if entregado else "PENDIENTE"
                 txt_f_actual = hoy_dt.strftime('%d/%m/%Y')
                 
-                # HTML Timeline (Una sola línea)
+                # HTML Timeline (Una sola línea para renderizado óptimo)
                 html_timeline = f'<div style="background:#111827;padding:25px;border-radius:12px;border:1px solid #374151;margin-top:15px;margin-bottom:20px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;width:100%;"><div style="position:absolute;top:20px;left:10%;right:10%;height:6px;background:#374151;z-index:0;"></div><div style="text-align:center;z-index:1;width:25%;"><div class="dot-green" style="width:40px;height:40px;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">ENVIADO</div><div style="color:gray;font-size:10px;">{txt_f_envio}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="dot-green" style="width:40px;height:40px;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">FECHA ACTUAL</div><div style="color:gray;font-size:10px;">{txt_f_actual}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="{anim_medio}" style="width:40px;height:40px;background:{c_medio};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_medio}</div><div style="color:gray;font-size:10px;"><span style="color:#22c55e;">PROMESA</span> {txt_f_promesa}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="{anim_fin}" style="width:40px;height:40px;border-radius:50%;background:{c_fin};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_fin}</div><div style="color:gray;font-size:10px;">FECHA REAL: {txt_f_real}</div></div></div></div>'
                 st.markdown(html_timeline, unsafe_allow_html=True)
                 
@@ -377,18 +377,18 @@ else:
                 estilo_card = "background-color:#1A1E25; padding:15px; border-radius:10px; border: 1px solid #374151; min-height: 270px;"
                 
                 with c1:
-                    # Cálculo de costo con blindaje contra errores
+                    # Cálculo de costo (Asegurando que 'row' esté disponible)
                     try:
-                        costo_val = row.get('COSTO DE LA GUÍA', 0)
-                        costo_mxn = f"${float(costo_val):,.2f}" if costo_val else "$0.00"
+                        c_val = row.get('COSTO DE LA GUÍA', 0)
+                        costo_mxn = f"${float(c_val):,.2f}" if c_val else "$0.00"
                     except:
                         costo_mxn = "$0.00"
                     
                     st.markdown(f"<div style='{estilo_card}'><div style='color:yellow; font-weight:bold; text-align:center;'>Información Cliente</div><b>NO CLIENTE:</b> {row.get('NO CLIENTE')}<br><b>NOMBRE:</b> {row.get('NOMBRE DEL CLIENTE')}<br><b>DESTINO:</b> {row.get('DESTINO')}<br><b>FLETERA:</b> {row.get('FLETERA')}<br><b>NÚMERO DE GUÍA:</b> {row.get('NÚMERO DE GUÍA')}<br><b>COSTO:</b> <span style='color:#22c55e;'>{costo_mxn}</span></div>", unsafe_allow_html=True)
                 
                 with c2:
-                    retraso = row.get('DIAS_RETRASO', 0)
-                    st.markdown(f"<div style='{estilo_card}'><div style='color:yellow; font-weight:bold; text-align:center;'>Seguimiento</div><b>ENVÍO:</b> {txt_f_envio}<br><b>PROMESA:</b> {txt_f_promesa}<br><b>REAL:</b> {txt_f_real}<br><b>DÍAS TRANS:</b> {row.get('DIAS_TRANSCURRIDOS')}<br><b>RETRASO:</b> <span style='color:{'red' if retraso > 0 else 'white'};'>{retraso}</span></div>", unsafe_allow_html=True)
+                    retraso_val = row.get('DIAS_RETRASO', 0)
+                    st.markdown(f"<div style='{estilo_card}'><div style='color:yellow; font-weight:bold; text-align:center;'>Seguimiento</div><b>ENVÍO:</b> {txt_f_envio}<br><b>PROMESA:</b> {txt_f_promesa}<br><b>REAL:</b> {txt_f_real}<br><b>DÍAS TRANS:</b> {row.get('DIAS_TRANSCURRIDOS')}<br><b>RETRASO:</b> <span style='color:{'red' if retraso_val > 0 else 'white'};'>{retraso_val}</span></div>", unsafe_allow_html=True)
                 
                 with c3:
                     st.markdown(f"<div style='{estilo_card}'><div style='color:yellow; font-weight:bold; text-align:center;'>Observaciones</div><b>ESTATUS:</b> {row.get('ESTATUS_CALCULADO')}<br><b>PRIORIDAD:</b> {row.get('PRIORIDAD')}<br><b>COMENTARIOS:</b><br><small>{row.get('COMENTARIOS', 'Sin comentarios')}</small></div>", unsafe_allow_html=True)
@@ -881,6 +881,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
