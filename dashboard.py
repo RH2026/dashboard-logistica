@@ -947,66 +947,16 @@ else:
         # --------------------------------------------------
         # FINAL DE PÁGINA Y BOTÓN A KPIs
         # --------------------------------------------------
-        # --- FINAL DE PÁGINA PRINCIPAL ---
         st.divider()
         col_esp, col_btn = st.columns([4, 1])
         with col_btn:
             if st.button("Ver KPIs Detallados", use_container_width=True):
                 st.session_state.pagina = "KPIs"
-                # Subir al inicio antes del cambio
                 st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
                 st.rerun()
         
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
 
-    # --- FILTRO DINÁMICO DE RETRASOS CRÍTICOS (AL PRINCIPIO DE KPIs) ---
-    st.markdown("<h3 style='color:#FF4B4B;'>🚨 Rastreador de Retrasos Críticos</h3>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#9CA3AF; font-size:14px;'>Muestra solo pedidos sin entregar que ya vencieron su fecha promesa.</p>", unsafe_allow_html=True)
-
-    # 1. Filtrar: Sin entrega REAL y con ATRASO > 0
-    df_criticos = df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] > 0].copy()
-    
-    # 2. Selector dinámico: Solo fleteras con problemas reales
-    paqueterias_con_retraso = sorted(df_criticos["FLETERA"].unique())
-    
-    if len(paqueterias_con_retraso) > 0:
-        seleccion = st.multiselect(
-            "Selecciona paqueterías con pedidos vencidos:", 
-            options=paqueterias_con_retraso,
-            placeholder="Ej. SINALOA EXPRESS, SANCHEZ..."
-        )
-        
-        # 3. Mostrar tabla solo si hay selección
-        if seleccion:
-            df_ver = df_criticos[df_criticos["FLETERA"].isin(seleccion)].copy()
-            
-            columnas_solicitadas = [
-                "NOMBRE DEL CLIENTE", "NÚMERO DE PEDIDO", "FLETERA", 
-                "FECHA DE ENVÍO", "PROMESA DE ENTREGA", "NÚMERO DE GUÍA", 
-                "DIAS_TRANS", "DIAS_ATRASO_KPI"
-            ]
-            
-            # Formatear fechas para la tabla
-            df_ver_show = df_ver[columnas_solicitadas].copy()
-            df_ver_show["FECHA DE ENVÍO"] = df_ver_show["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
-            df_ver_show["PROMESA DE ENTREGA"] = df_ver_show["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y')
-
-            st.dataframe(
-                df_ver_show.sort_values("DIAS_ATRASO_KPI", ascending=False),
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "DIAS_ATRASO_KPI": st.column_config.NumberColumn("Días Atraso ⚠️", format="%d"),
-                    "DIAS_TRANS": st.column_config.NumberColumn("Días Trans. 🕒", format="%d"),
-                    "NÚMERO DE GUÍA": st.column_config.TextColumn("Guía")
-                }
-            )
-            st.divider()
-        else:
-            st.info("Selecciona una paquetería para ver el detalle de sus pedidos vencidos.")
-    else:
-        st.success("✅ ¡Excelente! No hay pedidos con retraso en este momento.")
-        
     # ------------------------------------------------------------------
     # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL DEFINITIVA)
     # ------------------------------------------------------------------
@@ -1017,42 +967,62 @@ else:
         st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📊 Panel de Control Gerencial</h2>", unsafe_allow_html=True)
         st.divider()
 
-        # --- 2. LÓGICA DE DATOS (CORREGIDA) ---
+        # --- 2. LÓGICA DE DATOS (ESTANDARIZADA) ---
         hoy = pd.Timestamp.today().normalize()
         df_kpi = df.copy()
-        
-        # Estandarizamos nombres de columnas para evitar KeyError
-        df_kpi.columns = [c.upper() for c in df_kpi.columns]
+        df_kpi.columns = [c.upper() for c in df_kpi.columns] # Blindaje contra KeyErrors
         
         df_kpi["COSTO DE LA GUÍA"] = pd.to_numeric(df_kpi["COSTO DE LA GUÍA"], errors='coerce').fillna(0)
         df_kpi["CANTIDAD DE CAJAS"] = pd.to_numeric(df_kpi["CANTIDAD DE CAJAS"], errors='coerce').fillna(1).replace(0, 1)
         df_kpi["COSTO_UNITARIO"] = df_kpi["COSTO DE LA GUÍA"] / df_kpi["CANTIDAD DE CAJAS"]
         
-        # Filtro de pedidos SIN ENTREGAR
         df_sin_entregar = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].isna()].copy()
         df_sin_entregar["DIAS_ATRASO_KPI"] = (hoy - df_sin_entregar["PROMESA DE ENTREGA"]).dt.days
         df_sin_entregar["DIAS_ATRASO_KPI"] = df_sin_entregar["DIAS_ATRASO_KPI"].apply(lambda x: x if x > 0 else 0)
         df_sin_entregar["DIAS_TRANS"] = (hoy - df_sin_entregar["FECHA DE ENVÍO"]).dt.days
 
-        # --- 3. CÁLCULO DE MÉTRICAS ---
+        # --- 3. FILTRO DINÁMICO DE RETRASOS CRÍTICOS ---
+        st.markdown("<h3 style='color:#FF4B4B;'>🚨 Rastreador de Retrasos Críticos</h3>", unsafe_allow_html=True)
+        df_criticos = df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] > 0].copy()
+        paqueterias_con_retraso = sorted(df_criticos["FLETERA"].unique())
+        
+        if len(paqueterias_con_retraso) > 0:
+            seleccion = st.multiselect("Selecciona paqueterías con pedidos vencidos:", options=paqueterias_con_retraso)
+            if seleccion:
+                df_ver = df_criticos[df_criticos["FLETERA"].isin(seleccion)].copy()
+                df_ver_show = df_ver.copy()
+                df_ver_show["FECHA DE ENVÍO"] = df_ver_show["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
+                df_ver_show["PROMESA DE ENTREGA"] = df_ver_show["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y')
+
+                st.dataframe(
+                    df_ver_show.sort_values("DIAS_ATRASO_KPI", ascending=False),
+                    use_container_width=True, hide_index=True,
+                    column_config={
+                        "DIAS_ATRASO_KPI": st.column_config.NumberColumn("Días Atraso ⚠️", format="%d"),
+                        "DIAS_TRANS": st.column_config.NumberColumn("Días Trans. 🕒", format="%d")
+                    }
+                )
+                st.divider()
+        else:
+            st.success("✅ ¡Excelente! No hay pedidos con retraso en este momento.")
+
+        # --- 4. CÁLCULO DE MÉTRICAS Y TARJETAS ---
         total_p = len(df_kpi)
         pend_p = len(df_sin_entregar)
         eficiencia_p = (len(df_kpi[df_kpi['ESTATUS_CALCULADO'] == 'ENTREGADO']) / total_p * 100) if total_p > 0 else 0
         costo_caja_p = df_kpi["COSTO_UNITARIO"].mean()
 
-        # Alertas de atraso (Fila 2)
         a1_val = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] == 1])
         a2_val = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] == 2])
         a5_val = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] >= 5])
 
-        # --- 4. ESTILOS ---
         estilo_main = "background-color:#11141C; padding:20px; border-radius:15px; border:1px solid #2D333F; text-align:center; min-height:140px;"
         titulo_main = "color:yellow; font-size:13px; font-weight:bold; margin-bottom:10px; text-transform:uppercase; border-bottom:1px solid #2D333F; padding-bottom:5px;"
         
         def card_alerta(color):
             return f"background-color:#161B22; padding:20px; border-radius:10px; border-left: 6px solid {color}; border-top:1px solid #2D333F; border-right:1px solid #2D333F; border-bottom:1px solid #2D333F; text-align:center;"
 
-        # --- 5. FILA 1: PRINCIPALES (AMARILLO) ---
+        # --- FILA 1 ---
         m1, m2, m3, m4 = st.columns(4)
         m1.markdown(f"<div style='{estilo_main}'><div style='{titulo_main}'>Pedidos Totales</div><div style='color:white; font-size:28px; font-weight:bold;'>{total_p}</div></div>", unsafe_allow_html=True)
         m2.markdown(f"<div style='{estilo_main}'><div style='{titulo_main}'>Sin Entregar</div><div style='color:#38bdf8; font-size:28px; font-weight:bold;'>{pend_p}</div></div>", unsafe_allow_html=True)
@@ -1062,7 +1032,7 @@ else:
 
         st.write("##")
         
-        # --- 6. FILA 2: ALERTAS DE ATRASO PREMIUM ---
+        # --- FILA 2 ---
         st.markdown("<p style='color:#9CA3AF; font-size:12px; font-weight:bold; letter-spacing:1px;'>⚠️ MONITOREO DE ATRASOS (SOLO PENDIENTES)</p>", unsafe_allow_html=True)
         a1, a2, a3 = st.columns(3)
         a1.markdown(f"<div style='{card_alerta('yellow')}'><div style='color:#9CA3AF; font-size:11px; font-weight:bold; text-transform:uppercase;'>1 Día Retraso</div><div style='color:white; font-size:32px; font-weight:bold;'>{a1_val}</div></div>", unsafe_allow_html=True)
@@ -1071,80 +1041,31 @@ else:
 
         st.write("##")
 
-        # --- 7. TABLA DE PENDIENTES ---
+        # --- 7. TABLA DE PENDIENTES GENERAL ---
         st.markdown("<p style='color:white; font-size:18px; font-weight:bold;'>📦 Detalle de Pedidos Sin Entregar</p>", unsafe_allow_html=True)
-        
-        df_tabla = df_sin_entregar.copy()
-        df_tabla["FECHA DE ENVÍO"] = df_tabla["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
-        df_tabla["PROMESA DE ENTREGA"] = df_tabla["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y')
-        
-        df_final = df_tabla[[
-            "NÚMERO DE PEDIDO", "NOMBRE DEL CLIENTE", "FLETERA", 
-            "FECHA DE ENVÍO", "PROMESA DE ENTREGA", "NÚMERO DE GUÍA", 
-            "DIAS_TRANS", "DIAS_ATRASO_KPI"
-        ]].rename(columns={"DIAS_ATRASO_KPI":"DÍAS ATRASO", "DIAS_TRANS":"DÍAS TRANS."})
-
-        st.dataframe(
-            df_final,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "NOMBRE DEL CLIENTE": st.column_config.TextColumn(width="large"),
-                "NÚMERO DE PEDIDO": st.column_config.TextColumn(width="medium")
-            }
-        )
+        df_final = df_sin_entregar[["NÚMERO DE PEDIDO", "NOMBRE DEL CLIENTE", "FLETERA", "FECHA DE ENVÍO", "PROMESA DE ENTREGA", "NÚMERO DE GUÍA", "DIAS_TRANS", "DIAS_ATRASO_KPI"]].rename(columns={"DIAS_ATRASO_KPI":"DÍAS ATRASO", "DIAS_TRANS":"DÍAS TRANS."})
+        st.dataframe(df_final, use_container_width=True, hide_index=True, column_config={"NOMBRE DEL CLIENTE": st.column_config.TextColumn(width="large")})
 
         st.divider()
 
         # --- 8. GRÁFICOS INDEPENDIENTES ---
-        # Gráfico 1: Volumen
         st.markdown("<p style='color:yellow; font-weight:bold; font-size:16px;'>📈 Volumen Histórico de Envíos</p>", unsafe_allow_html=True)
         df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="P")
         chart_vol = alt.Chart(df_vol).mark_area(line={'color':'#00FFAA'}, color=alt.Gradient(gradient='linear', stops=[alt.GradientStop(color='#00FFAA', offset=0), alt.GradientStop(color='transparent', offset=1)], x1=1, x2=1, y1=1, y2=0)).encode(x='FECHA DE ENVÍO:T', y='P:Q').properties(height=300)
         st.altair_chart(chart_vol, use_container_width=True)
 
-        # Gráfico 2: Eficiencia (CORREGIDO EL ERROR DE NOMBRE DE COLUMNA)
+        st.write("##")
         st.markdown("<p style='color:yellow; font-weight:bold; font-size:16px;'>🏆 Eficiencia Real por Fletera</p>", unsafe_allow_html=True)
         df_ent = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
         if not df_ent.empty:
             df_ent["AT"] = df_ent["FECHA DE ENTREGA REAL"] <= df_ent["PROMESA DE ENTREGA"]
             df_p = (df_ent.groupby("FLETERA")["AT"].mean() * 100).reset_index()
-            chart_perf = alt.Chart(df_p).mark_bar().encode(
-                x=alt.X('AT:Q', title="Cumplimiento %", scale=alt.Scale(domain=[0,100])),
-                y=alt.Y('FLETERA:N', sort='-x', title=None, axis=alt.Axis(labelLimit=400)),
-                color=alt.Color('AT:Q', scale=alt.Scale(scheme='redyellowgreen'), legend=None)
-            ).properties(height=400)
+            chart_perf = alt.Chart(df_p).mark_bar().encode(x=alt.X('AT:Q', scale=alt.Scale(domain=[0,100])), y=alt.Y('FLETERA:N', sort='-x', axis=alt.Axis(labelLimit=400)), color=alt.Color('AT:Q', scale=alt.Scale(scheme='redyellowgreen'), legend=None)).properties(height=400)
             st.altair_chart(chart_perf, use_container_width=True)
 
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
-            st.rerun()  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            st.rerun()
 
 
 
