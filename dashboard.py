@@ -950,6 +950,9 @@ else:
             # Este es el botón que cambia el estado para ir a la otra página
             if st.button("📊 Ver KPIs Detallados", use_container_width=True):
                 st.session_state.pagina = "KPIs"
+            # Esta línea extra ayuda a limpiar el foco antes de saltar
+            st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+                
                 st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
@@ -958,11 +961,8 @@ else:
     # ------------------------------------------------------------------
     # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL - DISEÑO FINAL)
     # ------------------------------------------------------------------
-    elif st.session_state.pagina == "KPIs":
-        # 1. Fuerza el scroll hacia arriba (JavaScript)
-        st.markdown("<script>window.scrollTo(0,0); parent.window.scrollTo(0,0);</script>", unsafe_allow_html=True)
-        
-        st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📊 Panel de Control Gerencial</h2>", unsafe_allow_html=True)
+          
+        st.markdown("<h2 style='text-align:center; color:#FFFFFF;'>Panel de Seguimiento</h2>", unsafe_allow_html=True)
         st.divider()
 
         # --- 2. LÓGICA DE DATOS ---
@@ -1062,6 +1062,7 @@ else:
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
+
 
 
 
