@@ -961,13 +961,63 @@ else:
     # ------------------------------------------------------------------
     # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL - DISEÑO FINAL)
     # ------------------------------------------------------------------
-    # ESTE ELIF VA AFUERA, AL MISMO NIVEL QUE EL IF PRINCIPAL
-    elif st.session_state.pagina == "KPIs":
-        # 1. Asegurar scroll al inicio al cargar esta sección
-        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+    
+    #FILTROS
+    # --- FILTRO DINÁMICO DE PENDIENTES (AL PRINCIPIO DE KPIs) ---
+    st.markdown("<h3 style='color:#00FFAA;'>🔍 Rastreador de Pendientes</h3>", unsafe_allow_html=True)
+    
+    # 1. Filtrar solo los que no tienen FECHA DE ENTREGA REAL
+    df_pendientes = df_kpi[df_kpi["FECHA DE entrega real"].isna()].copy()
+    
+    # 2. Selector de Fletera
+    paqueterias_pendientes = df_pendientes["FLETERA"].unique()
+    seleccion = st.multiselect(
+        "Filtrar por Paquetería (Solo pedidos en tránsito):", 
+        options=paqueterias_pendientes,
+        placeholder="Selecciona una o varias paqueterías para ver el detalle..."
+    )
+    
+    # 3. Mostrar/Ocultar bloque según la selección
+    if seleccion:
+        # Filtrar datos
+        df_ver = df_pendientes[df_pendientes["FLETERA"].isin(seleccion)].copy()
         
-        st.markdown("<h2 style='text-align:center; color:#FFFFFF;'>Panel de Seguimiento</h2>", unsafe_allow_html=True)
-        st.divider()              
+        # Calcular columnas necesarias si no existen
+        hoy = pd.Timestamp.now()
+        df_ver["DÍAS TRANS."] = (hoy - df_ver["FECHA DE ENVÍO"]).dt.days
+        df_ver["DÍAS ATRASO"] = (hoy - df_ver["PROMESA DE ENTREGA"]).dt.days
+        df_ver["DÍAS ATRASO"] = df_ver["DÍAS ATRASO"].apply(lambda x: x if x > 0 else 0)
+        
+        # Seleccionar solo las columnas solicitadas
+        columnas_solicitadas = [
+            "NOMBRE DEL CLIENTE", "NÚMERO DE PEDIDO", "FLETERA", 
+            "FECHA DE ENVÍO", "PROMESA DE ENTREGA", "NÚMERO DE GUÍA", 
+            "DÍAS TRANS.", "DÍAS ATRASO"
+        ]
+        
+        # Estilizar y mostrar
+        st.dataframe(
+            df_ver[columnas_solicitadas].sort_values("DÍAS ATRASO", ascending=False),
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "FECHA DE ENVÍO": st.column_config.DateColumn("Envío"),
+                "PROMESA DE ENTREGA": st.column_config.DateColumn("Promesa"),
+                "DÍAS ATRASO": st.column_config.NumberColumn("Atraso (Días)", format="%d ⚠️")
+            }
+        )
+        st.divider() # Línea divisoria solo cuando hay selección
+    else:
+        st.info("Selecciona una paquetería arriba para desplegar la lista de pedidos pendientes.")
+        
+        
+        # ESTE ELIF VA AFUERA, AL MISMO NIVEL QUE EL IF PRINCIPAL
+        elif st.session_state.pagina == "KPIs":
+            # 1. Asegurar scroll al inicio al cargar esta sección
+            st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+            
+            st.markdown("<h2 style='text-align:center; color:#FFFFFF;'>Panel de Seguimiento</h2>", unsafe_allow_html=True)
+            st.divider()              
         
         
         # --- 2. LÓGICA DE DATOS ---
@@ -1098,6 +1148,7 @@ else:
             st.session_state.pagina = "principal"
             
             st.rerun()        
+
 
 
 
