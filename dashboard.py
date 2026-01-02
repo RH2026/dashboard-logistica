@@ -900,85 +900,88 @@ else:
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
     
     # ------------------------------------------------------------------
-    # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL - CÁLCULOS EN MEMORIA)
+    # BLOQUE 9: PÁGINA DE KPIs (DISEÑO PREMIUM DE TARJETAS)
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "KPIs":
         st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📊 Panel de Control Gerencial</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center; color:gray;'>Análisis de Riesgos y Costos Unitarios</p>", unsafe_allow_html=True)
         st.divider()
 
-        # --- LÓGICA DE DATOS (Solo en memoria RAM) ---
+        # --- LÓGICA DE DATOS ---
         hoy = pd.Timestamp.today().normalize()
-        
-        # Creamos el dataframe de trabajo para KPIs
         df_kpi = df.copy()
         
-        # Limpieza técnica para el cálculo
+        # Cálculos de Costo en Memoria
         df_kpi["COSTO DE LA GUÍA"] = pd.to_numeric(df_kpi["COSTO DE LA GUÍA"], errors='coerce').fillna(0)
-        df_kpi["CANTIDAD DE CAJAS"] = pd.to_numeric(df_kpi["CANTIDAD DE CAJAS"], errors='coerce').fillna(1)
-        df_kpi["CANTIDAD DE CAJAS"] = df_kpi["CANTIDAD DE CAJAS"].replace(0, 1)
-        
-        # Este cálculo solo existe aquí dentro
-        df_kpi["COSTO_UNITARIO_MEMORIA"] = df_kpi["COSTO DE LA GUÍA"] / df_kpi["CANTIDAD DE CAJAS"]
+        df_kpi["CANTIDAD DE CAJAS"] = pd.to_numeric(df_kpi["CANTIDAD DE CAJAS"], errors='coerce').fillna(1).replace(0, 1)
+        df_kpi["COSTO_UNITARIO"] = df_kpi["COSTO DE LA GUÍA"] / df_kpi["CANTIDAD DE CAJAS"]
 
-        df_entregados = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()]
-        df_retrasados = df_kpi[df_kpi["ESTATUS_CALCULADO"] == "RETRASADO"]
-        df_pendientes = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].isna()]
+        df_entregados = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
+        df_retrasados = df_kpi[df_kpi["ESTATUS_CALCULADO"] == "RETRASADO"].copy()
+        df_pendientes = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].isna()].copy()
 
         # --------------------------------------------------
-        # 1. INDICADORES (Métrica corregida en memoria)
+        # 1. MÉTRICAS SUPERIORES
         # --------------------------------------------------
         m1, m2, m3, m4, m5 = st.columns(5)
-        
-        with m1:
-            eficiencia = (len(df_entregados) / len(df_kpi) * 100) if len(df_kpi) > 0 else 0
-            st.metric("Cumplimiento", f"{eficiencia:.1f}%")
-        
-        with m2:
-            st.metric("Costo en Riesgo", f"${df_retrasados['COSTO DE LA GUÍA'].sum():,.2f}")
-        
-        with m3:
-            # Usamos la columna que vive en memoria
-            costo_caja_prom = df_kpi["COSTO_UNITARIO_MEMORIA"].mean()
-            st.metric("Costo Prom. Caja", f"${costo_caja_prom:,.2f}")
-            
-        with m4:
-            dias_atraso = (hoy - df_retrasados["PROMESA DE ENTREGA"]).dt.days.mean() if not df_retrasados.empty else 0
-            st.metric("Retraso Prom.", f"{dias_atraso:.1f} días")
-            
-        with m5:
-            st.metric("Total Pendientes", len(df_pendientes))
+        m1.metric("Cumplimiento", f"{(len(df_entregados)/len(df_kpi)*100):.1f}%")
+        m2.metric("Riesgo $", f"${df_retrasados['COSTO DE LA GUÍA'].sum():,.0f}")
+        m3.metric("Costo/Caja", f"${df_kpi['COSTO_UNITARIO'].mean():,.2f}")
+        m4.metric("Retraso Prom.", f"{(hoy - df_retrasados['PROMESA DE ENTREGA']).dt.days.mean() if not df_retrasados.empty else 0:.1f} d")
+        m5.metric("Pendientes", len(df_pendientes))
 
         # --------------------------------------------------
-        # 2. SECCIÓN DE TABLAS (Sin mostrar la columna de memoria)
+        # 2. GRÁFICAS (Mantenemos tu análisis visual)
         # --------------------------------------------------
         st.write("##")
-        t1, t2 = st.columns(2)
+        g1, g2 = st.columns(2)
+        with g1:
+            st.markdown("<p style='color:yellow; font-weight:bold;'>Volumen de Envíos</p>", unsafe_allow_html=True)
+            df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="P")
+            st.altair_chart(alt.Chart(df_vol).mark_area(line={'color':'#00FFAA'}, color=alt.Gradient(gradient='linear', stops=[alt.GradientStop(color='#00FFAA', offset=0), alt.GradientStop(color='transparent', offset=1)], x1=1, x2=1, y1=1, y2=0)).encode(x='FECHA DE ENVÍO:T', y='P:Q').properties(height=250), use_container_width=True)
+        with g2:
+            st.markdown("<p style='color:yellow; font-weight:bold;'>Eficiencia por Fletera</p>", unsafe_allow_html=True)
+            if not df_entregados.empty:
+                df_entregados["AT"] = df_entregados["FECHA DE ENTREGA REAL"] <= df_entregados["PROMESA DE ENTREGA"]
+                df_p = (df_entregados.groupby("FLETERA")["AT"].mean() * 100).reset_index()
+                st.altair_chart(alt.Chart(df_p).mark_bar().encode(x=alt.X('AT:Q', scale=alt.Scale(domain=[0,100])), y=alt.Y('FLETERA:N', sort='-x'), color=alt.Color('AT:Q', scale=alt.Scale(scheme='redyellowgreen'))).properties(height=250), use_container_width=True)
 
-        with t1:
-            st.markdown("#### 🚨 Retrasos Críticos (>3 días)")
-            df_graves = df_retrasados.copy()
-            df_graves["DIAS_MORO"] = (hoy - df_graves["PROMESA DE ENTREGA"]).dt.days
-            df_graves = df_graves[df_graves["DIAS_MORO"] > 3].sort_values("DIAS_MORO", ascending=False)
-            if not df_graves.empty:
-                # Solo columnas originales
-                st.dataframe(df_graves[["NÚMERO DE PEDIDO", "FLETERA", "DIAS_MORO", "NO CLIENTE"]], use_container_width=True, hide_index=True)
-            else:
-                st.success("Sin retrasos críticos.")
+        # --------------------------------------------------
+        # 3. TARJETAS PRESENTABLES (ESTILO TU DISEÑO)
+        # --------------------------------------------------
+        st.write("##")
+        st.markdown("<h4 style='color:white;'>📋 Gestión de Casos Críticos</h4>", unsafe_allow_html=True)
+        
+        # Estilo de Card de tu imagen
+        estilo_card = "background-color:#11141C; padding:20px; border-radius:10px; border: 1px solid #2D333F; margin-bottom:15px; min-height:180px;"
 
-        with t2:
-            st.markdown("#### 📦 Lista de Pedidos Pendientes")
-            if not df_pendientes.empty:
-                df_p_view = df_pendientes.sort_values("PROMESA DE ENTREGA")
-                # Solo columnas originales
-                st.dataframe(df_p_view[["NÚMERO DE PEDIDO", "FLETERA", "PROMESA DE ENTREGA", "ESTATUS_CALCULADO"]], use_container_width=True, hide_index=True)
-            else:
-                st.success("¡Todo entregado!")
+        # Filtro de casos graves (>3 días)
+        df_graves = df_retrasados.copy()
+        df_graves["D_M"] = (hoy - df_graves["PROMESA DE ENTREGA"]).dt.days
+        df_graves = df_graves[df_graves["D_M"] > 3].sort_values("D_M", ascending=False).head(6) # Mostramos top 6
+
+        if not df_graves.empty:
+            # Mostramos en rejilla de 2 columnas para que se vean como tarjetas grandes
+            cols = st.columns(2)
+            for idx, (_, row) in enumerate(df_graves.iterrows()):
+                with cols[idx % 2]:
+                    st.markdown(f"""
+                        <div style='{estilo_card}'>
+                            <div style='color:yellow; font-weight:bold; text-align:center; border-bottom:1px solid #2D333F; margin-bottom:10px; padding-bottom:5px;'>Alerta de Retraso Crítico</div>
+                            <b>PEDIDO:</b> {row['NÚMERO DE PEDIDO']}<br>
+                            <b>CLIENTE:</b> {row['NOMBRE DEL CLIENTE']}<br>
+                            <b>FLETERA:</b> {row['FLETERA']}<br>
+                            <b>RETRASO:</b> <span style='color:#FF4B4B; font-weight:bold;'>{row['D_M']} DÍAS</span><br>
+                            <b>GUÍA:</b> <span style='color:#38bdf8;'>{row.get('NÚMERO DE GUÍA','—')}</span>
+                        </div>
+                    """, unsafe_allow_html=True)
+        else:
+            st.success("✅ No hay retrasos mayores a 3 días.")
 
         st.write("##")
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
+
 
 
 
