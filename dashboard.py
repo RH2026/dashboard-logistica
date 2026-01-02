@@ -959,8 +959,54 @@ else:
         
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
 
-    # ------------------------------------------------------------------
-    # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL - DISEÑO FINAL)
+    # --- FILTRO DINÁMICO DE RETRASOS CRÍTICOS (AL PRINCIPIO DE KPIs) ---
+    st.markdown("<h3 style='color:#FF4B4B;'>🚨 Rastreador de Retrasos Críticos</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#9CA3AF; font-size:14px;'>Muestra solo pedidos sin entregar que ya vencieron su fecha promesa.</p>", unsafe_allow_html=True)
+
+    # 1. Filtrar: Sin entrega REAL y con ATRASO > 0
+    df_criticos = df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] > 0].copy()
+    
+    # 2. Selector dinámico: Solo fleteras con problemas reales
+    paqueterias_con_retraso = sorted(df_criticos["FLETERA"].unique())
+    
+    if len(paqueterias_con_retraso) > 0:
+        seleccion = st.multiselect(
+            "Selecciona paqueterías con pedidos vencidos:", 
+            options=paqueterias_con_retraso,
+            placeholder="Ej. SINALOA EXPRESS, SANCHEZ..."
+        )
+        
+        # 3. Mostrar tabla solo si hay selección
+        if seleccion:
+            df_ver = df_criticos[df_criticos["FLETERA"].isin(seleccion)].copy()
+            
+            columnas_solicitadas = [
+                "NOMBRE DEL CLIENTE", "NÚMERO DE PEDIDO", "FLETERA", 
+                "FECHA DE ENVÍO", "PROMESA DE ENTREGA", "NÚMERO DE GUÍA", 
+                "DIAS_TRANS", "DIAS_ATRASO_KPI"
+            ]
+            
+            # Formatear fechas para la tabla
+            df_ver_show = df_ver[columnas_solicitadas].copy()
+            df_ver_show["FECHA DE ENVÍO"] = df_ver_show["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
+            df_ver_show["PROMESA DE ENTREGA"] = df_ver_show["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y')
+
+            st.dataframe(
+                df_ver_show.sort_values("DIAS_ATRASO_KPI", ascending=False),
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "DIAS_ATRASO_KPI": st.column_config.NumberColumn("Días Atraso ⚠️", format="%d"),
+                    "DIAS_TRANS": st.column_config.NumberColumn("Días Trans. 🕒", format="%d"),
+                    "NÚMERO DE GUÍA": st.column_config.TextColumn("Guía")
+                }
+            )
+            st.divider()
+        else:
+            st.info("Selecciona una paquetería para ver el detalle de sus pedidos vencidos.")
+    else:
+        st.success("✅ ¡Excelente! No hay pedidos con retraso en este momento.")
+        
     # ------------------------------------------------------------------
     # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL DEFINITIVA)
     # ------------------------------------------------------------------
@@ -1073,6 +1119,7 @@ else:
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()  
+
 
 
 
