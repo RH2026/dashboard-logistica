@@ -459,8 +459,8 @@ else:
                                 <div style='{estilo_titulo}'>Seguimiento</div>
                                 <div style='line-height:1.8;'>
                                     <b>ENVÍO:</b> {txt_f_envio}<br>
-                                    <b>PROMESA:</b> {txt_f_promesa}<br>
-                                    <b>REAL:</b> <span style='color:{"#22c55e" if txt_f_real != "PENDIENTE" else "#9CA3AF"};'>{txt_f_real}</span><br>
+                                    <b>PROMESA DE ENTREGA:</b> {txt_f_promesa}<br>
+                                    <b>FECHA DE ENTREGA:</b> <span style='color:{"#22c55e" if txt_f_real != "PENDIENTE" else "#9CA3AF"};'>{txt_f_real}</span><br>
                                     <b>DÍAS TRANS:</b> {row.get('DIAS_TRANSCURRIDOS', 0)}<br>
                                     <b>RETRASO:</b> <span style='color:{color_retraso}; font-weight:bold;'>{retraso_num} DÍAS</span>
                                 </div>
@@ -1036,6 +1036,7 @@ else:
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
+
 
 
 
