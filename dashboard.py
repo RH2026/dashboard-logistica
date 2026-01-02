@@ -1105,60 +1105,91 @@ else:
         # Pie de página
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística - Vista Gerencial</div>", unsafe_allow_html=True)
     # ------------------------------------------------------------------
-    # BLOQUE 10: REPORTE MENSUAL
+    # BLOQUE 10: REPORTE MENSUAL (DATOS DE GITHUB)
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "Reporte":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📅 Reporte Logístico Mensual</h2>", unsafe_allow_html=True)
         st.divider()
 
-        # --- LÓGICA DE DATOS MENSUALES ---
-        df_mes = df.copy()
-        df_mes['MES'] = df_mes['FECHA DE ENVÍO'].dt.strftime('%B %Y')
-        
-        # Selector de Mes
-        meses_disponibles = df_mes['MES'].unique()
-        mes_sel = st.selectbox("Selecciona el mes a analizar:", meses_disponibles)
-        
-        df_filtrado_mes = df_mes[df_mes['MES'] == mes_sel]
+        # 1. URL DE GITHUB (MATRIZ MENSUAL)
+        URL_MATRIZ = "https://raw.githubusercontent.com/Zetina97/Logistica/refs/heads/main/matriz_mensual.csv"
 
-        # --- CONTENIDO DEL REPORTE ---
-        col_a, col_b = st.columns(2)
-        
-        with col_a:
-            st.info(f"**Total Pedidos en {mes_sel}:** {len(df_filtrado_mes)}")
-            # Aquí puedes poner un resumen de costos del mes
-            costo_total_mes = df_filtrado_mes["COSTO DE LA GUÍA"].sum()
-            st.metric("Inversión en Fletes", f"${costo_total_mes:,.2f}")
-
-        with col_b:
-            # Gráfico de barras: Entregados vs Retrasados en el mes
-            resumen_estatus = df_filtrado_mes.groupby("ESTATUS_CALCULADO").size().reset_index(name="Total")
-            st.altair_chart(alt.Chart(resumen_estatus).mark_bar().encode(
-                x='Total:Q',
-                y='ESTATUS_CALCULADO:N',
-                color='ESTATUS_CALCULADO:N'
-            ).properties(height=200), use_container_width=True)
-
-        # --- NAVEGACIÓN DESDE REPORTE ---
-        st.divider()
-        st.markdown("<p style='color:gray; font-size:12px; font-weight:bold;'>NAVEGACIÓN RÁPIDA</p>", unsafe_allow_html=True)
-        
-        col_nav_r1, col_nav_r2 = st.columns(2)
-        
-        with col_nav_r1:
-            if st.button("🏠 Volver al Inicio", use_container_width=True):
-                st.session_state.pagina = "principal"
-                st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
-                st.rerun()
+        @st.cache_data
+        def cargar_reporte_mensual(url):
+            try:
+                # Cargamos el CSV de GitHub
+                df_rep = pd.read_csv(url)
                 
-        with col_nav_r2:
-            if st.button("📊 Ir a KPIs Gerenciales", use_container_width=True):
+                # --- LIMPIEZA Y CÁLCULOS ---
+                # Aseguramos que los valores sean numéricos
+                df_rep["COSTO DE GUIA"] = pd.to_numeric(df_rep["COSTO DE GUIA"], errors='coerce').fillna(0)
+                df_rep["VALOR FACTURA"] = pd.to_numeric(df_rep["VALOR FACTURA"], errors='coerce').fillna(0)
+                
+                # CÁLCULO: Porcentaje Logístico (Costo Flete / Valor Factura)
+                # Usamos una condición para evitar división por cero si la factura es 0
+                df_rep["PORC_LOGISTICO"] = (df_rep["COSTO DE GUIA"] / df_rep["VALOR FACTURA"]) * 100
+                df_rep["PORC_LOGISTICO"] = df_rep["PORC_LOGISTICO"].replace([float('inf'), -float('inf')], 0).fillna(0)
+                
+                return df_rep
+            except Exception as e:
+                st.error(f"Error al cargar matriz_mensual.csv: {e}")
+                return None
+
+        df_matriz = cargar_reporte_mensual(URL_MATRIZ)
+
+        if df_matriz is not None:
+            # --- 2. TARJETAS DE MÉTRICAS DEL REPORTE ---
+            total_costo_flete = df_matriz["COSTO DE GUIA"].sum()
+            total_venta = df_matriz["VALOR FACTURA"].sum()
+            promedio_logistico = (total_costo_flete / total_venta * 100) if total_venta > 0 else 0
+
+            c1, c2, c3 = st.columns(3)
+            
+            with c1:
+                st.metric("Inversión Total Fletes", f"${total_costo_flete:,.2f}")
+            with c2:
+                st.metric("Valor Total Facturado", f"${total_venta:,.2f}")
+            with c3:
+                # Color dinámico: si el flete supera el 3% de la venta, ponerlo en rojo
+                color_p = "normal" if promedio_logistico < 3 else "inverse"
+                st.metric("Gasto Logístico Promedio", f"{promedio_logistico:.2f}%", delta_color=color_p)
+
+            st.write("##")
+
+            # --- 3. TABLA DE DETALLE (CON EL NUEVO CÁLCULO) ---
+            st.markdown("### 📋 Desglose de Facturación y Logística")
+            
+            with st.expander("Ver tabla completa de Matriz Mensual"):
+                # Mostramos las columnas más importantes incluyendo el nuevo cálculo
+                cols_mostrar = [
+                    "FACTURA", "RAZON SOCIAL", "FLETERA", 
+                    "COSTO DE GUIA", "VALOR FACTURA", "PORC_LOGISTICO"
+                ]
+                
+                st.dataframe(
+                    df_matriz[cols_mostrar].sort_values("PORC_LOGISTICO", ascending=False),
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "COSTO DE GUIA": st.column_config.NumberColumn("Costo Flete", format="$%.2f"),
+                        "VALOR FACTURA": st.column_config.NumberColumn("Valor Factura", format="$%.2f"),
+                        "PORC_LOGISTICO": st.column_config.NumberColumn("% Logístico", format="%.2f%%")
+                    }
+                )
+
+        # --- NAVEGACIÓN ---
+        st.divider()
+        nav1, nav2 = st.columns(2)
+        with nav1:
+            if st.button("🏠 Inicio", use_container_width=True):
+                st.session_state.pagina = "principal"
+                st.rerun()
+        with nav2:
+            if st.button("📊 KPIs", use_container_width=True):
                 st.session_state.pagina = "KPIs"
-                st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
                 st.rerun()
 
-        st.markdown("<div style='text-align:center; color:#555; margin-top:30px;'>© 2026 Logística - Reporte Mensual</div>", unsafe_allow_html=True)
 
 
 
