@@ -26,20 +26,6 @@ if "ultimo_movimiento" not in st.session_state:
 if "tabla_expandida" not in st.session_state:
     st.session_state.tabla_expandida = False
 
-def render_principal():
-    st.title("Página principal")
-    st.write("Contenido corto")
-
-def render_kpis():
-    st.title("KPIs")
-    for i in range(50):
-        st.write("fila", i)
-
-if st.session_state.pagina == "principal":
-    render_principal()
-
-if st.session_state.pagina == "KPIs":
-    render_kpis()
 
 # --- 2. LÓGICA DE MÁRGENES Y ALTURA (Flecha visible y espacios respetados) ---
 st.markdown("""
@@ -1082,6 +1068,7 @@ else:
             st.session_state.pagina = "principal"
             
             st.rerun()        
+
 
 
 
