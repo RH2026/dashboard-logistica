@@ -981,9 +981,7 @@ else:
         df_sin_entregar["DIAS_ATRASO_KPI"] = df_sin_entregar["DIAS_ATRASO_KPI"].apply(lambda x: x if x > 0 else 0)
         df_sin_entregar["DIAS_TRANS"] = (hoy - df_sin_entregar["FECHA DE ENVÍO"]).dt.days
 
-        # --- 3. FILTRO DINÁMICO DE RETRASOS CRÍTICOS ---
-        st.markdown("<h3 style='color:#FF4B4B;'>🚨 Rastreador de Retrasos Críticos</h3>", unsafe_allow_html=True)
-        
+        # --- 3. FILTRO DINÁMICO DE RETRASOS CRÍTICOS ---       
         df_criticos = df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] > 0].copy()
         paqueterias_con_retraso = sorted(df_criticos["FLETERA"].unique())
         
@@ -1085,6 +1083,7 @@ else:
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()
+
 
 
 
