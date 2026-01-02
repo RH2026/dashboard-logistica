@@ -948,10 +948,9 @@ else:
         col_esp, col_btn = st.columns([4, 1])
         
         with col_btn:
-            if st.button("📊 Ver KPIs Detallados", use_container_width=True):
+            if st.button("Ver KPIs Detallados", use_container_width=True):
                 st.session_state.pagina = "KPIs"
-                # JavaScript para subir al tope antes del cambio
-                st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+               
                 st.rerun()
         
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
@@ -1065,6 +1064,7 @@ else:
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()        
+
 
 
 
