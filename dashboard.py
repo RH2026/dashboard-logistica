@@ -964,16 +964,9 @@ else:
         # 1. Asegurar scroll al inicio al cargar esta sección
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
-        st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📊 Panel de Control Gerencial</h2>", unsafe_allow_html=True)
-        st.divider()
-               
-
-        # ------------------------------------------------------------------
-        # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL - DISEÑO FINAL)
-        # ------------------------------------------------------------------
-          
         st.markdown("<h2 style='text-align:center; color:#FFFFFF;'>Panel de Seguimiento</h2>", unsafe_allow_html=True)
-        st.divider()
+        st.divider()              
+        
         
         # --- 2. LÓGICA DE DATOS ---
         hoy = pd.Timestamp.today().normalize()
@@ -1072,6 +1065,7 @@ else:
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             st.rerun()        
+
 
 
 
