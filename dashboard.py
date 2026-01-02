@@ -24,6 +24,16 @@ if "ultimo_movimiento" not in st.session_state:
 if "tabla_expandida" not in st.session_state:
     st.session_state.tabla_expandida = False
 
+# =============================
+# FUNCIONES AUXILIARES
+# =============================
+def scroll_top():
+    st.markdown(
+        "<script>window.scrollTo({ top: 0, behavior: 'instant' });</script>",
+        unsafe_allow_html=True
+    )
+
+
 # --- 2. LÓGICA DE MÁRGENES Y ALTURA (Flecha visible y espacios respetados) ---
 st.markdown("""
     <style>
@@ -950,7 +960,7 @@ else:
         with col_btn:
             if st.button("Ver KPIs Detallados", use_container_width=True):
                 st.session_state.pagina = "KPIs"
-               
+                scroll_top()
                 st.rerun()
         
         st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
@@ -1063,7 +1073,9 @@ else:
         
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
+            scroll_top()
             st.rerun()        
+
 
 
 
