@@ -1050,49 +1050,55 @@ else:
         
         st.divider()
         
-        # --- 7. GRÁFICOS (CON CORRECCIÓN DE ETIQUETAS) ---
-        g1, g2 = st.columns(2)
+        # --- 7. GRÁFICOS INDEPENDIENTES (UNO DEBAJO DEL OTRO) ---
         
-        with g1:
-            st.markdown("<p style='color:yellow; font-weight:bold;'>Volumen Histórico</p>", unsafe_allow_html=True)
-            df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="P")
-            chart_vol = alt.Chart(df_vol).mark_area(
-                line={'color':'#00FFAA'}, 
-                color=alt.Gradient(
-                    gradient='linear', 
-                    stops=[alt.GradientStop(color='#00FFAA', offset=0), 
-                           alt.GradientStop(color='transparent', offset=1)], 
-                    x1=1, x2=1, y1=1, y2=0
-                )
-            ).encode(
-                x=alt.X('FECHA DE ENVÍO:T', title="Fecha"), 
-                y=alt.Y('P:Q', title="Pedidos")
-            ).properties(height=250)
-            st.altair_chart(chart_vol, use_container_width=True)
+        # --- GRÁFICO A: VOLUMEN HISTÓRICO ---
+        st.markdown("<p style='color:yellow; font-weight:bold; font-size:18px;'>📈 Volumen Histórico de Envíos</p>", unsafe_allow_html=True)
+        df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="P")
+        
+        chart_vol = alt.Chart(df_vol).mark_area(
+            line={'color':'#00FFAA'}, 
+            color=alt.Gradient(
+                gradient='linear', 
+                stops=[alt.GradientStop(color='#00FFAA', offset=0), 
+                       alt.GradientStop(color='transparent', offset=1)], 
+                x1=1, x2=1, y1=1, y2=0
+            )
+        ).encode(
+            x=alt.X('FECHA DE ENVÍO:T', title="Línea de Tiempo"), 
+            y=alt.Y('P:Q', title="Cantidad de Pedidos"),
+            tooltip=[alt.Tooltip('FECHA DE ENVÍO:T', title='Fecha'), alt.Tooltip('P:Q', title='Pedidos')]
+        ).properties(height=300) # Aumentamos un poco la altura ya que tiene más ancho
+        
+        st.altair_chart(chart_vol, use_container_width=True)
 
-        with g2:
-            st.markdown("<p style='color:yellow; font-weight:bold;'>Eficiencia por Fletera</p>", unsafe_allow_html=True)
-            df_ent = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
-            if not df_ent.empty:
-                df_ent["AT"] = df_ent["FECHA DE ENTREGA REAL"] <= df_ent["PROMESA DE ENTREGA"]
-                df_p = (df_ent.groupby("FLETERA")["AT"].mean() * 100).reset_index()
-                
-                # CORRECCIÓN AQUÍ: axis=alt.Axis(labelLimit=200) y sort
-                chart_perf = alt.Chart(df_p).mark_bar().encode(
-                    x=alt.X('AT:Q', title="Eficiencia (%)", scale=alt.Scale(domain=[0,100])), 
-                    y=alt.Y('FLETERA:N', sort='-x', title=None, 
-                           axis=alt.Axis(labelLimit=300, labels=True, ticks=True)), # Evita que se corten las etiquetas
-                    color=alt.Color('AT:Q', scale=alt.Scale(scheme='redyellowgreen'), legend=None),
-                    tooltip=[alt.Tooltip('FLETERA'), alt.Tooltip('AT', format='.1f', title='Eficiencia %')]
-                ).properties(height=250)
-                
-                st.altair_chart(chart_perf, use_container_width=True)
+        st.write("##") # Espacio de separación
 
-        st.write("##")
+        # --- GRÁFICO B: EFICIENCIA POR FLETERA (ANCHO COMPLETO) ---
+        st.markdown("<p style='color:yellow; font-weight:bold; font-size:18px;'>🏆 Eficiencia Real por Fletera</p>", unsafe_allow_html=True)
+        df_ent = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
+        
+        if not df_ent.empty:
+            df_ent["AT"] = df_ent["FECHA DE ENTREGA REAL"] <= df_ent["PROMESA DE ENTREGA"]
+            df_p = (df_ent.groupby("FLETERA")["AT"].mean() * 100).reset_index()
+            
+            # Al estar solo, podemos darle más altura y un límite de etiqueta mayor
+            chart_perf = alt.Chart(df_p).mark_bar().encode(
+                x=alt.X('AT:Q', title="Porcentaje de Cumplimiento (%)", scale=alt.Scale(domain=[0,100])), 
+                y=alt.Y('FLETERA:N', sort='-x', title=None, 
+                       axis=alt.Axis(labelLimit=400, labels=True)), # Límite de texto muy amplio
+                color=alt.Color('AT:Q', scale=alt.Scale(scheme='redyellowgreen'), legend=None),
+                tooltip=[alt.Tooltip('FLETERA:N'), alt.Tooltip('AT:Q', format='.1f', title='Eficiencia %')]
+            ).properties(height=400) # Más altura para que respiren las fleteras
+            
+            st.altair_chart(chart_perf, use_container_width=True)
+        else:
+            st.info("Aún no hay datos de entregas reales para calcular la eficiencia.")
         if st.button("⬅ Volver al Inicio", use_container_width=True):
             st.session_state.pagina = "principal"
             
             st.rerun()        
+
 
 
 
