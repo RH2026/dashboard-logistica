@@ -1140,10 +1140,26 @@ else:
                 color='ESTATUS_CALCULADO:N'
             ).properties(height=200), use_container_width=True)
 
-        # Botón para volver
-        if st.button("⬅ Volver al Inicio", use_container_width=True):
-            st.session_state.pagina = "principal"
-            st.rerun()
+        # --- NAVEGACIÓN DESDE REPORTE ---
+        st.divider()
+        st.markdown("<p style='color:gray; font-size:12px; font-weight:bold;'>NAVEGACIÓN RÁPIDA</p>", unsafe_allow_html=True)
+        
+        col_nav_r1, col_nav_r2 = st.columns(2)
+        
+        with col_nav_r1:
+            if st.button("🏠 Volver al Inicio", use_container_width=True):
+                st.session_state.pagina = "principal"
+                st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+                st.rerun()
+                
+        with col_nav_r2:
+            if st.button("📊 Ir a KPIs Gerenciales", use_container_width=True):
+                st.session_state.pagina = "KPIs"
+                st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+                st.rerun()
+
+        st.markdown("<div style='text-align:center; color:#555; margin-top:30px;'>© 2026 Logística - Reporte Mensual</div>", unsafe_allow_html=True)
+
 
 
 
