@@ -1071,6 +1071,39 @@ else:
         
         st.divider()
 
+        # --- GRÁFICO: TOP 20 DESTINOS CON MÁS RETRASO ---
+        st.markdown("<p style='color:yellow; font-weight:bold; font-size:16px;'>📍 Top 20 Destinos con Mayor Acumulado de Retraso</p>", unsafe_allow_html=True)
+        
+        # 1. Usamos tu columna DIAS_RETRASO (filtramos los que sean > 0)
+        # Convertimos a numérico por seguridad si es que viene de un cálculo previo
+        df_kpi["DIAS_RETRASO"] = pd.to_numeric(df_kpi["DIAS_RETRASO"], errors='coerce').fillna(0)
+        df_retrasos = df_kpi[df_kpi["DIAS_RETRASO"] > 0].copy()
+        
+        if not df_retrasos.empty:
+            # 2. Agrupamos por tu encabezado DESTINO
+            df_destinos = df_retrasos.groupby("DESTINO")["DIAS_RETRASO"].sum().reset_index()
+            
+            # Ordenamos para sacar los 20 peores
+            df_destinos = df_destinos.sort_values("DIAS_RETRASO", ascending=False).head(20)
+            
+            # 3. Gráfico Horizontal para lectura fácil
+            chart_destinos = alt.Chart(df_destinos).mark_bar(
+                color="#FF4B4B", 
+                cornerRadiusTopRight=5,
+                cornerRadiusBottomRight=5
+            ).encode(
+                x=alt.X('DIAS_RETRASO:Q', title="Total Días de Retraso Acumulados"),
+                y=alt.Y('DESTINO:N', sort='-x', title=None, axis=alt.Axis(labelLimit=350)),
+                tooltip=[
+                    alt.Tooltip('DESTINO:N', title='Ciudad/Destino'),
+                    alt.Tooltip('DIAS_RETRASO:Q', title='Días Totales', format='.0f')
+                ]
+            ).properties(height=550) # Altura suficiente para 20 barras
+            
+            st.altair_chart(chart_destinos, use_container_width=True)
+        else:
+            st.success("✅ No se detectan destinos con días de retraso en la base de datos.")
+        
         # --- 8. GRÁFICOS INDEPENDIENTES ---
         st.markdown("<p style='color:yellow; font-weight:bold; font-size:16px;'>📈 Volumen Histórico de Envíos</p>", unsafe_allow_html=True)
         df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="P")
@@ -1159,6 +1192,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#555; margin-top:30px;'>© 2026 Logística - Reporte Mensual</div>", unsafe_allow_html=True)
+
 
 
 
