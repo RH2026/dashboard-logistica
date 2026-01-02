@@ -267,50 +267,66 @@ else:
             key="fletera_filtro"
         )
         # --------------------------------------------------
-        # APLICACIÓN DE FILTROS (CORREGIDO Y REFORZADO)
+        # 1. ENTRADA DE BÚSQUEDA POR PEDIDO (Mover arriba de los filtros)
+        # --------------------------------------------------
+        pedido_buscar = st.text_input(
+            "Buscar por Número de Factura",
+            value="",
+            help="Ingresa un número de pedido para mostrar solo ese registro e ignorar los demás filtros"
+        ).strip()
+        
+        # --------------------------------------------------
+        # 2. APLICACIÓN DE FILTROS (LÓGICA PRIORITARIA)
         # --------------------------------------------------
         df_filtrado = df.copy()
         
-        # 1. Limpiamos el valor buscado para evitar errores de espacios
-        valor_buscado = str(st.session_state.filtro_cliente_actual).strip().lower()
-    
-        # PRIORIDAD 1: Si el usuario escribió algo en el buscador
-        if valor_buscado != "":
-            # Convertimos las columnas a texto y quitamos el .0 que pone Excel a veces
-            col_cliente_txt = df_filtrado["NO CLIENTE"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
-            col_guia_txt = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
+        # PRIORIDAD SUPERIOR: Búsqueda por Pedido Directo
+        if pedido_buscar != "":
+            # Limpiamos filtros globales para que la búsqueda sea pura
+            mask_pedido = df_filtrado["NÚMERO DE PEDIDO"].astype(str).str.contains(pedido_buscar, case=False, na=False)
+            df_filtrado = df_filtrado[mask_pedido]
             
-            # Creamos la máscara de búsqueda
-            mask_cliente = col_cliente_txt.str.contains(valor_buscado, na=False)
-            mask_guia = col_guia_txt.str.contains(valor_buscado, na=False)
-            
-            # Filtramos (Si coincide con cliente O con guía)
-            df_filtrado = df_filtrado[mask_cliente | mask_guia]
-            
-        # PRIORIDAD 2: Si el buscador está vacío, aplicamos fechas y fletera
+            # Si encontramos algo, podemos forzar a que el buscador de clientes esté vacío visualmente si lo deseas
+            # Pero lo importante es que aquí df_filtrado ya solo contiene ese pedido.
+        
+        # PRIORIDAD 2: Filtros Normales (Solo si no se está buscando un pedido específico)
         else:
-            # Validación de fechas
-            if isinstance(rango_fechas, (list, tuple)) and len(rango_fechas) == 2:
-                f_inicio, f_fin = rango_fechas
-                f_ini_dt = pd.to_datetime(f_inicio)
-                f_fin_dt = pd.to_datetime(f_fin)
-                
-                df_filtrado = df_filtrado[
-                    (df_filtrado["FECHA DE ENVÍO"] >= f_ini_dt) & 
-                    (df_filtrado["FECHA DE ENVÍO"] <= f_fin_dt)
-                ]
+            # 1. Filtro por Buscador de Cliente/Guía (filtro_cliente_actual)
+            valor_buscado = str(st.session_state.get('filtro_cliente_actual', "")).strip().lower()
             
-            # Filtro de fletera
-            if fletera_sel != "":
-                df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
-    
-            # --------------------------------------------------
-            # ACTUALIZACIÓN DE MÉTRICAS (Para que los círculos cambien)
-            # --------------------------------------------------
-            total = len(df_filtrado)
-            entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
-            en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
-            retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
+            if valor_buscado != "":
+                col_cliente_txt = df_filtrado["NO CLIENTE"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
+                col_guia_txt = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
+                mask_cliente = col_cliente_txt.str.contains(valor_buscado, na=False)
+                mask_guia = col_guia_txt.str.contains(valor_buscado, na=False)
+                df_filtrado = df_filtrado[mask_cliente | mask_guia]
+            
+            # 2. Filtro de Fechas y Fletera
+            else:
+                # Validación de fechas
+                if isinstance(rango_fechas, (list, tuple)) and len(rango_fechas) == 2:
+                    f_inicio, f_fin = rango_fechas
+                    df_filtrado = df_filtrado[
+                        (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(f_inicio)) & 
+                        (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(f_fin))
+                    ]
+                
+                # Filtro de fletera
+                if fletera_sel != "":
+                    df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
+        
+        # --------------------------------------------------
+        # 3. ACTUALIZACIÓN DE MÉTRICAS Y RENDERIZADO
+        # --------------------------------------------------
+        # (Aquí sigue tu código de métricas, timeline y tarjetas usando el df_filtrado ya procesado)
+        total = len(df_filtrado)
+        entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
+        en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
+        retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
+        
+        # Si el usuario buscó un pedido, mostrar el Timeline inmediatamente
+        if pedido_buscar != "" and not df_filtrado.empty:
+            for index, row in df_filtrado.iterrows():
     
         # --------------------------------------------------
         # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
@@ -331,14 +347,7 @@ else:
         .dot-red { border-radius: 50% !important; animation: p-red 2s infinite; }
         </style>
         """, unsafe_allow_html=True)
-        
-        pedido_buscar = st.text_input(
-            "Buscar por Número de Factura",
-            value="",
-            help="Ingresa un número de pedido para mostrar solo esos registros"
-        )
-        
-        df_busqueda = pd.DataFrame() # Blindaje inicial
+               
     
         if pedido_buscar.strip() != "":
             # Filtrar solo por Número de Pedido
@@ -906,6 +915,7 @@ else:
             st.rerun()
     
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Vista Gerencial</div>", unsafe_allow_html=True)
+
 
 
 
