@@ -1106,73 +1106,92 @@ else:
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística - Vista Gerencial</div>", unsafe_allow_html=True)
     # ------------------------------------------------------------------
     # BLOQUE 10: REPORTE MENSUAL (LIMPIEZA DE DATOS PROFUNDA)
-    # ------------------------------------------------------------------
-    elif st.session_state.pagina == "Reporte":
-        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
-        st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📅 Reporte Logístico Mensual</h2>", unsafe_allow_html=True)
-        st.divider()
-
-        @st.cache_data
-        def cargar_matriz_reporte():
-            try:
-                # Carga local desde el repositorio
-                df_r = pd.read_csv("matriz_mensual.csv", encoding="utf-8")
-                df_r.columns = [str(c).strip().upper() for c in df_r.columns]
-                
-                # Función para limpiar símbolos de moneda y comas
-                def limpiar_moneda(valor):
-                    if pd.isna(valor): return 0.0
-                    if isinstance(valor, str):
-                        # Quita $, comas y espacios
-                        valor = valor.replace('$', '').replace(',', '').strip()
-                        try:
-                            return float(valor)
-                        except:
-                            return 0.0
-                    return float(valor)
-
-                # Aplicar limpieza a las columnas críticas
-                df_r["COSTO DE GUIA"] = df_r["COSTO DE GUIA"].apply(limpiar_moneda)
-                df_r["VALOR FACTURA"] = df_r["VALOR FACTURA"].apply(limpiar_moneda)
-                
-                # CÁLCULO LOGÍSTICO (Costo / Venta)
-                df_r["% LOGÍSTICO"] = 0.0
-                mask = df_r["VALOR FACTURA"] > 0
-                df_r.loc[mask, "% LOGÍSTICO"] = (df_r["COSTO DE GUIA"] / df_r["VALOR FACTURA"]) * 100
-                
-                return df_r
-            except Exception as e:
-                st.error(f"Error en matriz: {e}")
-                return None
-
-        df_m = cargar_matriz_reporte()
-
+    # --- MOTOR DE CÁLCULOS EJECUTIVOS ---
         if df_m is not None:
-            # MÉTRICAS
-            s_flete = df_m["COSTO DE GUIA"].sum()
-            s_venta = df_m["VALOR FACTURA"].sum()
-            imp_global = (s_flete / s_venta * 100) if s_venta > 0 else 0
+            # Cálculos Base
+            df_m["COSTO_CAJA"] = (df_m["COSTO DE GUIA"] / df_m["CAJAS"]).replace([float('inf')], 0).fillna(0)
+            
+            total_fletes = df_m["COSTO DE GUIA"].sum()
+            total_facturado = df_m["VALOR FACTURA"].sum()
+            total_cajas = df_m["CAJAS"].sum()
+            total_facturas = df_m["FACTURA"].nunique()
+            
+            # KPIs Críticos
+            impacto_log_global = (total_fletes / total_facturado * 100) if total_facturado > 0 else 0
+            costo_promedio_caja = (total_fletes / total_cajas) if total_cajas > 0 else 0
 
-            c1, c2, c3 = st.columns(3)
-            c1.metric("Gasto en Fletes", f"${s_flete:,.2f}")
-            c2.metric("Venta Total", f"${s_venta:,.2f}")
-            c3.metric("Impacto Logístico", f"{imp_global:.2f}%")
+            # --- DISEÑO DE TARJETAS NIVEL PRO (ESTILO FINANZAS) ---
+            st.markdown("""
+                <style>
+                    .fin-card {
+                        background-color: #0E1117;
+                        border: 1px solid #262730;
+                        border-radius: 10px;
+                        padding: 20px;
+                        text-align: left;
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+                    }
+                    .fin-label {
+                        color: #808495;
+                        font-size: 12px;
+                        font-weight: bold;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        margin-bottom: 5px;
+                    }
+                    .fin-value {
+                        color: #FFFFFF;
+                        font-size: 24px;
+                        font-weight: 600;
+                        font-family: 'Inter', sans-serif;
+                    }
+                    .fin-delta {
+                        font-size: 12px;
+                        margin-top: 5px;
+                    }
+                </style>
+            """, unsafe_allow_html=True)
+
+            # FILA 1: MÉTRICAS DE VOLUMEN Y VENTA
+            row1_1, row1_2, row1_3 = st.columns(3)
+            
+            row1_1.markdown(f"""<div class='fin-card'><div class='fin-label'>📈 Valor Total Facturado</div><div class='fin-value'>${total_facturado:,.2f}</div><div class='fin-delta' style='color:#00FFAA;'>▲ Ingreso Bruto Mensual</div></div>""", unsafe_allow_html=True)
+            row1_2.markdown(f"""<div class='fin-card'><div class='fin-label'>📦 Volumen de Cajas</div><div class='fin-value'>{total_cajas:,.0f} Unidades</div><div class='fin-delta' style='color:#38bdf8;'>Total Cajas Despachadas</div></div>""", unsafe_allow_html=True)
+            row1_3.markdown(f"""<div class='fin-card'><div class='fin-label'>📄 Documentos Fiscales</div><div class='fin-value'>{total_facturas} Facturas</div><div class='fin-delta' style='color:gray;'>Operaciones del Periodo</div></div>""", unsafe_allow_html=True)
 
             st.write("##")
 
-            # TABLA
-            with st.expander("Ver desglose detallado"):
-                cols = ["FACTURA", "RAZON SOCIAL", "FLETERA", "COSTO DE GUIA", "VALOR FACTURA", "% LOGÍSTICO"]
+            # FILA 2: MÉTRICAS DE EFICIENCIA Y COSTO (MÉTRICAS "ELITE")
+            row2_1, row2_2, row2_3 = st.columns(3)
+            
+            # Color dinámico para el impacto logístico
+            color_impacto = "#00FFAA" if impacto_log_global < 3.5 else "#FF4B4B"
+            
+            row2_1.markdown(f"""<div class='fin-card' style='border-top: 3px solid #FF4B4B;'><div class='fin-label'>📉 Inversión en Logística</div><div class='fin-value'>${total_fletes:,.2f}</div><div class='fin-delta' style='color:gray;'>Gasto Total en Fletes</div></div>""", unsafe_allow_html=True)
+            row2_2.markdown(f"""<div class='fin-card' style='border-top: 3px solid {color_impacto};'><div class='fin-label'>🎯 Ratio de Gasto Logístico</div><div class='fin-value' style='color:{color_impacto};'>{impacto_log_global:.2f}%</div><div class='fin-delta' style='color:gray;'>vs Valor de Facturación</div></div>""", unsafe_allow_html=True)
+            row2_3.markdown(f"""<div class='fin-card' style='border-top: 3px solid #38bdf8;'><div class='fin-label'>💰 Costo Promedio por Caja</div><div class='fin-value'>${costo_promedio_caja:,.2f}</div><div class='fin-delta' style='color:gray;'>Eficiencia de Carga Unitario</div></div>""", unsafe_allow_html=True)
+
+            st.write("##")
+            st.divider()
+
+            # --- TABLA DE AUDITORÍA ---
+            st.markdown("### 📒 Auditoría Detallada de Operaciones")
+            with st.expander("Expandir Matriz de Datos para Revisión de Contraloría"):
+                # Columnas con nombres profesionales
+                df_m_view = df_m.copy()
                 st.dataframe(
-                    df_m[cols].sort_values("% LOGÍSTICO", ascending=False),
+                    df_m_view[["FACTURA", "RAZON SOCIAL", "FLETERA", "CAJAS", "COSTO DE GUIA", "VALOR FACTURA", "% LOGÍSTICO", "COSTO_CAJA"]],
                     use_container_width=True,
                     hide_index=True,
                     column_config={
-                        "COSTO DE GUIA": st.column_config.NumberColumn("Costo Flete", format="$%.2f"),
-                        "VALOR FACTURA": st.column_config.NumberColumn("Valor Venta", format="$%.2f"),
-                        "% LOGÍSTICO": st.column_config.NumberColumn("Gasto %", format="%.2f%%")
+                        "COSTO DE GUIA": st.column_config.NumberColumn("Gasto Flete", format="$%.2f"),
+                        "VALOR FACTURA": st.column_config.NumberColumn("Monto Factura", format="$%.2f"),
+                        "% LOGÍSTICO": st.column_config.NumberColumn("% Log", format="%.2f%%"),
+                        "COSTO_CAJA": st.column_config.NumberColumn("Costo/Caja", format="$%.2f"),
+                        "CAJAS": st.column_config.NumberColumn("Cant. Cajas", format="%d")
                     }
                 )
+
 
 
 
