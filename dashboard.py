@@ -1154,76 +1154,87 @@ else:
         st.write("##")
         st.divider()
                
-                # --- 8. GRÁFICOS INDEPENDIENTES (DISEÑO ELITE DARK) ---
+                
+        # --- 8. SECCIÓN DE GRÁFICOS ELITE (CONTROL & RENDIMIENTO) ---
         
-        # Color Verde Ejecutivo (menos pupila dañada, más elegancia)
-        verde_pro = "#059669" # Un esmeralda profundo y serio
-        
-        def titulo_grafico(texto, emoji):
+        # Paleta de colores ejecutiva (Semáforo de alto contraste)
+        color_excelencia = "#059669" # Esmeralda (>= 95%)
+        color_alerta = "#fbbf24"     # Ámbar (85% - 94%)
+        color_critico = "#fb7185"    # Coral/Rojo (< 85%)
+
+        def titulo_grafico_elite(texto, emoji):
             st.markdown(f"""
-                <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid {verde_pro}; margin-bottom: 20px;'>
-                    <span style='color: #e2e8f0; font-weight: 700; font-size: 16px; letter-spacing: 1.2px;'>{emoji} {texto.upper()}</span>
+                <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid {color_excelencia}; margin-bottom: 20px;'>
+                    <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>{emoji} {texto.upper()}</span>
                 </div>
             """, unsafe_allow_html=True)
 
-        # --- GRÁFICO 1: VOLUMEN HISTÓRICO (LÍNEAS RECTAS) ---
-        titulo_grafico("Volumen Histórico de Envíos", "📈")
-        df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="P")
+        # --- GRÁFICO 1: VOLUMEN DE OPERACIÓN (LÍNEAS TÉCNICAS) ---
+        titulo_grafico_elite("Volumen Diario de Envíos", "📈")
+        df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="Pedidos")
         
-        chart_vol = alt.Chart(df_vol).mark_area(
-            line={'color': verde_pro, 'strokeWidth': 2},
+        # Gráfico de área con líneas rectas y puntos de dato para precisión
+        line_base = alt.Chart(df_vol).encode(
+            x=alt.X('FECHA DE ENVÍO:T', title=None, axis=alt.Axis(grid=False, labelColor='#94a3b8')),
+            y=alt.Y('Pedidos:Q', title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8'))
+        )
+
+        area = line_base.mark_area(
+            line={'color': color_excelencia, 'strokeWidth': 2.5},
             color=alt.Gradient(
                 gradient='linear',
-                stops=[
-                    alt.GradientStop(color=verde_pro, offset=0),
-                    alt.GradientStop(color='transparent', offset=1)
-                ],
+                stops=[alt.GradientStop(color=color_excelencia, offset=0), alt.GradientStop(color='transparent', offset=1)],
                 x1=1, x2=1, y1=1, y2=0
             ),
-            interpolate='linear' # << AQUÍ: Líneas rectas, nada de curvas.
-        ).encode(
-            x=alt.X('FECHA DE ENVÍO:T', title=None, axis=alt.Axis(grid=False, labelColor='#94a3b8')),
-            y=alt.Y('P:Q', title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8'))
-        ).properties(height=280).configure_view(strokeOpacity=0)
-        
-        st.altair_chart(chart_vol, use_container_width=True)
+            interpolate='linear' # Líneas rectas tipo Trading
+        )
+
+        points = line_base.mark_point(color=color_excelencia, size=60, fill="#0f172a") # Puntos en cada día
+
+        st.altair_chart((area + points).properties(height=280), use_container_width=True)
 
         st.write("##")
 
-        # --- GRÁFICO 2: EFICIENCIA POR FLETERA (CON ETIQUETAS Y VERDE OSCURO) ---
-        titulo_grafico("Eficiencia Real por Fletera", "🏆")
+        # --- GRÁFICO 2: EFICIENCIA POR FLETERA (SEMÁFORO ETIQUETADO) ---
+        titulo_grafico_elite("Ranking de Eficiencia por Fletera", "🏆")
         df_ent = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
         
         if not df_ent.empty:
             df_ent["AT"] = df_ent["FECHA DE ENTREGA REAL"] <= df_ent["PROMESA DE ENTREGA"]
             df_p = (df_ent.groupby("FLETERA")["AT"].mean() * 100).reset_index()
             
-            # Gráfico base de barras
-            bars = alt.Chart(df_p).mark_bar(
-                cornerRadiusTopRight=6,
-                cornerRadiusBottomRight=6,
-                size=22,
-                color=verde_pro # Color sólido y elegante
+            # Definir colores condicionales (Semáforo)
+            chart_bars = alt.Chart(df_p).mark_bar(
+                cornerRadiusTopRight=8,
+                cornerRadiusBottomRight=8,
+                size=24
             ).encode(
-                x=alt.X('AT:Q', title='Cumplimiento (%)', scale=alt.Scale(domain=[0,115]), axis=alt.Axis(gridOpacity=0.05)),
-                y=alt.Y('FLETERA:N', sort='-x', title=None, axis=alt.Axis(labelColor='#e2e8f0', labelFontSize=12))
+                x=alt.X('AT:Q', title='Cumplimiento (%)', scale=alt.Scale(domain=[0,118]), axis=alt.Axis(gridOpacity=0.05)),
+                y=alt.Y('FLETERA:N', sort='-x', title=None, axis=alt.Axis(labelColor='white', labelFontSize=12)),
+                color=alt.condition(
+                    alt.datum.AT >= 95, alt.value(color_excelencia), # Verde si es excelente
+                    alt.condition(
+                        alt.datum.AT >= 85, alt.value(color_alerta),  # Naranja si es aceptable
+                        alt.value(color_critico)                      # Rojo si es deficiente
+                    )
+                )
             )
 
-            # Etiquetas de texto (los numeritos)
-            text = bars.mark_text(
+            # ETIQUETAS DE DATOS (Porcentaje exacto al final de la barra)
+            chart_text = chart_bars.mark_text(
                 align='left',
                 baseline='middle',
-                dx=10, 
-                color='#e2e8f0',
-                fontWeight=600
+                dx=12,
+                color='white',
+                fontWeight=700,
+                fontSize=13
             ).encode(
                 text=alt.Text('AT:Q', format='.1f')
             )
 
-            chart_final = (bars + text).properties(height=350).configure_view(strokeOpacity=0)
-            st.altair_chart(chart_final, use_container_width=True)
+            st.altair_chart((chart_bars + chart_text).properties(height=400), use_container_width=True)
         else:
-            st.info("Sin datos de entrega para mostrar eficiencia.")
+            st.info("Sin registros de entrega finalizada para este periodo.")
 
         # --- NAVEGACIÓN DESDE KPIs ---
         st.divider()
@@ -1385,6 +1396,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
