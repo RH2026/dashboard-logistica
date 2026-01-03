@@ -535,44 +535,53 @@ else:
             st.markdown(f"<div class='elite-card'><p style='{l_style}'>Retrasados</p>", unsafe_allow_html=True)
             st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
+        
         # --------------------------------------------------
         # TABLA DE ENVÍOS – DISEÑO PREMIUM ELITE (SIN CAJA)
         # --------------------------------------------------
-        st.markdown("<div style='margin-top: 60px;'></div>", unsafe_allow_html=True)
+        # Espaciador para separar de las donas
+        st.markdown("<div style='margin-top: 50px;'></div>", unsafe_allow_html=True)
+        
+        # Estructura de 3 columnas para centrado perfecto
         col_izq, col_centro, col_der = st.columns([2, 3, 2])
         
         with col_izq:
             btn_c1, btn_c2 = st.columns(2)
             with btn_c1:
-                if st.button("BD Completa", use_container_width=True, key="btn_full"):
+                if st.button("BD Completa", use_container_width=True, key="btn_full_v3"):
                     st.session_state.tabla_expandida = True
                     st.rerun()
             with btn_c2:
-                if st.button("BD Vista Normal", use_container_width=True, key="btn_norm"):
+                if st.button("BD Vista Normal", use_container_width=True, key="btn_norm_v3"):
                     st.session_state.tabla_expandida = False
                     st.rerun()
         
         with col_centro:
-            # Título limpio, sin bordes ni fondo, solo el texto estilizado
+            # Título con padding-bottom para empujar la tabla hacia abajo
             st.markdown("""
-                <div style="text-align:center;">
+                <div style="text-align:center; padding-bottom: 25px;">
                     <span style="color:white; font-size:24px; font-weight:800; letter-spacing:3px; text-transform:uppercase;">
                         📋 REGISTRO OPERATIVO
                     </span>
                 </div>
             """, unsafe_allow_html=True)
+
+        with col_der:
+            # Columna de equilibrio
+            st.write("")
         
+        # Lógica de altura dinámica
         h_dinamica = 850 if st.session_state.get('tabla_expandida', False) else 400
         
-        # Preparación de datos
+        # Preparación de datos final
         df_visual = df_filtrado.copy()
         hoy_t = pd.Timestamp.today().normalize()
         
-        # Calculamos métricas de tiempo
+        # Cálculos de tiempo para las barras de progreso y métricas
         df_visual["DIAS_TRANSCURRIDOS"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["FECHA DE ENVÍO"]).dt.days)
         df_visual["DIAS_RETRASO_VAL"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["PROMESA DE ENTREGA"]).dt.days).clip(lower=0)
         
-        # RENDERIZADO DE TABLA
+        # RENDERIZADO DE TABLA ULTRA MODERNA
         st.dataframe(
             df_visual,
             column_config={
@@ -1416,6 +1425,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
