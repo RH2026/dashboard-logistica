@@ -1195,7 +1195,7 @@ else:
 
         st.write("##")
 
-        # --- GRÁFICO 2: EFICIENCIA POR FLETERA (SEMÁFORO ETIQUETADO) ---
+        # --- GRÁFICO 2: EFICIENCIA POR FLETERA (CORREGIDO) ---
         titulo_grafico_elite("Ranking de Eficiencia por Fletera", "🏆")
         df_ent = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
         
@@ -1203,25 +1203,31 @@ else:
             df_ent["AT"] = df_ent["FECHA DE ENTREGA REAL"] <= df_ent["PROMESA DE ENTREGA"]
             df_p = (df_ent.groupby("FLETERA")["AT"].mean() * 100).reset_index()
             
-            # Definir colores condicionales (Semáforo)
-            chart_bars = alt.Chart(df_p).mark_bar(
+            # --- LÓGICA DE COLOR COMPATIBLE CON ALTAIR V5+ ---
+            # Usamos una expresión condicional de Vega-Lite directa
+            color_logic = alt.condition(
+                "datum.AT >= 95",
+                alt.value(color_excelencia),
+                alt.condition(
+                    "datum.AT >= 85",
+                    alt.value(color_alerta),
+                    alt.value(color_critico)
+                )
+            )
+
+            # Gráfico base de barras
+            bars = alt.Chart(df_p).mark_bar(
                 cornerRadiusTopRight=8,
                 cornerRadiusBottomRight=8,
                 size=24
             ).encode(
-                x=alt.X('AT:Q', title='Cumplimiento (%)', scale=alt.Scale(domain=[0,118]), axis=alt.Axis(gridOpacity=0.05)),
+                x=alt.X('AT:Q', title='Cumplimiento (%)', scale=alt.Scale(domain=[0, 118]), axis=alt.Axis(gridOpacity=0.05)),
                 y=alt.Y('FLETERA:N', sort='-x', title=None, axis=alt.Axis(labelColor='white', labelFontSize=12)),
-                color=alt.condition(
-                    alt.datum.AT >= 95, alt.value(color_excelencia), # Verde si es excelente
-                    alt.condition(
-                        alt.datum.AT >= 85, alt.value(color_alerta),  # Naranja si es aceptable
-                        alt.value(color_critico)                      # Rojo si es deficiente
-                    )
-                )
+                color=color_logic  # Aplicamos la lógica corregida aquí
             )
 
-            # ETIQUETAS DE DATOS (Porcentaje exacto al final de la barra)
-            chart_text = chart_bars.mark_text(
+            # ETIQUETAS DE DATOS
+            chart_text = bars.mark_text(
                 align='left',
                 baseline='middle',
                 dx=12,
@@ -1232,9 +1238,7 @@ else:
                 text=alt.Text('AT:Q', format='.1f')
             )
 
-            st.altair_chart((chart_bars + chart_text).properties(height=400), use_container_width=True)
-        else:
-            st.info("Sin registros de entrega finalizada para este periodo.")
+            st.altair_chart((bars + chart_text).properties(height=400), use_container_width=True)
 
         # --- NAVEGACIÓN DESDE KPIs ---
         st.divider()
@@ -1396,6 +1400,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
