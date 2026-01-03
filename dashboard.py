@@ -1154,20 +1154,65 @@ else:
         st.write("##")
         st.divider()
                
-        # --- 8. GRÁFICOS INDEPENDIENTES ---
-        st.markdown("<p style='color:yellow; font-weight:bold; font-size:16px;'>📈 Volumen Histórico de Envíos</p>", unsafe_allow_html=True)
+        # --- 8. GRÁFICOS INDEPENDIENTES (DISEÑO PREMIUM) ---
+        
+        # Estilo para los títulos de los gráficos
+        def titulo_grafico(texto, emoji):
+            st.markdown(f"""
+                <div style='background: rgba(255,255,255,0.03); padding: 10px 20px; border-radius: 10px; border-left: 4px solid #00FFAA; margin-bottom: 20px;'>
+                    <span style='color: white; font-weight: 700; font-size: 18px; letter-spacing: 1px;'>{emoji} {texto.upper()}</span>
+                </div>
+            """, unsafe_allow_html=True)
+
+        # --- GRÁFICO 1: VOLUMEN HISTÓRICO ---
+        titulo_grafico("Volumen Histórico de Envíos", "📈")
         df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="P")
-        chart_vol = alt.Chart(df_vol).mark_area(line={'color':'#00FFAA'}, color=alt.Gradient(gradient='linear', stops=[alt.GradientStop(color='#00FFAA', offset=0), alt.GradientStop(color='transparent', offset=1)], x1=1, x2=1, y1=1, y2=0)).encode(x='FECHA DE ENVÍO:T', y='P:Q').properties(height=300)
+        
+        chart_vol = alt.Chart(df_vol).mark_area(
+            line={'color':'#00FFAA', 'strokeWidth': 3},
+            color=alt.Gradient(
+                gradient='linear',
+                stops=[
+                    alt.GradientStop(color='rgba(0, 255, 170, 0.4)', offset=0),
+                    alt.GradientStop(color='rgba(0, 255, 170, 0.0)', offset=1)
+                ],
+                x1=1, x2=1, y1=1, y2=0
+            ),
+            interpolate='monotone' # Curva suave tipo Apple/Fintech
+        ).encode(
+            x=alt.X('FECHA DE ENVÍO:T', title=None, axis=alt.Axis(grid=False, labelColor='#94a3b8')),
+            y=alt.Y('P:Q', title='Pedidos', axis=alt.Axis(gridOpacity=0.1, labelColor='#94a3b8'))
+        ).properties(height=300).configure_view(strokeOpacity=0)
+        
         st.altair_chart(chart_vol, use_container_width=True)
 
         st.write("##")
-        st.markdown("<p style='color:yellow; font-weight:bold; font-size:16px;'>🏆 Eficiencia Real por Fletera</p>", unsafe_allow_html=True)
+
+        # --- GRÁFICO 2: EFICIENCIA POR FLETERA ---
+        titulo_grafico("Eficiencia Real por Fletera", "🏆")
         df_ent = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
+        
         if not df_ent.empty:
             df_ent["AT"] = df_ent["FECHA DE ENTREGA REAL"] <= df_ent["PROMESA DE ENTREGA"]
             df_p = (df_ent.groupby("FLETERA")["AT"].mean() * 100).reset_index()
-            chart_perf = alt.Chart(df_p).mark_bar().encode(x=alt.X('AT:Q', scale=alt.Scale(domain=[0,100])), y=alt.Y('FLETERA:N', sort='-x', axis=alt.Axis(labelLimit=400)), color=alt.Color('AT:Q', scale=alt.Scale(scheme='redyellowgreen'), legend=None)).properties(height=400)
+            
+            chart_perf = alt.Chart(df_p).mark_bar(
+                cornerRadiusTopRight=10, # Barras redondeadas pro
+                cornerRadiusBottomRight=10,
+                size=25
+            ).encode(
+                x=alt.X('AT:Q', title='Cumplimiento (%)', scale=alt.Scale(domain=[0,105]), axis=alt.Axis(gridOpacity=0.1)),
+                y=alt.Y('FLETERA:N', sort='-x', title=None, axis=alt.Axis(labelLimit=400, labelFontSize=12, labelColor='white')),
+                color=alt.Color('AT:Q', 
+                    scale=alt.Scale(range=['#fb7185', '#fbbf24', '#00FFAA']), # Rojo -> Ámbar -> Neón
+                    legend=None
+                ),
+                tooltip=[alt.Tooltip('FLETERA:N'), alt.Tooltip('AT:Q', format='.1f')]
+            ).properties(height=400).configure_view(strokeOpacity=0)
+            
             st.altair_chart(chart_perf, use_container_width=True)
+        else:
+            st.info("Esperando datos de entrega para calcular eficiencia...")
 
         # --- NAVEGACIÓN DESDE KPIs ---
         st.divider()
@@ -1329,6 +1374,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
