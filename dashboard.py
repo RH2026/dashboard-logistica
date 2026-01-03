@@ -464,79 +464,49 @@ else:
         
                
 
-        # --------------------------------------------------
-        # 1. CÁLCULO DE MÉTRICAS
-        # --------------------------------------------------
+        # --- 1. CÁLCULO DE MÉTRICAS ---
         total = int(len(df_filtrado))
         entregados = int((df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum())
         en_transito = int((df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum())
         retrasados = int((df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum())
 
-        # --------------------------------------------------
-        # 2. CONFIGURACIÓN DE COLORES Y ESTILOS
-        # --------------------------------------------------
-        # Usamos Hexadecimales puros para evitar errores de serialización en Altair
+        # --- 2. COLORES ---
         COLOR_AVANCE_ENTREGADOS = "#00FFAA" 
         COLOR_AVANCE_TRANSITO   = "#38bdf8" 
         COLOR_AVANCE_RETRASADOS = "#fb7185" 
         COLOR_TOTAL             = "#fbbf24" 
-        COLOR_FALTANTE          = "#262730" # Un gris muy oscuro que combina con el fondo
+        COLOR_FALTANTE          = "#262730" 
 
-        st.markdown("""
-            <style>
-            .elite-card {
-                transition: all 0.4s ease;
-                padding: 20px;
-                border-radius: 20px;
-                background: rgba(255,255,255,0.03);
-                border: 1px solid rgba(255,255,255,0.05);
-                text-align: center;
-                margin-bottom: 10px;
-            }
-            .elite-card:hover {
-                transform: translateY(-8px);
-                box-shadow: 0 20px 40px rgba(0,0,0,0.7) !important;
-                border: 1px solid rgba(255,255,255,0.25) !important;
-            }
-            </style>
-        """, unsafe_allow_html=True)
-
-        # --------------------------------------------------
-        # 3. FUNCIÓN DE GRÁFICO CORREGIDA
-        # --------------------------------------------------
+        # --- 3. FUNCIÓN CORREGIDA (Sintaxis simplificada para evitar el TypeError) ---
         def donut_con_numero(avance, total_val, color_avance, color_faltante):
             porcentaje = int((avance / total_val) * 100) if total_val > 0 else 0
             
-            # Creamos el dataframe para la dona
+            # DataFrame plano para la dona
             data_dona = pd.DataFrame({
                 "segmento": ["A", "B"], 
                 "valor": [float(avance), float(max(total_val - avance, 0))]
             })
             
-            # Gráfico de dona con escala de color explícita
+            # Construcción de la Dona
             donut = alt.Chart(data_dona).mark_arc(innerRadius=52, outerRadius=65, cornerRadius=10).encode(
-                theta=alt.Theta(field="valor", type="quantitative"),
-                color=alt.Color(field="segmento", type="nominal", 
-                    scale=alt.Scale(domain=["A", "B"], range=[color_avance, color_faltante]), 
-                    legend=None),
+                theta="valor:Q",
+                color=alt.Color("segmento:N", scale=alt.Scale(domain=["A", "B"], range=[color_avance, color_faltante]), legend=None),
                 tooltip=None
             )
             
-            # Texto central
+            # Texto principal
             texto_n = alt.Chart(pd.DataFrame({"t": [str(avance)]})).mark_text(
                 align="center", baseline="middle", fontSize=28, fontWeight=800, dy=-6, color="white"
-            ).encode(text=alt.Text("t:N"))
+            ).encode(text="t:N")
             
             # Texto porcentaje
             texto_p = alt.Chart(pd.DataFrame({"t": [f"{porcentaje}%"]})).mark_text(
                 align="center", baseline="middle", fontSize=12, fontWeight=400, dy=18, color="#94a3b8"
-            ).encode(text=alt.Text("t:N"))
+            ).encode(text="t:N")
             
             return (donut + texto_n + texto_p).properties(width=140, height=140).configure_view(strokeOpacity=0)
 
-        # --------------------------------------------------
-        # 4. RENDERIZADO
-        # --------------------------------------------------
+        # --- 4. RENDERIZADO DE COLUMNAS ---
         st.markdown("<div style='background:rgba(255,255,255,0.02);padding:15px;border-radius:15px;border-left:5px solid #38bdf8;margin-bottom:25px;'><span style='color:white;font-size:20px;font-weight:800;letter-spacing:1.5px;'>📊 CONSOLA GLOBAL DE RENDIMIENTO</span></div>", unsafe_allow_html=True)
     
         c1, c2, c3, c4 = st.columns(4)
@@ -561,8 +531,6 @@ else:
             st.markdown(f"<div class='elite-card'><p style='{l_style}'>Retrasados</p>", unsafe_allow_html=True)
             st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
-
-        st.divider()
         # --------------------------------------------------
         # TABLA DE ENVÍOS – DISEÑO PERSONALIZADO
         # --------------------------------------------------
@@ -1463,6 +1431,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
