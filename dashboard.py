@@ -1310,10 +1310,10 @@ else:
         def cargar_analisis_elite():
             try:
                 df = pd.read_csv("analisis.csv", encoding="utf-8")
-                # Limpieza Elite de Nombres de Columnas y Filas
                 df.columns = [str(c).strip().upper() for c in df.columns]
-                df = df.dropna(subset=['MES']) # Elimina filas vacías que generan nombres "sospechosos"
-                df = df[df['MES'].str.contains('Unnamed') == False] # Filtra basura de Excel
+                # Limpieza de basura de Excel
+                df = df.dropna(subset=['MES'])
+                df = df[df['MES'].str.contains('Unnamed|TOTAL', case=False) == False]
                 
                 def limpiar_a_numero(v):
                     if pd.isna(v): return 0.0
@@ -1331,7 +1331,6 @@ else:
                 for col in cols_numericas:
                     if col in df.columns:
                         df[col] = df[col].apply(limpiar_a_numero)
-                
                 return df
             except Exception as e:
                 st.error(f"Error en Motor: {e}")
@@ -1342,107 +1341,107 @@ else:
         if df_a is not None:
             # --- SIDEBAR PREMIUM ---
             st.sidebar.markdown("## 🛰️ OPS COMMAND")
-            # Limpiamos los meses para que el filtro sea perfecto
-            opciones_mes = [m for m in df_a["MES"].unique() if str(m).strip() != ""]
-            mes_sel = st.sidebar.selectbox("SELECCIONAR PERIODO", opciones_mes)
+            meses_limpios = [m for m in df_a["MES"].unique() if str(m).strip() != ""]
+            mes_sel = st.sidebar.selectbox("SELECCIONAR PERIODO", meses_limpios)
             df_mes = df_a[df_a["MES"] == mes_sel].iloc[0]
         
-            # --- CSS: ESTILO AMAZON / DHL DARK MODE ---
+            # --- CSS: DISEÑO PREMIUM ELITE ---
             st.markdown("""
                 <style>
                 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;800&display=swap');
                 
-                /* Títulos Estilo Elite */
                 .premium-header {
                     font-family: 'Orbitron', sans-serif;
                     color: #f8fafc;
-                    letter-spacing: 3px;
+                    letter-spacing: 2px;
                     text-transform: uppercase;
                     border-bottom: 2px solid #38bdf8;
-                    padding-bottom: 10px;
-                    margin-bottom: 25px;
+                    padding-bottom: 8px;
+                    margin: 20px 0;
                 }
         
                 .card-container {
                     background-color: #0d1117;
-                    border-radius: 12px;
-                    padding: 20px;
+                    border-radius: 10px;
+                    padding: 15px;
                     border: 1px solid #30363d;
-                    height: 140px;
+                    height: 125px;
                     margin-bottom: 15px;
-                    transition: all 0.3s ease;
+                    transition: all 0.3s;
                 }
-                .card-container:hover { border-color: #58a6ff; transform: scale(1.02); }
+                .card-container:hover { border-color: #58a6ff; transform: translateY(-3px); }
                 
-                .card-label { color: #8b949e; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; }
-                .card-value { font-size: 1.8rem; font-weight: 800; margin: 5px 0; font-family: 'Inter', sans-serif; color: #f0f6fc; }
-                
-                /* Bordes Neón */
+                .card-label { color: #8b949e; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
+                .card-value { font-size: 1.6rem; font-weight: 800; margin: 4px 0; font-family: 'Inter', sans-serif; color: #f0f6fc; }
+                .card-footer { color: #484f58; font-size: 0.6rem; font-weight: 600; }
+        
                 .border-blue { border-left: 5px solid #38bdf8; }
                 .border-green { border-left: 5px solid #00ffa2; }
                 .border-red { border-left: 5px solid #fb7185; }
-                
-                /* Diseño Radiografía Estilo Alerta Amazon */
+                .border-purple { border-left: 5px solid #a78bfa; }
+                .border-yellow { border-left: 5px solid #eab308; }
+        
                 .alert-box {
-                    background: rgba(13, 17, 23, 0.8);
+                    background: #161b22;
                     border: 1px solid #30363d;
                     border-radius: 10px;
                     padding: 20px;
-                    margin-top: 20px;
-                }
-                .alert-header {
-                    font-family: 'Orbitron', sans-serif;
-                    font-size: 1rem;
-                    margin-bottom: 15px;
-                    display: flex;
-                    align-items: center;
+                    margin-top: 10px;
                 }
                 </style>
             """, unsafe_allow_html=True)
         
             st.markdown(f"<h1 class='premium-header'>🚢 Logistics Performance: {mes_sel}</h1>", unsafe_allow_html=True)
         
-            # --- GRID DE TARJETAS (Resumen del código anterior optimizado) ---
+            # --- GRID DE 9 TARJETAS (3x3) ---
             c1, c2, c3 = st.columns(3)
-            # (Se repite la lógica de 9 tarjetas con el nuevo CSS card-container)
-            # ... [Inserte aquí la lógica de las 9 tarjetas de la versión V3 usando las clases .card-container y .border-X] ...
+            with c1: # COSTO LOGÍSTICO
+                color = "#00ffa2" if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else "#fb7185"
+                clase = "border-green" if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else "border-red"
+                st.markdown(f"<div class='card-container {clase}'><div class='card-label'>Costo Logístico</div><div class='card-value' style='color:{color}'>{df_mes['COSTO LOGÍSTICO']:.1f}%</div><div class='card-footer'>META: {df_mes['META INDICADOR']}%</div></div>", unsafe_allow_html=True)
+            with c2: # INCREMENTO + VI
+                color = "#fb7185" if df_mes["INCREMENTO + VI"] < 0 else "#00ffa2"
+                st.markdown(f"<div class='card-container border-red'><div class='card-label'>Incremento + VI</div><div class='card-value' style='color:{color}'>${df_mes['INCREMENTO + VI']:,.0f}</div><div class='card-footer'>Variación Financiera</div></div>", unsafe_allow_html=True)
+            with c3: # % INCREMENTO VS 2024
+                st.markdown(f"<div class='card-container border-purple'><div class='card-label'>% Incr. vs 2024</div><div class='card-value' style='color:#a78bfa'>{df_mes['% DE INCREMENTO VS 2024']:.1f}%</div><div class='card-footer'>Inflación Unitaria</div></div>", unsafe_allow_html=True)
         
-            # --- ANÁLISIS DINÁMICO NIVEL ELITE ---
-            st.write("---")
-            st.markdown("<h2 class='premium-header' style='font-size:1.2rem; border-color:#a78bfa;'>🧠 RADIOGRAFÍA INTELIGENTE</h2>", unsafe_allow_html=True)
-            
-            # Cálculos Dinámicos para la Radiografía
-            impacto_flete = df_mes['INCREMENTO + VI']
-            eficiencia = df_mes['COSTO LOGÍSTICO']
-            meta = df_mes['META INDICADOR']
+            c4, c5, c6 = st.columns(3)
+            with c4: # COSTO POR CAJA
+                color = "#00ffa2" if df_mes["COSTO POR CAJA"] <= df_mes["COSTO POR CAJA 2024"] else "#fb7185"
+                st.markdown(f"<div class='card-container border-blue'><div class='card-label'>Costo por Caja</div><div class='card-value' style='color:{color}'>${df_mes['COSTO POR CAJA']:.1f}</div><div class='card-footer'>Target 2024: ${df_mes['COSTO POR CAJA 2024']:.1f}</div></div>", unsafe_allow_html=True)
+            with c5: # VALUACION INCIDENCIAS
+                st.markdown(f"<div class='card-container border-yellow'><div class='card-label'>Valuación Incidencias</div><div class='card-value' style='color:#eab308'>${df_mes['VALUACION INCIDENCIAS']:,.0f}</div><div class='card-footer'>Mermas Reportadas</div></div>", unsafe_allow_html=True)
+            with c6: # % INCIDENCIAS
+                st.markdown(f"<div class='card-container border-purple'><div class='card-label'>% Incidencias</div><div class='card-value' style='color:#a78bfa'>{df_mes['PORCENTAJE DE INCIDENCIAS']:.2f}%</div><div class='card-footer'>Calidad de Entrega</div></div>", unsafe_allow_html=True)
+        
+            c7, c8, c9 = st.columns(3)
+            with c7: # FACTURACIÓN
+                st.markdown(f"<div class='card-container border-blue'><div class='card-label'>Facturación</div><div class='card-value'>${df_mes['FACTURACIÓN']:,.0f}</div><div class='card-footer'>Ingresos del Mes</div></div>", unsafe_allow_html=True)
+            with c8: # CAJAS
+                st.markdown(f"<div class='card-container border-purple'><div class='card-label'>Cajas Enviadas</div><div class='card-value'>{int(df_mes['CAJAS ENVIADAS']):,.0f}</div><div class='card-footer'>Unidades Totales</div></div>", unsafe_allow_html=True)
+            with c9: # FLETE
+                st.markdown(f"<div class='card-container border-blue'><div class='card-label'>Costo de Flete</div><div class='card-value'>${df_mes['COSTO DE FLETE']:,.0f}</div><div class='card-footer'>Gasto Directo</div></div>", unsafe_allow_html=True)
+        
+            # --- RADIOGRAFÍA DINÁMICA ---
+            st.markdown("<h2 class='premium-header' style='font-size:1.1rem; border-color:#a78bfa;'>🧠 RADIOGRAFÍA INTELIGENTE & DIAGNÓSTICO</h2>", unsafe_allow_html=True)
             
             col_rad1, col_rad2 = st.columns(2)
-        
             with col_rad1:
-                st.markdown(f"""
-                <div class="alert-box">
-                    <div class="alert-header" style="color: #38bdf8;">📊 METODOLOGÍA DE CONTROL</div>
-                    <p style="color: #94a3b8; font-size: 0.9rem;">
-                        <b>Costo Logístico:</b> ${df_mes['COSTO DE FLETE']:,.0f} flete / ${df_mes['FACTURACIÓN']:,.0f} venta.<br><br>
-                        <b>Unidad Operativa:</b> Se procesaron {int(df_mes['CAJAS ENVIADAS']):,.0f} cajas a un costo unitario de ${df_mes['COSTO POR CAJA']:.2f}.<br><br>
-                        <b>Desvío Anual:</b> Comparado con 2024 (${df_mes['COSTO POR CAJA 2024']:.2f}), el costo subió un {df_mes['% DE INCREMENTO VS 2024']:.1f}%.
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f"""<div class="alert-box"><div style="color:#38bdf8; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:10px;">📊 METODOLOGÍA ELITE</div>
+                <p style="color:#94a3b8; font-size:0.85rem;">
+                Para <b>{mes_sel}</b>, el sistema detectó una eficiencia de flete de <b>{df_mes['COSTO LOGÍSTICO']:.2f}%</b> sobre la venta bruta.<br><br>
+                El cálculo de <b>Incremento + VI</b> se determinó cruzando el ahorro en incidencias (${df_mes['VALUACION INCIDENCIAS']:,.0f}) contra el sobrecosto unitario vs 2024.
+                </p></div>""", unsafe_allow_html=True)
         
             with col_rad2:
-                status_color = "#00ffa2" if eficiencia <= meta else "#fb7185"
-                status_text = "SALUDABLE" if eficiencia <= meta else "CRÍTICO"
-                st.markdown(f"""
-                <div class="alert-box" style="border-top: 4px solid {status_color};">
-                    <div class="alert-header" style="color: {status_color};">🩺 DIAGNÓSTICO: {status_text}</div>
-                    <p style="color: #f1f5f9; font-size: 0.9rem;">
-                        La operación en <b>{mes_sel}</b> presenta un impacto de <b>{eficiencia:.2f}%</b> sobre la facturación.<br><br>
-                        <b>Impacto Financiero:</b> Se registra un desvío de <span style="color:#fb7185;">${abs(impacto_flete):,.2f}</span> debido a la variación de tarifas vs 2024.<br><br>
-                        <b>Acción Amazon Elite:</b> {'Mantener optimización de última milla.' if eficiencia <= meta else 'Urgente: Auditar tarifas de transportistas (Castores vs 3 Guerras).'}
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
+                status_color = "#00ffa2" if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else "#fb7185"
+                status_txt = "OPERACIÓN SALUDABLE" if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else "ALERTA: EXCESO DE GASTO"
+                st.markdown(f"""<div class="alert-box" style="border-top: 4px solid {status_color};">
+                <div style="color:{status_color}; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:10px;">🩺 DIAGNÓSTICO FINAL</div>
+                <p style="color:#f1f5f9; font-size:0.85rem;">
+                Estatus: <b>{status_txt}</b>.<br><br>
+                Se observa un desvío de <b>${abs(df_mes['INCREMENTO + VI']):,.0f}</b>. { 'La operación está bajo control.' if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else 'Se requiere auditoría inmediata de fletes.'}
+                </p></div>""", unsafe_allow_html=True)
 
         # --- NAVEGACIÓN ---
         st.divider()
@@ -1457,6 +1456,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
