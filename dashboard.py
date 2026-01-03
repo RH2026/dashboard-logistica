@@ -536,68 +536,62 @@ else:
             st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
         # --------------------------------------------------
-        # TABLA DE ENVÍOS – DISEÑO PREMIUM ELITE
+        # TABLA DE ENVÍOS – DISEÑO PREMIUM ELITE (FIXED)
         # --------------------------------------------------
-        # 1. Espaciado y Cabecera
         st.markdown("<div style='margin-top: 60px;'></div>", unsafe_allow_html=True)
         col_izq, col_centro, col_der = st.columns([2, 3, 2])
         
         with col_izq:
             btn_c1, btn_c2 = st.columns(2)
             with btn_c1:
-                if st.button("BD Completa", use_container_width=True):
+                if st.button("BD Completa", use_container_width=True, key="btn_full"):
                     st.session_state.tabla_expandida = True
                     st.rerun()
             with btn_c2:
-                if st.button("BD Vista Normal", use_container_width=True):
+                if st.button("BD Vista Normal", use_container_width=True, key="btn_norm"):
                     st.session_state.tabla_expandida = False
                     st.rerun()
         
         with col_centro:
-            st.markdown("""
-                <div style="text-align:center; padding: 10px; border-radius: 50px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);">
-                    <span style="color:white; font-size:22px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">
-                        📋 Registro Operativo
-                    </span>
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown("""<div style="text-align:center; padding: 10px; border-radius: 50px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);"><span style="color:white; font-size:22px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">📋 Registro Operativo</span></div>""", unsafe_allow_html=True)
 
-        # 2. Lógica de Altura
         h_dinamica = 850 if st.session_state.get('tabla_expandida', False) else 400
 
-        # 3. Preparación de Datos (Igual a tu lógica pero limpia)
-        hoy_t = pd.Timestamp.today().normalize()
+        # Preparación de datos (Aseguramos que sean tipos nativos de fecha para la tabla)
         df_visual = df_filtrado.copy()
+        hoy_t = pd.Timestamp.today().normalize()
         
-        df_visual["DIAS_RETRASO"] = (
-            (df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["PROMESA DE ENTREGA"]).dt.days
-        ).clip(lower=0)
+        # Calculamos retraso solo si no existe para la barra de progreso
+        df_visual["DIAS_RETRASO_VAL"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["PROMESA DE ENTREGA"]).dt.days).clip(lower=0)
 
-        # 4. RENDERIZADO CON COLUMN_CONFIG (El secreto de la modernidad)
+        # RENDERIZADO CON COLUMN_CONFIG CORREGIDO
         st.dataframe(
             df_visual,
             column_config={
-                "ESTATUS_CALCULADO": st.column_config.SelectColumn(
+                "ESTATUS_CALCULADO": st.column_config.SelectboxColumn(
                     "Estado",
+                    help="Estatus logístico actual",
                     options=["ENTREGADO", "EN TRANSITO", "RETRASADO"],
+                    required=True,
                 ),
-                "DIAS_RETRASO": st.column_config.ProgressColumn(
+                "DIAS_RETRASO_VAL": st.column_config.ProgressColumn(
                     "Retraso",
-                    help="Días de desviación vs Promesa",
+                    help="Días de desviación visual",
                     format="%d d",
                     min_value=0,
                     max_value=15,
-                    color="red"
+                    color="red",
                 ),
                 "COSTO DE LA GUÍA": st.column_config.NumberColumn(
-                    "Costo",
-                    format="$ %.2f"
+                    "Inversión",
+                    format="$ %.2f",
                 ),
-                "FLETERA": st.column_config.TextColumn("Fletera"),
-                "NÚMERO DE GUÍA": st.column_config.TextColumn("Tracking ID"),
                 "FECHA DE ENVÍO": st.column_config.DateColumn("Salida", format="DD/MM/YYYY"),
                 "PROMESA DE ENTREGA": st.column_config.DateColumn("Promesa", format="DD/MM/YYYY"),
                 "FECHA DE ENTREGA REAL": st.column_config.DateColumn("Entrega", format="DD/MM/YYYY"),
+                "NÚMERO DE GUÍA": "Tracking ID",
+                "NOMBRE DEL CLIENTE": "Cliente",
+                "FLETERA": "Fletera"
             },
             hide_index=True,
             use_container_width=True,
@@ -1410,6 +1404,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
