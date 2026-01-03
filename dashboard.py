@@ -508,7 +508,7 @@ else:
                 align="center", baseline="middle", fontSize=12, fontWeight=400, dy=18, color="#94a3b8"
             ).encode(text=alt.Text(field="t", type="nominal"))
             
-            return (donut + texto_n + texto_p).properties(width=120, height=120).configure_view(strokeOpacity=0)
+            return (donut + texto_n + texto_p).properties(width=140, height=140).configure_view(strokeOpacity=0)
 
         # --- 4. RENDERIZADO DE COLUMNAS ---
         st.markdown("<div style='background:rgba(255,255,255,0.02);padding:15px;border-radius:15px;border-left:5px solid #38bdf8;margin-bottom:25px;'><span style='color:white;font-size:20px;font-weight:800;letter-spacing:1.5px;'>CONSOLA GLOBAL DE RENDIMIENTO</span></div>", unsafe_allow_html=True)
@@ -1425,6 +1425,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
