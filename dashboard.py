@@ -792,46 +792,62 @@ else:
         # --------------------------------------------------
         # RANKING DE CALIDAD: MEJOR A PEOR FLETERA (MENOS FALLOS A MÁS)
         # --------------------------------------------------
-        st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:18px; font-weight:700; margin:30px 0 10px 0;">Ranking de Calidad por Paquetería</div></div>""", unsafe_allow_html=True)
-    
-        # 1. Filtramos los entregados tarde
+        # --- RANKING DE CALIDAD (DISEÑO ELITE) ---
+        
+        # Estética de colores de la central de monitoreo
+        color_perfecto = "#059669"  # Esmeralda (Cero fallos)
+        color_con_fallo = "#fb7185" # Coral/Rojo (Con retrasos)
+
+        st.markdown(f"""
+            <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #00FFAA; margin-top: 30px; margin-bottom: 20px;'>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>🏆 RANKING DE CALIDAD: INCIDENCIAS POR FLETERA</span>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # 1. Procesamiento de incidencias
         df_entregas_tarde = df_filtrado[
             (df_filtrado["FECHA DE ENTREGA REAL"].notna()) & 
             (df_filtrado["FECHA DE ENTREGA REAL"] > df_filtrado["PROMESA DE ENTREGA"])
         ].copy()
-    
-        # 2. Contamos fallos por fletera
-        df_ranking = df_entregas_tarde.groupby("FLETERA").size().reset_index(name="CANTIDAD_FALLOS")
-        
-        # 3. Incluimos a las fleteras que tienen 0 fallos para que aparezcan como las "mejores"
-        todas_las_fleteras = pd.DataFrame(df_filtrado["FLETERA"].unique(), columns=["FLETERA"])
-        df_ranking_completo = pd.merge(todas_las_fleteras, df_ranking, on="FLETERA", how="left").fillna(0)
-    
-        if not df_ranking_completo.empty:
-            # 4. Gráfica de barras - Ordenada de Menos Fallos (Mejor) a Más Fallos (Peor)
-            chart_ranking = alt.Chart(df_ranking_completo).mark_bar(
-                cornerRadiusTopLeft=8, 
-                cornerRadiusTopRight=8
-            ).encode(
-                # sort='y' ordena de menor a mayor (la mejor fletera primero)
-                x=alt.X("FLETERA:N", title="Paquetería (Mejor → Peor)", sort='y', axis=alt.Axis(labelAngle=-45)),
-                y=alt.Y("CANTIDAD_FALLOS:Q", title="Total de Pedidos Tarde"),
-                # Color dinámico: Verde si es 0, Rojo si tiene fallos
-                color=alt.condition(
-                    alt.datum.CANTIDAD_FALLOS == 0,
-                    alt.value("#2ECC71"), # Verde para las perfectas
-                    alt.value("#FF0000")  # Rojo para las que tienen fallos
-                ),
-                tooltip=["FLETERA", "CANTIDAD_FALLOS"]
-            ).properties(height=400)
-    
-            # 5. Etiqueta numérica
-            text_ranking = chart_ranking.mark_text(
-                align='center', baseline='bottom', dy=-10, fontSize=16, fontWeight='bold', color='white'
-            ).encode(text=alt.Text("CANTIDAD_FALLOS:Q"))
-    
-            st.altair_chart((chart_ranking + text_ranking), use_container_width=True)
-            st.caption("🏆 Las fleteras a la izquierda son las más cumplidas (menos fallos).")
+
+        df_ranking = df_entregas_tarde.groupby("FLETERA").size().reset_index(name="FALLOS")
+        todas_f = pd.DataFrame(df_filtrado["FLETERA"].unique(), columns=["FLETERA"])
+        df_rk = pd.merge(todas_f, df_ranking, on="FLETERA", how="left").fillna(0)
+
+        if not df_rk.empty:
+            # Asignación de colores segura (Elite Style)
+            df_rk["COLOR_HEX"] = df_rk["FALLOS"].apply(lambda x: color_perfecto if x == 0 else color_con_fallo)
+
+            # 2. Gráfico Vertical Premium
+            chart_base = alt.Chart(df_rk).encode(
+                x=alt.X("FLETERA:N", title=None, sort='y', axis=alt.Axis(labelAngle=-45, labelColor='white', labelFontSize=11)),
+                y=alt.Y("FALLOS:Q", title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8')),
+                color=alt.Color("COLOR_HEX:N", scale=None)
+            )
+
+            bars = chart_base.mark_bar(
+                cornerRadiusTopLeft=10, 
+                cornerRadiusTopRight=10,
+                size=40
+            )
+
+            # Etiquetas de datos (Los números arriba de las barras)
+            labels = chart_base.mark_text(
+                align='center', baseline='bottom', dy=-10, fontSize=15, fontWeight=700, color='white'
+            ).encode(text=alt.Text("FALLOS:Q", format='d'))
+
+            st.altair_chart((bars + labels).properties(height=400).configure_view(strokeOpacity=0), use_container_width=True)
+            
+            # Guía de lectura rápida
+            st.markdown(f"""
+                <p style='text-align:center; color:#94a3b8; font-size:12px; font-style:italic;'>
+                    <span style='color:{color_perfecto};'>●</span> <b>Cero Incidencias</b> | 
+                    <span style='color:{color_con_fallo};'>●</span> <b>Con Pedidos Tarde</b> <br>
+                    Las fleteras a la izquierda son las de mayor confianza operativa.
+                </p>
+            """, unsafe_allow_html=True)
+        else:
+            st.info("No se detectaron entregas fuera de tiempo en el periodo actual.")
         
         # --------------------------------------------------
         # SECCIÓN UNIFICADA: ANÁLISIS DE EXPERIENCIA (LUPA)
@@ -1385,6 +1401,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
