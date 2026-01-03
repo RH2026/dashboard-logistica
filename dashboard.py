@@ -971,7 +971,18 @@ else:
         # 1. Fuerza el scroll hacia arriba
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
-        st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📊 Panel de Control Gerencial</h2>", unsafe_allow_html=True)
+        st.markdown("""
+            <div style='text-align: center; padding: 10px 0px 30px 0px;'>
+                <h1 style='color: white; font-family: "Inter", sans-serif; font-weight: 800; font-size: 42px; margin-bottom: 5px; letter-spacing: -1px;'>
+                    SEGUIMIENTO <span style='color: #00FFAA;'>ANALISIS</span>
+                </h1>
+                <p style='color: #94a3b8; font-size: 16px; font-weight: 400; letter-spacing: 1px;'>
+                    Análisis de Eficiencia y Seguimiento
+                </p>
+                <div style='height: 2px; width: 60px; background: #00FFAA; margin: 10px auto;'></div>
+            </div>
+        """, unsafe_allow_html=True)
+        
         st.divider()
 
         # --- 2. LÓGICA DE DATOS (ESTANDARIZADA) ---
@@ -1306,6 +1317,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
