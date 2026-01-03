@@ -465,7 +465,8 @@ else:
                
 
         # --- 1. CÁLCULO DE MÉTRICAS ---
-        st.markdown("<style>.elite-card{transition:all 0.4s ease;padding:20px;border-radius:20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);text-align:center;margin-bottom:10px;}.elite-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,0.7)!important;border:1px solid rgba(255,255,255,0.25)!important;}</style>", unsafe_allow_html=True)
+        # (El CSS se mantiene igual, ya funciona perfecto)
+        st.markdown("<style>.elite-card{transition:all 0.4s ease;padding:20px;border-radius:20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);text-align:center;margin-bottom:10px;min-height:280px;}.elite-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,0.7)!important;border:1px solid rgba(255,255,255,0.25)!important;}</style>", unsafe_allow_html=True)
         
         total = int(len(df_filtrado))
         entregados = int((df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum())
@@ -479,36 +480,38 @@ else:
         COLOR_TOTAL             = "#fbbf24" 
         COLOR_FALTANTE          = "#262730" 
 
-        # --- 3. FUNCIÓN CORREGIDA (Sintaxis simplificada para evitar el TypeError) ---
+        # --- 3. FUNCIÓN DONITA (CON CÍRCULO COMPLETO SIN CORTES) ---
         def donut_con_numero(avance, total_val, color_avance, color_faltante):
             porcentaje = int((avance / total_val) * 100) if total_val > 0 else 0
             
-            # DataFrame con tipos de datos limpios
             data_dona = pd.DataFrame({
                 "segmento": ["A", "B"], 
                 "valor": [float(avance), float(max(total_val - avance, 0))]
             })
             
-            # 1. El arco (Dona) con sintaxis explícita
-            donut = alt.Chart(data_dona).mark_arc(innerRadius=52, outerRadius=65, cornerRadius=10).encode(
+            # Ajustamos radios y añadimos PADDING para evitar que se corte el borde
+            donut = alt.Chart(data_dona).mark_arc(innerRadius=45, outerRadius=58, cornerRadius=10).encode(
                 theta=alt.Theta(field="valor", type="quantitative"),
                 color=alt.Color(field="segmento", type="nominal", 
                                 scale=alt.Scale(domain=["A", "B"], range=[color_avance, color_faltante]), 
                                 legend=None),
-                tooltip=alt.value(None) # Forma segura de desactivar tooltip
+                tooltip=alt.value(None)
             )
             
-            # 2. Número central
             texto_n = alt.Chart(pd.DataFrame({"t": [str(avance)]})).mark_text(
-                align="center", baseline="middle", fontSize=28, fontWeight=800, dy=-6, color="white"
+                align="center", baseline="middle", fontSize=26, fontWeight=800, dy=-6, color="white"
             ).encode(text=alt.Text(field="t", type="nominal"))
             
-            # 3. Porcentaje inferior
             texto_p = alt.Chart(pd.DataFrame({"t": [f"{porcentaje}%"]})).mark_text(
                 align="center", baseline="middle", fontSize=12, fontWeight=400, dy=18, color="#94a3b8"
             ).encode(text=alt.Text(field="t", type="nominal"))
             
-            return (donut + texto_n + texto_p).properties(width=140, height=140).configure_view(strokeOpacity=0)
+            # El secreto está en .properties(padding=15) y en no forzar un width/height gigante
+            return (donut + texto_n + texto_p).properties(
+                width=140, 
+                height=140,
+                padding=15
+            ).configure_view(strokeOpacity=0)
 
         # --- 4. RENDERIZADO DE COLUMNAS ---
         st.markdown("<div style='background:rgba(255,255,255,0.02);padding:15px;border-radius:15px;border-left:5px solid #38bdf8;margin-bottom:25px;'><span style='color:white;font-size:20px;font-weight:800;letter-spacing:1.5px;'>CONSOLA GLOBAL DE RENDIMIENTO</span></div>", unsafe_allow_html=True)
@@ -1425,6 +1428,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
