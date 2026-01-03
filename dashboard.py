@@ -722,56 +722,72 @@ else:
         # --------------------------------------------------
         # GRÁFICO EXCLUSIVO: RETRASO PROMEDIO (DÍAS) + NOTA
         # --------------------------------------------------
-        import datetime
-    
-        st.markdown("<h5 style='text-align:center; color:white;'>Retraso Promedio por Paquetería</h5>", unsafe_allow_html=True)
-    
-        # 1. Preparación de datos (Reactivo a df_filtrado)
+        # --- ANÁLISIS DE DESVIACIÓN (DISEÑO SUPER ELITE) ---
+        
+        # 1. Título con el estilo de la casa (OPS MONITOR)
+        st.markdown(f"""
+            <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #fbbf24; margin-bottom: 20px;'>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>⏱️ RETRASO PROMEDIO POR PAQUETERÍA</span>
+            </div>
+        """, unsafe_allow_html=True)
+
         df_entregados_p = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
         
         if not df_entregados_p.empty:
-            # Cálculo de la desviación en días
-            df_entregados_p["DIAS_DESVIACION"] = (
-                (df_entregados_p["FECHA DE ENTREGA REAL"] - df_entregados_p["PROMESA DE ENTREGA"]).dt.days
-            )
-    
-            # Promedio por Fletera
+            # Cálculo de desviación
+            df_entregados_p["DIAS_DESVIACION"] = (df_entregados_p["FECHA DE ENTREGA REAL"] - df_entregados_p["PROMESA DE ENTREGA"]).dt.days
             df_prom = df_entregados_p.groupby("FLETERA")["DIAS_DESVIACION"].mean().reset_index(name="PROMEDIO")
-    
-            # 2. Creación del Gráfico Horizontal
-            chart_prom = alt.Chart(df_prom).mark_bar(
-                cornerRadiusTopRight=8, 
-                cornerRadiusBottomRight=8
-            ).encode(
-                y=alt.Y("FLETERA:N", title=None, sort='-x'),
-                x=alt.X("PROMEDIO:Q", title="Días promedio"),
-                color=alt.condition(
-                    alt.datum.PROMEDIO > 0, 
-                    alt.value("#F39C12"), # Naranja si hay retraso
-                    alt.value("#2ECC71")  # Verde si es a tiempo/antes
-                )
-            ).properties(height=400)
             
-            # Etiquetas de número con un decimal
-            text_prom = chart_prom.mark_text(
-                align='left', baseline='middle', dx=5, fontSize=15, fontWeight='bold', color='white'
+            # --- ASIGNACIÓN DE COLORES ELITE (MÉTODO SEGURO) ---
+            # Verde oscuro para buen servicio, Naranja quemado para retrasos
+            def color_desviacion(valor):
+                return "#059669" if valor <= 0 else "#d97706"
+            
+            df_prom["COLOR_HEX"] = df_prom["PROMEDIO"].apply(color_desviacion)
+
+            # 2. Creación del Gráfico Horizontal Premium
+            bars = alt.Chart(df_prom).mark_bar(
+                cornerRadiusTopRight=10, 
+                cornerRadiusBottomRight=10,
+                size=22
+            ).encode(
+                y=alt.Y("FLETERA:N", title=None, sort='-x', axis=alt.Axis(labelColor='white', labelFontSize=12)),
+                x=alt.X("PROMEDIO:Q", title="Días Promedio (Retraso > 0)", axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8')),
+                color=alt.Color("COLOR_HEX:N", scale=None)
+            )
+            
+            # Etiquetas de datos flotantes
+            text_labels = bars.mark_text(
+                align='left', baseline='middle', dx=10, fontSize=14, fontWeight=700, color='white'
             ).encode(text=alt.Text("PROMEDIO:Q", format='.1f'))
             
-            st.altair_chart((chart_prom + text_prom), use_container_width=True)
-    
-            # 3. Nota Dinámica Diaria
-            fecha_hoy = datetime.date.today().strftime('%d/%m/%Y')
+            st.altair_chart((bars + text_labels).properties(height=400).configure_view(strokeOpacity=0), use_container_width=True)
+
+            # 3. DIAGNÓSTICO LOGÍSTICO (TARJETA DE ALTO IMPACTO)
             peor_fletera = df_prom.sort_values(by="PROMEDIO", ascending=False).iloc[0]
+            fecha_hoy = datetime.date.today().strftime('%d/%m/%Y')
             
             if peor_fletera["PROMEDIO"] > 0:
-                st.error(f"🔍 **Diagnóstico Logístico al {fecha_hoy}:** El mayor impacto en la espera del cliente lo tiene **{peor_fletera['FLETERA']}** con un retraso promedio de **{peor_fletera['PROMEDIO']:.1f} días**.")
+                st.markdown(f"""
+                    <div style='background: rgba(251, 113, 133, 0.1); border: 1px solid #fb7185; padding: 20px; border-radius: 12px; margin-top: 20px;'>
+                        <p style='margin:0; color:#fb7185; font-weight:800; font-size:14px; text-transform:uppercase;'>🔍 Diagnóstico Crítico al {fecha_hoy}</p>
+                        <p style='margin:10px 0 0 0; color:white; font-size:16px;'>
+                            El mayor impacto en la experiencia del cliente lo tiene <b>{peor_fletera['FLETERA']}</b> 
+                            con un retraso promedio de <span style='color:#fb7185; font-weight:bold;'>{peor_fletera['PROMEDIO']:.1f} días</span>.
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
             else:
-                st.success(f"✨ **Reporte al {fecha_hoy}:** Todas las fleteras están operando a tiempo o antes de lo prometido.")
-    
-            # Guía visual fija
-            st.info("💡 **Guía rápida:** Barras Verdes = Buen servicio | Barras Naranjas = Retraso promedio.")
+                st.markdown(f"""
+                    <div style='background: rgba(5, 150, 105, 0.1); border: 1px solid #059669; padding: 20px; border-radius: 12px; margin-top: 20px;'>
+                        <p style='margin:0; color:#059669; font-weight:800; font-size:14px; text-transform:uppercase;'>✨ Reporte de Excelencia al {fecha_hoy}</p>
+                        <p style='margin:10px 0 0 0; color:white; font-size:16px;'>
+                            Todas las paqueterías están operando <b>dentro de la promesa de entrega</b>.
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
         else:
-            st.warning("No hay datos de entregas finalizadas para calcular el promedio.")
+            st.warning("No hay datos de entregas finalizadas para este análisis.")
     
         # --------------------------------------------------
         # RANKING DE CALIDAD: MEJOR A PEOR FLETERA (MENOS FALLOS A MÁS)
@@ -1369,6 +1385,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
