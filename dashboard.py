@@ -974,7 +974,7 @@ else:
         st.markdown("""
             <div style='text-align: center; padding: 10px 0px 30px 0px;'>
                 <h1 style='color: white; font-family: "Inter", sans-serif; font-weight: 800; font-size: 42px; margin-bottom: 5px; letter-spacing: -1px;'>
-                    SEGUIMIENTO <span style='color: #00FFAA;'>ANALISIS</span>
+                    OPS<span style='color: #00FFAA;'>MONITOR</span>
                 </h1>
                 <p style='color: #94a3b8; font-size: 16px; font-weight: 400; letter-spacing: 1px;'>
                     Análisis de Eficiencia y Seguimiento
@@ -1189,10 +1189,15 @@ else:
         
         # Título con estilo minimalista
         st.markdown("""
-            <h1 style='text-align: center; color: white; font-family: sans-serif; font-weight: 800; letter-spacing: -1px;'>
-                REPORTE <span style='color: #00FFAA;'>MENSUAL</span> OPS
-            </h1>
-            <p style='text-align: center; color: #808495; font-size: 18px;'>Análisis de Eficiencia Logística y Rentabilidad</p>
+            <div style='text-align: center; padding: 10px 0px 30px 0px;'>
+                <h1 style='color: white; font-family: "Inter", sans-serif; font-weight: 800; font-size: 42px; margin-bottom: 5px; letter-spacing: -1px;'>
+                    REPORTE MENSUAL<span style='color: #00FFAA;'>OPS</span>
+                </h1>
+                <p style='color: #94a3b8; font-size: 16px; font-weight: 400; letter-spacing: 1px;'>
+                    Análisis de Eficiencia Logística y Rentabilidad
+                </p>
+                <div style='height: 2px; width: 60px; background: #00FFAA; margin: 10px auto;'></div>
+            </div>
         """, unsafe_allow_html=True)
         st.write("##")
 
@@ -1317,6 +1322,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
