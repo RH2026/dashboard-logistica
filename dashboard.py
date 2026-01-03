@@ -234,7 +234,8 @@ else:
         # --------------------------------------------------
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
-        st.markdown("<style>@keyframes floatBox{0%{transform:translateY(0px);}50%{transform:translateY(-4px);}100%{transform:translateY(0px);}}@keyframes fadeInText{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}</style><h2 style='text-align:center;display:flex;align-items:center;justify-content:center;gap:14px;color:#FFFFFF;font-weight:600;'><svg style='animation:floatBox 3.2s ease-in-out infinite;' width='34' height='34' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 7L12 2L21 7L12 12L3 7Z' stroke='#00FFAA' stroke-width='1.5' stroke-linejoin='round'/><path d='M3 7V17L12 22L21 17V7' stroke='#00FFAA' stroke-width='1.5' stroke-linejoin='round'/><path d='M12 12V22' stroke='#00FFAA' stroke-width='1.5'/><path d='M7.5 4.8L16.5 9.3' stroke='#00FFAA' stroke-width='1.1' opacity='0.6'/></svg><span style='animation:fadeInText 1.2s ease-out forwards;'>Control de Embarques</span></h2>", unsafe_allow_html=True)
+        st.markdown("<style>@keyframes floatBox{0%,100%{transform:translateY(0px)}50%{transform:translateY(-6px)}}</style>", unsafe_allow_html=True)
+        st.markdown(f"<div style='text-align:center;'><svg style='animation:floatBox 3s infinite' width='45' height='45' viewBox='0 0 24 24' fill='none' stroke='#38bdf8' stroke-width='1.8' xmlns='http://www.w3.org/2000/svg'><path d='M3 7L12 2L21 7L12 12L3 7ZM3 7V17L12 22L21 17V7M12 12V22'/></svg><h1 style='color:white; font-family:Inter; font-weight:800; font-size:42px; margin-top:10px; letter-spacing:-1.5px;'>CONTROL DE <span style='color:#38bdf8'>EMBARQUES</span></h1></div>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;'>Logística – Enero 2026</p>", unsafe_allow_html=True)
        
         st.divider()
@@ -1322,6 +1323,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
