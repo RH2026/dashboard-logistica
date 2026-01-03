@@ -1303,8 +1303,7 @@ else:
                 <div style='height: 2px; width: 60px; background: #00FFAA; margin: 10px auto;'></div>
             </div>
         """, unsafe_allow_html=True)
-        st.write("##")
-
+        
         # --- MOTOR DE DATOS NIVEL ELITE ---
         @st.cache_data
         def cargar_analisis_elite():
@@ -1456,6 +1455,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
