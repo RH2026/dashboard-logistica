@@ -1105,7 +1105,7 @@ else:
         # Pie de página
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística - Vista Gerencial</div>", unsafe_allow_html=True)
     # ------------------------------------------------------------------
-    # BLOQUE 10: REPORTE MENSUAL (CÁLCULO LOGÍSTICO CORREGIDO)
+    # BLOQUE 10: REPORTE MENSUAL (LIMPIEZA DE DATOS PROFUNDA)
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "Reporte":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
@@ -1115,78 +1115,64 @@ else:
         @st.cache_data
         def cargar_matriz_reporte():
             try:
-                # Carga local del archivo que está en tu GitHub
+                # Carga local desde el repositorio
                 df_r = pd.read_csv("matriz_mensual.csv", encoding="utf-8")
-                
-                # 1. Limpieza extrema de encabezados (quita espacios y asegura mayúsculas)
                 df_r.columns = [str(c).strip().upper() for c in df_r.columns]
                 
-                # 2. Conversión forzada a números (quita símbolos si los hubiera)
-                for col in ["COSTO DE GUIA", "VALOR FACTURA"]:
-                    if col in df_r.columns:
-                        df_r[col] = pd.to_numeric(df_r[col], errors='coerce').fillna(0)
+                # Función para limpiar símbolos de moneda y comas
+                def limpiar_moneda(valor):
+                    if pd.isna(valor): return 0.0
+                    if isinstance(valor, str):
+                        # Quita $, comas y espacios
+                        valor = valor.replace('$', '').replace(',', '').strip()
+                        try:
+                            return float(valor)
+                        except:
+                            return 0.0
+                    return float(valor)
+
+                # Aplicar limpieza a las columnas críticas
+                df_r["COSTO DE GUIA"] = df_r["COSTO DE GUIA"].apply(limpiar_moneda)
+                df_r["VALOR FACTURA"] = df_r["VALOR FACTURA"].apply(limpiar_moneda)
                 
-                # 3. CÁLCULO EXACTO: COSTO DE GUIA / VALOR FACTURA
-                # Creamos la columna inicializada en 0
+                # CÁLCULO LOGÍSTICO (Costo / Venta)
                 df_r["% LOGÍSTICO"] = 0.0
-                
-                # Solo calculamos donde VALOR FACTURA sea mayor a 0 para evitar error matemático
                 mask = df_r["VALOR FACTURA"] > 0
                 df_r.loc[mask, "% LOGÍSTICO"] = (df_r["COSTO DE GUIA"] / df_r["VALOR FACTURA"]) * 100
                 
                 return df_r
             except Exception as e:
-                st.error(f"Error al procesar los datos: {e}")
+                st.error(f"Error en matriz: {e}")
                 return None
 
         df_m = cargar_matriz_reporte()
 
         if df_m is not None:
-            # --- MÉTRICAS TOTALES ---
-            suma_flete = df_m["COSTO DE GUIA"].sum()
-            suma_venta = df_m["VALOR FACTURA"].sum()
-            # Impacto real de toda la operación
-            impacto_global = (suma_flete / suma_venta * 100) if suma_venta > 0 else 0
+            # MÉTRICAS
+            s_flete = df_m["COSTO DE GUIA"].sum()
+            s_venta = df_m["VALOR FACTURA"].sum()
+            imp_global = (s_flete / s_venta * 100) if s_venta > 0 else 0
 
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Gasto en Fletes", f"${suma_flete:,.2f}")
-            col2.metric("Venta Total", f"${suma_venta:,.2f}")
-            col3.metric("Impacto Logístico", f"{impacto_global:.2f}%")
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Gasto en Fletes", f"${s_flete:,.2f}")
+            c2.metric("Venta Total", f"${s_venta:,.2f}")
+            c3.metric("Impacto Logístico", f"{imp_global:.2f}%")
 
             st.write("##")
 
-            # --- TABLA DE ANÁLISIS ---
-            st.markdown("### 📋 Análisis por Factura")
-            with st.expander("Ver desglose detallado (Matriz Mensual)"):
-                # Columnas seleccionadas de tus encabezados
-                columnas_ver = [
-                    "FACTURA", "RAZON SOCIAL", "FLETERA", 
-                    "COSTO DE GUIA", "VALOR FACTURA", "% LOGÍSTICO"
-                ]
-                
-                # Ordenamos para que veas primero las facturas con fletes más caros proporcionalmente
+            # TABLA
+            with st.expander("Ver desglose detallado"):
+                cols = ["FACTURA", "RAZON SOCIAL", "FLETERA", "COSTO DE GUIA", "VALOR FACTURA", "% LOGÍSTICO"]
                 st.dataframe(
-                    df_m[columnas_ver].sort_values("% LOGÍSTICO", ascending=False),
+                    df_m[cols].sort_values("% LOGÍSTICO", ascending=False),
                     use_container_width=True,
                     hide_index=True,
                     column_config={
                         "COSTO DE GUIA": st.column_config.NumberColumn("Costo Flete", format="$%.2f"),
-                        "VALOR FACTURA": st.column_config.NumberColumn("Venta", format="$%.2f"),
+                        "VALOR FACTURA": st.column_config.NumberColumn("Valor Venta", format="$%.2f"),
                         "% LOGÍSTICO": st.column_config.NumberColumn("Gasto %", format="%.2f%%")
                     }
                 )
-
-        # --- NAVEGACIÓN ---
-        st.divider()
-        n1, n2 = st.columns(2)
-        with n1:
-            if st.button("🏠 Volver al Inicio", use_container_width=True):
-                st.session_state.pagina = "principal"
-                st.rerun()
-        with n2:
-            if st.button("📊 Ir a KPIs Gerenciales", use_container_width=True):
-                st.session_state.pagina = "KPIs"
-                st.rerun()
 
 
 
