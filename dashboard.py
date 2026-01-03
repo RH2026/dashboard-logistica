@@ -1105,107 +1105,146 @@ else:
 
         # Pie de página
         st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística - Vista Gerencial</div>", unsafe_allow_html=True)
+    # ----------------------------------------------
     # ------------------------------------------------------------------
-    # ------------------------------------------------------------------
-    # BLOQUE 10: REPORTE MENSUAL (DISEÑO CORPORATIVO)
+    # BLOQUE 10: REPORTE EJECUTIVO MENSUAL (FINANZAS Y OPERACIONES)
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "Reporte":
-        # 1. Asegurar scroll al inicio
+        # Asegurar que la página cargue desde arriba
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         st.markdown("<h2 style='text-align:center; color:#00FFAA;'>📊 Reporte Ejecutivo de Operaciones</h2>", unsafe_allow_html=True)
         st.divider()
 
-        # --- MOTOR DE DATOS (PROCESAMIENTO) ---
+        # --- MOTOR DE DATOS (PROCESAMIENTO LOCAL) ---
         @st.cache_data
         def cargar_matriz_reporte():
             try:
-                # Carga local del archivo matriz_mensual.csv
+                # Carga del archivo matriz_mensual.csv en el mismo directorio
                 df_r = pd.read_csv("matriz_mensual.csv", encoding="utf-8")
+                
+                # Estandarización de encabezados
                 df_r.columns = [str(c).strip().upper() for c in df_r.columns]
                 
+                # Función para limpiar formatos de moneda y texto en números
                 def limpiar_num(v):
                     if pd.isna(v): return 0.0
                     if isinstance(v, str):
+                        # Limpia $, comas y espacios para permitir cálculos
                         v = v.replace('$', '').replace(',', '').strip()
                         try: return float(v)
                         except: return 0.0
                     return float(v)
 
+                # Aplicar limpieza a columnas clave de tu tabla
                 df_r["COSTO DE GUIA"] = df_r["COSTO DE GUIA"].apply(limpiar_num)
                 df_r["VALOR FACTURA"] = df_r["VALOR FACTURA"].apply(limpiar_num)
+                
+                # Asegurar que CAJAS sea numérico y mínimo 1 para evitar errores
                 df_r["CAJAS"] = pd.to_numeric(df_r["CAJAS"], errors='coerce').fillna(1).replace(0, 1)
                 
-                # Cálculos Financieros
+                # --- CÁLCULOS FINANCIEROS ---
+                # Ratio Logístico: Costo de Guía / Valor Factura (Meta 7%)
                 df_r["% LOGÍSTICO"] = (df_r["COSTO DE GUIA"] / df_r["VALOR FACTURA"].replace(0, float('nan'))) * 100
                 df_r["% LOGÍSTICO"] = df_r["% LOGÍSTICO"].fillna(0)
+                
+                # Eficiencia Unitaria: Costo de Guía / Cantidad de Cajas
                 df_r["COSTO_CAJA"] = df_r["COSTO DE GUIA"] / df_r["CAJAS"]
                 
                 return df_r
             except Exception as e:
-                st.error(f"Error crítico en datos: {e}")
+                st.error(f"Error crítico al procesar matriz_mensual.csv: {e}")
                 return None
 
+        # Ejecutar la carga
         df_m = cargar_matriz_reporte()
 
         if df_m is not None:
-            # --- CÁLCULOS PARA TARJETAS ---
-            t_fletes = df_m["COSTO DE GUIA"].sum()
-            t_venta = df_m["VALOR FACTURA"].sum()
-            t_cajas = df_m["CAJAS"].sum()
-            t_facturas = df_m["FACTURA"].nunique()
-            t_impacto = (t_fletes / t_venta * 100) if t_venta > 0 else 0
-            t_costo_caja = (t_fletes / t_cajas) if t_cajas > 0 else 0
+            # --- CÁLCULOS PARA DASHBOARD EJECUTIVO ---
+            total_fletes = df_m["COSTO DE GUIA"].sum()
+            total_facturado = df_m["VALOR FACTURA"].sum()
+            total_cajas = df_m["CAJAS"].sum()
+            total_facturas = df_m["FACTURA"].nunique()
+            
+            # KPIs de Control
+            impacto_global = (total_fletes / total_facturado * 100) if total_facturado > 0 else 0
+            costo_prom_caja = (total_fletes / total_cajas) if total_cajas > 0 else 0
 
-            # --- CSS PARA TARJETAS ---
+            # --- ESTILO DE TARJETAS PRO ---
             st.markdown("""
                 <style>
-                .f-card { background:#11141C; border:1px solid #2D333F; border-radius:12px; padding:18px; margin-bottom:10px; }
-                .f-label { color:#9CA3AF; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; }
-                .f-value { color:white; font-size:22px; font-weight:700; margin-top:5px; }
+                .f-card { background:#11141C; border:1px solid #2D333F; border-radius:12px; padding:20px; margin-bottom:10px; }
+                .f-label { color:#9CA3AF; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:1px; }
+                .f-value { color:white; font-size:24px; font-weight:700; margin-top:5px; }
+                .f-status { font-size:10px; font-weight:bold; margin-top:8px; text-transform:uppercase; }
                 </style>
             """, unsafe_allow_html=True)
 
-            # FILA 1
+            # FILA 1: VOLUMEN Y VENTAS
             c1, c2, c3 = st.columns(3)
-            c1.markdown(f"<div class='f-card'><div class='f-label'>💰 Venta Total</div><div class='f-value'>${t_venta:,.2f}</div></div>", unsafe_allow_html=True)
-            c2.markdown(f"<div class='f-card'><div class='f-label'>📦 Cajas Totales</div><div class='f-value'>{t_cajas:,.0f} u</div></div>", unsafe_allow_html=True)
-            c3.markdown(f"<div class='f-card'><div class='f-label'>📄 Total Facturas</div><div class='f-value'>{t_facturas}</div></div>", unsafe_allow_html=True)
-
-            # FILA 2 (Métricas de Control)
-            c4, c5, c6 = st.columns(3)
-            color_i = "#00FFAA" if t_impacto < 3.5 else "#FF4B4B"
-            c4.markdown(f"<div class='f-card' style='border-top:3px solid #FF4B4B'><div class='f-label'>📉 Gasto Logístico</div><div class='f-value'>${t_fletes:,.2f}</div></div>", unsafe_allow_html=True)
-            c5.markdown(f"<div class='f-card' style='border-top:3px solid {color_i}'><div class='f-label'>🎯 Impacto Logístico</div><div class='f-value' style='color:{color_i}'>{t_impacto:.2f}%</div></div>", unsafe_allow_html=True)
-            c6.markdown(f"<div class='f-card' style='border-top:3px solid #38bdf8'><div class='f-label'>💵 Costo por Caja</div><div class='f-value'>${t_costo_caja:,.2f}</div></div>", unsafe_allow_html=True)
+            with c1:
+                st.markdown(f"<div class='f-card'><div class='f-label'>📈 Valor Total Facturado</div><div class='f-value'>${total_facturado:,.2f}</div></div>", unsafe_allow_html=True)
+            with c2:
+                st.markdown(f"<div class='f-card'><div class='f-label'>📦 Cajas Totales</div><div class='f-value'>{total_cajas:,.0f} u</div></div>", unsafe_allow_html=True)
+            with c3:
+                st.markdown(f"<div class='f-card'><div class='f-label'>📄 Facturas Emitidas</div><div class='f-value'>{total_facturas}</div></div>", unsafe_allow_html=True)
 
             st.write("##")
 
-            # --- TABLA DE AUDITORÍA ---
-            with st.expander("🔍 Auditoría de Operaciones Mensuales"):
+            # FILA 2: EFICIENCIA Y COSTO (UMBRAL 7%)
+            c4, c5, c6 = st.columns(3)
+            
+            # Semáforo dinámico basado en tu indicador del 7%
+            color_metrica = "#00FFAA" if impacto_global <= 7.0 else "#FF4B4B"
+            texto_metrica = "DENTRO DE PRESUPUESTO" if impacto_global <= 7.0 else "FUERA DE PRESUPUESTO"
+            
+            with c4:
+                st.markdown(f"<div class='f-card' style='border-top:3px solid #FF4B4B;'><div class='f-label'>📉 Gasto Bruto Fletes</div><div class='f-value'>${total_fletes:,.2f}</div></div>", unsafe_allow_html=True)
+            with c5:
+                st.markdown(f"""
+                    <div class='f-card' style='border-top:3px solid {color_metrica};'>
+                        <div class='f-label'>🎯 Impacto Logístico (Meta 7%)</div>
+                        <div class='f-value' style='color:{color_metrica};'>{impacto_global:.2f}%</div>
+                        <div class='f-status' style='color:{color_metrica};'>{texto_metrica}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+            with c6:
+                st.markdown(f"<div class='f-card' style='border-top:3px solid #38bdf8;'><div class='f-label'>💵 Costo Promedio Caja</div><div class='f-value'>${costo_prom_caja:,.2f}</div></div>", unsafe_allow_html=True)
+
+            st.write("##")
+
+            # --- TABLA DE AUDITORÍA DETALLADA ---
+            st.markdown("### 📒 Desglose Operativo Mensual")
+            with st.expander("Expandir Matriz de Datos para Auditoría de Finanzas"):
+                # Mostramos columnas clave de tu archivo matriz_mensual.csv
+                columnas_fin = ["FACTURA", "RAZON SOCIAL", "FLETERA", "CAJAS", "COSTO DE GUIA", "VALOR FACTURA", "% LOGÍSTICO", "COSTO_CAJA"]
+                
                 st.dataframe(
-                    df_m[["FACTURA", "RAZON SOCIAL", "FLETERA", "CAJAS", "COSTO DE GUIA", "VALOR FACTURA", "% LOGÍSTICO", "COSTO_CAJA"]],
-                    use_container_width=True, hide_index=True,
+                    df_m[columnas_fin].sort_values("% LOGÍSTICO", ascending=False),
+                    use_container_width=True, 
+                    hide_index=True,
                     column_config={
-                        "COSTO DE GUIA": st.column_config.NumberColumn("Flete", format="$%.2f"),
-                        "VALOR FACTURA": st.column_config.NumberColumn("Venta", format="$%.2f"),
-                        "% LOGÍSTICO": st.column_config.NumberColumn("% Log", format="%.2f%%"),
-                        "COSTO_CAJA": st.column_config.NumberColumn("C/Caja", format="$%.2f")
+                        "COSTO DE GUIA": st.column_config.NumberColumn("Costo Flete", format="$%.2f"),
+                        "VALOR FACTURA": st.column_config.NumberColumn("Monto Venta", format="$%.2f"),
+                        "% LOGÍSTICO": st.column_config.NumberColumn("Gasto %", format="%.2f%%"),
+                        "COSTO_CAJA": st.column_config.NumberColumn("Costo/Caja", format="$%.2f"),
+                        "CAJAS": st.column_config.NumberColumn("Cajas", format="%d")
                     }
                 )
 
-        # --- NAVEGACIÓN Y PIE DE PÁGINA ---
+        # --- PIE DE PÁGINA Y NAVEGACIÓN ---
         st.divider()
-        nav1, nav2 = st.columns(2)
-        with nav1:
-            if st.button("🏠 Volver al Inicio", use_container_width=True):
+        nav_1, nav_2 = st.columns(2)
+        with nav_1:
+            if st.button("🏠 Volver a Dashboard Inicial", use_container_width=True):
                 st.session_state.pagina = "principal"
                 st.rerun()
-        with nav2:
-            if st.button("📊 Ir a KPIs Gerenciales", use_container_width=True):
+        with nav_2:
+            if st.button("📊 Ver KPIs de Retrasos", use_container_width=True):
                 st.session_state.pagina = "KPIs"
                 st.rerun()
 
-        st.markdown("<div style='text-align:center; color:gray; margin-top:30px; font-size:12px;'>© 2026 Dash - Control de Operaciones y Finanzas</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:#555; margin-top:20px; font-size:11px;'>Reporte de Control Operativo - Confidencial</div>", unsafe_allow_html=True)
+
 
 
 
