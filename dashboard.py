@@ -556,13 +556,7 @@ else:
         
         with col_centro:
             # El título con margin:0 para que no se desplace hacia abajo
-            st.markdown("""
-                <div style="text-align:center;">
-                    <div style="color:white; font-size:26px; font-weight:700; margin:0; line-height:1.5;">
-                        Lista de envíos
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown("<h2 style='text-align: center; margin-top: 60px; margin-bottom: 20px; color: white;'>Lista de envíos</h2>", unsafe_allow_html=True)
         
         with col_der:
             # Columna vacía para que el título no se cargue a la derecha
@@ -1435,6 +1429,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
