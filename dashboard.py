@@ -432,25 +432,18 @@ else:
                     
                     st.markdown(html_timeline, unsafe_allow_html=True)
                     
-                    # --- 8. TARJETAS DE DETALLE INDIVIDUAL (NIVEL ELITE) ---
                     c1, c2, c3 = st.columns(3)
+
+                    # Variables de color refinadas
+                    color_accent = "#38bdf8"   # Azul técnico
+                    color_success = "#059669"  # Verde esmeralda ejecutivo
+                    color_warning = "#fb7185"  # Coral de alerta
                     
-                    # Variables de color consistentes
-                    color_accent = "#38bdf8"  # Azul técnico
-                    color_success = "#059669" # Verde esmeralda DHL
-                    color_warning = "#fb7185" # Coral intenso
-                    
-                    # Estilos unificados
-                    estilo_card = f"""
-                        background: rgba(255, 255, 255, 0.02);
-                        padding: 22px;
-                        border-radius: 15px;
-                        border: 1px solid rgba(255, 255, 255, 0.05);
-                        min-height: 285px;
-                        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-                    """
-                    estilo_label = "color: #94a3b8; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;"
-                    estilo_valor = "color: #e2e8f0; font-size: 15px; font-weight: 500; margin-bottom: 8px;"
+                    # Estilos Base
+                    estilo_card = "background-color:#11141C; padding:22px; border-radius:15px; border: 1px solid #2D333F; min-height: 300px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);"
+                    estilo_linea = "display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03);"
+                    estilo_label = "color: #94a3b8; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;"
+                    estilo_valor = "color: #e2e8f0; font-size: 13px; font-weight: 500;"
                     
                     with c1:
                         try:
@@ -461,21 +454,15 @@ else:
                             
                         st.markdown(f"""
                             <div style='{estilo_card}'>
-                                <div style='display: flex; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;'>
-                                    <span style='font-size: 20px; margin-right: 10px;'>👤</span>
-                                    <span style='color: white; font-weight: 800; font-size: 14px; letter-spacing: 1px;'>DETALLES DEL CLIENTE</span>
+                                <div style='color:{color_accent}; font-weight:800; font-size:12px; margin-bottom:15px; letter-spacing:1px;'>📦 INFO DE CARGA</div>
+                                <div style='{estilo_linea}'><span style='{estilo_label}'>No. Cliente</span><span style='{estilo_valor}'>#{row.get('NO CLIENTE', '—')}</span></div>
+                                <div style='{estilo_linea}'><span style='{estilo_label}'>Nombre</span><span style='{estilo_valor}'>{row.get('NOMBRE DEL CLIENTE', '—')}</span></div>
+                                <div style='{estilo_linea}'><span style='{estilo_label}'>Destino</span><span style='{estilo_valor}'>{row.get('DESTINO', '—')}</span></div>
+                                <div style='{estilo_linea}'><span style='{estilo_label}'>Guía</span><span style='{estilo_valor} font-family:monospace; color:{color_accent};'>{row.get('NÚMERO DE GUÍA','—')}</span></div>
+                                <div style='display:flex; justify-content:space-between; margin-top:15px;'>
+                                    <span style='{estilo_label}'>Inversión</span>
+                                    <span style='color:{color_success}; font-weight:800; font-size:18px;'>{costo_mxn}</span>
                                 </div>
-                                <div style='{estilo_label}'>Nombre y No. Cliente</div>
-                                <div style='{estilo_valor}'>{row.get('NOMBRE DEL CLIENTE', '—')} <span style='color:{color_accent};'>#{row.get('NO CLIENTE', '—')}</span></div>
-                                
-                                <div style='{estilo_label}'>Destino Operativo</div>
-                                <div style='{estilo_valor}'>{row.get('DESTINO', '—')}</div>
-                                
-                                <div style='{estilo_label}'>Número de Guía</div>
-                                <div style='{estilo_valor} font-family: monospace; color:{color_accent}; font-weight: 700;'>{row.get('NÚMERO DE GUÍA','—')}</div>
-                                
-                                <div style='{estilo_label}'>Costo de Operación</div>
-                                <div style='font-size: 20px; color:{color_success}; font-weight: 800;'>{costo_mxn}</div>
                             </div>
                         """, unsafe_allow_html=True)
                     
@@ -485,22 +472,14 @@ else:
                         
                         st.markdown(f"""
                             <div style='{estilo_card}'>
-                                <div style='display: flex; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;'>
-                                    <span style='font-size: 20px; margin-right: 10px;'>🚚</span>
-                                    <span style='color: white; font-weight: 800; font-size: 14px; letter-spacing: 1px;'>LÍNEA DE TIEMPO</span>
-                                </div>
-                                <div style='{estilo_label}'>Salida de Almacén</div>
-                                <div style='{estilo_valor}'>{txt_f_envio}</div>
-                                
-                                <div style='{estilo_label}'>Promesa de Entrega</div>
-                                <div style='{estilo_valor}'>{txt_f_promesa}</div>
-                                
-                                <div style='{estilo_label}'>Fecha de Entrega Real</div>
-                                <div style='{estilo_valor} color:{"#ffffff" if txt_f_real != "PENDIENTE" else "#475569"};'>{txt_f_real}</div>
-                                
-                                <div style='margin-top: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border-left: 4px solid {color_ret};'>
-                                    <div style='{estilo_label} color:{color_ret};'>Estado de Cumplimiento</div>
-                                    <div style='font-size: 18px; font-weight: 800; color: white;'>{retraso_num} DÍAS RETRASO</div>
+                                <div style='color:#fbbf24; font-weight:800; font-size:12px; margin-bottom:15px; letter-spacing:1px;'>⏱️ LINEA DE TIEMPO</div>
+                                <div style='{estilo_linea}'><span style='{estilo_label}'>Envío</span><span style='{estilo_valor}'>{txt_f_envio}</span></div>
+                                <div style='{estilo_linea}'><span style='{estilo_label}'>Promesa</span><span style='{estilo_valor}'>{txt_f_promesa}</span></div>
+                                <div style='{estilo_linea}'><span style='{estilo_label}'>Entrega Real</span><span style='{estilo_valor} color:{"#ffffff" if txt_f_real != "PENDIENTE" else "#475569"};'>{txt_f_real}</span></div>
+                                <div style='{estilo_linea}'><span style='{estilo_label}'>Transcurridos</span><span style='{estilo_valor}'>{row.get('DIAS_TRANSCURRIDOS', 0)} días</span></div>
+                                <div style='margin-top:15px; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; border-left:4px solid {color_ret};'>
+                                    <span style='{estilo_label} color:{color_ret};'>Retraso Actual</span><br>
+                                    <span style='color:white; font-size:18px; font-weight:800;'>{retraso_num} DÍAS</span>
                                 </div>
                             </div>
                         """, unsafe_allow_html=True)
@@ -512,27 +491,12 @@ else:
                     
                         st.markdown(f"""
                             <div style='{estilo_card}'>
-                                <div style='display: flex; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;'>
-                                    <span style='font-size: 20px; margin-right: 10px;'>📋</span>
-                                    <span style='color: white; font-weight: 800; font-size: 14px; letter-spacing: 1px;'>ESTADO Y NOTAS</span>
-                                </div>
-                                
-                                <div style='display: flex; justify-content: space-between; margin-bottom: 15px;'>
-                                    <div>
-                                        <div style='{estilo_label}'>Estatus Actual</div>
-                                        <div style='background:{color_st}22; color:{color_st}; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; border: 1px solid {color_st}44;'>
-                                            {estatus_val}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div style='{estilo_label}'>Prioridad</div>
-                                        <div style='color: white; font-weight: 700; font-size: 14px;'>{row.get('PRIORIDAD', 'NORMAL')}</div>
-                                    </div>
-                                </div>
-                                
-                                <div style='{estilo_label}'>Comentarios Operativos</div>
-                                <div style='background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; border: 1px dashed rgba(255,255,255,0.1); font-size: 13px; color: #cbd5e1; height: 80px; overflow-y: auto;'>
-                                    {row.get('COMENTARIOS', 'Sin comentarios registrados.')}
+                                <div style='color:#a855f7; font-weight:800; font-size:12px; margin-bottom:15px; letter-spacing:1px;'>📋 STATUS & NOTAS</div>
+                                <div style='{estilo_linea}'><span style='{estilo_label}'>Estado</span><span style='background:{color_st}22; color:{color_st}; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:bold; border:1px solid {color_st}44;'>{estatus_val}</span></div>
+                                <div style='{estilo_linea}'><span style='{estilo_label}'>Prioridad</span><span style='{estilo_valor}'>{row.get('PRIORIDAD', 'NORMAL')}</span></div>
+                                <div style='{estilo_label} margin-top:12px; margin-bottom:5px;'>Comentarios de Operación</div>
+                                <div style='background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; border:1px dashed #2D333F; font-size:12px; color:#94a3b8; min-height:60px;'>
+                                    {row.get('COMENTARIOS', 'Sin observaciones adicionales.')}
                                 </div>
                             </div>
                         """, unsafe_allow_html=True)
@@ -1512,6 +1476,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
