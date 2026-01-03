@@ -536,14 +536,13 @@ else:
             st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
         # --------------------------------------------------
-        # TABLA DE ENVÍOS – DISEÑO PERSONALIZADO
+        # TABLA DE ENVÍOS – DISEÑO PREMIUM ELITE
         # --------------------------------------------------
-        # 1. Definimos 3 columnas: [Botones, Título al Centro, Espacio para equilibrar]
-        # El peso [2, 3, 2] asegura que el centro sea la parte más ancha
+        # 1. Espaciado y Cabecera
+        st.markdown("<div style='margin-top: 60px;'></div>", unsafe_allow_html=True)
         col_izq, col_centro, col_der = st.columns([2, 3, 2])
         
         with col_izq:
-            # Usamos una sub-columna interna para pegar los botones entre sí
             btn_c1, btn_c2 = st.columns(2)
             with btn_c1:
                 if st.button("BD Completa", use_container_width=True):
@@ -555,78 +554,54 @@ else:
                     st.rerun()
         
         with col_centro:
-            # El título con margin:0 para que no se desplace hacia abajo
             st.markdown("""
-                <div style="text-align:center;">
-                    <div style="color:white; font-size:26px; font-weight:700; margin:0; line-height:1.5;">
-                        Lista de envíos
-                    </div>
+                <div style="text-align:center; padding: 10px; border-radius: 50px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color:white; font-size:22px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">
+                        📋 Registro Operativo
+                    </span>
                 </div>
             """, unsafe_allow_html=True)
-        
-        with col_der:
-            # Columna vacía para que el título no se cargue a la derecha
-            st.write("")
-        
-        # --- 2. LÓGICA DE MÁRGENES (Igual que antes) ---
-        # --- AJUSTE DE ANCHO CONSTANTE Y ALTURA DINÁMICA ---
-        if st.session_state.tabla_expandida:
-            # VISTA COMPLETA: Ancho total y mucha altura
-            st.markdown("""
-                <style>
-                    .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
-                </style>
-            """, unsafe_allow_html=True)
-            h_dinamica = 850  # Cubre casi toda la pantalla hacia abajo
-        else:
-            # VISTA NORMAL: Mismo ancho total pero altura pequeña
-            st.markdown("""
-                <style>
-                    .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
-                </style>
-            """, unsafe_allow_html=True)
-            h_dinamica = 300  # Altura reducida para ver los gráficos abajo
 
-        #:::::::::::::::::::::::::::::::::::::::::::::::::::
-        #INICIA TABLA NORMAL
-        #:::::::::::::::::::::::::::::::::::::::::::::::::::
+        # 2. Lógica de Altura
+        h_dinamica = 850 if st.session_state.get('tabla_expandida', False) else 400
+
+        # 3. Preparación de Datos (Igual a tu lógica pero limpia)
         hoy_t = pd.Timestamp.today().normalize()
-        df_mostrar = df_filtrado.copy()
-    
-        # Cálculo de días transcurridos y retraso para las columnas de la tabla
-        df_mostrar["DIAS_TRANSCURRIDOS"] = (
-            (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_mostrar["FECHA DE ENVÍO"]).dt.days
-        )
-        df_mostrar["DIAS_RETRASO"] = (
-            (df_mostrar["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_mostrar["PROMESA DE ENTREGA"]).dt.days
-        )
-        df_mostrar["DIAS_RETRASO"] = df_mostrar["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
-    
-        # Formateo de fechas para que se vean limpias (DD/MM/YYYY)
-        df_mostrar["FECHA DE ENTREGA REAL"] = df_mostrar["FECHA DE ENTREGA REAL"].dt.strftime('%d/%m/%Y').fillna('')
-        df_mostrar["FECHA DE ENVÍO"] = df_mostrar["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y').fillna('')
-        df_mostrar["PROMESA DE ENTREGA"] = df_mostrar["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y').fillna('')
-    
-        # --- FUNCIONES DE ESTILO CSS PARA LA TABLA ---
-        def colorear_retraso(val):
-            # Si hay días de retraso, fondo rojo y texto negro
-            return 'background-color: #ff4d4d; color: black; font-weight: bold;' if val > 0 else ''
-    
-        def zebra_filas(row):
-            # Alterna colores entre las filas para facilitar la lectura
-            color = '#0E1117' if row.name % 2 == 0 else '#1A1E25'
-            return [f'background-color: {color}; color: white;' for _ in row]
-    
-        # --- RENDERIZADO DE LA TABLA CON ESTILOS ---
+        df_visual = df_filtrado.copy()
+        
+        df_visual["DIAS_RETRASO"] = (
+            (df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["PROMESA DE ENTREGA"]).dt.days
+        ).clip(lower=0)
+
+        # 4. RENDERIZADO CON COLUMN_CONFIG (El secreto de la modernidad)
         st.dataframe(
-            df_mostrar.style.apply(zebra_filas, axis=1)
-                            .applymap(colorear_retraso, subset=["DIAS_RETRASO"])
-                            .set_table_styles([
-                                {'selector': 'th', 'props': [('background-color', 'orange'), ('color', 'white'), ('font-weight','bold'), ('font-size','14px')]},
-                                {'selector': 'td', 'props': [('padding', '12px')]}
-                            ]),
+            df_visual,
+            column_config={
+                "ESTATUS_CALCULADO": st.column_config.SelectColumn(
+                    "Estado",
+                    options=["ENTREGADO", "EN TRANSITO", "RETRASADO"],
+                ),
+                "DIAS_RETRASO": st.column_config.ProgressColumn(
+                    "Retraso",
+                    help="Días de desviación vs Promesa",
+                    format="%d d",
+                    min_value=0,
+                    max_value=15,
+                    color="red"
+                ),
+                "COSTO DE LA GUÍA": st.column_config.NumberColumn(
+                    "Costo",
+                    format="$ %.2f"
+                ),
+                "FLETERA": st.column_config.TextColumn("Fletera"),
+                "NÚMERO DE GUÍA": st.column_config.TextColumn("Tracking ID"),
+                "FECHA DE ENVÍO": st.column_config.DateColumn("Salida", format="DD/MM/YYYY"),
+                "PROMESA DE ENTREGA": st.column_config.DateColumn("Promesa", format="DD/MM/YYYY"),
+                "FECHA DE ENTREGA REAL": st.column_config.DateColumn("Entrega", format="DD/MM/YYYY"),
+            },
+            hide_index=True,
             use_container_width=True,
-            height=h_dinamica  # Usa la variable de los botones
+            height=h_dinamica
         )
 
         st.divider()
@@ -1435,6 +1410,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
