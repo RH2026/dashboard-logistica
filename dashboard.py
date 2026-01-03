@@ -1427,40 +1427,7 @@ else:
                     render_card("Costo Logístico", f"{df_mes_b['COSTO LOGÍSTICO']:.1f}%", f"Meta: {df_mes_b['META INDICADOR']}%", "border-green")
                     render_card("Costo por Caja", f"${df_mes_b['COSTO POR CAJA']:.1f}", "Comparativo", "border-blue")
                     render_card("Cajas Enviadas", f"{int(df_mes_b['CAJAS ENVIADAS']):,.0f}", "Volumen", "border-purple")
-        
-            # --- BLOQUE DE INTELIGENCIA COMPARATIVA DELTA ---
-            st.write("---")
-            st.markdown("<h2 class='premium-header' style='font-size:1.1rem; border-color:#38bdf8;'>📊 DELTA ANALYSIS: LOGISTICS BATTLE</h2>", unsafe_allow_html=True)
-            
-            # Cálculos de Diferencia (Delta)
-            delta_log = df_mes["COSTO LOGÍSTICO"] - df_mes_b["COSTO LOGÍSTICO"]
-            delta_cpc = df_mes["COSTO POR CAJA"] - df_mes_b["COSTO POR CAJA 2024"]
-            delta_fact = ((df_mes["FACTURACIÓN"] / df_mes_b["FACTURACIÓN"]) - 1) * 100
-            
-            c_r1, c_r2 = st.columns(2)
-            
-            with c_r1:
-                # Análisis de Eficiencia
-                if delta_log <= 0:
-                    st.success(f"✅ **Ganancia de Eficiencia:** El costo logístico en {mes_sel} es {abs(delta_log):.2f}% menor que en {mes_comp}.")
-                else:
-                    st.error(f"⚠️ **Pérdida de Eficiencia:** El impacto logístico subió {delta_log:.2f}% respecto a {mes_comp}.")
-                
-                # Análisis de Facturación
-                st.info(f"📈 **Variación de Ingresos:** La facturación tuvo un cambio del {delta_fact:.1f}% entre ambos periodos.")
-    
-            with c_r2:
-                # Análisis de Costo por Unidad
-                if df_mes["COSTO POR CAJA"] < df_mes_b["COSTO POR CAJA"]:
-                    st.markdown(f"""<div class="alert-box" style="border-left: 5px solid #00ffa2; padding:10px;">
-                    <b style="color:#00ffa2;">VENTAJA UNITARIA:</b><br>
-                    Mover cajas en {mes_sel} es más barato por unidad que en {mes_comp}.
-                    </div>""", unsafe_allow_html=True)
-                else:
-                    st.markdown(f"""<div class="alert-box" style="border-left: 5px solid #fb7185; padding:10px;">
-                    <b style="color:#fb7185;">ALERTA DE SOBRECOSTO:</b><br>
-                    El costo por caja aumentó en {mes_sel}. Se recomienda revisar tarifas vigentes.
-                    </div>""", unsafe_allow_html=True)
+                  
 
             # --- RADIOGRAFÍA FINAL DE LA COMPARATIVA ---
             st.markdown(f"""
@@ -1505,6 +1472,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
