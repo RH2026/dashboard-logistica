@@ -536,7 +536,7 @@ else:
             st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
         # --------------------------------------------------
-        # TABLA DE ENVÍOS – DISEÑO PREMIUM ELITE (FIXED)
+        # TABLA DE ENVÍOS – DISEÑO PREMIUM ELITE (SIN CAJA)
         # --------------------------------------------------
         st.markdown("<div style='margin-top: 60px;'></div>", unsafe_allow_html=True)
         col_izq, col_centro, col_der = st.columns([2, 3, 2])
@@ -553,7 +553,14 @@ else:
                     st.rerun()
         
         with col_centro:
-            st.markdown("""<div style="text-align:center; padding: 10px; border-radius: 50px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);"><span style="color:white; font-size:22px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">📋 REGISTRO OPERATIVO</span></div>""", unsafe_allow_html=True)
+            # Título limpio, sin bordes ni fondo, solo el texto estilizado
+            st.markdown("""
+                <div style="text-align:center;">
+                    <span style="color:white; font-size:24px; font-weight:800; letter-spacing:3px; text-transform:uppercase;">
+                        📋 REGISTRO OPERATIVO
+                    </span>
+                </div>
+            """, unsafe_allow_html=True)
         
         h_dinamica = 850 if st.session_state.get('tabla_expandida', False) else 400
         
@@ -561,11 +568,11 @@ else:
         df_visual = df_filtrado.copy()
         hoy_t = pd.Timestamp.today().normalize()
         
-        # Calculamos retraso y transcurridos para la tabla
+        # Calculamos métricas de tiempo
         df_visual["DIAS_TRANSCURRIDOS"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["FECHA DE ENVÍO"]).dt.days)
         df_visual["DIAS_RETRASO_VAL"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["PROMESA DE ENTREGA"]).dt.days).clip(lower=0)
         
-        # RENDERIZADO SIN MEZCLA DE MAYÚSCULAS/MINÚSCULAS
+        # RENDERIZADO DE TABLA
         st.dataframe(
             df_visual,
             column_config={
@@ -1409,6 +1416,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
