@@ -465,6 +465,8 @@ else:
                
 
         # --- 1. CÁLCULO DE MÉTRICAS ---
+        st.markdown("<style>.elite-card{transition:all 0.4s ease;padding:20px;border-radius:20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);text-align:center;margin-bottom:10px;}.elite-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,0.7)!important;border:1px solid rgba(255,255,255,0.25)!important;}</style>", unsafe_allow_html=True)
+        
         total = int(len(df_filtrado))
         entregados = int((df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum())
         en_transito = int((df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum())
@@ -481,28 +483,30 @@ else:
         def donut_con_numero(avance, total_val, color_avance, color_faltante):
             porcentaje = int((avance / total_val) * 100) if total_val > 0 else 0
             
-            # DataFrame plano para la dona
+            # DataFrame con tipos de datos limpios
             data_dona = pd.DataFrame({
                 "segmento": ["A", "B"], 
                 "valor": [float(avance), float(max(total_val - avance, 0))]
             })
             
-            # Construcción de la Dona
+            # 1. El arco (Dona) con sintaxis explícita
             donut = alt.Chart(data_dona).mark_arc(innerRadius=52, outerRadius=65, cornerRadius=10).encode(
-                theta="valor:Q",
-                color=alt.Color("segmento:N", scale=alt.Scale(domain=["A", "B"], range=[color_avance, color_faltante]), legend=None),
-                tooltip=None
+                theta=alt.Theta(field="valor", type="quantitative"),
+                color=alt.Color(field="segmento", type="nominal", 
+                                scale=alt.Scale(domain=["A", "B"], range=[color_avance, color_faltante]), 
+                                legend=None),
+                tooltip=alt.value(None) # Forma segura de desactivar tooltip
             )
             
-            # Texto principal
+            # 2. Número central
             texto_n = alt.Chart(pd.DataFrame({"t": [str(avance)]})).mark_text(
                 align="center", baseline="middle", fontSize=28, fontWeight=800, dy=-6, color="white"
-            ).encode(text="t:N")
+            ).encode(text=alt.Text(field="t", type="nominal"))
             
-            # Texto porcentaje
+            # 3. Porcentaje inferior
             texto_p = alt.Chart(pd.DataFrame({"t": [f"{porcentaje}%"]})).mark_text(
                 align="center", baseline="middle", fontSize=12, fontWeight=400, dy=18, color="#94a3b8"
-            ).encode(text="t:N")
+            ).encode(text=alt.Text(field="t", type="nominal"))
             
             return (donut + texto_n + texto_p).properties(width=140, height=140).configure_view(strokeOpacity=0)
 
@@ -1431,6 +1435,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
