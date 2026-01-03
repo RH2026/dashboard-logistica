@@ -1427,21 +1427,7 @@ else:
                     render_card("Costo Logístico", f"{df_mes_b['COSTO LOGÍSTICO']:.1f}%", f"Meta: {df_mes_b['META INDICADOR']}%", "border-green")
                     render_card("Costo por Caja", f"${df_mes_b['COSTO POR CAJA']:.1f}", "Comparativo", "border-blue")
                     render_card("Cajas Enviadas", f"{int(df_mes_b['CAJAS ENVIADAS']):,.0f}", "Volumen", "border-purple")
-                  
-
-            # --- RADIOGRAFÍA FINAL DE LA COMPARATIVA ---
-            st.markdown(f"""
-            <div class="alert-box" style="background: rgba(56, 189, 248, 0.05); border: 1px dashed #38bdf8;">
-                <p style="color:#f8fafc; font-size:0.9rem; margin:0;">
-                    <b>🚀 VERDICTO DEL CAPITÁN:</b> 
-                    Al comparar <b>{mes_sel}</b> contra <b>{mes_comp}</b>, observamos que la operación 
-                    {'ha mejorado su rentabilidad' if delta_log <= 0 else 'está bajo presión inflacionaria'}. 
-                    El factor clave ha sido la {'disminución' if delta_log <= 0 else 'elevación'} del gasto operativo 
-                    en relación a la facturación bruta.
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-            
+        
             # --- RADIOGRAFÍA (Ajustada con aire) ---
             st.markdown("<h2 class='premium-header' style='font-size:1.1rem; border-color:#a78bfa; margin-top:40px;'>🧠 RADIOGRAFÍA INTELIGENTE & DIAGNÓSTICO</h2>", unsafe_allow_html=True)
             
@@ -1458,6 +1444,37 @@ else:
                 <div style="color:{status_color}; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:10px;">🩺 DIAGNÓSTICO FINAL</div>
                 <p style="color:#f1f5f9; font-size:0.85rem;">Estatus: <b>{status_txt}</b>.<br><br>
                 Se observa un desvío de <b>${abs(df_mes['INCREMENTO + VI']):,.0f}</b>. { 'La operación está bajo control.' if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else 'Se requiere auditoría inmediata de fletes.'}</p></div>""", unsafe_allow_html=True)
+                          
+        
+                    # --- RADIOGRAFÍA FINAL DE LA COMPARATIVA ---
+                    st.markdown(f"""
+                    <div class="alert-box" style="background: rgba(56, 189, 248, 0.05); border: 1px dashed #38bdf8;">
+                        <p style="color:#f8fafc; font-size:0.9rem; margin:0;">
+                            <b>🚀 VERDICTO DEL CAPITÁN:</b> 
+                            Al comparar <b>{mes_sel}</b> contra <b>{mes_comp}</b>, observamos que la operación 
+                            {'ha mejorado su rentabilidad' if delta_log <= 0 else 'está bajo presión inflacionaria'}. 
+                            El factor clave ha sido la {'disminución' if delta_log <= 0 else 'elevación'} del gasto operativo 
+                            en relación a la facturación bruta.
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # --- RADIOGRAFÍA (Ajustada con aire) ---
+                    st.markdown("<h2 class='premium-header' style='font-size:1.1rem; border-color:#a78bfa; margin-top:40px;'>🧠 RADIOGRAFÍA INTELIGENTE & DIAGNÓSTICO</h2>", unsafe_allow_html=True)
+                    
+                    col_rad1, col_rad2 = st.columns(2)
+                    with col_rad1:
+                        st.markdown(f"""<div class="alert-box"><div style="color:#38bdf8; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:10px;">📊 METODOLOGÍA ELITE</div>
+                        <p style="color:#94a3b8; font-size:0.85rem;">Para <b>{mes_sel}</b>, el sistema detectó una eficiencia de <b>{df_mes['COSTO LOGÍSTICO']:.2f}%</b>.<br><br>
+                        El cálculo de <b>Incremento + VI</b> cruza el ahorro en incidencias contra el sobrecosto unitario vs 2024.</p></div>""", unsafe_allow_html=True)
+                
+                    with col_rad2:
+                        status_color = "#00ffa2" if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else "#fb7185"
+                        status_txt = "OPERACIÓN SALUDABLE" if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else "ALERTA: EXCESO DE GASTO"
+                        st.markdown(f"""<div class="alert-box" style="border-top: 4px solid {status_color};">
+                        <div style="color:{status_color}; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:10px;">🩺 DIAGNÓSTICO FINAL</div>
+                        <p style="color:#f1f5f9; font-size:0.85rem;">Estatus: <b>{status_txt}</b>.<br><br>
+                        Se observa un desvío de <b>${abs(df_mes['INCREMENTO + VI']):,.0f}</b>. { 'La operación está bajo control.' if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else 'Se requiere auditoría inmediata de fletes.'}</p></div>""", unsafe_allow_html=True)
 
         # --- NAVEGACIÓN ---
         st.divider()
@@ -1472,6 +1489,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
