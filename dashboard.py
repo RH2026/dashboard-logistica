@@ -1265,6 +1265,50 @@ else:
 
             st.altair_chart((bars + chart_text).properties(height=400), use_container_width=True)
 
+        # =================================================================
+        # 6. RADAR GEOESPACIAL DE RETRASOS (MAPA)
+        # =================================================================
+        st.markdown("<div style='text-align:center; padding: 25px;'><span style='color:white; font-size:24px; font-weight:800; letter-spacing:3px; text-transform:uppercase;'>📍 RADAR DE ENTREGAS CRÍTICAS</span></div>", unsafe_allow_html=True)
+        
+        # 1. Filtramos solo los datos que tienen retraso para el mapa
+        df_retrasos = df_visual[df_visual["DIAS_RETRASO_VAL"] > 0].copy()
+        
+        # 2. Verificamos si hay coordenadas disponibles (LATITUD y LONGITUD)
+        if not df_retrasos.empty and 'LATITUD' in df_retrasos.columns and 'LONGITUD' in df_retrasos.columns:
+            
+            # Configuramos la vista inicial (centrada en México por defecto)
+            view_state = pdk.ViewState(
+                latitude=df_retrasos["LATITUD"].mean(),
+                longitude=df_retrasos["LONGITUD"].mean(),
+                zoom=4,
+                pitch=45,
+            )
+        
+            # Creamos la capa de "puntos calientes" (Heatmap)
+            layer = pdk.Layer(
+                "HeatmapLayer",
+                data=df_retrasos,
+                get_position="[LONGITUD, LATITUD]",
+                get_weight="DIAS_RETRASO_VAL", # A más días de retraso, más intenso el color
+                radius_pixels=60,
+                intensity=0.9,
+                threshold=0.05,
+                color_range=[
+                    [0, 255, 0, 25],    # Verde (bajo)
+                    [255, 255, 0, 100],  # Amarillo
+                    [255, 128, 0, 150],  # Naranja
+                    [255, 0, 0, 200]     # Rojo (Crítico)
+                ]
+            )
+        
+            st.pydeck_chart(pdk.Deck(
+                layers=[layer],
+                initial_view_state=view_state,
+                map_style="mapbox://styles/mapbox/dark-v10", # Estilo táctico oscuro
+            ))
+        else:
+            st.warning("⚠️ Capitán, para activar el radar geoespacial asegúrese de que la matriz contenga las columnas 'LATITUD' y 'LONGITUD' con datos de las entregas retrasadas.")
+        
         # --- NAVEGACIÓN DESDE KPIs ---
         st.divider()
         col_nav1, col_nav2 = st.columns(2)
@@ -1425,6 +1469,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
