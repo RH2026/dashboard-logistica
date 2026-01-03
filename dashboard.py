@@ -553,51 +553,56 @@ else:
                     st.rerun()
         
         with col_centro:
-            st.markdown("""<div style="text-align:center; padding: 10px; border-radius: 50px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);"><span style="color:white; font-size:22px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">📋 Registro Operativo</span></div>""", unsafe_allow_html=True)
-
+            st.markdown("""<div style="text-align:center; padding: 10px; border-radius: 50px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);"><span style="color:white; font-size:22px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">📋 REGISTRO OPERATIVO</span></div>""", unsafe_allow_html=True)
+        
         h_dinamica = 850 if st.session_state.get('tabla_expandida', False) else 400
-
-        # Preparación de datos (Aseguramos que sean tipos nativos de fecha para la tabla)
+        
+        # Preparación de datos
         df_visual = df_filtrado.copy()
         hoy_t = pd.Timestamp.today().normalize()
         
-        # Calculamos retraso solo si no existe para la barra de progreso
+        # Calculamos retraso y transcurridos para la tabla
+        df_visual["DIAS_TRANSCURRIDOS"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["FECHA DE ENVÍO"]).dt.days)
         df_visual["DIAS_RETRASO_VAL"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["PROMESA DE ENTREGA"]).dt.days).clip(lower=0)
-
-        # RENDERIZADO CON COLUMN_CONFIG CORREGIDO
+        
+        # RENDERIZADO SIN MEZCLA DE MAYÚSCULAS/MINÚSCULAS
         st.dataframe(
             df_visual,
             column_config={
                 "ESTATUS_CALCULADO": st.column_config.SelectboxColumn(
-                    "Estado",
-                    help="Estatus logístico actual",
+                    "ESTATUS",
                     options=["ENTREGADO", "EN TRANSITO", "RETRASADO"],
                     required=True,
                 ),
+                "DIAS_TRANSCURRIDOS": st.column_config.NumberColumn(
+                    "DÍAS TRANSCURRIDOS",
+                    format="%d d"
+                ),
                 "DIAS_RETRASO_VAL": st.column_config.ProgressColumn(
-                    "Retraso",
-                    help="Días de desviación visual",
+                    "RETRASO",
                     format="%d d",
                     min_value=0,
                     max_value=15,
                     color="red",
                 ),
                 "COSTO DE LA GUÍA": st.column_config.NumberColumn(
-                    "Inversión",
+                    "COSTO DE LA GUÍA",
                     format="$ %.2f",
                 ),
-                "FECHA DE ENVÍO": st.column_config.DateColumn("Salida", format="DD/MM/YYYY"),
-                "PROMESA DE ENTREGA": st.column_config.DateColumn("Promesa", format="DD/MM/YYYY"),
-                "FECHA DE ENTREGA REAL": st.column_config.DateColumn("Entrega", format="DD/MM/YYYY"),
-                "NÚMERO DE GUÍA": "Tracking ID",
-                "NOMBRE DEL CLIENTE": "Cliente",
-                "FLETERA": "Fletera"
+                "FECHA DE ENVÍO": st.column_config.DateColumn("FECHA DE ENVÍO", format="DD/MM/YYYY"),
+                "PROMESA DE ENTREGA": st.column_config.DateColumn("PROMESA DE ENTREGA", format="DD/MM/YYYY"),
+                "FECHA DE ENTREGA REAL": st.column_config.DateColumn("FECHA DE ENTREGA REAL", format="DD/MM/YYYY"),
+                "NÚMERO DE GUÍA": "NÚMERO DE GUÍA",
+                "NOMBRE DEL CLIENTE": "NOMBRE DEL CLIENTE",
+                "FLETERA": "FLETERA",
+                "DESTINO": "DESTINO",
+                "NO CLIENTE": "NO CLIENTE"
             },
             hide_index=True,
             use_container_width=True,
             height=h_dinamica
         )
-
+        
         st.divider()
         # --------------------------------------------------
         # GRÁFICOS DE BARRAS POR PAQUETERÍA (CON ETIQUETAS)
@@ -1404,6 +1409,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
