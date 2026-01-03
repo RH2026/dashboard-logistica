@@ -1305,132 +1305,137 @@ else:
         """, unsafe_allow_html=True)
         st.write("##")
 
-        # --- MOTOR DE DATOS ---
+        # --- MOTOR DE DATOS NIVEL ELITE (Blindado contra errores de tipo) ---
         @st.cache_data
-        def cargar_analisis_premium():
+        def cargar_analisis_elite():
             try:
-                # Cargamos el nuevo archivo análisis.csv
                 df = pd.read_csv("analisis.csv", encoding="utf-8")
                 df.columns = [str(c).strip().upper() for c in df.columns]
                 
-                def limpiar_num(v):
+                def limpiar_a_numero(v):
                     if pd.isna(v): return 0.0
-                    if isinstance(v, str):
-                        v = v.replace('$', '').replace(',', '').replace('%', '').strip()
-                        try: return float(v)
-                        except: return 0.0
-                    return float(v)
+                    if isinstance(v, (int, float)): return float(v)
+                    # Limpia símbolos de moneda, comas y porcentajes para evitar fallos matemáticos
+                    s = str(v).replace('$', '').replace(',', '').replace('%', '').replace('(', '-').replace(')', '').strip()
+                    try: return float(s)
+                    except: return 0.0
         
-                # Limpieza de columnas clave
-                cols_numericas = ["COSTO DE FLETE", "FACTURACIÓN", "CAJAS ENVIADAS", "COSTO POR CAJA", 
-                                  "META INDICADOR", "VALUACION INCIDENCIAS", "IN 2024 VS 2025", 
-                                  "INCREMENTO + VI", "COSTO POR CAJA 2024"]
+                # Columnas críticas para el semáforo y tarjetas
+                cols_numericas = [
+                    "COSTO DE FLETE", "FACTURACIÓN", "CAJAS ENVIADAS", "COSTO LOGÍSTICO", 
+                    "COSTO POR CAJA", "META INDICADOR", "VALUACION INCIDENCIAS", 
+                    "INCREMENTO + VI", "% DE INCREMENTO VS 2024", "COSTO POR CAJA 2024"
+                ]
                 
                 for col in cols_numericas:
                     if col in df.columns:
-                        df[col] = df[col].apply(limpiar_num)
+                        df[col] = df[col].apply(limpiar_a_numero)
                 
                 return df
             except Exception as e:
-                st.error(f"Error cargando analisis.csv: {e}")
+                st.error(f"Error en Motor de Datos: {e}")
                 return None
         
-        df_a = cargar_analisis_premium()
+        df_a = cargar_analisis_elite()
         
         if df_a is not None:
-            # --- FILTRO POR MES ---
-            st.sidebar.title("💎 FILTROS ÉLITE")
-            meses_disponibles = df_a["MES"].unique()
-            mes_sel = st.sidebar.selectbox("Seleccionar Mes de Operación", meses_disponibles)
-        
-            # Filtrado de datos para el mes seleccionado
+            # --- INTERFAZ DE FILTROS ---
+            st.sidebar.markdown("### 🛠️ CONTROL DE MANDO")
+            mes_sel = st.sidebar.selectbox("SELECCIONAR MES", df_a["MES"].unique())
             df_mes = df_a[df_a["MES"] == mes_sel].iloc[0]
         
-            # --- CSS DE TARJETAS PREMIUM ELITE ---
+            # --- CSS: DISEÑO PREMIUM ELITE (TIPO AMAZON/DHL DARK) ---
             st.markdown("""
                 <style>
-                .main-card {
-                    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-                    border-left: 5px solid #38bdf8;
-                    border-radius: 15px;
-                    padding: 20px;
-                    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-                    margin-bottom: 15px;
+                .card-container {
+                    background-color: #161b22;
+                    border-radius: 10px;
+                    padding: 25px;
+                    text-align: center;
+                    border: 1px solid #30363d;
+                    height: 160px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
                 }
-                .card-title { color: #94a3b8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px; }
-                .card-value { color: #f8fafc; font-size: 28px; font-weight: 800; font-family: 'Inter', sans-serif; }
-                .card-sub { font-size: 10px; margin-top: 5px; font-weight: 600; text-transform: uppercase; }
+                .card-label {
+                    color: #8b949e;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 1.2px;
+                    margin-bottom: 10px;
+                }
+                .card-value {
+                    font-size: 2.2rem;
+                    font-weight: 800;
+                    margin: 0;
+                    font-family: 'Inter', sans-serif;
+                }
+                /* Bordes de Neón según diseño solicitado */
+                .border-blue { border-left: 5px solid #38bdf8; }
+                .border-purple { border-left: 5px solid #a78bfa; }
+                .border-green { border-left: 5px solid #00ffa2; }
+                .border-red { border-left: 5px solid #fb7185; }
+                .border-yellow { border-left: 5px solid #eab308; }
                 </style>
             """, unsafe_allow_html=True)
         
-            st.title(f"📊 Análisis Logístico: {mes_sel}")
+            st.title(f"🚀 Logistics Performance: {mes_sel}")
         
-            # --- FILA 1: LOS "MANDAMIENTOS" (INDICADORES DE RENTABILIDAD) ---
+            # --- FILA 1: KPIs DE IMPACTO (Los más importantes) ---
             c1, c2, c3 = st.columns(3)
             
-            # Costo Logístico vs Meta (Prioridad 1)
-            color_log = "#00FFAA" if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else "#fb7185"
+            # Eficiencia Logística (Meta 7.0%)
+            color_log = "#00ffa2" if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else "#fb7185"
+            clase_log = "border-green" if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else "border-red"
             with c1:
-                st.markdown(f"""<div class='main-card' style='border-left-color: {color_log};'>
-                    <div class='card-title'>Eficiencia Logística</div>
+                st.markdown(f"""<div class='card-container {clase_log}'>
+                    <div class='card-label'>Costo Logístico Real</div>
                     <div class='card-value' style='color: {color_log};'>{df_mes["COSTO LOGÍSTICO"]:.1f}%</div>
-                    <div class='card-sub'>META: {df_mes["META INDICADOR"]}%</div>
+                    <div style='color: #8b949e; font-size: 0.7rem;'>META: {df_mes["META INDICADOR"]}%</div>
                 </div>""", unsafe_allow_html=True)
         
-            # Costo por Caja vs 2024 (Prioridad 2)
-            color_cpc = "#00FFAA" if df_mes["COSTO POR CAJA"] <= df_mes["COSTO POR CAJA 2024"] else "#fb7185"
+            # Costo por Caja vs 2024
+            color_cpc = "#00ffa2" if df_mes["COSTO POR CAJA"] <= df_mes["COSTO POR CAJA 2024"] else "#fb7185"
+            clase_cpc = "border-green" if df_mes["COSTO POR CAJA"] <= df_mes["COSTO POR CAJA 2024"] else "border-red"
             with c2:
-                st.markdown(f"""<div class='main-card' style='border-left-color: {color_cpc};'>
-                    <div class='card-title'>Costo por Caja</div>
+                st.markdown(f"""<div class='card-container {clase_cpc}'>
+                    <div class='card-label'>Costo por Caja</div>
                     <div class='card-value' style='color: {color_cpc};'>${df_mes["COSTO POR CAJA"]:.1f}</div>
-                    <div class='card-sub'>VS 2024: ${df_mes["COSTO POR CAJA 2024"]:.1f}</div>
+                    <div style='color: #8b949e; font-size: 0.7rem;'>VS 2024: ${df_mes["COSTO POR CAJA 2024"]:.2f}</div>
                 </div>""", unsafe_allow_html=True)
         
-            # Incremento + VI (Pérdida/Ahorro Real)
-            color_inc = "#fb7185" if df_mes["INCREMENTO + VI"] < 0 else "#00FFAA"
+            # Impacto Financiero (Incremento + VI)
+            # Si es negativo, significa pérdida de eficiencia (Rojo)
+            color_vi = "#fb7185" if df_mes["INCREMENTO + VI"] < 0 else "#00ffa2"
+            clase_vi = "border-red" if df_mes["INCREMENTO + VI"] < 0 else "border-green"
             with c3:
-                st.markdown(f"""<div class='main-card' style='border-left-color: {color_inc};'>
-                    <div class='card-title'>Impacto Financiero Total</div>
-                    <div class='card-value' style='color: {color_inc};'>${df_mes["INCREMENTO + VI"]:,.0f}</div>
-                    <div class='card-sub'>Incremento + Incidencias</div>
+                st.markdown(f"""<div class='card-container {clase_vi}'>
+                    <div class='card-label'>Desvío Financiero</div>
+                    <div class='card-value' style='color: {color_vi};'>${df_mes["INCREMENTO + VI"]:,.0f}</div>
+                    <div style='color: #8b949e; font-size: 0.7rem;'>INCIDENCIAS + FLETE</div>
                 </div>""", unsafe_allow_html=True)
         
-            # --- FILA 2: MOTOR OPERATIVO (VENTAS Y VOLUMEN) ---
+            st.write("###")
+        
+            # --- FILA 2: OPERACIÓN Y VOLUMEN ---
             c4, c5, c6 = st.columns(3)
             with c4:
-                st.markdown(f"""<div class='main-card' style='border-left-color: #a78bfa;'>
-                    <div class='card-title'>Facturación</div>
-                    <div class='card-value'>${df_mes["FACTURACIÓN"]:,.0f}</div>
-                    <div class='card-sub' style='color:#a78bfa;'>Ingresos del mes</div>
+                st.markdown(f"""<div class='card-container border-blue'>
+                    <div class='card-label'>Facturación Bruta</div>
+                    <div class='card-value' style='color: #f8fafc;'>${df_mes["FACTURACIÓN"]:,.0f}</div>
                 </div>""", unsafe_allow_html=True)
             with c5:
-                st.markdown(f"""<div class='main-card' style='border-left-color: #f1f5f9;'>
-                    <div class='card-title'>Volumen Despachado</div>
-                    <div class='card-value'>{df_mes["CAJAS ENVIADAS"]:,.0f}</div>
-                    <div class='card-sub'>Cajas totales</div>
+                st.markdown(f"""<div class='card-container border-purple'>
+                    <div class='card-label'>Cajas Despachadas</div>
+                    <div class='card-value' style='color: #f8fafc;'>{int(df_mes["CAJAS ENVIADAS"]):,.0f}</div>
                 </div>""", unsafe_allow_html=True)
             with c6:
-                st.markdown(f"""<div class='main-card' style='border-left-color: #38bdf8;'>
-                    <div class='card-title'>Gasto en Fletes</div>
-                    <div class='card-value'>${df_mes["COSTO DE FLETE"]:,.0f}</div>
-                    <div class='card-sub'>Inversión total</div>
-                </div>""", unsafe_allow_html=True)
-        
-            # --- FILA 3: CALIDAD Y DESVÍO ---
-            c7, c8 = st.columns(2)
-            with c7:
-                # Incidencias
-                st.markdown(f"""<div class='main-card' style='border-left-color: #f59e0b;'>
-                    <div class='card-title'>Calidad de Entrega</div>
-                    <div class='card-value' style='color: #f59e0b;'>{df_mes["PORCENTAJE DE INCIDENCIAS"]:.1f}%</div>
-                    <div class='card-sub'>Valuación: ${df_mes["VALUACION INCIDENCIAS"]:,.2f}</div>
-                </div>""", unsafe_allow_html=True)
-            with c8:
-                # Porcentaje de Incremento vs 2024
-                st.markdown(f"""<div class='main-card' style='border-left-color: #ec4899;'>
-                    <div class='card-title'>Desvío vs 2024</div>
-                    <div class='card-value' style='color: #ec4899;'>{df_mes["% DE INCREMENTO VS 2024"]:.1f}%</div>
-                    <div class='card-sub'>Inflación en costo por unidad</div>
+                st.markdown(f"""<div class='card-container border-yellow'>
+                    <div class='card-label'>Gasto Total Flete</div>
+                    <div class='card-value' style='color: #f8fafc;'>${df_mes["COSTO DE FLETE"]:,.0f}</div>
                 </div>""", unsafe_allow_html=True)
 
         # --- NAVEGACIÓN ---
@@ -1446,6 +1451,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
