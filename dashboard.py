@@ -1195,7 +1195,7 @@ else:
 
         st.write("##")
 
-        # --- GRÁFICO 2: EFICIENCIA POR FLETERA (CORREGIDO) ---
+        # --- GRÁFICO 2: EFICIENCIA POR FLETERA (MÉTODO SEGURO) ---
         titulo_grafico_elite("Ranking de Eficiencia por Fletera", "🏆")
         df_ent = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
         
@@ -1203,17 +1203,13 @@ else:
             df_ent["AT"] = df_ent["FECHA DE ENTREGA REAL"] <= df_ent["PROMESA DE ENTREGA"]
             df_p = (df_ent.groupby("FLETERA")["AT"].mean() * 100).reset_index()
             
-            # --- LÓGICA DE COLOR COMPATIBLE CON ALTAIR V5+ ---
-            # Usamos una expresión condicional de Vega-Lite directa
-            color_logic = alt.condition(
-                "datum.AT >= 95",
-                alt.value(color_excelencia),
-                alt.condition(
-                    "datum.AT >= 85",
-                    alt.value(color_alerta),
-                    alt.value(color_critico)
-                )
-            )
+            # --- ASIGNACIÓN DIRECTA DE COLORES (Aquí está el truco) ---
+            def asignar_color(valor):
+                if valor >= 95: return color_excelencia
+                if valor >= 85: return color_alerta
+                return color_critico
+            
+            df_p["COLOR_HEX"] = df_p["AT"].apply(asignar_color)
 
             # Gráfico base de barras
             bars = alt.Chart(df_p).mark_bar(
@@ -1223,7 +1219,8 @@ else:
             ).encode(
                 x=alt.X('AT:Q', title='Cumplimiento (%)', scale=alt.Scale(domain=[0, 118]), axis=alt.Axis(gridOpacity=0.05)),
                 y=alt.Y('FLETERA:N', sort='-x', title=None, axis=alt.Axis(labelColor='white', labelFontSize=12)),
-                color=color_logic  # Aplicamos la lógica corregida aquí
+                # Usamos el color directamente desde la columna que creamos
+                color=alt.Color('COLOR_HEX:N', scale=None) 
             )
 
             # ETIQUETAS DE DATOS
@@ -1400,6 +1397,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
