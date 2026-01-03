@@ -672,53 +672,60 @@ else:
         # --------------------------------------------------
         # GRÁFICOS DE BARRAS POR PAQUETERÍA (CON ETIQUETAS)
         # --------------------------------------------------
-        st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:18px; font-weight:700; margin:10px 0;">Análisis por Paquetería</div></div>""", unsafe_allow_html=True)
-        
-        g1, g2 = st.columns(2)
-    
-        # Gráfico 1: En Tránsito por Fletera
-        df_t = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
-        if not df_t.empty:
-            # Definimos la base de la barra
-            base_t = alt.Chart(df_t).encode(
-                x=alt.X("FLETERA:N", title="Paquetería", sort='-y'),
-                y=alt.Y("CANTIDAD:Q", title="Pedidos"),
-                tooltip=["FLETERA", "CANTIDAD"]
-            )
-            
-            # Color y forma de la barra
-            chart_t = base_t.mark_bar(color="#FFC107", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).properties(height=300)
-            
-            # Etiqueta numérica superior
-            text_t = base_t.mark_text(
-                align='center', baseline='bottom', dy=-10, fontSize=14, fontWeight='bold', color='white'
-            ).encode(text=alt.Text("CANTIDAD:Q"))
-            
-            g1.markdown("<h5 style='text-align:center; color:yellow;'>En tránsito / En tiempo</h5>", unsafe_allow_html=True)
-            g1.altair_chart((chart_t + text_t), use_container_width=True)
-    
-        # Gráfico 2: Retrasados por Fletera
-        df_r = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
-        if not df_r.empty:
-            # Definimos la base de la barra
-            base_r = alt.Chart(df_r).encode(
-                x=alt.X("FLETERA:N", title="Paquetería", sort='-y'),
-                y=alt.Y("CANTIDAD:Q", title="Pedidos"),
-                tooltip=["FLETERA", "CANTIDAD"]
-            )
-            
-            # Color y forma de la barra
-            chart_r = base_r.mark_bar(color="#F44336", cornerRadiusTopLeft=6, cornerRadiusTopRight=6).properties(height=300)
-            
-            # Etiqueta numérica superior
-            text_r = base_r.mark_text(
-                align='center', baseline='bottom', dy=-10, fontSize=14, fontWeight='bold', color='white'
-            ).encode(text=alt.Text("CANTIDAD:Q"))
-            
-            g2.markdown("<h5 style='text-align:center; color:#F44336;'>Sin entregar con retraso</h5>", unsafe_allow_html=True)
-            g2.altair_chart((chart_r + text_r), use_container_width=True)
+        # --- ANÁLISIS POR PAQUETERÍA (LADO A LADO PREMIUM) ---
+        st.markdown(f"""
+            <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 30px; margin-bottom: 25px;'>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>📦 MONITOREO DE CARGA POR ESTATUS</span>
+            </div>
+        """, unsafe_allow_html=True)
 
-        st.divider()    
+        g1, g2 = st.columns(2)
+
+        # Función para estados vacíos "Elite"
+        def empty_state_card(titulo, mensaje, color):
+            return f"""
+                <div style='border: 1px dashed {color}55; padding: 40px 20px; border-radius: 15px; text-align: center; background: rgba(255,255,255,0.01);'>
+                    <div style='font-size: 30px; margin-bottom: 10px;'>✅</div>
+                    <div style='color: white; font-weight: 700; font-size: 14px;'>{titulo}</div>
+                    <div style='color: #94a3b8; font-size: 12px;'>{mensaje}</div>
+                </div>
+            """
+
+        # --- Gráfico 1: En Tránsito ---
+        with g1:
+            st.markdown("<p style='text-align:center; color:#fbbf24; font-weight:700; font-size:14px; text-transform:uppercase;'>🟡 En tránsito / En tiempo</p>", unsafe_allow_html=True)
+            df_t = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
+            
+            if not df_t.empty:
+                base_t = alt.Chart(df_t).encode(
+                    x=alt.X("FLETERA:N", title=None, sort='-y', axis=alt.Axis(labelColor='white', labelAngle=-45)),
+                    y=alt.Y("CANTIDAD:Q", title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8')),
+                    color=alt.value("#fbbf24") # Ámbar
+                )
+                chart_t = base_t.mark_bar(cornerRadiusTopLeft=8, cornerRadiusTopRight=8).properties(height=280)
+                text_t = base_t.mark_text(align='center', baseline='bottom', dy=-10, fontWeight='bold', color='white').encode(text="CANTIDAD:Q")
+                st.altair_chart((chart_t + text_t), use_container_width=True)
+            else:
+                st.markdown(empty_state_card("SIN PENDIENTES", "No hay pedidos en tránsito actualmente.", "#fbbf24"), unsafe_allow_html=True)
+
+        # --- Gráfico 2: Retrasados ---
+        with g2:
+            st.markdown("<p style='text-align:center; color:#fb7185; font-weight:700; font-size:14px; text-transform:uppercase;'>🔴 Sin entregar con retraso</p>", unsafe_allow_html=True)
+            df_r = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
+            
+            if not df_r.empty:
+                base_r = alt.Chart(df_r).encode(
+                    x=alt.X("FLETERA:N", title=None, sort='-y', axis=alt.Axis(labelColor='white', labelAngle=-45)),
+                    y=alt.Y("CANTIDAD:Q", title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8')),
+                    color=alt.value("#fb7185") # Coral
+                )
+                chart_r = base_r.mark_bar(cornerRadiusTopLeft=8, cornerRadiusTopRight=8).properties(height=280)
+                text_r = base_r.mark_text(align='center', baseline='bottom', dy=-10, fontWeight='bold', color='white').encode(text="CANTIDAD:Q")
+                st.altair_chart((chart_r + text_r), use_container_width=True)
+            else:
+                st.markdown(empty_state_card("LIMPIO", "Excelente: No hay pedidos con retraso acumulado.", "#fb7185"), unsafe_allow_html=True)
+
+        st.write("##")   
                
         # --------------------------------------------------
         # GRÁFICO EXCLUSIVO: RETRASO PROMEDIO (DÍAS) + NOTA
@@ -1422,6 +1429,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
