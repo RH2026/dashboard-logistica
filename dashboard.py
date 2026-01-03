@@ -463,79 +463,31 @@ else:
                         st.markdown(html_c3, unsafe_allow_html=True)
     
        
-        # ----------------------------------------------------------------
-        # 1. ADN VISUAL - CSS PARA TARJETAS UNIFICADAS
-        # ----------------------------------------------------------------
-        st.markdown("""
-            <style>
-            .elite-card {
-                transition: all 0.4s ease;
-                padding: 20px;
-                border-radius: 20px;
-                background: #11141C; /* Fondo sólido para unir todo */
-                border: 1px solid rgba(255,255,255,0.08);
-                text-align: center;
-                margin-bottom: 10px;
-                height: 260px; /* Altura fija para evitar el efecto aplastado */
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                overflow: visible;
-            }
-            .elite-card:hover {
-                transform: translateY(-5px);
-                border: 1px solid rgba(56,189,248,0.3) !important;
-                box-shadow: 0 15px 30px rgba(0,0,0,0.5);
-            }
-            .kpi-title {
-                color: #94a3b8;
-                font-size: 13px;
-                font-weight: 800;
-                text-transform: uppercase;
-                letter-spacing: 2px;
-                margin-bottom: 5px;
-            }
-            </style>
-        """, unsafe_allow_html=True)
+        # =================================================================
+        # 1. DEFINICIÓN DE COLORES (BLINDAJE CONTRA NAMEERROR)
+        # =================================================================
+        COLOR_AVANCE_ENTREGADOS = "#00FFAA" 
+        COLOR_AVANCE_TRANSITO   = "#38bdf8" 
+        COLOR_AVANCE_RETRASADOS = "#fb7185" 
+        COLOR_TOTAL             = "#fbbf24" 
+        COLOR_FALTANTE          = "#262730" 
         
-        # ----------------------------------------------------------------
-        # 2. FUNCIÓN DONITA - CÍRCULO PERFECTO (SIN CORTES)
-        # ----------------------------------------------------------------
-        def donut_con_numero(avance, total_val, color_avance, color_faltante):
-            porcentaje = int((avance / total_val) * 100) if total_val > 0 else 0
-            data_dona = pd.DataFrame({
-                "segmento": ["A", "B"], 
-                "valor": [float(avance), float(max(total_val - avance, 0))]
-            })
-            
-            # Radios optimizados para que el círculo respire dentro de la tarjeta
-            donut = alt.Chart(data_dona).mark_arc(innerRadius=38, outerRadius=52, cornerRadius=10).encode(
-                theta=alt.Theta(field="valor", type="quantitative"),
-                color=alt.Color(field="segmento", type="nominal", 
-                                scale=alt.Scale(domain=["A", "B"], range=[color_avance, color_faltante]), 
-                                legend=None),
-                tooltip=alt.value(None)
-            )
-            
-            texto_n = alt.Chart(pd.DataFrame({"t": [str(avance)]})).mark_text(
-                align="center", baseline="middle", fontSize=26, fontWeight=800, dy=-6, color="white"
-            ).encode(text=alt.Text(field="t", type="nominal"))
-            
-            texto_p = alt.Chart(pd.DataFrame({"t": [f"{porcentaje}%"]})).mark_text(
-                align="center", baseline="middle", fontSize=11, fontWeight=400, dy=16, color="#94a3b8"
-            ).encode(text=alt.Text(field="t", type="nominal"))
-            
-            return (donut + texto_n + texto_p).properties(width=135, height=135).configure_view(strokeOpacity=0)
+        # =================================================================
+        # 2. CÁLCULO DE VALORES
+        # =================================================================
+        total = int(len(df_filtrado))
+        entregados = int((df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum())
+        en_transito = int((df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum())
+        retrasados = int((df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum())
         
-        # ----------------------------------------------------------------
-        # 3. RENDERIZADO DE LAS 4 COLUMNAS INTEGRADAS
-        # ----------------------------------------------------------------
+        # =================================================================
+        # 3. RENDERIZADO DE LA CONSOLA (DONITAS UNIFICADAS)
+        # =================================================================
         st.markdown("<div style='background:rgba(255,255,255,0.02);padding:15px;border-radius:15px;border-left:5px solid #38bdf8;margin-bottom:25px;'><span style='color:white;font-size:20px;font-weight:800;letter-spacing:1.5px;'>📊 CONSOLA GLOBAL DE RENDIMIENTO</span></div>", unsafe_allow_html=True)
         
         c1, c2, c3, c4 = st.columns(4)
         
-        # Datos para el mapeo
+        # Aquí ya no fallará porque los colores están definidos arriba
         metricas = [
             ("TOTAL PEDIDOS", total, COLOR_TOTAL),
             ("ENTREGADOS", entregados, COLOR_AVANCE_ENTREGADOS),
@@ -547,14 +499,11 @@ else:
         
         for i, (titulo, valor, color) in enumerate(metricas):
             with cols[i]:
-                # INICIO DE TARJETA Y TÍTULO
+                # TRUCO: El st.markdown abre el div y el st.altair_chart se inyecta adentro
                 st.markdown(f"<div class='elite-card'><div class='kpi-title'>{titulo}</div>", unsafe_allow_html=True)
-                
-                # EL GRÁFICO (Se dibuja dentro del div abierto arriba)
+                # Asegúrate de que la función donut_con_numero esté definida antes de este bucle
                 st.altair_chart(donut_con_numero(valor, total, color, COLOR_FALTANTE), use_container_width=True)
-                
-                # CIERRE DE TARJETA
-                st.markdown("</div>", unsafe_allow_html=True)      
+                st.markdown("</div>", unsafe_allow_html=True)  
         
         
 
@@ -1419,6 +1368,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
