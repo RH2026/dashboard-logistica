@@ -5,6 +5,7 @@ import time
 import base64
 import textwrap
 import streamlit.components.v1 as components
+import numpy as np
 
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
@@ -1135,7 +1136,7 @@ else:
                 df_r["CAJAS"] = pd.to_numeric(df_r["CAJAS"], errors='coerce').fillna(1).replace(0, 1)
                 
                 # Cálculos Financieros
-                df_r["% LOGÍSTICO"] = (df_r["COSTO DE GUIA"] / df_r["VALOR FACTURA"].replace(0, np.nan)) * 100
+                df_r["% LOGÍSTICO"] = (df_r["COSTO DE GUIA"] / df_r["VALOR FACTURA"].replace(0, float('nan'))) * 100
                 df_r["% LOGÍSTICO"] = df_r["% LOGÍSTICO"].fillna(0)
                 df_r["COSTO_CAJA"] = df_r["COSTO DE GUIA"] / df_r["CAJAS"]
                 
@@ -1205,6 +1206,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:gray; margin-top:30px; font-size:12px;'>© 2026 Dash - Control de Operaciones y Finanzas</div>", unsafe_allow_html=True)
+
 
 
 
