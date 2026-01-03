@@ -852,46 +852,67 @@ else:
         # --------------------------------------------------
         # SECCIÓN UNIFICADA: ANÁLISIS DE EXPERIENCIA (LUPA)
         # --------------------------------------------------
-        st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:18px; font-weight:700; margin:30px 0 10px 0;">Ananlisis por Paquetería: Distribución de Experiencia</div></div>""", unsafe_allow_html=True)
-    
-        # 1. Selector único para controlar el gráfico
+        # --- ANÁLISIS POR PAQUETERÍA: LUPA DE EXPERIENCIA (NIVEL ELITE) ---
+        
+        # Estética de colores OPS MONITOR
+        color_entrega_ok = "#059669" # Esmeralda (A tiempo o antes)
+        color_entrega_late = "#fb7185" # Coral (Retraso)
+
+        st.markdown(f"""
+            <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 30px; margin-bottom: 20px;'>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>🔍 DISTRIBUCIÓN DE EXPERIENCIA: {fletera_seleccionada if 'fletera_seleccionada' in locals() else 'GENERAL'}</span>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # 1. Selector Elite con mejor espaciado
         lista_fleteras = ["TODAS"] + sorted(df_filtrado["FLETERA"].unique().tolist())
-        fletera_seleccionada = st.selectbox("Selecciona una paquetería para analizar su detalle de entregas:", lista_fleteras)
-    
-        # 2. Filtrado dinámico
+        fletera_seleccionada = st.selectbox("🎯 Filtrar por Paquetería:", lista_fleteras, help="Analiza la puntualidad específica de cada proveedor.")
+
+        # 2. Procesamiento de datos de experiencia
         df_lupa = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
         if fletera_seleccionada != "TODAS":
             df_lupa = df_lupa[df_lupa["FLETERA"] == fletera_seleccionada]
         
-        # Cálculo de días de diferencia
         df_lupa["DIAS_DIF"] = (df_lupa["FECHA DE ENTREGA REAL"] - df_lupa["PROMESA DE ENTREGA"]).dt.days
-    
+
         if not df_lupa.empty:
-            # 3. Gráfico Único de Distribución
             df_dist_lupa = df_lupa.groupby("DIAS_DIF").size().reset_index(name="PEDIDOS")
             
-            chart_lupa = alt.Chart(df_dist_lupa).mark_bar(cornerRadiusTopLeft=5, cornerRadiusTopRight=5).encode(
-                x=alt.X("DIAS_DIF:Q", title="Días de diferencia (Negativo = Antes / Positivo = Retraso)"),
-                y=alt.Y("PEDIDOS:Q", title="Número de Entregas"),
-                color=alt.condition(
-                    alt.datum.DIAS_DIF <= 0,
-                    alt.value("#2ECC71"), # Verde: A tiempo
-                    alt.value("#E74C3C")  # Rojo: Retraso
-                ),
-                tooltip=["DIAS_DIF", "PEDIDOS"]
-            ).properties(height=400)
-    
-            # Etiquetas numéricas sobre las barras
-            text_lupa = chart_lupa.mark_text(align='center', baseline='bottom', dy=-10, fontWeight='bold', color='white').encode(
-                text=alt.Text("PEDIDOS:Q")
+            # --- ASIGNACIÓN DE COLORES SEGURA ---
+            df_dist_lupa["COLOR_HEX"] = df_dist_lupa["DIAS_DIF"].apply(lambda x: color_entrega_ok if x <= 0 else color_entrega_late)
+
+            # 3. Gráfico de Histograma Técnico
+            base_lupa = alt.Chart(df_dist_lupa).encode(
+                x=alt.X("DIAS_DIF:Q", title="Días vs Promesa (← Antes | Retraso →)", axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8')),
+                y=alt.Y("PEDIDOS:Q", title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8')),
+                color=alt.Color("COLOR_HEX:N", scale=None)
             )
-    
-            st.altair_chart((chart_lupa + text_lupa), use_container_width=True)
-    
-            # 4. Tip dinámico según la selección
-            st.info(f"💡 **Tip de Atención:** Estás viendo la distribución de **{fletera_seleccionada}**. La barra más alta en el lado rojo indica el retraso más frecuente para esta selección.")
+
+            bars_lupa = base_lupa.mark_bar(
+                cornerRadiusTopLeft=6, 
+                cornerRadiusTopRight=6,
+                size=35 if len(df_dist_lupa) < 10 else 20 # Ajuste dinámico de ancho
+            )
+
+            # Etiquetas de datos para precisión absoluta
+            text_lupa = base_lupa.mark_text(
+                align='center', baseline='bottom', dy=-8, fontWeight=700, color='white', fontSize=12
+            ).encode(text=alt.Text("PEDIDOS:Q"))
+
+            st.altair_chart((bars_lupa + text_lupa).properties(height=350).configure_view(strokeOpacity=0), use_container_width=True)
+
+            # 4. Tip Inteligente con Estilo de Tarjeta
+            st.markdown(f"""
+                <div style='background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 15px; border-radius: 10px;'>
+                    <p style='margin:0; color:#38bdf8; font-size:13px; font-weight:600;'>💡 TIP DE OPERACIONES:</p>
+                    <p style='margin:5px 0 0 0; color:#e2e8f0; font-size:14px;'>
+                        Analizando a <b>{fletera_seleccionada}</b>: Las barras a la derecha del '0' representan promesas incumplidas. 
+                        Busca reducir la dispersión hacia el lado rojo para mejorar la lealtad del cliente.
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
         else:
-            st.warning("No hay datos disponibles para esta paquetería.")
+            st.warning("⚠️ Sin registros de entrega para los filtros seleccionados.")
         
         # --------------------------------------------------
         # TABLA SCORECARD: CALIFICACIÓN DE FLETERAS
@@ -1401,6 +1422,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
