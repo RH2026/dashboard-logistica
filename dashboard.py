@@ -435,107 +435,29 @@ else:
                                        
                     
                     ## --- PASO 1: INYECTAR EL ADN (ESTILOS OCULTOS) ---
-                    st.markdown("""
-                        <style>
-                        /* Efecto de elevación y brillo tipo Amazon/DHL */
-                        .elite-card {
-                            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
-                            cursor: default;
-                        }
-                        .elite-card:hover {
-                            transform: translateY(-8px);
-                            box-shadow: 0 20px 40px rgba(0,0,0,0.7) !important;
-                            border: 1px solid rgba(255, 255, 255, 0.25) !important;
-                            background: rgba(255, 255, 255, 0.04) !important;
-                        }
-                        </style>
-                    """, unsafe_allow_html=True)
+                    st.markdown("<style>.elite-card{transition:all 0.4s ease;cursor:default;}.elite-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,0.7)!important;border:1px solid rgba(255,255,255,0.25)!important;background:rgba(255,255,255,0.04)!important;}</style>", unsafe_allow_html=True)
                     
                     c1, c2, c3 = st.columns(3)
 
-                    # Paleta de colores técnica
-                    color_sky = "#38bdf8"    # Expedición
-                    color_amber = "#fbbf24"  # Tiempos
-                    color_purple = "#a855f7" # Estado Crítico
-                    color_mint = "#00FFAA"   # Éxito
-                    
-                    estilo_base = "background:#11141C; padding:24px; border-radius:20px; border:1px solid rgba(255,255,255,0.08); min-height:340px;"
-                    
-                    def row_elite(label, value, color="#e2e8f0", bold=False):
-                        f_weight = "800" if bold else "500"
-                        return f"""
-                            <div style='display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.03);'>
-                                <span style='color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px;'>{label}</span>
-                                <span style='color: {color}; font-size: 13px; font-weight: {f_weight};'>{value}</span>
-                            </div>
-                        """
-                    
-                    # --- COLUMNA 1: EXPEDICIÓN ---
+                    # --- TARJETA 1: EXPEDICIÓN ---
                     with c1:
-                        try: costo = f"${float(row.get('COSTO DE LA GUÍA', 0)):,.2f}"
-                        except: costo = "$0.00"
-                        
-                        st.markdown(f"""
-                            <div class='elite-card' style='{estilo_base} border-top: 4px solid {color_sky};'>
-                                <div style='display: flex; align-items: center; margin-bottom: 20px;'>
-                                    <div style='background: {color_sky}22; padding: 10px; border-radius: 12px; margin-right: 15px;'>📦</div>
-                                    <div style='color: white; font-weight: 800; font-size: 14px; letter-spacing: 1px;'>EXPEDICIÓN</div>
-                                </div>
-                                {row_elite("Tracking", row.get('NÚMERO DE GUÍA','—'), color=color_sky, bold=True)}
-                                {row_elite("Cliente", row.get('NOMBRE DEL CLIENTE', '—'))}
-                                {row_elite("ID Cliente", f"#{row.get('NO CLIENTE', '—')}")}
-                                {row_elite("Destino", row.get('DESTINO', '—'))}
-                                <div style='margin-top: 25px; text-align: right;'>
-                                    <div style='color: #64748b; font-size: 9px; font-weight: 800; letter-spacing: 1px;'>INVERSIÓN LOGÍSTICA</div>
-                                    <div style='color: {color_mint}; font-size: 26px; font-weight: 900;'>{costo}</div>
-                                </div>
-                            </div>
-                        """, unsafe_allow_html=True)
+                        costo = f"${float(row.get('COSTO DE LA GUÍA', 0)):,.2f}"
+                        html_c1 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #38bdf8;min-height:340px;'><div style='display:flex;align-items:center;margin-bottom:20px;'><div style='background:#38bdf822;padding:10px;border-radius:12px;margin-right:15px;'>📦</div><div style='color:white;font-weight:800;font-size:14px;'>EXPEDICIÓN</div></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;'>Tracking</span><span style='color:#38bdf8;font-size:13px;font-weight:800;'>{row.get('NÚMERO DE GUÍA','—')}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;'>Cliente</span><span style='color:#e2e8f0;font-size:13px;'>{row.get('NOMBRE DEL CLIENTE','—')}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;'>Destino</span><span style='color:#e2e8f0;font-size:13px;'>{row.get('DESTINO','—')}</span></div><div style='margin-top:40px;text-align:right;'><div style='color:#64748b;font-size:9px;font-weight:800;'>INVERSIÓN</div><div style='color:#00FFAA;font-size:26px;font-weight:900;'>{costo}</div></div></div>"
+                        st.markdown(html_c1, unsafe_allow_html=True)
                     
-                    # --- COLUMNA 2: TIEMPOS ---
+                    # --- TARJETA 2: TIEMPOS ---
                     with c2:
                         retraso = row.get('DIAS_RETRASO', 0)
-                        color_time = "#fb7185" if retraso > 0 else color_mint
-                        
-                        st.markdown(f"""
-                            <div class='elite-card' style='{estilo_base} border-top: 4px solid {color_amber};'>
-                                <div style='display: flex; align-items: center; margin-bottom: 20px;'>
-                                    <div style='background: {color_amber}22; padding: 10px; border-radius: 12px; margin-right: 15px;'>⏱️</div>
-                                    <div style='color: white; font-weight: 800; font-size: 14px; letter-spacing: 1px;'>TIEMPOS</div>
-                                </div>
-                                {row_elite("Salida", txt_f_envio)}
-                                {row_elite("Promesa", txt_f_promesa)}
-                                {row_elite("Entrega", txt_f_real, color=color_mint if txt_f_real != "PENDIENTE" else "#64748b")}
-                                {row_elite("Tránsito", f"{row.get('DIAS_TRANSCURRIDOS', 0)} días")}
-                                <div style='margin-top: 20px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border-left: 4px solid {color_time};'>
-                                    <div style='color: {color_time}; font-size: 10px; font-weight: 800; letter-spacing: 1px;'>DESVIACIÓN</div>
-                                    <div style='color: white; font-size: 22px; font-weight: 900;'>{retraso} DÍAS</div>
-                                </div>
-                            </div>
-                        """, unsafe_allow_html=True)
-
-                    # --- COLUMNA 3: ESTADO CRÍTICO ---
-                    with c3:
-                        estatus = row.get('ESTATUS_CALCULADO', '—')
-                        color_status = color_mint if estatus == "ENTREGADO" else "#3b82f6"
-                        if estatus == "RETRASADO": color_status = "#fb7185"
+                        color_t = "#fb7185" if retraso > 0 else "#00FFAA"
+                        html_c2 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #fbbf24;min-height:340px;'><div style='display:flex;align-items:center;margin-bottom:20px;'><div style='background:#fbbf2422;padding:10px;border-radius:12px;margin-right:15px;'>⏱️</div><div style='color:white;font-weight:800;font-size:14px;'>TIEMPOS</div></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;'>Salida</span><span style='color:#e2e8f0;font-size:13px;'>{txt_f_envio}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;'>Promesa</span><span style='color:#e2e8f0;font-size:13px;'>{txt_f_promesa}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;'>Entrega</span><span style='color:#00FFAA;font-size:13px;'>{txt_f_real}</span></div><div style='margin-top:25px;background:rgba(255,255,255,0.03);padding:15px;border-radius:12px;border-left:4px solid {color_t};'><div style='color:{color_t};font-size:10px;font-weight:800;'>DESVIACIÓN</div><div style='color:white;font-size:22px;font-weight:900;'>{retraso} DÍAS</div></div></div>"
+                        st.markdown(html_c2, unsafe_allow_html=True)
                     
-                        st.markdown(f"""
-                            <div class='elite-card' style='{estilo_base} border-top: 4px solid {color_purple};'>
-                                <div style='display: flex; align-items: center; margin-bottom: 20px;'>
-                                    <div style='background: {color_purple}22; padding: 10px; border-radius: 12px; margin-right: 15px;'>📊</div>
-                                    <div style='color: white; font-weight: 800; font-size: 14px; letter-spacing: 1px;'>ESTADO CRÍTICO</div>
-                                </div>
-                                {row_elite("Estatus", estatus, color=color_status, bold=True)}
-                                {row_elite("Prioridad", row.get('PRIORIDAD', 'NORMAL'))}
-                                <div style='margin-top: 15px;'>
-                                    <div style='color: #64748b; font-size: 10px; font-weight: 700; margin-bottom: 8px; letter-spacing: 1px;'>NOTAS DEL SISTEMA</div>
-                                    <div style='background: rgba(0,0,0,0.3); padding: 14px; border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1); color: #cbd5e1; font-size: 12px; line-height: 1.6; min-height: 90px;'>
-                                        {row.get('COMENTARIOS', 'Sin incidencias reportadas en este folio.')}
-                                    </div>
-                                </div>
-                            </div>
-                        """, unsafe_allow_html=True)
+                    # --- TARJETA 3: ESTADO ---
+                    with c3:
+                        est = row.get('ESTATUS_CALCULADO', '—')
+                        color_e = "#00FFAA" if est == "ENTREGADO" else "#fb7185" if est == "RETRASADO" else "#3b82f6"
+                        html_c3 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #a855f7;min-height:340px;'><div style='display:flex;align-items:center;margin-bottom:20px;'><div style='background:#a855f722;padding:10px;border-radius:12px;margin-right:15px;'>📊</div><div style='color:white;font-weight:800;font-size:14px;'>ESTADO CRÍTICO</div></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;'>Estatus</span><span style='color:{color_e};font-size:13px;font-weight:800;'>{est}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;'>Prioridad</span><span style='color:#e2e8f0;font-size:13px;'>{row.get('PRIORIDAD','NORMAL')}</span></div><div style='margin-top:15px;'><div style='color:#64748b;font-size:10px;font-weight:700;margin-bottom:8px;'>NOTAS</div><div style='background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;border:1px dashed rgba(255,255,255,0.1);color:#cbd5e1;font-size:12px;min-height:80px;'>{row.get('COMENTARIOS','Sin incidencias.')}</div></div></div>"
+                        st.markdown(html_c3, unsafe_allow_html=True)
         
         # --------------------------------------------------
         # 1. CÁLCULO DE MÉTRICAS (INDISPENSABLE ANTES DE LAS DONITAS)
@@ -1510,6 +1432,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
