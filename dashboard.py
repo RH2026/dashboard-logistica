@@ -939,14 +939,9 @@ else:
         # --------------------------------------------------
         # TABLA SCORECARD: CALIFICACIÓN DE FLETERAS
         # --------------------------------------------------
-        # --- 🏆 SCORECARD DE DESEMPEÑO LOGÍSTICO (ULTRA-AMAZON STYLE) ---
-        st.markdown(f"""
-            <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-top: 30px; margin-bottom: 25px;'>
-                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>🏆 SCORECARD DE DESEMPEÑO LOGÍSTICO</span>
-            </div>
-        """, unsafe_allow_html=True)
-
-        # 1. Preparación de datos Pro
+        # --- 🏆 SCORECARD DE DESEMPEÑO LOGÍSTICO (INTEGRADO & DESPLEGABLE) ---
+        
+        # 1. Preparación de datos (Cálculos Pro)
         resumen_score = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
         resumen_score["ES_TARDE"] = (resumen_score["FECHA DE ENTREGA REAL"] > resumen_score["PROMESA DE ENTREGA"])
         resumen_score["DIAS_DIF"] = (resumen_score["FECHA DE ENTREGA REAL"] - resumen_score["PROMESA DE ENTREGA"]).dt.days
@@ -960,44 +955,67 @@ else:
         df_score["Eficiencia"] = ((1 - (df_score["Pedidos_Tarde"] / df_score["Total_Entregas"])) * 100).round(1)
         df_score = df_score.sort_values(by="Eficiencia", ascending=False)
 
-        # 2. Renderizado de Tarjetas Estilo "Command Center"
-        for _, row in df_score.iterrows():
-            # Lógica de colores y estados
-            if row["Eficiencia"] >= 95:
-                status_color, status_bg, label = "#059669", "rgba(5, 150, 105, 0.1)", "⭐ EXCELENTE"
-            elif row["Eficiencia"] >= 80:
-                status_color, status_bg, label = "#3b82f6", "rgba(59, 130, 246, 0.1)", "✅ CONFIABLE"
-            elif row["Eficiencia"] >= 60:
-                status_color, status_bg, label = "#f59e0b", "rgba(245, 158, 11, 0.1)", "⚠️ OBSERVACIÓN"
-            else:
-                status_color, status_bg, label = "#fb7185", "rgba(251, 113, 133, 0.1)", "🚨 CRÍTICO"
+        # 2. CSS para el Botón Desplegable Ultra-Moderno
+        st.markdown("""
+            <style>
+            .streamlit-expanderHeader {
+                background: rgba(255, 255, 255, 0.03) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                border-radius: 12px !important;
+                padding: 18px !important;
+                color: #00FFAA !important;
+                font-weight: 800 !important;
+                transition: 0.3s all ease;
+            }
+            .streamlit-expanderHeader:hover {
+                background: rgba(0, 255, 170, 0.05) !important;
+                border: 1px solid #00FFAA !important;
+            }
+            .streamlit-expanderContent {
+                border: none !important;
+                background: transparent !important;
+                padding-top: 20px !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
 
-            # HTML de la Tarjeta Premium
-            st.markdown(f"""
-                <div style='background: {status_bg}; border: 1px solid {status_color}33; padding: 20px; border-radius: 15px; margin-bottom: 15px;'>
-                    <div style='display: flex; justify-content: space-between; align-items: center;'>
-                        <div style='flex-grow: 1;'>
-                            <h3 style='margin:0; color:white; font-size:18px;'>{row['FLETERA']}</h3>
-                            <span style='background: {status_color}; color: white; padding: 2px 10px; border-radius: 20px; font-size: 10px; font-weight: 800;'>{label}</span>
+        # 3. El Botón y el Contenido
+        with st.expander("🏆 CLASIFICACIÓN DE SOCIOS LOGÍSTICOS (SCORECARD)"):
+            st.markdown("<p style='color: #94a3b8; font-size: 13px; margin-bottom: 25px; margin-left: 5px;'>Análisis profundo de rendimiento y cumplimiento de promesas de entrega.</p>", unsafe_allow_html=True)
+            
+            for _, row in df_score.iterrows():
+                # Colores Dinámicos
+                if row["Eficiencia"] >= 95:
+                    s_color, s_bg, label = "#059669", "rgba(5, 150, 105, 0.1)", "⭐ EXCELENTE"
+                elif row["Eficiencia"] >= 80:
+                    s_color, s_bg, label = "#3b82f6", "rgba(59, 130, 246, 0.1)", "✅ CONFIABLE"
+                elif row["Eficiencia"] >= 60:
+                    s_color, s_bg, label = "#f59e0b", "rgba(245, 158, 11, 0.1)", "⚠️ OBSERVACIÓN"
+                else:
+                    s_color, s_bg, label = "#fb7185", "rgba(251, 113, 133, 0.1)", "🚨 CRÍTICO"
+
+                # Render de Tarjeta Amazon Style
+                st.markdown(f"""
+                    <div style='background: {s_bg}; border: 1px solid {s_color}33; padding: 20px; border-radius: 15px; margin-bottom: 15px;'>
+                        <div style='display: flex; justify-content: space-between; align-items: center;'>
+                            <div style='flex-grow: 1;'>
+                                <h3 style='margin:0; color:white; font-size:18px; font-family:"Inter", sans-serif;'>{row['FLETERA']}</h3>
+                                <span style='background: {s_color}; color: white; padding: 2px 10px; border-radius: 20px; font-size: 10px; font-weight: 800;'>{label}</span>
+                            </div>
+                            <div style='text-align: right; margin-right: 30px;'>
+                                <p style='margin:0; color:#94a3b8; font-size:10px; text-transform:uppercase;'>Eficiencia</p>
+                                <h2 style='margin:0; color:{s_color}; font-size:28px; font-weight:800;'>{row['Eficiencia']}%</h2>
+                            </div>
+                            <div style='text-align: right; min-width: 100px;'>
+                                <p style='margin:0; color:#94a3b8; font-size:10px; text-transform:uppercase;'>Días Prom.</p>
+                                <h2 style='margin:0; color:white; font-size:24px;'>{row['Promedio_Dias']:.1f}</h2>
+                            </div>
                         </div>
-                        <div style='text-align: right; margin-right: 30px;'>
-                            <p style='margin:0; color:#94a3b8; font-size:10px; text-transform:uppercase;'>Eficiencia</p>
-                            <h2 style='margin:0; color:{status_color}; font-size:28px;'>{row['Eficiencia']}%</h2>
-                        </div>
-                        <div style='text-align: right; min-width: 100px;'>
-                            <p style='margin:0; color:#94a3b8; font-size:10px; text-transform:uppercase;'>Días Promedio</p>
-                            <h2 style='margin:0; color:white; font-size:24px;'>{row['Promedio_Dias']:.1f}</h2>
-                        </div>
-                        <div style='text-align: right; min-width: 100px; padding-left: 20px; border-left: 1px solid rgba(255,255,255,0.1);'>
-                            <p style='margin:0; color:#94a3b8; font-size:10px; text-transform:uppercase;'>Entregas</p>
-                            <h2 style='margin:0; color:white; font-size:24px;'>{row['Total_Entregas']}</h2>
+                        <div style='width: 100%; height: 4px; background: rgba(255,255,255,0.05); margin-top: 15px; border-radius: 10px;'>
+                            <div style='width: {row['Eficiencia']}%; height: 100%; background: {s_color}; border-radius: 10px; box-shadow: 0 0 10px {s_color}55;'></div>
                         </div>
                     </div>
-                    <div style='width: 100%; height: 4px; background: rgba(255,255,255,0.05); margin-top: 15px; border-radius: 10px;'>
-                        <div style='width: {row['Eficiencia']}%; height: 100%; background: {status_color}; border-radius: 10px;'></div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
         
         # --------------------------------------------------
         # FINAL DE PÁGINA Y BOTÓN A KPIs
@@ -1456,6 +1474,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
