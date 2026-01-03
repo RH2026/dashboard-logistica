@@ -462,90 +462,83 @@ else:
                         html_c3 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #a855f7;min-height:{h_size};'><div style='display:flex;align-items:center;margin-bottom:15px;'><div style='background:#a855f722;padding:10px;border-radius:12px;margin-right:15px;'>📊</div><div style='color:white;font-weight:800;font-size:14px;'>ESTATUS</div></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Estatus</span><span style='color:{color_e};font-size:13px;font-weight:800;'>{est}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Prioridad</span><span style='color:#e2e8f0;font-size:13px;'>{row.get('PRIORIDAD','NORMAL')}</span></div><div style='margin-top:auto;'><div style='color:#64748b;font-size:14px;font-weight:700;margin-bottom:8px;'>NOTAS</div><div style='background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;border:1px dashed rgba(255,255,255,0.1);color:#cbd5e1;font-size:12px;min-height:90px;'>{row.get('COMENTARIOS','Sin incidencias.')}</div></div></div>"
                         st.markdown(html_c3, unsafe_allow_html=True)
         
+               
+
         # --------------------------------------------------
-        # 1. CÁLCULO DE MÉTRICAS (INDISPENSABLE ANTES DE LAS DONITAS)
+        # 1. CÁLCULO DE MÉTRICAS (INDISPENSABLE)
         # --------------------------------------------------
-        # Aseguramos que 'total' y demás variables existan
         total = len(df_filtrado)
         entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
         en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
         retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
-    
+
         # --------------------------------------------------
-        # 2. CONFIGURACIÓN DE COLORES Y FUNCIÓN PREMIUM
+        # 2. CONFIGURACIÓN DE COLORES Y ESTILOS CSS
         # --------------------------------------------------
-        # Paleta DHL/Amazon Modern
         COLOR_AVANCE_ENTREGADOS = "#00FFAA" # Mentol Neón
         COLOR_AVANCE_TRANSITO   = "#38bdf8" # Azul Eléctrico
         COLOR_AVANCE_RETRASADOS = "#fb7185" # Coral Alerta
         COLOR_TOTAL             = "#fbbf24" # Ámbar Pro
-        COLOR_FALTANTE          = "rgba(255,255,255,0.05)" # Transparencia técnica
-    
+        COLOR_FALTANTE          = "rgba(255,255,255,0.05)" 
+
+        # Inyección de CSS para tarjetas con efecto Glow y Hover
+        st.markdown("""
+            <style>
+            .elite-card {
+                transition: all 0.4s ease;
+                cursor: default;
+                padding: 20px;
+                border-radius: 20px;
+                background: rgba(255,255,255,0.03);
+                border: 1px solid rgba(255,255,255,0.05);
+                text-align: center;
+                margin-bottom: 10px;
+            }
+            .elite-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.7) !important;
+                border: 1px solid rgba(255,255,255,0.25) !important;
+                background: rgba(255,255,255,0.04) !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
+        # --------------------------------------------------
+        # 3. FUNCIÓN DE GRÁFICO (DONITA CHIC)
+        # --------------------------------------------------
         def donut_con_numero(avance, total_val, color_avance, color_faltante):
             porcentaje = int((avance / total_val) * 100) if total_val > 0 else 0
             data_dona = pd.DataFrame({
-                "segmento": ["avance", "faltante"],
+                "segmento": ["avance", "faltante"], 
                 "valor": [avance, max(total_val - avance, 0)]
             })
             
-            # El arco con grosor fino para verse más "chic"
+            # Gráfico de dona
             donut = alt.Chart(data_dona).mark_arc(innerRadius=52, outerRadius=65, cornerRadius=10).encode(
                 theta=alt.Theta("valor:Q"),
                 color=alt.Color("segmento:N", scale=alt.Scale(range=[color_avance, color_faltante]), legend=None),
                 tooltip=None
             )
             
-            texto_n = alt.Chart(pd.DataFrame({"texto": [f"{avance}"]} balancing)).mark_text(
-                align="center", baseline="middle", fontSize=28, fontWeight=800, dy=-6, color="white", font="Inter"
-            ).encode(text="texto:N")
-            
-            texto_p = alt.Chart(pd.DataFrame({"texto": [f"{porcentaje}%"]})).mark_text(
-                align="center", baseline="middle", fontSize=12, fontWeight=400, dy=18, color="#94a3b8"
-            ).encode(text="texto:N")
-            
-            return (donut + texto_n + texto_p).properties(width=140, height=140).configure_view(strokeOpacity=0)
-    
-        # --------------------------------------------------
-        # 3. RENDERIZADO DONITAS PREMIUM DOD
-        # --------------------------------------------------
-        st.markdown("<style>.elite-card{transition:all 0.4s ease;cursor:default;padding:20px;border-radius:20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);text-align:center;}.elite-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,0.7)!important;border:1px solid rgba(255,255,255,0.25)!important;background:rgba(255,255,255,0.04)!important;}</style>", unsafe_allow_html=True)
-    
-        # --------------------------------------------------
-        # 2. CONFIGURACIÓN DE COLORES Y FUNCIÓN PREMIUM
-        # --------------------------------------------------
-        COLOR_AVANCE_ENTREGADOS = "#00FFAA" 
-        COLOR_AVANCE_TRANSITO   = "#38bdf8" 
-        COLOR_AVANCE_RETRASADOS = "#fb7185" 
-        COLOR_TOTAL             = "#fbbf24" 
-        COLOR_FALTANTE          = "rgba(255,255,255,0.05)" 
-    
-        def donut_con_numero(avance, total_val, color_avance, color_faltante):
-            porcentaje = int((avance / total_val) * 100) if total_val > 0 else 0
-            data_dona = pd.DataFrame({"segmento": ["avance", "faltante"], "valor": [avance, max(total_val - avance, 0)]})
-            
-            donut = alt.Chart(data_dona).mark_arc(innerRadius=52, outerRadius=65, cornerRadius=10).encode(
-                theta=alt.Theta("valor:Q"),
-                color=alt.Color("segmento:N", scale=alt.Scale(range=[color_avance, color_faltante]), legend=None),
-                tooltip=None
-            )
-            
+            # Número central
             texto_n = alt.Chart(pd.DataFrame({"texto": [f"{avance}"]})).mark_text(
                 align="center", baseline="middle", fontSize=28, fontWeight=800, dy=-6, color="white"
             ).encode(text="texto:N")
             
+            # Porcentaje inferior
             texto_p = alt.Chart(pd.DataFrame({"texto": [f"{porcentaje}%"]})).mark_text(
                 align="center", baseline="middle", fontSize=12, fontWeight=400, dy=18, color="#94a3b8"
             ).encode(text="texto:N")
             
             return (donut + texto_n + texto_p).properties(width=140, height=140).configure_view(strokeOpacity=0)
-    
+
         # --------------------------------------------------
-        # 3. RENDERIZADO DE LOS KPIs PREMIUM
+        # 4. RENDERIZADO DE LA CONSOLA
         # --------------------------------------------------
         st.markdown("<div style='background:rgba(255,255,255,0.02);padding:15px;border-radius:15px;border-left:5px solid #38bdf8;margin-bottom:25px;'><span style='color:white;font-size:20px;font-weight:800;letter-spacing:1.5px;'>📊 CONSOLA GLOBAL DE RENDIMIENTO</span></div>", unsafe_allow_html=True)
     
         c1, c2, c3, c4 = st.columns(4)
-        label_style = "color:#94a3b8;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;"
+        label_style = "color:#94a3b8;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;"
 
         with c1:
             st.markdown(f"<div class='elite-card'><p style='{label_style}'>Total Pedidos</p>", unsafe_allow_html=True)
@@ -1468,6 +1461,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
