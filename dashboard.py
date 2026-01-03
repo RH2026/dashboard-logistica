@@ -1075,7 +1075,7 @@ else:
             }
             .kpi-value { 
                 color: #f8fafc; 
-                font-size: 52px; /* Número extra grande */
+                font-size: 32px; /* Número extra grande */
                 font-weight: 800; 
                 font-family: 'Inter', sans-serif;
                 line-height: 1;
@@ -1306,6 +1306,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
