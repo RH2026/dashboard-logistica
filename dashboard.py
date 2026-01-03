@@ -1392,7 +1392,7 @@ else:
             """, unsafe_allow_html=True)
         
             st.markdown(f"<h1 class='premium-header'>🚢 Logistics Performance: {mes_sel}</h1>", unsafe_allow_html=True)
-        
+            st.write("##")
             # --- GRID DE 9 TARJETAS (3x3) ---
             c1, c2, c3 = st.columns(3)
             with c1: # COSTO LOGÍSTICO
@@ -1456,6 +1456,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
