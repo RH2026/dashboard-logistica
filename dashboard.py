@@ -672,60 +672,70 @@ else:
         # --------------------------------------------------
         # GRÁFICOS DE BARRAS POR PAQUETERÍA (CON ETIQUETAS)
         # --------------------------------------------------
-        # --- ANÁLISIS POR PAQUETERÍA (LADO A LADO PREMIUM) ---
+        # --- 📦 PANEL DE CONTROL DE OPERACIONES (ULTRA-MODERNO) ---
         st.markdown(f"""
             <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 30px; margin-bottom: 25px;'>
-                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>📦 MONITOREO DE CARGA POR ESTATUS</span>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>🚀 ESTADO DE CARGA EN TIEMPO REAL</span>
             </div>
         """, unsafe_allow_html=True)
 
-        g1, g2 = st.columns(2)
+        # Colores Elite
+        color_transito = "#fbbf24"  # Ámbar
+        color_retraso = "#fb7185"   # Coral/Sandía
+        
+        col1, col2 = st.columns(2)
 
-        # Función para estados vacíos "Elite"
-        def empty_state_card(titulo, mensaje, color):
-            return f"""
-                <div style='border: 1px dashed {color}55; padding: 40px 20px; border-radius: 15px; text-align: center; background: rgba(255,255,255,0.01);'>
-                    <div style='font-size: 30px; margin-bottom: 10px;'>✅</div>
-                    <div style='color: white; font-weight: 700; font-size: 14px;'>{titulo}</div>
-                    <div style='color: #94a3b8; font-size: 12px;'>{mensaje}</div>
-                </div>
-            """
-
-        # --- Gráfico 1: En Tránsito ---
-        with g1:
-            st.markdown("<p style='text-align:center; color:#fbbf24; font-weight:700; font-size:14px; text-transform:uppercase;'>🟡 En tránsito / En tiempo</p>", unsafe_allow_html=True)
+        # --- COLUMNA 1: EN TRÁNSITO ---
+        with col1:
             df_t = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
+            total_t = df_t["CANTIDAD"].sum()
             
+            # Tarjeta de Encabezado Premium
+            st.markdown(f"""
+                <div style='background: linear-gradient(90deg, rgba(251, 191, 36, 0.1) 0%, transparent 100%); padding: 15px; border-radius: 10px; border-bottom: 2px solid {color_transito}33;'>
+                    <p style='margin:0; color:{color_transito}; font-size:12px; font-weight:800; text-transform:uppercase;'>🟡 En Movimiento</p>
+                    <h2 style='margin:0; color:white; font-size:32px;'>{total_t} <span style='font-size:14px; color:#94a3b8;'>pedidos</span></h2>
+                </div>
+            """, unsafe_allow_html=True)
+
             if not df_t.empty:
-                base_t = alt.Chart(df_t).encode(
-                    x=alt.X("FLETERA:N", title=None, sort='-y', axis=alt.Axis(labelColor='white', labelAngle=-45)),
-                    y=alt.Y("CANTIDAD:Q", title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8')),
-                    color=alt.value("#fbbf24") # Ámbar
-                )
-                chart_t = base_t.mark_bar(cornerRadiusTopLeft=8, cornerRadiusTopRight=8).properties(height=280)
-                text_t = base_t.mark_text(align='center', baseline='bottom', dy=-10, fontWeight='bold', color='white').encode(text="CANTIDAD:Q")
-                st.altair_chart((chart_t + text_t), use_container_width=True)
+                chart_t = alt.Chart(df_t).mark_bar(
+                    cornerRadiusTopRight=5, cornerRadiusBottomRight=5, size=18
+                ).encode(
+                    x=alt.X("CANTIDAD:Q", title=None, axis=None),
+                    y=alt.Y("FLETERA:N", title=None, sort='-x', axis=alt.Axis(labelColor='white', labelFontSize=12)),
+                    color=alt.value(color_transito),
+                    tooltip=["FLETERA", "CANTIDAD"]
+                ).properties(height=200).configure_view(strokeOpacity=0)
+                st.altair_chart(chart_t, use_container_width=True)
             else:
-                st.markdown(empty_state_card("SIN PENDIENTES", "No hay pedidos en tránsito actualmente.", "#fbbf24"), unsafe_allow_html=True)
+                st.markdown(f"<div style='padding:40px; text-align:center; color:#475569;'>Sin carga activa</div>", unsafe_allow_html=True)
 
-        # --- Gráfico 2: Retrasados ---
-        with g2:
-            st.markdown("<p style='text-align:center; color:#fb7185; font-weight:700; font-size:14px; text-transform:uppercase;'>🔴 Sin entregar con retraso</p>", unsafe_allow_html=True)
+        # --- COLUMNA 2: RETRASADOS ---
+        with col2:
             df_r = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
+            total_r = df_r["CANTIDAD"].sum()
             
-            if not df_r.empty:
-                base_r = alt.Chart(df_r).encode(
-                    x=alt.X("FLETERA:N", title=None, sort='-y', axis=alt.Axis(labelColor='white', labelAngle=-45)),
-                    y=alt.Y("CANTIDAD:Q", title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8')),
-                    color=alt.value("#fb7185") # Coral
-                )
-                chart_r = base_r.mark_bar(cornerRadiusTopLeft=8, cornerRadiusTopRight=8).properties(height=280)
-                text_r = base_r.mark_text(align='center', baseline='bottom', dy=-10, fontWeight='bold', color='white').encode(text="CANTIDAD:Q")
-                st.altair_chart((chart_r + text_r), use_container_width=True)
-            else:
-                st.markdown(empty_state_card("LIMPIO", "Excelente: No hay pedidos con retraso acumulado.", "#fb7185"), unsafe_allow_html=True)
+            # Tarjeta de Encabezado Premium
+            st.markdown(f"""
+                <div style='background: linear-gradient(90deg, rgba(251, 113, 133, 0.1) 0%, transparent 100%); padding: 15px; border-radius: 10px; border-bottom: 2px solid {color_retraso}33;'>
+                    <p style='margin:0; color:{color_retraso}; font-size:12px; font-weight:800; text-transform:uppercase;'>🔴 Alerta de Retraso</p>
+                    <h2 style='margin:0; color:white; font-size:32px;'>{total_r} <span style='font-size:14px; color:#94a3b8;'>pedidos</span></h2>
+                </div>
+            """, unsafe_allow_html=True)
 
-        st.write("##")   
+            if not df_r.empty:
+                chart_r = alt.Chart(df_r).mark_bar(
+                    cornerRadiusTopRight=5, cornerRadiusBottomRight=5, size=18
+                ).encode(
+                    x=alt.X("CANTIDAD:Q", title=None, axis=None),
+                    y=alt.Y("FLETERA:N", title=None, sort='-x', axis=alt.Axis(labelColor='white', labelFontSize=12)),
+                    color=alt.value(color_retraso),
+                    tooltip=["FLETERA", "CANTIDAD"]
+                ).properties(height=200).configure_view(strokeOpacity=0)
+                st.altair_chart(chart_r, use_container_width=True)
+            else:
+                st.markdown(f"<div style='padding:40px; text-align:center; color:#059669; font-weight:bold;'>✓ Operación al día</div>", unsafe_allow_html=True) 
                
         # --------------------------------------------------
         # GRÁFICO EXCLUSIVO: RETRASO PROMEDIO (DÍAS) + NOTA
@@ -1429,6 +1439,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
