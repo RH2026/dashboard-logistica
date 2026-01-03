@@ -1475,7 +1475,7 @@ else:
                         <div style="color:{status_color}; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:10px;">🩺 DIAGNÓSTICO FINAL</div>
                         <p style="color:#f1f5f9; font-size:0.85rem;">Estatus: <b>{status_txt}</b>.<br><br>
                         Se observa un desvío de <b>${abs(df_mes['INCREMENTO + VI']):,.0f}</b>. { 'La operación está bajo control.' if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else 'Se requiere auditoría inmediata de fletes.'}</p></div>""", unsafe_allow_html=True)
-
+        
         # --- NAVEGACIÓN ---
         st.divider()
         n1, n2 = st.columns(2)
@@ -1489,6 +1489,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
