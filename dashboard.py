@@ -472,12 +472,14 @@ else:
         retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
     
         # --------------------------------------------------
-        # 2. CONFIGURACIÓN DE COLORES Y FUNCIÓN
+        # 2. CONFIGURACIÓN DE COLORES Y FUNCIÓN PREMIUM
         # --------------------------------------------------
-        COLOR_AVANCE_ENTREGADOS = "#4CAF50"
-        COLOR_AVANCE_TRANSITO   = "#FFC107"
-        COLOR_AVANCE_RETRASADOS = "#F44336"
-        COLOR_FALTANTE          = "#3A3A3A"
+        # Paleta DHL/Amazon Modern
+        COLOR_AVANCE_ENTREGADOS = "#00FFAA" # Mentol Neón
+        COLOR_AVANCE_TRANSITO   = "#38bdf8" # Azul Eléctrico
+        COLOR_AVANCE_RETRASADOS = "#fb7185" # Coral Alerta
+        COLOR_TOTAL             = "#fbbf24" # Ámbar Pro
+        COLOR_FALTANTE          = "rgba(255,255,255,0.05)" # Transparencia técnica
     
         def donut_con_numero(avance, total_val, color_avance, color_faltante):
             porcentaje = int((avance / total_val) * 100) if total_val > 0 else 0
@@ -486,53 +488,59 @@ else:
                 "valor": [avance, max(total_val - avance, 0)]
             })
             
-            donut = alt.Chart(data_dona).mark_arc(innerRadius=50).encode(
+            # El arco con grosor fino para verse más "chic"
+            donut = alt.Chart(data_dona).mark_arc(innerRadius=52, outerRadius=65, cornerRadius=10).encode(
                 theta=alt.Theta("valor:Q"),
-                color=alt.Color("segmento:N", scale=alt.Scale(range=[color_avance, color_faltante]), legend=None)
+                color=alt.Color("segmento:N", scale=alt.Scale(range=[color_avance, color_faltante]), legend=None),
+                tooltip=None
             )
             
-            texto_n = alt.Chart(pd.DataFrame({"texto": [f"{avance}"]})).mark_text(
-                align="center", baseline="middle", fontSize=26, fontWeight="bold", dy=-8, color="white"
+            texto_n = alt.Chart(pd.DataFrame({"texto": [f"{avance}"]} balancing)).mark_text(
+                align="center", baseline="middle", fontSize=28, fontWeight=800, dy=-6, color="white", font="Inter"
             ).encode(text="texto:N")
             
             texto_p = alt.Chart(pd.DataFrame({"texto": [f"{porcentaje}%"]})).mark_text(
-                align="center", baseline="middle", fontSize=14, dy=16, color="gray"
+                align="center", baseline="middle", fontSize=12, fontWeight=400, dy=18, color="#94a3b8"
             ).encode(text="texto:N")
             
-            return (donut + texto_n + texto_p).properties(width=140, height=140)
+            return (donut + texto_n + texto_p).properties(width=140, height=140).configure_view(strokeOpacity=0)
     
         # --------------------------------------------------
-        # 3. RENDERIZADO DE LOS KPIs (Línea 405)
+        # 3. RENDERIZADO DE LOS KPIs PREMIUM
         # --------------------------------------------------
-        st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Indicadores Generales</div></div>""", unsafe_allow_html=True)
+        st.markdown("""
+            <div style='background: rgba(255,255,255,0.02); padding: 15px; border-radius: 15px; border-left: 5px solid #38bdf8; margin-bottom: 25px;'>
+                <span style='color: white; font-size: 20px; font-weight: 800; letter-spacing: 1.5px;'>📊 CONSOLA GLOBAL DE RENDIMIENTO</span>
+            </div>
+        """, unsafe_allow_html=True)
     
         c1, c2, c3, c4 = st.columns(4)
-    
+        
+        # Estilo común para los títulos de las tarjetas
+        label_style = "color: #94a3b8; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;"
+        card_style = "background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; text-align: center;"
+
         with c1:
-            st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Total de pedidos</div>", unsafe_allow_html=True)
-            # Ahora 'total' ya está definido arriba
-            st.altair_chart(donut_con_numero(total, total, "#FFD700", COLOR_FALTANTE), use_container_width=True)
+            st.markdown(f"<div style='{card_style}'><p style='{label_style}'>Total Pedidos</p>", unsafe_allow_html=True)
+            st.altair_chart(donut_con_numero(total, total, COLOR_TOTAL, COLOR_FALTANTE), use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
     
         with c2:
-            st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Entregados</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='{card_style}'><p style='{label_style}'>Entregados</p>", unsafe_allow_html=True)
             st.altair_chart(donut_con_numero(entregados, total, COLOR_AVANCE_ENTREGADOS, COLOR_FALTANTE), use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
     
         with c3:
-            st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>En tránsito</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='{card_style}'><p style='{label_style}'>En Tránsito</p>", unsafe_allow_html=True)
             st.altair_chart(donut_con_numero(en_transito, total, COLOR_AVANCE_TRANSITO, COLOR_FALTANTE), use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
     
         with c4:
-            st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Retrasados</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='{card_style}'><p style='{label_style}'>Retrasados</p>", unsafe_allow_html=True)
             st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown("""
-            <style>
-                div[data-testid="stHorizontalBlock"]:has(div[style*="text-align:center"]) {
-                    margin-bottom: 2rem !important;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-
+        st.markdown("<br>", unsafe_allow_html=True)
         st.divider()
         # --------------------------------------------------
         # TABLA DE ENVÍOS – DISEÑO PERSONALIZADO
@@ -1434,6 +1442,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
