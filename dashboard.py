@@ -432,110 +432,106 @@ else:
                     
                     st.markdown(html_timeline, unsafe_allow_html=True)
                     
+                                       
                     
-                    # --- 8. TARJETAS DE DETALLE INDIVIDUAL (ULTRA-MODERN GLOW DESIGN) ---
-                    
-                    # 1. Inyectamos el CSS para el efecto Hover "Glow"
+                    ## --- PASO 1: INYECTAR EL ADN (ESTILOS OCULTOS) ---
                     st.markdown("""
                         <style>
+                        /* Efecto de elevación y brillo tipo Amazon/DHL */
                         .elite-card {
-                            transition: all 0.3s ease-in-out !important;
+                            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
                             cursor: default;
                         }
                         .elite-card:hover {
-                            transform: translateY(-5px);
-                            box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important;
-                            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                            transform: translateY(-8px);
+                            box-shadow: 0 20px 40px rgba(0,0,0,0.7) !important;
+                            border: 1px solid rgba(255, 255, 255, 0.25) !important;
+                            background: rgba(255, 255, 255, 0.04) !important;
                         }
                         </style>
                     """, unsafe_allow_html=True)
                     
                     c1, c2, c3 = st.columns(3)
-                    
+
                     # Paleta de colores técnica
-                    color_bg = "#11141C"
-                    color_border = "rgba(255, 255, 255, 0.1)"
-                    color_accent = "#38bdf8"   
-                    color_success = "#00FFAA"  
-                    color_warning = "#fb7185"  
+                    color_sky = "#38bdf8"    # Expedición
+                    color_amber = "#fbbf24"  # Tiempos
+                    color_purple = "#a855f7" # Estado Crítico
+                    color_mint = "#00FFAA"   # Éxito
                     
-                    # Estilo de contenedor base
-                    estilo_card_base = f"""
-                        background: {color_bg};
-                        padding: 24px;
-                        border-radius: 20px;
-                        border: 1px solid {color_border};
-                        min-height: 320px;
-                    """
+                    estilo_base = "background:#11141C; padding:24px; border-radius:20px; border:1px solid rgba(255,255,255,0.08); min-height:340px;"
                     
-                    def data_row(label, value, color="#e2e8f0", is_bold=False):
-                        weight = "800" if is_bold else "500"
+                    def row_elite(label, value, color="#e2e8f0", bold=False):
+                        f_weight = "800" if bold else "500"
                         return f"""
-                            <div style='display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03);'>
-                                <span style='color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;'>{label}</span>
-                                <span style='color: {color}; font-size: 13px; font-weight: {weight};'>{value}</span>
+                            <div style='display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.03);'>
+                                <span style='color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px;'>{label}</span>
+                                <span style='color: {color}; font-size: 13px; font-weight: {f_weight};'>{value}</span>
                             </div>
                         """
                     
+                    # --- COLUMNA 1: EXPEDICIÓN ---
                     with c1:
-                        try: costo_mxn = f"${float(row.get('COSTO DE LA GUÍA', 0)):,.2f}"
-                        except: costo_mxn = "$0.00"
+                        try: costo = f"${float(row.get('COSTO DE LA GUÍA', 0)):,.2f}"
+                        except: costo = "$0.00"
                         
                         st.markdown(f"""
-                            <div class='elite-card' style='{estilo_card_base} border-top: 4px solid {color_accent};'>
+                            <div class='elite-card' style='{estilo_base} border-top: 4px solid {color_sky};'>
                                 <div style='display: flex; align-items: center; margin-bottom: 20px;'>
-                                    <div style='background: {color_accent}22; padding: 8px; border-radius: 10px; margin-right: 12px;'>📦</div>
-                                    <div style='color: white; font-weight: 800; font-size: 14px;'>EXPEDICIÓN</div>
+                                    <div style='background: {color_sky}22; padding: 10px; border-radius: 12px; margin-right: 15px;'>📦</div>
+                                    <div style='color: white; font-weight: 800; font-size: 14px; letter-spacing: 1px;'>EXPEDICIÓN</div>
                                 </div>
-                                {data_row("Tracking", row.get('NÚMERO DE GUÍA','—'), color=color_accent, is_bold=True)}
-                                {data_row("Cliente", row.get('NOMBRE DEL CLIENTE', '—'))}
-                                {data_row("ID", f"#{row.get('NO CLIENTE', '—')}")}
-                                {data_row("Destino", row.get('DESTINO', '—'))}
-                                <div style='margin-top: 20px; text-align: right;'>
-                                    <div style='color: #64748b; font-size: 10px; font-weight: 700;'>COSTO DE GUÍA</div>
-                                    <div style='color: {color_success}; font-size: 24px; font-weight: 900;'>{costo_mxn}</div>
+                                {row_elite("Tracking", row.get('NÚMERO DE GUÍA','—'), color=color_sky, bold=True)}
+                                {row_elite("Cliente", row.get('NOMBRE DEL CLIENTE', '—'))}
+                                {row_elite("ID Cliente", f"#{row.get('NO CLIENTE', '—')}")}
+                                {row_elite("Destino", row.get('DESTINO', '—'))}
+                                <div style='margin-top: 25px; text-align: right;'>
+                                    <div style='color: #64748b; font-size: 9px; font-weight: 800; letter-spacing: 1px;'>INVERSIÓN LOGÍSTICA</div>
+                                    <div style='color: {color_mint}; font-size: 26px; font-weight: 900;'>{costo}</div>
                                 </div>
                             </div>
                         """, unsafe_allow_html=True)
                     
+                    # --- COLUMNA 2: TIEMPOS ---
                     with c2:
                         retraso = row.get('DIAS_RETRASO', 0)
-                        color_retraso = color_warning if retraso > 0 else color_success
+                        color_time = "#fb7185" if retraso > 0 else color_mint
                         
                         st.markdown(f"""
-                            <div class='elite-card' style='{estilo_card_base} border-top: 4px solid #fbbf24;'>
+                            <div class='elite-card' style='{estilo_base} border-top: 4px solid {color_amber};'>
                                 <div style='display: flex; align-items: center; margin-bottom: 20px;'>
-                                    <div style='background: rgba(251, 191, 36, 0.1); padding: 8px; border-radius: 10px; margin-right: 12px;'>⏱️</div>
-                                    <div style='color: white; font-weight: 800; font-size: 14px;'>TIEMPOS</div>
+                                    <div style='background: {color_amber}22; padding: 10px; border-radius: 12px; margin-right: 15px;'>⏱️</div>
+                                    <div style='color: white; font-weight: 800; font-size: 14px; letter-spacing: 1px;'>TIEMPOS</div>
                                 </div>
-                                {data_row("Salida", txt_f_envio)}
-                                {data_row("Promesa", txt_f_promesa)}
-                                {data_row("Entrega", txt_f_real, color=color_success if txt_f_real != "PENDIENTE" else "#64748b")}
-                                {data_row("Tránsito", f"{row.get('DIAS_TRANSCURRIDOS', 0)} días")}
-                                <div style='margin-top: 20px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border-left: 4px solid {color_retraso};'>
-                                    <div style='color: {color_retraso}; font-size: 10px; font-weight: 800;'>DESVIACIÓN</div>
-                                    <div style='color: white; font-size: 20px; font-weight: 900;'>{retraso} DÍAS</div>
+                                {row_elite("Salida", txt_f_envio)}
+                                {row_elite("Promesa", txt_f_promesa)}
+                                {row_elite("Entrega", txt_f_real, color=color_mint if txt_f_real != "PENDIENTE" else "#64748b")}
+                                {row_elite("Tránsito", f"{row.get('DIAS_TRANSCURRIDOS', 0)} días")}
+                                <div style='margin-top: 20px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border-left: 4px solid {color_time};'>
+                                    <div style='color: {color_time}; font-size: 10px; font-weight: 800; letter-spacing: 1px;'>DESVIACIÓN</div>
+                                    <div style='color: white; font-size: 22px; font-weight: 900;'>{retraso} DÍAS</div>
                                 </div>
                             </div>
                         """, unsafe_allow_html=True)
-                    
+
+                    # --- COLUMNA 3: ESTADO CRÍTICO ---
                     with c3:
                         estatus = row.get('ESTATUS_CALCULADO', '—')
-                        color_st = color_success if estatus == "ENTREGADO" else "#3b82f6"
-                        if estatus == "RETRASADO": color_st = color_warning
+                        color_status = color_mint if estatus == "ENTREGADO" else "#3b82f6"
+                        if estatus == "RETRASADO": color_status = "#fb7185"
                     
                         st.markdown(f"""
-                            <div class='elite-card' style='{estilo_card_base} border-top: 4px solid #a855f7;'>
+                            <div class='elite-card' style='{estilo_base} border-top: 4px solid {color_purple};'>
                                 <div style='display: flex; align-items: center; margin-bottom: 20px;'>
-                                    <div style='background: rgba(168, 85, 247, 0.1); padding: 8px; border-radius: 10px; margin-right: 12px;'>📊</div>
-                                    <div style='color: white; font-weight: 800; font-size: 14px;'>ESTADO CRÍTICO</div>
+                                    <div style='background: {color_purple}22; padding: 10px; border-radius: 12px; margin-right: 15px;'>📊</div>
+                                    <div style='color: white; font-weight: 800; font-size: 14px; letter-spacing: 1px;'>ESTADO CRÍTICO</div>
                                 </div>
-                                {data_row("Estatus", estatus, color=color_st, is_bold=True)}
-                                {data_row("Prioridad", row.get('PRIORIDAD', 'NORMAL'))}
+                                {row_elite("Estatus", estatus, color=color_status, bold=True)}
+                                {row_elite("Prioridad", row.get('PRIORIDAD', 'NORMAL'))}
                                 <div style='margin-top: 15px;'>
-                                    <div style='color: #64748b; font-size: 10px; font-weight: 700; margin-bottom: 8px;'>NOTAS DE SEGUIMIENTO</div>
-                                    <div style='background: rgba(0,0,0,0.2); padding: 12px; border-radius: 10px; border: 1px dashed rgba(255,255,255,0.1); color: #cbd5e1; font-size: 12px; line-height: 1.5; min-height: 80px;'>
-                                        {row.get('COMENTARIOS', 'Sin observaciones adicionales.')}
+                                    <div style='color: #64748b; font-size: 10px; font-weight: 700; margin-bottom: 8px; letter-spacing: 1px;'>NOTAS DEL SISTEMA</div>
+                                    <div style='background: rgba(0,0,0,0.3); padding: 14px; border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1); color: #cbd5e1; font-size: 12px; line-height: 1.6; min-height: 90px;'>
+                                        {row.get('COMENTARIOS', 'Sin incidencias reportadas en este folio.')}
                                     </div>
                                 </div>
                             </div>
@@ -1514,6 +1510,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
