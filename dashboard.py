@@ -461,29 +461,27 @@ else:
                         color_e = "#00FFAA" if est == "ENTREGADO" else "#fb7185" if est == "RETRASADO" else "#3b82f6"
                         html_c3 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #a855f7;min-height:{h_size};'><div style='display:flex;align-items:center;margin-bottom:15px;'><div style='background:#a855f722;padding:10px;border-radius:12px;margin-right:15px;'>📊</div><div style='color:white;font-weight:800;font-size:14px;'>ESTATUS</div></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Estatus</span><span style='color:{color_e};font-size:13px;font-weight:800;'>{est}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Prioridad</span><span style='color:#e2e8f0;font-size:13px;'>{row.get('PRIORIDAD','NORMAL')}</span></div><div style='margin-top:auto;'><div style='color:#64748b;font-size:14px;font-weight:700;margin-bottom:8px;'>NOTAS</div><div style='background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;border:1px dashed rgba(255,255,255,0.1);color:#cbd5e1;font-size:12px;min-height:90px;'>{row.get('COMENTARIOS','Sin incidencias.')}</div></div></div>"
                         st.markdown(html_c3, unsafe_allow_html=True)
-      
-               
-        
+    
+       
         # ----------------------------------------------------------------
-        # 1. ESTILOS CSS - ADN ELITE (SIN CORTES Y CON AIRE)
+        # 1. ADN VISUAL - CSS PARA TARJETAS UNIFICADAS
         # ----------------------------------------------------------------
         st.markdown("""
             <style>
-            /* Tarjeta para las donitas */
             .elite-card {
                 transition: all 0.4s ease;
                 padding: 20px;
                 border-radius: 20px;
-                background: #11141C;
-                border: 1px solid rgba(255,255,255,0.05);
+                background: #11141C; /* Fondo sólido para unir todo */
+                border: 1px solid rgba(255,255,255,0.08);
                 text-align: center;
                 margin-bottom: 10px;
-                min-height: 260px;
-                overflow: visible;
+                height: 260px; /* Altura fija para evitar el efecto aplastado */
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
+                overflow: visible;
             }
             .elite-card:hover {
                 transform: translateY(-5px);
@@ -496,27 +494,13 @@ else:
                 font-weight: 800;
                 text-transform: uppercase;
                 letter-spacing: 2px;
-                margin-bottom: 15px;
+                margin-bottom: 5px;
             }
             </style>
         """, unsafe_allow_html=True)
         
         # ----------------------------------------------------------------
-        # 2. CÁLCULO DE MÉTRICAS (Asegúrate de que df_filtrado exista antes)
-        # ----------------------------------------------------------------
-        total = int(len(df_filtrado))
-        entregados = int((df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum())
-        en_transito = int((df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum())
-        retrasados = int((df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum())
-        
-        COLOR_AVANCE_ENTREGADOS = "#00FFAA" 
-        COLOR_AVANCE_TRANSITO   = "#38bdf8" 
-        COLOR_AVANCE_RETRASADOS = "#fb7185" 
-        COLOR_TOTAL             = "#fbbf24" 
-        COLOR_FALTANTE          = "#262730" 
-        
-        # ----------------------------------------------------------------
-        # 3. FUNCIÓN DONITA (CÍRCULO COMPLETO Y SEGURO)
+        # 2. FUNCIÓN DONITA - CÍRCULO PERFECTO (SIN CORTES)
         # ----------------------------------------------------------------
         def donut_con_numero(avance, total_val, color_avance, color_faltante):
             porcentaje = int((avance / total_val) * 100) if total_val > 0 else 0
@@ -525,8 +509,8 @@ else:
                 "valor": [float(avance), float(max(total_val - avance, 0))]
             })
             
-            # Radios conservadores (40-55) en lienzo de 140 garantizan que el círculo NO se corte
-            donut = alt.Chart(data_dona).mark_arc(innerRadius=40, outerRadius=55, cornerRadius=10).encode(
+            # Radios optimizados para que el círculo respire dentro de la tarjeta
+            donut = alt.Chart(data_dona).mark_arc(innerRadius=38, outerRadius=52, cornerRadius=10).encode(
                 theta=alt.Theta(field="valor", type="quantitative"),
                 color=alt.Color(field="segmento", type="nominal", 
                                 scale=alt.Scale(domain=["A", "B"], range=[color_avance, color_faltante]), 
@@ -539,37 +523,40 @@ else:
             ).encode(text=alt.Text(field="t", type="nominal"))
             
             texto_p = alt.Chart(pd.DataFrame({"t": [f"{porcentaje}%"]})).mark_text(
-                align="center", baseline="middle", fontSize=12, fontWeight=400, dy=18, color="#94a3b8"
+                align="center", baseline="middle", fontSize=11, fontWeight=400, dy=16, color="#94a3b8"
             ).encode(text=alt.Text(field="t", type="nominal"))
             
-            return (donut + texto_n + texto_p).properties(width=140, height=140).configure_view(strokeOpacity=0)
+            return (donut + texto_n + texto_p).properties(width=135, height=135).configure_view(strokeOpacity=0)
         
         # ----------------------------------------------------------------
-        # 4. RENDERIZADO DE MÉTRICAS (CONSOLA)
+        # 3. RENDERIZADO DE LAS 4 COLUMNAS INTEGRADAS
         # ----------------------------------------------------------------
         st.markdown("<div style='background:rgba(255,255,255,0.02);padding:15px;border-radius:15px;border-left:5px solid #38bdf8;margin-bottom:25px;'><span style='color:white;font-size:20px;font-weight:800;letter-spacing:1.5px;'>📊 CONSOLA GLOBAL DE RENDIMIENTO</span></div>", unsafe_allow_html=True)
         
         c1, c2, c3, c4 = st.columns(4)
         
-        with c1:
-            st.markdown("<div class='elite-card'><div class='kpi-title'>TOTAL PEDIDOS</div>", unsafe_allow_html=True)
-            st.altair_chart(donut_con_numero(total, total, COLOR_TOTAL, COLOR_FALTANTE), use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        # Datos para el mapeo
+        metricas = [
+            ("TOTAL PEDIDOS", total, COLOR_TOTAL),
+            ("ENTREGADOS", entregados, COLOR_AVANCE_ENTREGADOS),
+            ("EN TRÁNSITO", en_transito, COLOR_AVANCE_TRANSITO),
+            ("RETRASADOS", retrasados, COLOR_AVANCE_RETRASADOS)
+        ]
         
-        with c2:
-            st.markdown("<div class='elite-card'><div class='kpi-title'>ENTREGADOS</div>", unsafe_allow_html=True)
-            st.altair_chart(donut_con_numero(entregados, total, COLOR_AVANCE_ENTREGADOS, COLOR_FALTANTE), use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        cols = [c1, c2, c3, c4]
         
-        with c3:
-            st.markdown("<div class='elite-card'><div class='kpi-title'>EN TRÁNSITO</div>", unsafe_allow_html=True)
-            st.altair_chart(donut_con_numero(en_transito, total, COLOR_AVANCE_TRANSITO, COLOR_FALTANTE), use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        for i, (titulo, valor, color) in enumerate(metricas):
+            with cols[i]:
+                # INICIO DE TARJETA Y TÍTULO
+                st.markdown(f"<div class='elite-card'><div class='kpi-title'>{titulo}</div>", unsafe_allow_html=True)
+                
+                # EL GRÁFICO (Se dibuja dentro del div abierto arriba)
+                st.altair_chart(donut_con_numero(valor, total, color, COLOR_FALTANTE), use_container_width=True)
+                
+                # CIERRE DE TARJETA
+                st.markdown("</div>", unsafe_allow_html=True)      
         
-        with c4:
-            st.markdown("<div class='elite-card'><div class='kpi-title'>RETRASADOS</div>", unsafe_allow_html=True)
-            st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        
 
         # ----------------------------------------------------------------
         # 5. TABLA DE ENVÍOS – DISEÑO PREMIUM ELITE (LIMPIO)
@@ -1432,6 +1419,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
