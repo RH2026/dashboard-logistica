@@ -1154,41 +1154,43 @@ else:
         st.write("##")
         st.divider()
                
-        # --- 8. GRÁFICOS INDEPENDIENTES (DISEÑO PREMIUM) ---
+                # --- 8. GRÁFICOS INDEPENDIENTES (DISEÑO ELITE DARK) ---
         
-        # Estilo para los títulos de los gráficos
+        # Color Verde Ejecutivo (menos pupila dañada, más elegancia)
+        verde_pro = "#059669" # Un esmeralda profundo y serio
+        
         def titulo_grafico(texto, emoji):
             st.markdown(f"""
-                <div style='background: rgba(255,255,255,0.03); padding: 10px 20px; border-radius: 10px; border-left: 4px solid #00FFAA; margin-bottom: 20px;'>
-                    <span style='color: white; font-weight: 700; font-size: 18px; letter-spacing: 1px;'>{emoji} {texto.upper()}</span>
+                <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid {verde_pro}; margin-bottom: 20px;'>
+                    <span style='color: #e2e8f0; font-weight: 700; font-size: 16px; letter-spacing: 1.2px;'>{emoji} {texto.upper()}</span>
                 </div>
             """, unsafe_allow_html=True)
 
-        # --- GRÁFICO 1: VOLUMEN HISTÓRICO ---
+        # --- GRÁFICO 1: VOLUMEN HISTÓRICO (LÍNEAS RECTAS) ---
         titulo_grafico("Volumen Histórico de Envíos", "📈")
         df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="P")
         
         chart_vol = alt.Chart(df_vol).mark_area(
-            line={'color':'#00FFAA', 'strokeWidth': 3},
+            line={'color': verde_pro, 'strokeWidth': 2},
             color=alt.Gradient(
                 gradient='linear',
                 stops=[
-                    alt.GradientStop(color='rgba(0, 255, 170, 0.4)', offset=0),
-                    alt.GradientStop(color='rgba(0, 255, 170, 0.0)', offset=1)
+                    alt.GradientStop(color=verde_pro, offset=0),
+                    alt.GradientStop(color='transparent', offset=1)
                 ],
                 x1=1, x2=1, y1=1, y2=0
             ),
-            interpolate='monotone' # Curva suave tipo Apple/Fintech
+            interpolate='linear' # << AQUÍ: Líneas rectas, nada de curvas.
         ).encode(
             x=alt.X('FECHA DE ENVÍO:T', title=None, axis=alt.Axis(grid=False, labelColor='#94a3b8')),
-            y=alt.Y('P:Q', title='Pedidos', axis=alt.Axis(gridOpacity=0.1, labelColor='#94a3b8'))
-        ).properties(height=300).configure_view(strokeOpacity=0)
+            y=alt.Y('P:Q', title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8'))
+        ).properties(height=280).configure_view(strokeOpacity=0)
         
         st.altair_chart(chart_vol, use_container_width=True)
 
         st.write("##")
 
-        # --- GRÁFICO 2: EFICIENCIA POR FLETERA ---
+        # --- GRÁFICO 2: EFICIENCIA POR FLETERA (CON ETIQUETAS Y VERDE OSCURO) ---
         titulo_grafico("Eficiencia Real por Fletera", "🏆")
         df_ent = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
         
@@ -1196,23 +1198,32 @@ else:
             df_ent["AT"] = df_ent["FECHA DE ENTREGA REAL"] <= df_ent["PROMESA DE ENTREGA"]
             df_p = (df_ent.groupby("FLETERA")["AT"].mean() * 100).reset_index()
             
-            chart_perf = alt.Chart(df_p).mark_bar(
-                cornerRadiusTopRight=10, # Barras redondeadas pro
-                cornerRadiusBottomRight=10,
-                size=25
+            # Gráfico base de barras
+            bars = alt.Chart(df_p).mark_bar(
+                cornerRadiusTopRight=6,
+                cornerRadiusBottomRight=6,
+                size=22,
+                color=verde_pro # Color sólido y elegante
             ).encode(
-                x=alt.X('AT:Q', title='Cumplimiento (%)', scale=alt.Scale(domain=[0,105]), axis=alt.Axis(gridOpacity=0.1)),
-                y=alt.Y('FLETERA:N', sort='-x', title=None, axis=alt.Axis(labelLimit=400, labelFontSize=12, labelColor='white')),
-                color=alt.Color('AT:Q', 
-                    scale=alt.Scale(range=['#fb7185', '#fbbf24', '#00FFAA']), # Rojo -> Ámbar -> Neón
-                    legend=None
-                ),
-                tooltip=[alt.Tooltip('FLETERA:N'), alt.Tooltip('AT:Q', format='.1f')]
-            ).properties(height=400).configure_view(strokeOpacity=0)
-            
-            st.altair_chart(chart_perf, use_container_width=True)
+                x=alt.X('AT:Q', title='Cumplimiento (%)', scale=alt.Scale(domain=[0,115]), axis=alt.Axis(gridOpacity=0.05)),
+                y=alt.Y('FLETERA:N', sort='-x', title=None, axis=alt.Axis(labelColor='#e2e8f0', labelFontSize=12))
+            )
+
+            # Etiquetas de texto (los numeritos)
+            text = bars.mark_text(
+                align='left',
+                baseline='middle',
+                dx=10, 
+                color='#e2e8f0',
+                fontWeight=600
+            ).encode(
+                text=alt.Text('AT:Q', format='.1f')
+            )
+
+            chart_final = (bars + text).properties(height=350).configure_view(strokeOpacity=0)
+            st.altair_chart(chart_final, use_container_width=True)
         else:
-            st.info("Esperando datos de entrega para calcular eficiencia...")
+            st.info("Sin datos de entrega para mostrar eficiencia.")
 
         # --- NAVEGACIÓN DESDE KPIs ---
         st.divider()
@@ -1374,6 +1385,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
