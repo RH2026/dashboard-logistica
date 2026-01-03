@@ -506,35 +506,28 @@ else:
         # --------------------------------------------------
         st.markdown("""<div style="text-align:center;"><div style="color:white; font-size:24px; font-weight:700; margin:10px 0;">Indicadores Generales</div></div>""", unsafe_allow_html=True)
     
-        c1, c2, c3, c4 = st.columns(4)
-    
-        with c1:
-            st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Total de pedidos</div>", unsafe_allow_html=True)
-            # Ahora 'total' ya está definido arriba
-            st.altair_chart(donut_con_numero(total, total, "#FFD700", COLOR_FALTANTE), use_container_width=True)
-    
-        with c2:
-            st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Entregados</div>", unsafe_allow_html=True)
-            st.altair_chart(donut_con_numero(entregados, total, COLOR_AVANCE_ENTREGADOS, COLOR_FALTANTE), use_container_width=True)
-    
-        with c3:
-            st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>En tránsito</div>", unsafe_allow_html=True)
-            st.altair_chart(donut_con_numero(en_transito, total, COLOR_AVANCE_TRANSITO, COLOR_FALTANTE), use_container_width=True)
-    
-        with c4:
-            st.markdown("<div style='text-align:center; color:yellow; font-size:12px;'>Retrasados</div>", unsafe_allow_html=True)
-            st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
-
-        st.markdown("""
-            <style>
-                div[data-testid="stHorizontalBlock"]:has(div[style*="text-align:center"]) {
-                    margin-bottom: 2rem !important;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-
-        st.divider()
+        c1, c2, c3 = st.columns(3)
+        h_size = "380px" # Aumentamos ligeramente la altura para el texto más grande
         
+        # --- TARJETA 1: EXPEDICIÓN ---
+        with c1:
+            costo = f"${float(row.get('COSTO DE LA GUÍA', 0)):,.2f}"
+            html_c1 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #38bdf8;min-height:{h_size};'><div style='display:flex;align-items:center;margin-bottom:15px;'><div style='background:#38bdf822;padding:10px;border-radius:12px;margin-right:15px;'>📦</div><div style='color:white;font-weight:800;font-size:16px;'>EXPEDICIÓN</div></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#94a3b8;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;'>Tracking</span><span style='color:#38bdf8;font-size:14px;font-weight:800;'>{row.get('NÚMERO DE GUÍA','—')}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#94a3b8;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;'>Cliente</span><span style='color:#e2e8f0;font-size:14px;'>{row.get('NOMBRE DEL CLIENTE','—')}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#94a3b8;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;'>Destino</span><span style='color:#e2e8f0;font-size:14px;'>{row.get('DESTINO','—')}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#94a3b8;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;'>Fletera</span><span style='color:#fbbf24;font-size:14px;font-weight:800;'>{row.get('FLETERA','—')}</span></div><div style='margin-top:auto;text-align:right;'><div style='color:#64748b;font-size:10px;font-weight:800;'>INVERSIÓN</div><div style='color:#00FFAA;font-size:28px;font-weight:900;'>{costo}</div></div></div>"
+            st.markdown(html_c1, unsafe_allow_html=True)
+        
+        # --- TARJETA 2: TIEMPOS ---
+        with c2:
+            retraso = row.get('DIAS_RETRASO', 0)
+            color_t = "#fb7185" if retraso > 0 else "#00FFAA"
+            html_c2 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #fbbf24;min-height:{h_size};'><div style='display:flex;align-items:center;margin-bottom:15px;'><div style='background:#fbbf2422;padding:10px;border-radius:12px;margin-right:15px;'>⏱️</div><div style='color:white;font-weight:800;font-size:16px;'>TIEMPOS</div></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#94a3b8;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;'>Salida</span><span style='color:#e2e8f0;font-size:14px;'>{txt_f_envio}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#94a3b8;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;'>Promesa</span><span style='color:#e2e8f0;font-size:14px;'>{txt_f_promesa}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#94a3b8;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;'>Entrega</span><span style='color:#00FFAA;font-size:14px;'>{txt_f_real}</span></div><div style='margin-top:auto;background:rgba(255,255,255,0.03);padding:15px;border-radius:12px;border-left:4px solid {color_t};'><div style='color:{color_t};font-size:11px;font-weight:800;'>DESVIACIÓN</div><div style='color:white;font-size:24px;font-weight:900;'>{retraso} DÍAS</div></div></div>"
+            st.markdown(html_c2, unsafe_allow_html=True)
+        
+        # --- TARJETA 3: ESTADO ---
+        with c3:
+            est = row.get('ESTATUS_CALCULADO', '—')
+            color_e = "#00FFAA" if est == "ENTREGADO" else "#fb7185" if est == "RETRASADO" else "#3b82f6"
+            html_c3 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #a855f7;min-height:{h_size};'><div style='display:flex;align-items:center;margin-bottom:15px;'><div style='background:#a855f722;padding:10px;border-radius:12px;margin-right:15px;'>📊</div><div style='color:white;font-weight:800;font-size:16px;'>ESTADO CRÍTICO</div></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#94a3b8;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;'>Estatus</span><span style='color:{color_e};font-size:14px;font-weight:800;'>{est}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#94a3b8;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;'>Prioridad</span><span style='color:#e2e8f0;font-size:14px;'>{row.get('PRIORIDAD','NORMAL')}</span></div><div style='margin-top:auto;'><div style='color:#94a3b8;font-size:11px;font-weight:800;margin-bottom:8px;'>NOTAS</div><div style='background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;border:1px dashed rgba(255,255,255,0.1);color:#cbd5e1;font-size:13px;min-height:90px;'>{row.get('COMENTARIOS','Sin incidencias.')}</div></div></div>"
+            st.markdown(html_c3, unsafe_allow_html=True)
         # --------------------------------------------------
         # TABLA DE ENVÍOS – DISEÑO PERSONALIZADO
         # --------------------------------------------------
@@ -1435,6 +1428,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
