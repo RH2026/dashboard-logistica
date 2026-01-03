@@ -626,90 +626,7 @@ else:
         )
         st.divider()
         
-        # --------------------------------------------------
-        # TABLA DE ENVÍOS – DISEÑO PREMIUM ELITE (SIN CAJA)
-        # --------------------------------------------------
-        # Espaciador para separar de las donas
-        st.markdown("<div style='margin-top: 50px;'></div>", unsafe_allow_html=True)
         
-        # Estructura de 3 columnas para centrado perfecto
-        col_izq, col_centro, col_der = st.columns([2, 3, 2])
-        
-        with col_izq:
-            btn_c1, btn_c2 = st.columns(2)
-            with btn_c1:
-                if st.button("BD Completa", use_container_width=True, key="btn_full_v3"):
-                    st.session_state.tabla_expandida = True
-                    st.rerun()
-            with btn_c2:
-                if st.button("BD Vista Normal", use_container_width=True, key="btn_norm_v3"):
-                    st.session_state.tabla_expandida = False
-                    st.rerun()
-        
-        with col_centro:
-            # Título con padding-bottom para empujar la tabla hacia abajo
-            st.markdown("""
-                <div style="text-align:center; padding-bottom: 25px;">
-                    <span style="color:white; font-size:24px; font-weight:800; letter-spacing:3px; text-transform:uppercase;">
-                        📋 REGISTRO OPERATIVO
-                    </span>
-                </div>
-            """, unsafe_allow_html=True)
-
-        with col_der:
-            # Columna de equilibrio
-            st.write("")
-        
-        # Lógica de altura dinámica
-        h_dinamica = 850 if st.session_state.get('tabla_expandida', False) else 400
-        
-        # Preparación de datos final
-        df_visual = df_filtrado.copy()
-        hoy_t = pd.Timestamp.today().normalize()
-        
-        # Cálculos de tiempo para las barras de progreso y métricas
-        df_visual["DIAS_TRANSCURRIDOS"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["FECHA DE ENVÍO"]).dt.days)
-        df_visual["DIAS_RETRASO_VAL"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["PROMESA DE ENTREGA"]).dt.days).clip(lower=0)
-        
-        # RENDERIZADO DE TABLA ULTRA MODERNA
-        st.dataframe(
-            df_visual,
-            column_config={
-                "ESTATUS_CALCULADO": st.column_config.SelectboxColumn(
-                    "ESTATUS",
-                    options=["ENTREGADO", "EN TRANSITO", "RETRASADO"],
-                    required=True,
-                ),
-                "DIAS_TRANSCURRIDOS": st.column_config.NumberColumn(
-                    "DÍAS TRANSCURRIDOS",
-                    format="%d d"
-                ),
-                "DIAS_RETRASO_VAL": st.column_config.ProgressColumn(
-                    "RETRASO",
-                    format="%d d",
-                    min_value=0,
-                    max_value=15,
-                    color="red",
-                ),
-                "COSTO DE LA GUÍA": st.column_config.NumberColumn(
-                    "COSTO DE LA GUÍA",
-                    format="$ %.2f",
-                ),
-                "FECHA DE ENVÍO": st.column_config.DateColumn("FECHA DE ENVÍO", format="DD/MM/YYYY"),
-                "PROMESA DE ENTREGA": st.column_config.DateColumn("PROMESA DE ENTREGA", format="DD/MM/YYYY"),
-                "FECHA DE ENTREGA REAL": st.column_config.DateColumn("FECHA DE ENTREGA REAL", format="DD/MM/YYYY"),
-                "NÚMERO DE GUÍA": "NÚMERO DE GUÍA",
-                "NOMBRE DEL CLIENTE": "NOMBRE DEL CLIENTE",
-                "FLETERA": "FLETERA",
-                "DESTINO": "DESTINO",
-                "NO CLIENTE": "NO CLIENTE"
-            },
-            hide_index=True,
-            use_container_width=True,
-            height=h_dinamica
-        )
-        
-        st.divider()
         # --------------------------------------------------
         # GRÁFICOS DE BARRAS POR PAQUETERÍA (CON ETIQUETAS)
         # --------------------------------------------------
@@ -1515,6 +1432,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
