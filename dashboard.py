@@ -1157,28 +1157,17 @@ else:
                 
         # --- 8. SECCIÓN DE GRÁFICOS ELITE (CONTROL & RENDIMIENTO) ---
         
-        # Paleta de colores ejecutiva (Semáforo de alto contraste)
-        color_excelencia = "#059669" # Esmeralda (>= 95%)
-        color_alerta = "#fbbf24"     # Ámbar (85% - 94%)
-        color_critico = "#fb7185"    # Coral/Rojo (< 85%)
-
-        def titulo_grafico_elite(texto, emoji):
-            st.markdown(f"""
-                <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid {color_excelencia}; margin-bottom: 20px;'>
-                    <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>{emoji} {texto.upper()}</span>
-                </div>
-            """, unsafe_allow_html=True)
-
-        # --- GRÁFICO 1: VOLUMEN DE OPERACIÓN (LÍNEAS TÉCNICAS) ---
+        # --- GRÁFICO 1: VOLUMEN DE OPERACIÓN (CON ETIQUETAS DE DATOS) ---
         titulo_grafico_elite("Volumen Diario de Envíos", "📈")
         df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="Pedidos")
         
-        # Gráfico de área con líneas rectas y puntos de dato para precisión
+        # Base del gráfico
         line_base = alt.Chart(df_vol).encode(
             x=alt.X('FECHA DE ENVÍO:T', title=None, axis=alt.Axis(grid=False, labelColor='#94a3b8')),
             y=alt.Y('Pedidos:Q', title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8'))
         )
 
+        # Capa 1: El área sombreada y la línea recta
         area = line_base.mark_area(
             line={'color': color_excelencia, 'strokeWidth': 2.5},
             color=alt.Gradient(
@@ -1186,12 +1175,28 @@ else:
                 stops=[alt.GradientStop(color=color_excelencia, offset=0), alt.GradientStop(color='transparent', offset=1)],
                 x1=1, x2=1, y1=1, y2=0
             ),
-            interpolate='linear' # Líneas rectas tipo Trading
+            interpolate='linear'
         )
 
-        points = line_base.mark_point(color=color_excelencia, size=60, fill="#0f172a") # Puntos en cada día
+        # Capa 2: Puntos en cada vértice
+        points = line_base.mark_point(color=color_excelencia, size=60, fill="#0f172a")
 
-        st.altair_chart((area + points).properties(height=280), use_container_width=True)
+        # Capa 3: ETIQUETAS DE DATOS (Los números sobre los puntos)
+        labels = line_base.mark_text(
+            align='center',
+            baseline='bottom',
+            dy=-12,  # Desplazamiento hacia arriba para que no toque el punto
+            color='#e2e8f0',
+            fontWeight=600,
+            fontSize=12
+        ).encode(
+            text='Pedidos:Q'
+        )
+
+        # Combinar todas las capas
+        chart_vol_final = (area + points + labels).properties(height=280).configure_view(strokeOpacity=0)
+        
+        st.altair_chart(chart_vol_final, use_container_width=True)
 
         st.write("##")
 
@@ -1397,6 +1402,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
