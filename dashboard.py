@@ -1044,51 +1044,94 @@ else:
         a2_val = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] == 2])
         a5_val = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] >= 5])
 
-        # --- ESTILO CSS PREMIUM ---
+        # --- ESTILO CSS PREMIUM (TARJETAS ALTAS Y NÚMEROS GRANDES) ---
         st.markdown("""
             <style>
             .main-card-kpi {
                 background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-                border-left: 5px solid #38bdf8;
+                border-left: 6px solid #38bdf8;
                 border-radius: 15px;
-                padding: 22px;
-                box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-                margin-bottom: 10px;
+                
+                /* AJUSTE DE ALTURA Y ESPACIADO */
+                padding: 45px 25px;       
+                min-height: 200px;        
+                
+                display: flex;
+                flex-direction: column;
+                justify-content: center;   
+                align-items: center;
+                text-align: center;
+                
+                box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+                margin-bottom: 15px;
             }
-            .kpi-label { color: #94a3b8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; }
-            .kpi-value { color: #f8fafc; font-size: 30px; font-weight: 800; }
+            .kpi-label { 
+                color: #94a3b8; 
+                font-size: 14px; 
+                font-weight: 700; 
+                text-transform: uppercase; 
+                letter-spacing: 2px; 
+                margin-bottom: 15px; 
+            }
+            .kpi-value { 
+                color: #f8fafc; 
+                font-size: 52px; /* Número extra grande */
+                font-weight: 800; 
+                font-family: 'Inter', sans-serif;
+                line-height: 1;
+            }
             
-            /* Estilo para tarjetas de alerta inferiores */
+            /* Tarjetas de Alerta Inferiores */
             .card-alerta {
-                background-color:#161B22; padding:20px; border-radius:10px; 
-                border-top:1px solid #2D333F; border-right:1px solid #2D333F; border-bottom:1px solid #2D333F; 
+                background-color:#161B22; 
+                padding:25px; 
+                border-radius:12px; 
+                border-top:1px solid #2D333F; 
+                border-right:1px solid #2D333F; 
+                border-bottom:1px solid #2D333F; 
                 text-align:center;
             }
             </style>
         """, unsafe_allow_html=True)
 
-        # --- FILA 1: MÉTRICAS PRINCIPALES (3 COLUMNAS) ---
+        # --- FILA 1: MÉTRICAS PRINCIPALES (ANCHAS Y ALTAS) ---
         m1, m2, m3 = st.columns(3)
         
         with m1:
-            st.markdown(f"""<div class='main-card-kpi' style='border-left-color: #f1f5f9;'><div class='kpi-label'>Total Operaciones</div><div class='kpi-value'>{total_p}</div></div>""", unsafe_allow_html=True)
+            st.markdown(f"""
+                <div class='main-card-kpi' style='border-left-color: #f1f5f9;'>
+                    <div class='kpi-label'>Pedidos Totales</div>
+                    <div class='kpi-value'>{total_p}</div>
+                </div>
+            """, unsafe_allow_html=True)
+            
         with m2:
-            st.markdown(f"""<div class='main-card-kpi' style='border-left-color: #38bdf8;'><div class='kpi-label'>Pedidos en Tránsito</div><div class='kpi-value'>{pend_p}</div></div>""", unsafe_allow_html=True)
+            st.markdown(f"""
+                <div class='main-card-kpi' style='border-left-color: #38bdf8;'>
+                    <div class='kpi-label'>Sin Entregar</div>
+                    <div class='kpi-value' style='color:#38bdf8;'>{pend_p}</div>
+                </div>
+            """, unsafe_allow_html=True)
+            
         with m3:
             # Color dinámico para eficiencia
             color_ef = "#00FFAA" if eficiencia_p >= 95 else "#f97316"
-            st.markdown(f"""<div class='main-card-kpi' style='border-left-color: {color_ef};'><div class='kpi-label'>Nivel de Cumplimiento</div><div class='kpi-value' style='color:{color_ef};'>{eficiencia_p:.1f}%</div></div>""", unsafe_allow_html=True)
+            st.markdown(f"""
+                <div class='main-card-kpi' style='border-left-color: {color_ef};'>
+                    <div class='kpi-label'>Eficiencia Real</div>
+                    <div class='kpi-value' style='color:{color_ef};'>{eficiencia_p:.1f}%</div>
+                </div>
+            """, unsafe_allow_html=True)
 
         st.write("##")
         
-        # --- FILA 2: MONITOREO DE ATRASOS (MANTIENE DISEÑO ORIGINAL) ---
-        st.markdown("<p style='color:#9CA3AF; font-size:12px; font-weight:bold; letter-spacing:1px; margin-bottom:15px;'>⚠️ MONITOREO DE ATRASOS (PENDIENTES)</p>", unsafe_allow_html=True)
+        # --- FILA 2: MONITOREO DE ATRASOS ---
+        st.markdown("<p style='color:#9CA3AF; font-size:13px; font-weight:bold; letter-spacing:1px; margin-bottom:20px;'>⚠️ MONITOREO DE ATRASOS (SOLO PENDIENTES)</p>", unsafe_allow_html=True)
         a1, a2, a3 = st.columns(3)
         
-        # Tarjetas inferiores con bordes de color específicos
-        a1.markdown(f"<div class='card-alerta' style='border-left: 6px solid yellow;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold; text-transform:uppercase;'>1 Día Retraso</div><div style='color:white; font-size:32px; font-weight:bold;'>{a1_val}</div></div>", unsafe_allow_html=True)
-        a2.markdown(f"<div class='card-alerta' style='border-left: 6px solid #f97316;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold; text-transform:uppercase;'>2 Días Retraso</div><div style='color:white; font-size:32px; font-weight:bold;'>{a2_val}</div></div>", unsafe_allow_html=True)
-        a3.markdown(f"<div class='card-alerta' style='border-left: 6px solid #FF4B4B;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold; text-transform:uppercase;'>+5 Días Retraso</div><div style='color:white; font-size:32px; font-weight:bold;'>{a5_val}</div></div>", unsafe_allow_html=True)
+        a1.markdown(f"<div class='card-alerta' style='border-left: 6px solid yellow;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold; text-transform:uppercase;'>1 Día Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a1_val}</div></div>", unsafe_allow_html=True)
+        a2.markdown(f"<div class='card-alerta' style='border-left: 6px solid #f97316;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold; text-transform:uppercase;'>2 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a2_val}</div></div>", unsafe_allow_html=True)
+        a3.markdown(f"<div class='card-alerta' style='border-left: 6px solid #FF4B4B;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold; text-transform:uppercase;'>+5 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a5_val}</div></div>", unsafe_allow_html=True)
 
         st.write("##")
         st.divider()
@@ -1136,9 +1179,9 @@ else:
         # Título con estilo minimalista
         st.markdown("""
             <h1 style='text-align: center; color: white; font-family: sans-serif; font-weight: 800; letter-spacing: -1px;'>
-                REPORT <span style='color: #00FFAA;'>MONTHLY</span> OPS
+                REPORTE <span style='color: #00FFAA;'>MENSUAL</span> OPS
             </h1>
-            <p style='text-align: center; color: #808495; font-size: 14px;'>Análisis de Eficiencia Logística y Rentabilidad</p>
+            <p style='text-align: center; color: #808495; font-size: 18px;'>Análisis de Eficiencia Logística y Rentabilidad</p>
         """, unsafe_allow_html=True)
         st.write("##")
 
@@ -1263,6 +1306,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
