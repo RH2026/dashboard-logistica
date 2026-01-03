@@ -1156,7 +1156,20 @@ else:
                
                 
         # --- 8. SECCIÓN DE GRÁFICOS ELITE (CONTROL & RENDIMIENTO) ---
-        
+                       
+        # Paleta de colores ejecutiva (Semáforo de alto contraste)
+        color_excelencia = "#059669" # Esmeralda (>= 95%)
+        color_alerta = "#fbbf24"     # Ámbar (85% - 94%)
+        color_critico = "#fb7185"    # Coral/Rojo (< 85%)
+
+        # DEFINICIÓN DE LA FUNCIÓN (Debe ir antes de usarse)
+        def titulo_grafico_elite(texto, emoji):
+            st.markdown(f"""
+                <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid {color_excelencia}; margin-bottom: 20px;'>
+                    <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>{emoji} {texto.upper()}</span>
+                </div>
+            """, unsafe_allow_html=True)
+
         # --- GRÁFICO 1: VOLUMEN DE OPERACIÓN (CON ETIQUETAS DE DATOS) ---
         titulo_grafico_elite("Volumen Diario de Envíos", "📈")
         df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="Pedidos")
@@ -1167,7 +1180,7 @@ else:
             y=alt.Y('Pedidos:Q', title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8'))
         )
 
-        # Capa 1: El área sombreada y la línea recta
+        # Capa 1: El área sombreada y la línea recta (Estilo Trading)
         area = line_base.mark_area(
             line={'color': color_excelencia, 'strokeWidth': 2.5},
             color=alt.Gradient(
@@ -1185,7 +1198,7 @@ else:
         labels = line_base.mark_text(
             align='center',
             baseline='bottom',
-            dy=-12,  # Desplazamiento hacia arriba para que no toque el punto
+            dy=-12, # Espacio para que no toque el punto
             color='#e2e8f0',
             fontWeight=600,
             fontSize=12
@@ -1194,13 +1207,11 @@ else:
         )
 
         # Combinar todas las capas
-        chart_vol_final = (area + points + labels).properties(height=280).configure_view(strokeOpacity=0)
-        
-        st.altair_chart(chart_vol_final, use_container_width=True)
+        st.altair_chart((area + points + labels).properties(height=280).configure_view(strokeOpacity=0), use_container_width=True)
 
         st.write("##")
 
-        # --- GRÁFICO 2: EFICIENCIA POR FLETERA (MÉTODO SEGURO) ---
+        # --- GRÁFICO 2: EFICIENCIA POR FLETERA (SEMÁFORO) ---
         titulo_grafico_elite("Ranking de Eficiencia por Fletera", "🏆")
         df_ent = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
         
@@ -1208,7 +1219,7 @@ else:
             df_ent["AT"] = df_ent["FECHA DE ENTREGA REAL"] <= df_ent["PROMESA DE ENTREGA"]
             df_p = (df_ent.groupby("FLETERA")["AT"].mean() * 100).reset_index()
             
-            # --- ASIGNACIÓN DIRECTA DE COLORES (Aquí está el truco) ---
+            # Asignación de colores para el semáforo
             def asignar_color(valor):
                 if valor >= 95: return color_excelencia
                 if valor >= 85: return color_alerta
@@ -1216,7 +1227,7 @@ else:
             
             df_p["COLOR_HEX"] = df_p["AT"].apply(asignar_color)
 
-            # Gráfico base de barras
+            # Gráfico de barras con etiquetas
             bars = alt.Chart(df_p).mark_bar(
                 cornerRadiusTopRight=8,
                 cornerRadiusBottomRight=8,
@@ -1224,11 +1235,9 @@ else:
             ).encode(
                 x=alt.X('AT:Q', title='Cumplimiento (%)', scale=alt.Scale(domain=[0, 118]), axis=alt.Axis(gridOpacity=0.05)),
                 y=alt.Y('FLETERA:N', sort='-x', title=None, axis=alt.Axis(labelColor='white', labelFontSize=12)),
-                # Usamos el color directamente desde la columna que creamos
                 color=alt.Color('COLOR_HEX:N', scale=None) 
             )
 
-            # ETIQUETAS DE DATOS
             chart_text = bars.mark_text(
                 align='left',
                 baseline='middle',
@@ -1236,9 +1245,7 @@ else:
                 color='white',
                 fontWeight=700,
                 fontSize=13
-            ).encode(
-                text=alt.Text('AT:Q', format='.1f')
-            )
+            ).encode(text=alt.Text('AT:Q', format='.1f'))
 
             st.altair_chart((bars + chart_text).properties(height=400), use_container_width=True)
 
@@ -1402,6 +1409,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
