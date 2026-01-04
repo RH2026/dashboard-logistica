@@ -1561,7 +1561,7 @@ else:
 
             if not modo_comp:
                 if PDF_READY:
-                    if st.button("📊 GENERAR REPORTE"):
+                    if st.button("GENERAR REPORTE"):
                         try:
                             st.toast("Compilando las 9 tarjetas...", icon="⚙️")
                             
@@ -1636,7 +1636,7 @@ else:
                             pdf_final = bytes(pdf_raw) if isinstance(pdf_raw, bytearray) else pdf_raw.encode('latin-1')
                             
                             st.download_button(
-                                label="💾 DESCARGAR REPORTE COMPLETO (9 TARJETAS)",
+                                label="DESCARGAR REPORTE",
                                 data=pdf_final,
                                 file_name=f"Reporte_Elite_{mes_sel}.pdf",
                                 mime="application/pdf"
@@ -1647,7 +1647,7 @@ else:
                 else:
                     st.warning("⚠️ Sistema PDF no detectado.")
             else:
-                st.info("💡 **INFO DE COMANDO:** El PDF requiere una vista de mes individual.", icon="🛰️")
+                st.info("💡 **INFO DE COMANDO:** El PDF requiere una vista de mes individual.")
         # --- NAVEGACIÓN NIVEL AMAZON (ESTILO FINAL) ---
         st.divider()
         st.markdown('<div class="nav-container">', unsafe_allow_html=True) 
@@ -1667,6 +1667,7 @@ else:
         
         
     
+
 
 
 
