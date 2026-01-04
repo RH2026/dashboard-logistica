@@ -8,6 +8,7 @@ import streamlit.components.v1 as components
 import numpy as np
 import datetime
 import io
+import os
 
 # --- NUEVO PROTOCOLO DE IMPORTACIÓN PARA FPDF2 (BLOQUE ELITE) ---
 # --- PROTOCOLO DE CONEXIÓN FINAL ---
@@ -1917,6 +1918,7 @@ else:
         
         
     
+
 
 
 
