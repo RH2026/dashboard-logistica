@@ -1393,39 +1393,7 @@ else:
                 </style>
             """, unsafe_allow_html=True)
 
-            st.markdown("""
-                <style>
-                /* Contenedor de Navegación Elite */
-                .nav-container div.stButton > button {
-                    background: linear-gradient(145deg, #1e293b, #0f172a);
-                    color: #f8fafc !important;
-                    border: 1px solid #334155;
-                    border-radius: 8px;
-                    padding: 0.7rem;
-                    font-family: 'Inter', sans-serif;
-                    font-weight: 600;
-                    letter-spacing: 0.5px;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    height: 3rem;
-                }
-            
-                /* Efecto Amazon/DHL al pasar el mouse */
-                .nav-container div.stButton > button:hover {
-                    border-color: #38bdf8;
-                    color: #38bdf8 !important;
-                    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
-                    transform: translateY(-2px);
-                }
-            
-                /* Estado Activo (Cuando se presiona) */
-                .nav-container div.stButton > button:active {
-                    transform: scale(0.98);
-                    background: #38bdf8;
-                    color: #0f172a !important;
-                }
-                </style>
-            """, unsafe_allow_html=True)
-        
+                   
             header_txt = f"Resultados: {mes_sel}" if not modo_comp else f"Comparativa Mode: {mes_sel} VS {mes_comp}"
             st.markdown(f"<h4 class='premium-header'>{header_txt}</h4>", unsafe_allow_html=True)
         
@@ -1685,6 +1653,40 @@ else:
                 st.warning("⚠️ El sistema PDF está en proceso de instalación.")
         
         # --- NAVEGACIÓN NIVEL AMAZON ---
+
+        st.markdown("""
+                <style>
+                /* Contenedor de Navegación Elite */
+                .nav-container div.stButton > button {
+                    background: linear-gradient(145deg, #1e293b, #0f172a);
+                    color: #f8fafc !important;
+                    border: 1px solid #334155;
+                    border-radius: 8px;
+                    padding: 0.7rem;
+                    font-family: 'Inter', sans-serif;
+                    font-weight: 600;
+                    letter-spacing: 0.5px;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    height: 3rem;
+                }
+            
+                /* Efecto Amazon/DHL al pasar el mouse */
+                .nav-container div.stButton > button:hover {
+                    border-color: #38bdf8;
+                    color: #38bdf8 !important;
+                    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
+                    transform: translateY(-2px);
+                }
+            
+                /* Estado Activo (Cuando se presiona) */
+                .nav-container div.stButton > button:active {
+                    transform: scale(0.98);
+                    background: #38bdf8;
+                    color: #0f172a !important;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+        
         st.sidebar.divider()
         st.sidebar.markdown('<div class="nav-container">', unsafe_allow_html=True) # Abrir contenedor
         
@@ -1703,6 +1705,7 @@ else:
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
     
     
+
 
 
 
