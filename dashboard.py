@@ -1730,6 +1730,49 @@ else:
         st.write("---")
         generar_grafico_fleteras_elite_v2()
                 
+        def generar_grafico_eficiencia_envio():
+            try:
+                # 1. CARGA (Usamos la lógica ya probada)
+                df = pd.read_csv("matriz_mensual.scv", encoding='latin-1')
+                df.columns = [c.strip().upper() for c in df.columns]
+        
+                # 2. LIMPIEZA DE DATOS TÉCNICOS
+                df['COSTO DE GUIA'] = df['COSTO DE GUIA'].replace('[\$,]', '', regex=True).astype(float).fillna(0)
+                df['CAJAS'] = pd.to_numeric(df['CAJAS'], errors='coerce').fillna(0)
+                
+                # 3. CONSTRUCCIÓN DEL RADAR DE DISPERSIÓN
+                scatter = alt.Chart(df).mark_circle(size=100, opacity=0.6).encode(
+                    x=alt.X('CAJAS:Q', title="VOLUMEN (NÚMERO DE CAJAS)"),
+                    y=alt.Y('COSTO DE GUIA:Q', title="INVERSIÓN LOGÍSTICA ($)"),
+                    color=alt.Color('FLETERA:N', scale=alt.Scale(scheme='category10'), title="PAQUETERÍA"),
+                    tooltip=[
+                        alt.Tooltip('NOMBRE COMERCIAL:N', title="Cliente"),
+                        alt.Tooltip('FLETERA:N', title="Fletera"),
+                        alt.Tooltip('CAJAS:Q', title="Cajas"),
+                        alt.Tooltip('COSTO DE GUIA:Q', title="Costo", format="$,.2f"),
+                        alt.Tooltip('ESTADO:N', title="Destino")
+                    ]
+                ).properties(
+                    width='container',
+                    height=400,
+                    title=alt.TitleParams(
+                        text="RADAR DE EFICIENCIA: VOLUMEN VS COSTO",
+                        subtitle="Detección de desviaciones en costo de flete por cantidad de bultos",
+                        color='#00ffa2',
+                        fontSize=20,
+                        anchor='start'
+                    )
+                ).interactive() # Permite hacer Zoom y Pan como un radar real
+        
+                st.altair_chart(scatter, use_container_width=True)
+        
+            except Exception as e:
+                st.error(f"⚠️ FALLA EN RADAR DE EFICIENCIA: {e}")
+        
+        # Ejecución abajo del gráfico anterior
+        st.write("---")
+        generar_grafico_eficiencia_envio()
+        
         # --- NAVEGACIÓN NIVEL AMAZON (ESTILO FINAL) ---
         st.divider()
         st.markdown('<div class="nav-container">', unsafe_allow_html=True) 
@@ -1749,6 +1792,7 @@ else:
         
         
     
+
 
 
 
