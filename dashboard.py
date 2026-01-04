@@ -1571,24 +1571,24 @@ else:
                         pdf.cell(0, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.1f}", ln=True)
                         
                         # --- PROTOCOLO DE SALIDA INTELIGENTE ---
-                        pdf_raw = pdf.output() # fpdf2 entrega bytes directamente
-                        
-                        # Si el resultado es texto (viejas versiones), lo encodamos. 
-                        # Si son bytes (fpdf2), los pasamos directo.
-                        pdf_bytes = pdf_raw.encode('latin-1') if isinstance(pdf_raw, str) else pdf_raw
-                        
+                        pdf_raw = pdf.output()
+            
+                        # Forzamos la conversión a bytes puros, que es el lenguaje universal de Streamlit
+                        if isinstance(pdf_raw, (bytearray, str)):
+                            if isinstance(pdf_raw, str):
+                                pdf_final = pdf_raw.encode('latin-1')
+                            else:
+                                pdf_final = bytes(pdf_raw) # Convertimos bytearray a bytes
+                        else:
+                            pdf_final = pdf_raw
+            
                         st.download_button(
                             label="💾 DESCARGAR REPORTE AHORA",
-                            data=pdf_bytes,
+                            data=pdf_final,
                             file_name=f"Reporte_Elite_{mes_sel}.pdf",
                             mime="application/pdf"
                         )
-                        st.success("✅ Sistema restaurado. PDF listo para el Bottom Line.")
-                        
-                    except Exception as e:
-                        st.error(f"Error técnico en el PDF: {e}")
-            else:
-                st.warning("⚠️ El sistema PDF se está instalando. Por favor, espera 1 minuto y recarga la página.")
+                        st.success("✅ ¡Objetivo alcanzado! PDF listo para despacho.")
         
         # --- NAVEGACIÓN ---
         st.divider()
@@ -1603,6 +1603,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
