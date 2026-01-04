@@ -1644,6 +1644,7 @@ else:
         
         # --- MOTOR DE INTELIGENCIA VISUAL: ANÁLISIS DE FLETERAS ---
         def generar_grafico_fleteras_elite():
+            import os # <--- Agréguelo aquí mismo para una solución rápida
             try:
                 # 1. LOCALIZACIÓN Y CARGA DE DATOS
                 posibles_nombres = ["matriz_mensual.scv", "matriz_mensual.csv"]
@@ -1750,6 +1751,7 @@ else:
         
         
     
+
 
 
 
