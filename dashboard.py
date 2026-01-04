@@ -1384,8 +1384,8 @@ else:
                 </style>
             """, unsafe_allow_html=True)
         
-            header_txt = f"Performance: {mes_sel}" if not modo_comp else f"Comparativa Mode: {mes_sel} VS {mes_comp}"
-            st.markdown(f"<h1 class='premium-header'>{header_txt}</h1>", unsafe_allow_html=True)
+            header_txt = f"Resultados: {mes_sel}" if not modo_comp else f"Comparativa Mode: {mes_sel} VS {mes_comp}"
+            st.markdown(f"<h2 class='premium-header'>{header_txt}</h2>", unsafe_allow_html=True)
         
             if not modo_comp:
                 # --- VISTA NORMAL 9 TARJETAS ---
@@ -1499,6 +1499,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
