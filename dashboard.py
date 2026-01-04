@@ -1836,78 +1836,78 @@ else:
             generar_grafico_fleteras_elite_v2()
         
             def generar_ranking_destinos_pro():
-            import os
-            try:
-                # 1. LOCALIZACIÓN DE LA INTELIGENCIA
-                archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
-                
-                if not os.path.exists(archivo):
-                    st.error(f"🚨 RADAR: No se detectó la base de destinos ({archivo})")
-                    return
-        
-                # 2. PROCESAMIENTO DE DATOS
-                df = pd.read_csv(archivo, encoding='latin-1')
-                df.columns = [c.strip().upper() for c in df.columns]
-                df['VALOR FACTURA'] = df['VALOR FACTURA'].replace('[\$,]', '', regex=True).astype(float).fillna(0)
-                
-                # Agrupamos por Estado y seleccionamos los mejores 15
-                df_geo = df.groupby('ESTADO')['VALOR FACTURA'].sum().reset_index()
-                df_geo = df_geo.sort_values('VALOR FACTURA', ascending=False).head(15)
-        
-                # 3. CONSTRUCCIÓN DEL GRÁFICO (SINFONÍA EN ORO ESTILO ESCALERA)
-                base = alt.Chart(df_geo).encode(
-                    y=alt.Y('ESTADO:N', 
-                            title=None, 
-                            sort='-x', 
-                            axis=alt.Axis(labelFontSize=14, labelFontWeight='bold', labelColor='#FFFFFF', labelPadding=15)),
-                    x=alt.X('VALOR FACTURA:Q', 
-                            title=None, 
-                            axis=alt.Axis(format="$,.0f", grid=True, gridColor='#262730', labelColor='#94a3b8'))
-                )
-        
-                # CAPA 1: Barras con grosor premium y esquinas redondeadas
-                barras = base.mark_bar(
-                    cornerRadiusTopRight=5,
-                    cornerRadiusBottomRight=5,
-                    size=30, # Ajuste para el efecto visual de la imagen
-                    color='#EAB308' 
-                )
-        
-                # CAPA 2: Etiquetas de Monto Real al final de la barra
-                texto = base.mark_text(
-                    align='left',
-                    baseline='middle',
-                    dx=8, 
-                    color='#FFFFFF', # Blanco puro para máximo contraste
-                    fontWeight='bold',
-                    fontSize=15
-                ).encode(
-                    text=alt.Text('VALOR FACTURA:Q', format="$,.0f")
-                )
-        
-                # ENSAMBLAJE FINAL
-                radar_geo = (barras + texto).properties(
-                    width='container',
-                    height=500, # Más altura para apreciar el escalonamiento
-                    title=alt.TitleParams(
-                        text="TOP DESTINOS POR FACTURACIÓN",
-                        subtitle="Análisis de los 15 estados con mayor impacto comercial",
-                        fontSize=24,
-                        color='#EAB308',
-                        anchor='start',
-                        dy=-20
+                import os
+                try:
+                    # 1. LOCALIZACIÓN DE LA INTELIGENCIA
+                    archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
+                    
+                    if not os.path.exists(archivo):
+                        st.error(f"🚨 RADAR: No se detectó la base de destinos ({archivo})")
+                        return
+            
+                    # 2. PROCESAMIENTO DE DATOS
+                    df = pd.read_csv(archivo, encoding='latin-1')
+                    df.columns = [c.strip().upper() for c in df.columns]
+                    df['VALOR FACTURA'] = df['VALOR FACTURA'].replace('[\$,]', '', regex=True).astype(float).fillna(0)
+                    
+                    # Agrupamos por Estado y seleccionamos los mejores 15
+                    df_geo = df.groupby('ESTADO')['VALOR FACTURA'].sum().reset_index()
+                    df_geo = df_geo.sort_values('VALOR FACTURA', ascending=False).head(15)
+            
+                    # 3. CONSTRUCCIÓN DEL GRÁFICO (SINFONÍA EN ORO ESTILO ESCALERA)
+                    base = alt.Chart(df_geo).encode(
+                        y=alt.Y('ESTADO:N', 
+                                title=None, 
+                                sort='-x', 
+                                axis=alt.Axis(labelFontSize=14, labelFontWeight='bold', labelColor='#FFFFFF', labelPadding=15)),
+                        x=alt.X('VALOR FACTURA:Q', 
+                                title=None, 
+                                axis=alt.Axis(format="$,.0f", grid=True, gridColor='#262730', labelColor='#94a3b8'))
                     )
-                ).configure_view(strokeWidth=0).configure_axis(domain=False)
-        
-                # 4. DESPLIEGUE EN PANTALLA
-                st.altair_chart(radar_geo, use_container_width=True)
-        
-            except Exception as e:
-                st.error(f"⚠️ FALLA EN RADAR GEOGRÁFICO: {e}")
-        
-        # --- ORDEN DE EJECUCIÓN ---
-        st.write("---")
-        generar_ranking_destinos_pro()
+            
+                    # CAPA 1: Barras con grosor premium y esquinas redondeadas
+                    barras = base.mark_bar(
+                        cornerRadiusTopRight=5,
+                        cornerRadiusBottomRight=5,
+                        size=30, # Ajuste para el efecto visual de la imagen
+                        color='#EAB308' 
+                    )
+            
+                    # CAPA 2: Etiquetas de Monto Real al final de la barra
+                    texto = base.mark_text(
+                        align='left',
+                        baseline='middle',
+                        dx=8, 
+                        color='#FFFFFF', # Blanco puro para máximo contraste
+                        fontWeight='bold',
+                        fontSize=15
+                    ).encode(
+                        text=alt.Text('VALOR FACTURA:Q', format="$,.0f")
+                    )
+            
+                    # ENSAMBLAJE FINAL
+                    radar_geo = (barras + texto).properties(
+                        width='container',
+                        height=500, # Más altura para apreciar el escalonamiento
+                        title=alt.TitleParams(
+                            text="TOP DESTINOS POR FACTURACIÓN",
+                            subtitle="Análisis de los 15 estados con mayor impacto comercial",
+                            fontSize=24,
+                            color='#EAB308',
+                            anchor='start',
+                            dy=-20
+                        )
+                    ).configure_view(strokeWidth=0).configure_axis(domain=False)
+            
+                    # 4. DESPLIEGUE EN PANTALLA
+                    st.altair_chart(radar_geo, use_container_width=True)
+            
+                except Exception as e:
+                    st.error(f"⚠️ FALLA EN RADAR GEOGRÁFICO: {e}")
+            
+            # --- ORDEN DE EJECUCIÓN ---
+            st.write("---")
+            generar_ranking_destinos_pro()
             
         
         # --- NAVEGACIÓN NIVEL AMAZON (ESTILO FINAL) ---
@@ -1929,6 +1929,7 @@ else:
         
         
     
+
 
 
 
