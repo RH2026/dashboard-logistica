@@ -988,7 +988,7 @@ else:
                 st.session_state.pagina = "Reporte"
                 st.rerun()
         
-        st.markdown("<div style='text-align:center; color:gray;'>© 2026 Logística - Vista Operativa</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
 
     # ------------------------------------------------------------------
     # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL DEFINITIVA)
@@ -1389,7 +1389,7 @@ else:
                 st.rerun()
 
         # Pie de página
-        st.markdown("<div style='text-align:center; color:gray; margin-top:20px;'>© 2026 Logística - Vista Gerencial</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
     # ----------------------------------------------
     # ------------------------------------------------------------------
     # BLOQUE 10: REPORTE EJECUTIVO DE ALTO NIVEL
@@ -1930,6 +1930,7 @@ else:
         
         
     
+
 
 
 
