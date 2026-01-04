@@ -1641,6 +1641,8 @@ else:
                     st.warning("⚠️ Sistema PDF no detectado.")
             else:
                 st.info("💡 **INFO DE COMANDO:** El PDF requiere una vista de mes individual.")
+   
+       
         
         def generar_grafico_fleteras_elite_v2():
             import os # Refuerzo de seguridad para el radar
@@ -1673,10 +1675,9 @@ else:
         
                 # --- CONSTRUCCIÓN DEL GRÁFICO MULTI-CAPA ---
                 
-                # Base del gráfico con el filtro aplicado
                 base = alt.Chart(df).transform_filter(seleccion)
         
-                # CAPA 1: BARRAS CON COLORES DIFERENCIADOS
+                # CAPA 1: BARRAS CON TONOS AMBER/GOLD DIFERENCIADOS
                 barras = base.mark_bar(
                     cornerRadiusTopRight=15,
                     cornerRadiusBottomRight=15,
@@ -1684,9 +1685,9 @@ else:
                 ).encode(
                     x=alt.X('sum(COSTO DE GUIA):Q', title="INVERSIÓN ($)", axis=alt.Axis(format="$,.0f")),
                     y=alt.Y('FLETERA:N', title=None, sort='-x'),
-                    # Colores diferenciados por fletera (Paleta de alta gama)
+                    # CAMBIO TÁCTICO: Escala de tonos Oro y Ámbar
                     color=alt.Color('FLETERA:N', 
-                                   scale=alt.Scale(scheme='tableau20'), 
+                                   scale=alt.Scale(scheme='goldorange'), # Paleta de oros y naranjas ejecutivos
                                    legend=None),
                     tooltip=[
                         alt.Tooltip('FLETERA:N'),
@@ -1694,19 +1695,19 @@ else:
                     ]
                 )
         
-                # CAPA 2: TEXTO CON EL MONTO REAL (Nivel Almirante)
+                # CAPA 2: TEXTO CON EL MONTO REAL
                 texto = barras.mark_text(
                     align='left',
                     baseline='middle',
-                    dx=5, # Desplazamiento a la derecha de la barra
-                    color='white',
+                    dx=8, # Espacio para que no choque con la curva de la barra
+                    color='#f8fafc', # Blanco hueso para legibilidad premium
                     fontWeight='bold',
-                    fontSize=13
+                    fontSize=14
                 ).encode(
                     text=alt.Text('sum(COSTO DE GUIA):Q', format="$,.0f")
                 )
         
-                # COMBINACIÓN DE CAPAS + PARÁMETROS
+                # COMBINACIÓN DE CAPAS
                 grafico_final = (barras + texto).add_params(
                     seleccion
                 ).properties(
@@ -1714,64 +1715,23 @@ else:
                     height=450,
                     title=alt.TitleParams(
                         text="ESTADO DE INVERSIÓN POR FLETERA",
-                        subtitle=["Montos reales consolidados por proveedor de servicios"],
+                        subtitle=["Montos reales consolidados en matices de Amber/Gold Digital"],
                         fontSize=22,
-                        color='#00ffa2', # Título en Verde Esmeralda
+                        color='#eab308', # Título ahora también en Ámbar para total armonía
                         anchor='start'
                     )
-                ).configure_view(strokeWidth=0).configure_axis(labelFontSize=12)
+                ).configure_view(strokeWidth=0).configure_axis(
+                    labelFontSize=12,
+                    labelFontWeight='bold',
+                    labelColor='#94a3b8'
+                )
         
                 st.altair_chart(grafico_final, use_container_width=True)
         
             except Exception as e:
                 st.error(f"⚠️ FALLA TÁCTICA: {e}")
         
-        # Ejecución
-        st.write("---")
-        generar_grafico_fleteras_elite_v2()
-                
-        def generar_grafico_eficiencia_envio():
-            try:
-                # 1. CARGA (Usamos la lógica ya probada)
-                df = pd.read_csv("matriz_mensual.csv", encoding='latin-1')
-                df.columns = [c.strip().upper() for c in df.columns]
         
-                # 2. LIMPIEZA DE DATOS TÉCNICOS
-                df['COSTO DE GUIA'] = df['COSTO DE GUIA'].replace('[\$,]', '', regex=True).astype(float).fillna(0)
-                df['CAJAS'] = pd.to_numeric(df['CAJAS'], errors='coerce').fillna(0)
-                
-                # 3. CONSTRUCCIÓN DEL RADAR DE DISPERSIÓN
-                scatter = alt.Chart(df).mark_circle(size=100, opacity=0.6).encode(
-                    x=alt.X('CAJAS:Q', title="VOLUMEN (NÚMERO DE CAJAS)"),
-                    y=alt.Y('COSTO DE GUIA:Q', title="INVERSIÓN LOGÍSTICA ($)"),
-                    color=alt.Color('FLETERA:N', scale=alt.Scale(scheme='category10'), title="PAQUETERÍA"),
-                    tooltip=[
-                        alt.Tooltip('NOMBRE COMERCIAL:N', title="Cliente"),
-                        alt.Tooltip('FLETERA:N', title="Fletera"),
-                        alt.Tooltip('CAJAS:Q', title="Cajas"),
-                        alt.Tooltip('COSTO DE GUIA:Q', title="Costo", format="$,.2f"),
-                        alt.Tooltip('ESTADO:N', title="Destino")
-                    ]
-                ).properties(
-                    width='container',
-                    height=400,
-                    title=alt.TitleParams(
-                        text="RADAR DE EFICIENCIA: VOLUMEN VS COSTO",
-                        subtitle="Detección de desviaciones en costo de flete por cantidad de bultos",
-                        color='#00ffa2',
-                        fontSize=20,
-                        anchor='start'
-                    )
-                ).interactive() # Permite hacer Zoom y Pan como un radar real
-        
-                st.altair_chart(scatter, use_container_width=True)
-        
-            except Exception as e:
-                st.error(f"⚠️ FALLA EN RADAR DE EFICIENCIA: {e}")
-        
-        # Ejecución abajo del gráfico anterior
-        st.write("---")
-        generar_grafico_eficiencia_envio()
         
         # --- NAVEGACIÓN NIVEL AMAZON (ESTILO FINAL) ---
         st.divider()
@@ -1792,6 +1752,7 @@ else:
         
         
     
+
 
 
 
