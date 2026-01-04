@@ -198,6 +198,32 @@ elif not st.session_state.splash_completado:
 
 # 3. CONTENIDO PRIVADO (DASHBOARD)
 else:
+    
+    # --- PROTOCOLO LOGO NEXION (INSERTAR AQUÍ) ---
+    def inyectar_logo_nexion(path):
+        import base64
+        try:
+            with open(path, "rb") as f:
+                data = base64.b64encode(f.read()).decode()
+            st.sidebar.markdown(
+                f"""
+                <style>
+                    [data-testid="stSidebarNav"] {{
+                        background-image: url("data:image/png;base64,{data}");
+                        background-repeat: no-repeat;
+                        padding-top: 100px; /* Ajusta según el alto de tu imagen */
+                        background-position: center 20px;
+                        background-size: 240px auto; /* Basado en tu imagen horizontal */
+                    }}
+                </style>
+                """, unsafe_allow_html=True
+            )
+        except:
+            pass
+
+    # Ejecutar la inyección
+    inyectar_logo_nexion("n1.png")
+    
     # --- MOTOR DE DATOS ---
     @st.cache_data
     def cargar_datos():
@@ -1931,6 +1957,7 @@ else:
         
         
     
+
 
 
 
