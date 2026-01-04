@@ -1556,39 +1556,63 @@ else:
                 return pdf.output()
         
             # --- BOTON DE ACCION EN EL DASHBOARD ---
-            # --- MÓDULO PDF BLINDADO V4.0 ---
+            # --- 6. MÓDULO DE EXTRACCIÓN PDF (BLOQUE FINAL) ---
             st.write("---")
+            
             if PDF_READY:
+                st.markdown("### 📄 Exportación de Reporte Ejecutivo")
+                
+                # Creamos el botón
                 if st.button("📊 GENERAR REPORTE PDF"):
                     try:
+                        # Inicializamos el objeto PDF
                         pdf = FPDF()
                         pdf.add_page()
+                        
+                        # --- TÍTULO ---
                         pdf.set_font("Arial", 'B', 16)
                         pdf.cell(0, 10, f"REPORTE LOGISTICO: {mes_sel}", ln=True, align='C')
-                        pdf.set_font("Arial", '', 12)
                         pdf.ln(10)
-                        pdf.cell(0, 10, f"Costo Logistico: {df_mes['COSTO LOGÍSTICO']:.2f}%", ln=True)
-                        pdf.cell(0, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.1f}", ln=True)
                         
-                        # --- PROTOCOLO DE SALIDA INTELIGENTE ---
-                        pdf_raw = pdf.output()
+                        # --- CUERPO DE DATOS ---
+                        pdf.set_font("Arial", '', 12)
+                        pdf.cell(0, 10, f"Costo Logistico: {df_mes['COSTO LOGÍSTICO']:.2f}%", ln=True)
+                        pdf.cell(0, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.2f}", ln=True)
+                        pdf.cell(0, 10, f"Facturacion Mensual: ${df_mes['FACTURACIÓN']:,.2f}", ln=True)
+                        pdf.ln(5)
+                        
+                        # --- DIAGNÓSTICO ESTRATÉGICO ---
+                        pdf.set_font("Arial", 'B', 12)
+                        pdf.cell(0, 10, "DIAGNOSTICO DE OPERACION:", ln=True)
+                        pdf.set_font("Arial", 'I', 11)
+                        diagnostico = (f"Por cada $1,000 facturados, la logística consume ${impacto_1k:.2f}. "
+                                      f"Impacto acumulado en utilidad: ${abs(df_mes['INCREMENTO + VI']):,.2f}.")
+                        pdf.multi_cell(0, 10, diagnostico)
             
-                        # Forzamos la conversión a bytes puros, que es el lenguaje universal de Streamlit
+                        # --- PROTOCOLO DE SALIDA BINARIA (SOLUCIÓN AL ERROR) ---
+                        # 1. Generamos la salida
+                        pdf_raw = pdf.output()
+                        
+                        # 2. Convertimos a bytes puros (para que Streamlit no se confunda)
                         if isinstance(pdf_raw, (bytearray, str)):
-                            if isinstance(pdf_raw, str):
-                                pdf_final = pdf_raw.encode('latin-1')
-                            else:
-                                pdf_final = bytes(pdf_raw) # Convertimos bytearray a bytes
+                            pdf_final = bytes(pdf_raw) if isinstance(pdf_raw, bytearray) else pdf_raw.encode('latin-1')
                         else:
                             pdf_final = pdf_raw
             
+                        # 3. Lanzamos la descarga
                         st.download_button(
-                            label="💾 DESCARGAR REPORTE AHORA",
+                            label="💾 CLIC AQUÍ PARA DESCARGAR PDF",
                             data=pdf_final,
                             file_name=f"Reporte_Elite_{mes_sel}.pdf",
                             mime="application/pdf"
                         )
-                        st.success("✅ ¡Objetivo alcanzado! PDF listo para despacho.")
+                        st.success("✅ ¡PDF Generado! El archivo está listo para su descarga.")
+                        
+                    except Exception as e:
+                        st.error(f"Falla en los sistemas de impresión: {e}")
+            else:
+                # Mensaje de espera si la librería aún no carga en el servidor
+                st.warning("⚠️ El sistema PDF está en proceso de instalación. Espere 1 min y refresque (F5).")
         
         # --- NAVEGACIÓN ---
         st.divider()
@@ -1603,7 +1627,8 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
-
+    
+    
 
 
 
