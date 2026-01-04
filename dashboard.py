@@ -1728,6 +1728,8 @@ else:
             
                 except Exception as e:
                     st.error(f"⚠️ FALLA TÁCTICA: {e}")
+
+            generar_grafico_fleteras_elite_v2()
         
         
         
@@ -1750,6 +1752,7 @@ else:
         
         
     
+
 
 
 
