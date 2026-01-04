@@ -1786,7 +1786,7 @@ else:
                     columnas = base.mark_bar(
                         cornerRadiusTopLeft=12,
                         cornerRadiusTopRight=12,
-                        size=45 # Columnas más robustas
+                        size=90 # Columnas más robustas
                     ).encode(
                         x=alt.X('FLETERA:N', 
                                 title=None, 
@@ -1873,7 +1873,7 @@ else:
                     columnas = base.mark_bar(
                         cornerRadiusTopLeft=8,
                         cornerRadiusTopRight=8,
-                        size=35, # Grosor para que no se vea "flaco"
+                        size=50, # Grosor para que no se vea "flaco"
                         color='#EAB308'
                     )
             
@@ -1931,6 +1931,7 @@ else:
         
         
     
+
 
 
 
