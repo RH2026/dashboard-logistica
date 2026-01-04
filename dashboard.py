@@ -10,20 +10,12 @@ import datetime
 import io
 
 # --- NUEVO PROTOCOLO DE IMPORTACIÓN PARA FPDF2 (BLOQUE ELITE) ---
+# --- PROTOCOLO DE CONEXIÓN FINAL ---
 try:
-    # Intentamos la importación estándar
-    import fpdf
     from fpdf import FPDF
     PDF_READY = True
-except ImportError:
-    try:
-        # Si falla, forzamos la búsqueda en fpdf2
-        import fpdf2
-        from fpdf2 import FPDF
-        PDF_READY = True
-    except ImportError:
-        # Si ambos fallan, el servidor aún no termina la carga
-        PDF_READY = False
+except (ImportError, ModuleNotFoundError):
+    PDF_READY = False
 
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
@@ -1598,6 +1590,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
