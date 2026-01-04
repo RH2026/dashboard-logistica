@@ -1731,7 +1731,7 @@ else:
 
             generar_grafico_fleteras_elite_v2()
         
-             def generar_ranking_destinos_pro():
+            def generar_ranking_destinos_pro():
                 import os
                 try:
                     # 1. LOCALIZACIÓN DE LA INTELIGENCIA (Busca .scv o .csv)
@@ -1826,6 +1826,7 @@ else:
         
         
     
+
 
 
 
