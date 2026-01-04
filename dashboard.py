@@ -1556,7 +1556,7 @@ else:
                 if PDF_READY:
                     if st.button("GENERAR REPORTE"):
                         try:
-                            st.toast("Compilando las 9 tarjetas...", icon="⚙️")
+                            st.toast("Compilando información...", icon="⚙️")
                             
                             # RE-CÁLCULO DE SEGURIDAD
                             impacto_1k = (df_mes['COSTO DE FLETE'] / df_mes['FACTURACIÓN']) * 1000 if df_mes['FACTURACIÓN'] > 0 else 0
@@ -1642,95 +1642,93 @@ else:
             else:
                 st.info("💡 **INFO DE COMANDO:** El PDF requiere una vista de mes individual.")
         
-        # --- MOTOR DE INTELIGENCIA VISUAL: ANÁLISIS DE FLETERAS ---
-        def generar_grafico_fleteras_elite():
-            import os # <--- Agréguelo aquí mismo para una solución rápida
+        def generar_grafico_fleteras_elite_v2():
+            import os # Refuerzo de seguridad para el radar
             try:
-                # 1. LOCALIZACIÓN Y CARGA DE DATOS
+                # 1. DETECCIÓN DE ARCHIVO
                 posibles_nombres = ["matriz_mensual.scv", "matriz_mensual.csv"]
-                archivo_encontrado = None
-                
-                for nombre in posibles_nombres:
-                    if os.path.exists(nombre):
-                        archivo_encontrado = nombre
-                        break
+                archivo_encontrado = next((n for n in posibles_nombres if os.path.exists(n)), None)
                 
                 if not archivo_encontrado:
-                    st.error("🚨 ARCHIVO NO DETECTADO: Verifique que 'matriz_mensual.scv' esté en la carpeta.")
+                    st.error("🚨 RADAR: No se encontró 'matriz_mensual.scv'.")
                     return
         
-                # Carga con codificación para caracteres de México
+                # 2. CARGA Y LIMPIEZA DE DATOS
                 df = pd.read_csv(archivo_encontrado, encoding='latin-1')
                 df.columns = [c.strip().upper() for c in df.columns]
         
-                # 2. LIMPIEZA TÉCNICA DE DATOS
-                # Limpieza de Costo de Guía (Quitamos $, comas y espacios)
+                # Limpieza de moneda (Soporta $300,000.00)
                 df['COSTO DE GUIA'] = df['COSTO DE GUIA'].replace('[\$,]', '', regex=True).astype(float).fillna(0)
                 
-                # Procesamiento de Fechas para el Filtro
+                # Procesamiento de Fechas
                 df['FECHA DE FACTURA'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
                 df = df.dropna(subset=['FECHA DE FACTURA'])
-                
-                # Extraemos mes en texto y número para orden lógico
                 df['MES_LABEL'] = df['FECHA DE FACTURA'].dt.strftime('%B').str.upper()
                 df['MES_NUM'] = df['FECHA DE FACTURA'].dt.month
                 
-                # 3. CONFIGURACIÓN DEL FILTRO INTEGRADO (DROPDOWN)
-                # Ordenamos los meses cronológicamente
+                # 3. CONFIGURACIÓN DEL FILTRO INTEGRADO
                 meses_ordenados = df.sort_values('MES_NUM')['MES_LABEL'].unique().tolist()
-                
-                input_dropdown = alt.binding_select(options=meses_ordenados, name="PERIODO: ")
+                input_dropdown = alt.binding_select(options=meses_ordenados, name="FILTRAR MES: ")
                 seleccion = alt.selection_point(fields=['MES_LABEL'], bind=input_dropdown, value=meses_ordenados[-1])
         
-                # 4. CONSTRUCCIÓN DEL GRÁFICO (AMBER/GOLD DIGITAL)
-                chart = alt.Chart(df).mark_bar(
-                    cornerRadiusTopRight=12,
-                    cornerRadiusBottomRight=12,
-                    size=30 # Grosor de la barra para que se vea robusta
+                # --- CONSTRUCCIÓN DEL GRÁFICO MULTI-CAPA ---
+                
+                # Base del gráfico con el filtro aplicado
+                base = alt.Chart(df).transform_filter(seleccion)
+        
+                # CAPA 1: BARRAS CON COLORES DIFERENCIADOS
+                barras = base.mark_bar(
+                    cornerRadiusTopRight=15,
+                    cornerRadiusBottomRight=15,
+                    size=35
                 ).encode(
-                    x=alt.X('sum(COSTO DE GUIA):Q', 
-                            title="INVERSIÓN TOTAL EN FLETES ($)",
-                            axis=alt.Axis(format="$,.0f", grid=False, labelColor='#94a3b8')),
-                    y=alt.Y('FLETERA:N', 
-                            title=None, 
-                            sort='-x',
-                            axis=alt.Axis(labelFontSize=12, labelFontWeight='bold')),
-                    color=alt.value('#eab308'), # AMBER/GOLD DIGITAL (El color de otro nivel)
+                    x=alt.X('sum(COSTO DE GUIA):Q', title="INVERSIÓN ($)", axis=alt.Axis(format="$,.0f")),
+                    y=alt.Y('FLETERA:N', title=None, sort='-x'),
+                    # Colores diferenciados por fletera (Paleta de alta gama)
+                    color=alt.Color('FLETERA:N', 
+                                   scale=alt.Scale(scheme='tableau20'), 
+                                   legend=None),
                     tooltip=[
-                        alt.Tooltip('FLETERA:N', title="Fletera"),
-                        alt.Tooltip('sum(COSTO DE GUIA):Q', title="Gasto Total", format="$,.2f"),
-                        alt.Tooltip('count(GUIA):Q', title="Total de Envíos")
+                        alt.Tooltip('FLETERA:N'),
+                        alt.Tooltip('sum(COSTO DE GUIA):Q', format="$,.2f")
                     ]
-                ).add_params(
-                    seleccion
-                ).transform_filter(
+                )
+        
+                # CAPA 2: TEXTO CON EL MONTO REAL (Nivel Almirante)
+                texto = barras.mark_text(
+                    align='left',
+                    baseline='middle',
+                    dx=5, # Desplazamiento a la derecha de la barra
+                    color='white',
+                    fontWeight='bold',
+                    fontSize=13
+                ).encode(
+                    text=alt.Text('sum(COSTO DE GUIA):Q', format="$,.0f")
+                )
+        
+                # COMBINACIÓN DE CAPAS + PARÁMETROS
+                grafico_final = (barras + texto).add_params(
                     seleccion
                 ).properties(
                     width='container',
                     height=450,
                     title=alt.TitleParams(
-                        text="CONSOLIDADO DE GASTO POR PAQUETERÍA",
-                        subtitle=["Cifras totales acumuladas por fletera y mes de facturación"],
-                        fontSize=20,
-                        color='#f8fafc',
+                        text="ESTADO DE INVERSIÓN POR FLETERA",
+                        subtitle=["Montos reales consolidados por proveedor de servicios"],
+                        fontSize=22,
+                        color='#00ffa2', # Título en Verde Esmeralda
                         anchor='start'
                     )
-                ).configure_view(
-                    strokeWidth=0
-                ).configure_axis(
-                    labelFont='Inter',
-                    titleFont='Inter'
-                )
+                ).configure_view(strokeWidth=0).configure_axis(labelFontSize=12)
         
-                # Despliegue en Dashboard
-                st.altair_chart(chart, use_container_width=True)
+                st.altair_chart(grafico_final, use_container_width=True)
         
             except Exception as e:
-                st.error(f"⚠️ FALLA EN RADAR: {e}")
+                st.error(f"⚠️ FALLA TÁCTICA: {e}")
         
-        # Ejecución en el puente de mando
+        # Ejecución
         st.write("---")
-        generar_grafico_fleteras_elite()
+        generar_grafico_fleteras_elite_v2()
                 
         # --- NAVEGACIÓN NIVEL AMAZON (ESTILO FINAL) ---
         st.divider()
@@ -1751,6 +1749,7 @@ else:
         
         
     
+
 
 
 
