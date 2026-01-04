@@ -1556,24 +1556,23 @@ else:
                 
                 return pdf.output()
         
-            # --- PROTOCOLO DE EXTRACCIÓN SEGURO (BLOQUE REVISADO) ---
+            # --- PROTOCOLO DE EXTRACCIÓN SEGURO (LAS 9 TARJETAS) ---
             st.write("---")
 
             if not modo_comp:
-                # El botón solo es visible si NO estamos en modo comparativa
                 if PDF_READY:
-                    if st.button("GENERAR REPORTE"):
+                    if st.button("📊 GENERAR REPORTE"):
                         try:
-                            st.toast("Compilando estados financieros...", icon="⚙️")
+                            st.toast("Compilando las 9 tarjetas...", icon="⚙️")
                             
-                            # RE-CÁLCULO DE SEGURIDAD PARA EL PDF
+                            # RE-CÁLCULO DE SEGURIDAD
                             impacto_1k = (df_mes['COSTO DE FLETE'] / df_mes['FACTURACIÓN']) * 1000 if df_mes['FACTURACIÓN'] > 0 else 0
                             
                             pdf = FPDF()
                             pdf.add_page()
                             
-                            # --- ENCABEZADO INSTITUCIONAL (ESTILO ELITE) ---
-                            pdf.set_fill_color(13, 17, 23)  # Azul noche profundo
+                            # --- ENCABEZADO INSTITUCIONAL ---
+                            pdf.set_fill_color(13, 17, 23)
                             pdf.set_text_color(255, 255, 255)
                             pdf.set_font("Arial", 'B', 16)
                             pdf.cell(0, 15, f"REPORTE EJECUTIVO DE LOGÍSTICA - {mes_sel}", 0, 1, 'C', True)
@@ -1581,47 +1580,54 @@ else:
                             pdf.ln(5)
                             pdf.set_text_color(0, 0, 0)
                             
-                            # --- SECCIÓN 1: MÉTRICAS DE RENTABILIDAD (TARJETAS 1-3) ---
-                            pdf.set_font("Arial", 'B', 12)
+                            # --- SECCIÓN 1: RENTABILIDAD (TARJETAS 1, 2, 3) ---
+                            pdf.set_font("Arial", 'B', 11)
                             pdf.set_fill_color(240, 240, 240)
-                            pdf.cell(0, 10, "  I. INDICADORES DE RENTABILIDAD Y COSTO", 0, 1, 'L', True)
-                            pdf.ln(2)
-                            
+                            pdf.cell(0, 8, "  I. INDICADORES DE RENTABILIDAD Y COSTO", 0, 1, 'L', True)
+                            pdf.ln(1)
                             pdf.set_font("Arial", '', 10)
-                            pdf.cell(63, 10, f"Costo Logistico: {df_mes['COSTO LOGÍSTICO']:.2f}%", 1, 0, 'C')
-                            pdf.cell(63, 10, f"Meta: {df_mes['META INDICADOR']}%", 1, 0, 'C')
-                            pdf.cell(63, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.2f}", 1, 1, 'C')
+                            pdf.cell(63, 10, f"Costo Logistico: {df_mes['COSTO LOGÍSTICO']:.1f}%", 1, 0, 'C')
+                            pdf.cell(63, 10, f"Incr. vs 2024: {df_mes['% DE INCREMENTO VS 2024']:.1f}%", 1, 0, 'C')
+                            pdf.cell(63, 10, f"Meta Mes: {df_mes['META INDICADOR']}%", 1, 1, 'C')
                             
-                            pdf.ln(5)
+                            pdf.ln(3)
                             
-                            # --- SECCIÓN 2: IMPACTO FINANCIERO Y FUGAS (TARJETAS 4-6) ---
-                            pdf.set_font("Arial", 'B', 12)
-                            pdf.cell(0, 10, "  II. IMPACTO EN UTILIDAD Y DESVIACIONES", 0, 1, 'L', True)
-                            pdf.ln(2)
-                            
+                            # --- SECCIÓN 2: IMPACTO Y DESVIACIÓN (TARJETAS 4, 5, 6) ---
+                            pdf.set_font("Arial", 'B', 11)
+                            pdf.cell(0, 8, "  II. IMPACTO EN UTILIDAD Y CALIDAD", 0, 1, 'L', True)
+                            pdf.ln(1)
                             pdf.set_font("Arial", '', 10)
+                            pdf.cell(63, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.1f}", 1, 0, 'C')
                             pdf.cell(63, 10, f"Incidencias: {df_mes['PORCENTAJE DE INCIDENCIAS']:.2f}%", 1, 0, 'C')
-                            pdf.cell(63, 10, f"Valuacion VI: ${df_mes['VALUACION INCIDENCIAS']:,.0f}", 1, 0, 'C')
-                            pdf.cell(63, 10, f"Fuga Total: ${abs(df_mes['INCREMENTO + VI']):,.0f}", 1, 1, 'C')
+                            pdf.cell(63, 10, f"Val. Incidencias: ${df_mes['VALUACION INCIDENCIAS']:,.0f}", 1, 1, 'C')
                             
-                            pdf.ln(10)
+                            pdf.ln(3)
 
-                            # --- BLOQUE DE ANÁLISIS ESTRATÉGICO (EL "CORE") ---
-                            pdf.set_font("Arial", 'B', 13)
-                            pdf.set_text_color(30, 58, 138) # Azul corporativo
-                            pdf.cell(0, 10, "ANÁLISIS DE INTELIGENCIA DE NEGOCIO", ln=True)
+                            # --- SECCIÓN 3: OPERACIÓN (TARJETAS 7, 8, 9) --- [NUEVA SECCIÓN AGREGADA]
+                            pdf.set_font("Arial", 'B', 11)
+                            pdf.cell(0, 8, "  III. DATOS DE OPERACIÓN Y VOLUMETRÍA", 0, 1, 'L', True)
+                            pdf.ln(1)
+                            pdf.set_font("Arial", '', 10)
+                            pdf.cell(63, 10, f"Facturacion: ${df_mes['FACTURACIÓN']:,.0f}", 1, 0, 'C')
+                            pdf.cell(63, 10, f"Cajas Enviadas: {int(df_mes['CAJAS ENVIADAS']):,.0f}", 1, 0, 'C')
+                            pdf.cell(63, 10, f"Gasto Flete: ${df_mes['COSTO DE FLETE']:,.0f}", 1, 1, 'C')
+                            
+                            pdf.ln(6)
+
+                            # --- BLOQUE DE ANÁLISIS ---
+                            pdf.set_font("Arial", 'B', 12)
+                            pdf.set_text_color(30, 58, 138)
+                            pdf.cell(0, 10, "DIAGNÓSTICO ESTRATÉGICO FINAL", ln=True)
                             
                             pdf.set_text_color(0, 0, 0)
                             pdf.set_font("Arial", 'I', 11)
                             pdf.set_fill_color(245, 247, 250)
                             
-                            status_txt = "CRÍTICO" if df_mes['COSTO LOGÍSTICO'] > df_mes['META INDICADOR'] else "OPTIMO"
+                            status_txt = "CRÍTICO" if df_mes['COSTO LOGÍSTICO'] > df_mes['META INDICADOR'] else "ÓPTIMO"
                             analisis_pro = (
-                                f"El desempeño del mes de {mes_sel} muestra un estado {status_txt}. "
-                                f"Se detectó que por cada $1,000 MXN de venta, la logística consume ${impacto_1k:.2f}. "
-                                f"La desviación acumulada (Incremento vs 2024 + Valuación de Incidencias) "
-                                f"ha generado una erosión de margen de ${abs(df_mes['INCREMENTO + VI']):,.2f} MXN. "
-                                "\n\nAcción sugerida: Revisar rutas con mayor incidencia y negociar tarifas."
+                                f"En el periodo de {mes_sel}, la operacion registra un estado {status_txt}. "
+                                f"Cada $1,000 MXN de venta consumen ${impacto_1k:.2f} de flete. "
+                                f"El impacto acumulado por desviacion y mermas asciende a ${abs(df_mes['INCREMENTO + VI']):,.2f} MXN."
                             )
                             pdf.multi_cell(0, 10, analisis_pro, 1, 'L', True)
 
@@ -1630,21 +1636,18 @@ else:
                             pdf_final = bytes(pdf_raw) if isinstance(pdf_raw, bytearray) else pdf_raw.encode('latin-1')
                             
                             st.download_button(
-                                label="💾 DESCARGAR REPORTE",
+                                label="💾 DESCARGAR REPORTE COMPLETO (9 TARJETAS)",
                                 data=pdf_final,
-                                file_name=f"Analytics_Elite_{mes_sel}.pdf",
+                                file_name=f"Reporte_Elite_{mes_sel}.pdf",
                                 mime="application/pdf"
                             )
-                            st.toast("Reporte listo", icon="🔐")
                             
                         except Exception as e:
                             st.error(f"Falla en diseño: {e}")
                 else:
-                    st.warning("⚠️ El sistema PDF está en proceso de instalación.")
+                    st.warning("⚠️ Sistema PDF no detectado.")
             else:
-                # Mensaje Almirante para la vista comparativa
-                st.info("💡 **INFO DE COMANDO:** El generador de PDF está configurado para reportes de mes individual. En modo comparativa, la descarga está deshabilitada para asegurar la integridad de los datos.", icon="🛰️")
-
+                st.info("💡 **INFO DE COMANDO:** El PDF requiere una vista de mes individual.", icon="🛰️")
         # --- NAVEGACIÓN NIVEL AMAZON (ESTILO FINAL) ---
         st.divider()
         st.markdown('<div class="nav-container">', unsafe_allow_html=True) 
@@ -1664,6 +1667,7 @@ else:
         
         
     
+
 
 
 
