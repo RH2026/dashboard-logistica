@@ -1556,68 +1556,100 @@ else:
                 return pdf.output()
         
             # --- BOTON DE ACCION EN EL DASHBOARD ---
-            # --- MÓDULO DE EXTRACCIÓN PRO ELITE ---
+        
             st.write("---")
-            
+
             if PDF_READY:
-                st.markdown("### 🛰️ Terminal de Inteligencia")
-                
-                # Creamos un contenedor visual para el botón
-                with st.container():
-                    if st.button("🚀 GENERAR REPORTE ELITE (ALTA DEFINICIÓN)"):
-                        try:
-                            # Aviso de inicio de proceso (Pop-up en la esquina)
-                            st.toast("Iniciando compilación de datos...", icon="⚙️")
-                            
-                            pdf = FPDF()
-                            pdf.add_page()
-                            
-                            # --- DISEÑO DEL PDF PRO ---
-                            pdf.set_fill_color(20, 26, 35) # Fondo oscuro institucional
-                            pdf.set_text_color(255, 255, 255)
-                            pdf.set_font("Arial", 'B', 16)
-                            pdf.cell(0, 15, f"ANÁLISIS ESTRATÉGICO: {mes_sel}", ln=True, align='C', fill=True)
-                            
-                            pdf.ln(10)
-                            pdf.set_text_color(0, 0, 0)
-                            pdf.set_font("Arial", 'B', 12)
-                            pdf.cell(0, 10, "RESUMEN EJECUTIVO DE OPERACIONES", ln=True)
-                            
-                            # Tabla de KPIs Pro
-                            pdf.set_font("Arial", '', 11)
-                            pdf.cell(95, 10, f"Costo Logístico: {df_mes['COSTO LOGÍSTICO']:.2f}%", 1)
-                            pdf.cell(95, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.2f}", 1, 1)
-                            pdf.cell(95, 10, f"Facturación: ${df_mes['FACTURACIÓN']:,.2f}", 1)
-                            pdf.cell(95, 10, f"Volumen: {int(df_mes['CAJAS ENVIADAS']):,.0f} uds", 1, 1)
-                            
-                            # Salida binaria blindada
-                            pdf_raw = pdf.output()
-                            pdf_final = bytes(pdf_raw) if isinstance(pdf_raw, bytearray) else pdf_raw.encode('latin-1')
+                # Botón pequeño (sin use_container_width)
+                if st.button("📊 GENERAR REPORTE ELITE"):
+                    try:
+                        st.toast("Compilando estados financieros...", icon="⚙️")
+                        
+                        pdf = FPDF()
+                        pdf.add_page()
+                        
+                        # --- ENCABEZADO INSTITUCIONAL ---
+                        pdf.set_fill_color(13, 17, 23)  # Azul noche profundo
+                        pdf.set_text_color(255, 255, 255)
+                        pdf.set_font("Arial", 'B', 16)
+                        pdf.cell(0, 15, f"REPORTE EJECUTIVO DE LOGÍSTICA - {mes_sel}", 0, 1, 'C', True)
+                        
+                        pdf.ln(5)
+                        pdf.set_text_color(0, 0, 0)
+                        
+                        # --- SECCIÓN 1: MÉTRICAS DE RENTABILIDAD (TARJETAS 1-3) ---
+                        pdf.set_font("Arial", 'B', 12)
+                        pdf.set_fill_color(240, 240, 240)
+                        pdf.cell(0, 10, "  I. INDICADORES DE RENTABILIDAD Y COSTO", 0, 1, 'L', True)
+                        pdf.ln(2)
+                        
+                        pdf.set_font("Arial", '', 10)
+                        pdf.cell(63, 10, f"Costo Logistico: {df_mes['COSTO LOGÍSTICO']:.2f}%", 1, 0, 'C')
+                        pdf.cell(63, 10, f"Meta: {df_mes['META INDICADOR']}%", 1, 0, 'C')
+                        pdf.cell(63, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.2f}", 1, 1, 'C')
+                        
+                        pdf.ln(5)
+                        
+                        # --- SECCIÓN 2: IMPACTO FINANCIERO Y FUGAS (TARJETAS 4-6) ---
+                        pdf.set_font("Arial", 'B', 12)
+                        pdf.cell(0, 10, "  II. IMPACTO EN UTILIDAD Y DESVIACIONES", 0, 1, 'L', True)
+                        pdf.ln(2)
+                        
+                        pdf.set_font("Arial", '', 10)
+                        pdf.cell(63, 10, f"Incidencias: {df_mes['PORCENTAJE DE INCIDENCIAS']:.2f}%", 1, 0, 'C')
+                        pdf.cell(63, 10, f"Valuacion VI: ${df_mes['VALUACION INCIDENCIAS']:,.0f}", 1, 0, 'C')
+                        pdf.cell(63, 10, f"Fuga Total: ${abs(df_mes['INCREMENTO + VI']):,.0f}", 1, 1, 'C')
+                        
+                        pdf.ln(5)
             
-                            # Aviso de finalización (Pop-up)
-                            st.toast("Documento encriptado y listo.", icon="🔐")
-                            
-                            # Botón de descarga con estilo
-                            st.download_button(
-                                label="📥 DESCARGAR INFORME EJECUTIVO",
-                                data=pdf_final,
-                                file_name=f"Elite_Report_{mes_sel}.pdf",
-                                mime="application/pdf",
-                                use_container_width=True # Botón ancho nivel Pro
-                            )
-                            
-                            # Aviso de éxito Elite (Permanente)
-                            st.info(f"✨ **Protocolo Completado:** El reporte de **{mes_sel}** ha sido procesado con éxito. El archivo está disponible para su descarga.", icon="📊")
-                            
-                        except Exception as e:
-                            st.error(f"❌ **FALLO EN EL SISTEMA:** {e}", icon="🚨")
+                        # --- SECCIÓN 3: VOLUMETRÍA Y VENTA (TARJETAS 7-9) ---
+                        pdf.set_font("Arial", 'B', 12)
+                        pdf.cell(0, 10, "  III. DATOS DE OPERACIÓN Y FACTURACIÓN", 0, 1, 'L', True)
+                        pdf.ln(2)
+                        
+                        pdf.set_font("Arial", '', 10)
+                        pdf.cell(63, 10, f"Facturacion: ${df_mes['FACTURACIÓN']:,.0f}", 1, 0, 'C')
+                        pdf.cell(63, 10, f"Cajas: {int(df_mes['CAJAS ENVIADAS']):,.0f}", 1, 0, 'C')
+                        pdf.cell(63, 10, f"Gasto Flete: ${df_mes['COSTO DE FLETE']:,.0f}", 1, 1, 'C')
+                        
+                        pdf.ln(10)
+            
+                        # --- BLOQUE DE ANÁLISIS ESTRATÉGICO (EL "CORE") ---
+                        pdf.set_font("Arial", 'B', 13)
+                        pdf.set_text_color(30, 58, 138) # Azul corporativo
+                        pdf.cell(0, 10, "ANÁLISIS DE INTELIGENCIA DE NEGOCIO", ln=True)
+                        
+                        pdf.set_text_color(0, 0, 0)
+                        pdf.set_font("Arial", 'I', 11)
+                        pdf.set_fill_color(245, 247, 250)
+                        
+                        # Diagnóstico redactado dinámicamente
+                        status_txt = "CRÍTICO" if df_mes['COSTO LOGÍSTICO'] > df_mes['META INDICADOR'] else "OPTIMO"
+                        analisis_pro = (
+                            f"El desempeño del mes de {mes_sel} muestra un estado {status_txt}. "
+                            f"Se detectó que por cada $1,000 MXN de venta, la logística consume ${impacto_1k:.2f}. "
+                            f"La desviación acumulada (Incremento vs 2024 + Valuación de Incidencias) "
+                            f"ha generado una erosión de margen de ${abs(df_mes['INCREMENTO + VI']):,.2f} MXN. "
+                            "\n\nAcción sugerida: Revisar rutas con mayor incidencia y negociar tarifas en zonas de alta desviación."
+                        )
+                        pdf.multi_cell(0, 10, analisis_pro, 1, 'L', True)
+            
+                        # --- PROTOCOLO DE SALIDA ---
+                        pdf_raw = pdf.output()
+                        pdf_final = bytes(pdf_raw) if isinstance(pdf_raw, bytearray) else pdf_raw.encode('latin-1')
+                        
+                        st.download_button(
+                            label="💾 DESCARGAR REPORTE PRO-ELITE",
+                            data=pdf_final,
+                            file_name=f"Analytics_Elite_{mes_sel}.pdf",
+                            mime="application/pdf"
+                        )
+                        st.toast("Reporte listo para firma.", icon="🔐")
+                        
+                    except Exception as e:
+                        st.error(f"Falla en diseño: {e}")
             else:
-                # Aviso de espera nivel Pro (con spinner visual)
-                with st.status("🛠️ Sincronizando librerías de inteligencia...", expanded=True) as status:
-                    st.write("Verificando integridad de fpdf2 en el hangar...")
-                    st.write("Configurando protocolos de salida binaria...")
-                    if not PDF_READY:
-                        st.warning("⚠️ Módulo PDF en cola de espera. Refresque el mando en 30 segundos.")
+                st.warning("⚠️ El sistema PDF está en proceso de instalación.")
         
         # --- NAVEGACIÓN ---
         st.divider()
@@ -1634,6 +1666,7 @@ else:
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
     
     
+
 
 
 
