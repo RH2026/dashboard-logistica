@@ -1357,7 +1357,7 @@ else:
         
         if df_a is not None:
             # --- 3. SIDEBAR ---
-            st.sidebar.markdown("## 🛰️ OPS COMMAND")
+            st.sidebar.markdown("## ")
             meses_limpios = [m for m in df_a["MES"].unique() if str(m).strip() != ""]
             mes_sel = st.sidebar.selectbox("MES ACTUAL / BASE", meses_limpios)
             df_mes = df_a[df_a["MES"] == mes_sel].iloc[0]
@@ -1384,7 +1384,7 @@ else:
                 </style>
             """, unsafe_allow_html=True)
         
-            header_txt = f"Performance: {mes_sel}" if not modo_comp else f"⚔️ Combat Mode: {mes_sel} VS {mes_comp}"
+            header_txt = f"Performance: {mes_sel}" if not modo_comp else f"Comparativa Mode: {mes_sel} VS {mes_comp}"
             st.markdown(f"<h1 class='premium-header'>{header_txt}</h1>", unsafe_allow_html=True)
         
             if not modo_comp:
@@ -1407,40 +1407,54 @@ else:
                 # --- BLOQUE PREMIUM DE CÁLCULOS ---
                 st.markdown(f"""
                 <div class="calc-box">
-                    <b style="color:#38bdf8; text-transform:uppercase;">🧮 Metodología de Cálculo para {mes_sel}:</b><br><br>
+                    <b style="color:#38bdf8; text-transform:uppercase;">Metodología de Cálculo para {mes_sel}:</b><br><br>
                     • <b>Logístico:</b> (${df_mes['COSTO DE FLETE']:,.2f} / ${df_mes['FACTURACIÓN']:,.2f}) = {df_mes['COSTO LOGÍSTICO']:.2f}%<br>
                     • <b>C/Caja:</b> ${df_mes['COSTO DE FLETE']:,.2f} / {int(df_mes['CAJAS ENVIADAS'])} cajas = ${df_mes['COSTO POR CAJA']:.2f}<br>
                     • <b>Impacto:</b> (Ahorro Incidencias) - (Variación Tarifaria vs 2024 * Cajas) = ${df_mes['INCREMENTO + VI']:,.2f}
                 </div>
                 """, unsafe_allow_html=True)
         
-                # --- TARJETAS FINALES: ANÁLISIS ESTRATÉGICO Y RADIOGRAFÍA ---
+               # --- LÓGICA DE NARRATIVA DINÁMICA (EL CEREBRO DEL CAPITÁN) ---
+                impacto_1k = (df_mes['COSTO DE FLETE'] / df_mes['FACTURACIÓN']) * 1000
+                eficiencia_vs_meta = df_mes['META INDICADOR'] - df_mes['COSTO LOGÍSTICO']
+                
+                # Definición de Tono y Mensaje según Desempeño
+                if eficiencia_vs_meta >= 0.5:
+                    msg_clase = "OPTIMIZACIÓN RADICAL"
+                    msg_color = "#00ffa2"
+                    msg_desc = f"La operación está en zona de alta rentabilidad. Estamos operando {eficiencia_vs_meta:.1f}% por debajo del techo presupuestal, lo que inyecta liquidez directa al Bottom Line."
+                elif eficiencia_vs_meta >= 0:
+                    msg_clase = "ESTABILIDAD OPERATIVA"
+                    msg_color = "#38bdf8"
+                    msg_desc = "Cumplimiento de objetivos en curso. El control de fletes se mantiene alineado con la facturación, asegurando un margen neto previsible."
+                else:
+                    msg_clase = "EROSIÓN DE MARGEN"
+                    msg_color = "#fb7185"
+                    msg_desc = f"Alerta roja: La logística está devorando el margen bruto. Superamos el target por {abs(eficiencia_vs_meta):.1f}%, lo que requiere una intervención inmediata en el mix de transporte."
+        
+                # --- VISUALIZACIÓN DE ANÁLISIS DINÁMICO ---
                 r1, r2 = st.columns(2)
                 with r1:
-                    impacto_1k = (df_mes['COSTO DE FLETE'] / df_mes['FACTURACIÓN']) * 1000
-                    fuga_capital = abs(df_mes['INCREMENTO + VI'])
-                    st.markdown(f"""<div class="insight-box" style="border-left: 5px solid #38bdf8; height:220px;">
-                        <h4 style="color:#38bdf8; margin:0; font-family:Orbitron; font-size:0.9rem;">📉 IMPACTO EN EL BOTTOM LINE</h4>
-                        <p style="color:#94a3b8; font-size:0.85rem; margin-top:15px; line-height:1.5;">
-                        • <b>Tasa de Consumo:</b> Por cada <b>$1,000 MXN</b> vendidos, la logística devora <b>${impacto_1k:.2f}</b> de utilidad bruta.<br>
-                        • <b>Fuga de Capital:</b> Existe una hemorragia financiera de <b>${fuga_capital:,.0f}</b> provocada exclusivamente por el desvío de tarifas respecto al estándar de 2024.<br>
-                        • <b>Eficiencia de Escala:</b> A pesar de procesar {int(df_mes['CAJAS ENVIADAS']):,.0f} unidades, no estamos logrando economías de escala.
+                    st.markdown(f"""<div class="insight-box" style="border-left: 5px solid #38bdf8; height:240px;">
+                        <h4 style="color:#38bdf8; margin:0; font-family:Orbitron; font-size:0.9rem;">DEEP DIVE: EFICIENCIA FINANCIERA</h4>
+                        <p style="color:#94a3b8; font-size:0.85rem; margin-top:15px; line-height:1.6;">
+                        • <b>Métrica de Consumo:</b> Cada <b>$1,000</b> de venta genera un 'impuesto logístico' de <b>${impacto_1k:.2f}</b>.<br>
+                        • <b>Punto de Fuga:</b> El desvío tarifario vs 2024 representa una fuga de <b>${abs(df_mes['INCREMENTO + VI']):,.0f}</b>. <br>
+                        • <b>Diagnóstico:</b> El costo por unidad está <b>{'sobre la media' if df_mes['COSTO POR CAJA'] > df_mes['COSTO POR CAJA 2024'] else 'bajo control'}</b>, lo que indica una {'necesidad de renegociación' if df_mes['COSTO POR CAJA'] > df_mes['COSTO POR CAJA 2024'] else 'gestión óptima de activos'}.
                         </p></div>""", unsafe_allow_html=True)
                 
                 with r2:
-                    status_color = "#00ffa2" if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else "#fb7185"
-                    brecha = df_mes['% DE INCREMENTO VS 2024']
-                    st.markdown(f"""<div class="insight-box" style="border-top: 4px solid {status_color}; height:220px;">
-                        <h4 style="color:{status_color}; margin:0; font-family:Orbitron; font-size:0.9rem;">🩺 DIAGNÓSTICO ESTRATÉGICO</h4>
-                        <p style="color:#f1f5f9; font-size:0.85rem; margin-top:15px; line-height:1.5;">
-                        <b>DICTAMEN:</b> {'LA OPERACIÓN ESTÁ OPTIMIZADA DENTRO DEL BUDGET' if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else 'ALERTA DE EROSIÓN DE MARGEN'}.<br><br>
-                        La brecha inflacionaria de <b>{brecha:.1f}%</b> en el costo unitario indica que el crecimiento del costo de transporte está superando el ritmo de crecimiento de las ventas. 
-                        <b>Acción Crítica:</b> Auditoría inmediata de la matriz de fletes para frenar el incremento acumulado.
+                    st.markdown(f"""<div class="insight-box" style="border-top: 4px solid {msg_color}; height:240px;">
+                        <h4 style="color:{msg_color}; margin:0; font-family:Orbitron; font-size:0.9rem;">🩺 RADIOGRAFÍA: {msg_clase}</h4>
+                        <p style="color:#f1f5f9; font-size:0.85rem; margin-top:15px; line-height:1.6;">
+                        <b>DICTAMEN TÉCNICO:</b> {msg_desc}<br><br>
+                        <b>ANÁLISIS DE BRECHA:</b> Estamos operando con un incremento unitario del <b>{df_mes['% DE INCREMENTO VS 2024']:.1f}%</b>. Este nivel de inflación logística 
+                        {'es insostenible' if df_mes['% DE INCREMENTO VS 2024'] > 10 else 'es manejable'} bajo el esquema actual de precios de venta.
                         </p></div>""", unsafe_allow_html=True)
         
             else:
                 # --- VISTA COMPARATIVA 3 VS 3 ---
-                st.markdown(f"### ⚔️ Battle View: {mes_sel} vs {mes_comp}")
+                st.markdown(f"### Comparation View: {mes_sel} vs {mes_comp}")
                 col_a, col_b = st.columns(2)
                 
                 with col_a:
@@ -1455,18 +1469,17 @@ else:
                     render_card("Costo por Caja", f"${df_mes_b['COSTO POR CAJA']:.1f}", "Comparativo", df_mes_b['COSTO POR CAJA 2024'], df_mes_b['COSTO POR CAJA'])
                     render_card("Incremento + VI", f"${df_mes_b['INCREMENTO + VI']:,.0f}", "Comparativo", 0, df_mes_b['INCREMENTO + VI'], inverse=True)
         
-                # --- ANÁLISIS PROFUNDO COMPARATIVO ---
-                # --- ANÁLISIS PROFUNDO COMPARATIVO REALISTA ---
+                # --- ANÁLISIS DE COMBATE (DEEP DIVE COMPARATIVO) ---
                 delta_log = df_mes["COSTO LOGÍSTICO"] - df_mes_b["COSTO LOGÍSTICO"]
-                delta_cpc = df_mes["COSTO POR CAJA"] - df_mes_b["COSTO POR CAJA"]
+                mejor_mes = mes_sel if delta_log < 0 else mes_comp
+                
                 st.markdown(f"""
                 <div class="insight-box" style="border-top: 5px solid #a78bfa;">
-                    <h4 style="color:#a78bfa; margin:0; font-family:Orbitron; font-size:0.9rem;">🔎 ANÁLISIS DE VARIACIÓN ESTRUCTURAL (DEEP DIVE)</h4>
+                    <h4 style="color:#a78bfa; margin:0; font-family:Orbitron; font-size:0.9rem;">ANÁLISIS FORENSE: COMPARATIVA DE RENDIMIENTO</h4>
                     <p style="color:#f1f5f9; font-size:0.9rem; margin-top:10px; line-height:1.6;">
-                    Al contrastar <b>{mes_sel}</b> contra <b>{mes_comp}</b>, la telemetría revela una desviación de <b>${abs(delta_cpc):.2f}</b> por cada caja enviada. 
-                    <br>• <b>Efecto Volumen:</b> El cambio en facturación impactó la absorción de costos en un <b>{abs(delta_log):.2f}%</b>.<br>
-                    • <b>Veredicto Realista:</b> {'Estamos ganando eficiencia a pesar del entorno inflacionario' if delta_log < 0 else 'La operación actual es menos rentable que el periodo de referencia'}. 
-                    El factor determinante no es el flete total, sino la <b>densidad de carga</b> y el <b>mix de transportistas</b> utilizado.
+                    La telemetría indica que <b>{mejor_mes}</b> es el referente de eficiencia. 
+                    <br>• <b>Variación Estratégica:</b> Existe un diferencial de <b>{abs(delta_log):.2f}%</b> en la absorción del costo sobre la venta bruta.<br>
+                    • <b>Factor Determinante:</b> La diferencia no es el volumen, sino la <b>densidad de costo por caja</b>. {'Mantener el modelo de ' + mejor_mes if delta_log != 0 else 'Ambos periodos presentan paridad operativa'}.
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -1486,6 +1499,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
