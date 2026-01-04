@@ -1687,10 +1687,12 @@ else:
                 </style>
             """, unsafe_allow_html=True)
         
-        st.sidebar.divider()
-        st.sidebar.markdown('<div class="nav-container">', unsafe_allow_html=True) # Abrir contenedor
+        # --- NAVEGACIÓN NIVEL PRO (CUERPO PRINCIPAL) ---
+        st.divider()
+        # Abrimos el contenedor con el estilo CSS que ya inyectamos
+        st.markdown('<div class="nav-container">', unsafe_allow_html=True) 
         
-        n1, n2 = st.sidebar.columns(2)
+        n1, n2 = st.columns(2) # Columnas en el área principal
         with n1:
             if st.button("🏠 INICIO", use_container_width=True):
                 st.session_state.pagina = "principal"
@@ -1700,11 +1702,12 @@ else:
                 st.session_state.pagina = "KPIs"
                 st.rerun()
         
-        st.sidebar.markdown('</div>', unsafe_allow_html=True) # Cerrar contenedor
+        st.markdown('</div>', unsafe_allow_html=True) # Cerramos el contenedor
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
     
     
+
 
 
 
