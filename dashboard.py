@@ -7,6 +7,8 @@ import textwrap
 import streamlit.components.v1 as components
 import numpy as np
 import datetime
+from fpdf import FPDF
+import io
 
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
@@ -1484,7 +1486,84 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
 
+            def crear_pdf_logistico(df_mes, mes_sel, impacto_1k, veredicto):
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_auto_page_break(auto=True, margin=15)
+                
+                # --- ENCABEZADO ---
+                pdf.set_font("Arial", 'B', 16)
+                pdf.cell(0, 10, f"REPORTE EJECUTIVO DE LOGISTICA: {mes_sel}", ln=True, align='C')
+                pdf.set_font("Arial", 'I', 10)
+                pdf.cell(0, 10, "Intelligence Operations Command - Logistic Performance Analysis", ln=True, align='C')
+                pdf.ln(5)
+                pdf.line(10, 32, 200, 32) # Línea divisoria
+                pdf.ln(10)
+                
+                # --- TABLA DE KPIS CRITICOS ---
+                pdf.set_fill_color(240, 240, 240)
+                pdf.set_font("Arial", 'B', 12)
+                pdf.cell(100, 10, "INDICADOR CLAVE (KPI)", 1, 0, 'C', True)
+                pdf.cell(90, 10, "VALOR REPORTADO", 1, 1, 'C', True)
+                
+                pdf.set_font("Arial", '', 11)
+                kpis = [
+                    ("Costo Logistico (%)", f"{df_mes['COSTO LOGÍSTICO']:.2f}%"),
+                    ("Costo por Caja ($)", f"${df_mes['COSTO POR CAJA']:.2f}"),
+                    ("Facturacion Mensual", f"${df_mes['FACTURACIÓN']:,.2f}"),
+                    ("Volumen (Cajas)", f"{int(df_mes['CAJAS ENVIADAS']):,.0f}"),
+                    ("Fuga de Utilidad (Delta)", f"${abs(df_mes['INCREMENTO + VI']):,.2f}"),
+                    ("Inflacion vs 2024", f"{df_mes['% DE INCREMENTO VS 2024']:.1f}%")
+                ]
+                
+                for kpi, valor in kpis:
+                    pdf.cell(100, 10, kpi, 1)
+                    pdf.cell(90, 10, valor, 1, 1, 'C')
+                
+                pdf.ln(10)
+                
+                # --- METODOLOGIA DE CALCULO ---
+                pdf.set_font("Arial", 'B', 12)
+                pdf.cell(0, 10, "METODOLOGIA DE CALCULO Y AUDITORIA:", ln=True)
+                pdf.set_font("Arial", '', 10)
+                metodologia = (
+                    f"1. Costo Logistico: Se determina dividiendo el gasto total de fletes (${df_mes['COSTO DE FLETE']:,.2f}) "
+                    f"entre la facturacion bruta (${df_mes['FACTURACIÓN']:,.2f}).\n"
+                    f"2. Costo por Caja: Gasto total entre {int(df_mes['CAJAS ENVIADAS'])} unidades despachadas.\n"
+                    f"3. Impacto de Utilidad: Cruce de valuacion de incidencias contra desviacion tarifaria base 2024."
+                )
+                pdf.multi_cell(0, 8, metodologia)
+                pdf.ln(5)
+            
+                # --- RADIOGRAFIA Y DIAGNOSTICO ---
+                pdf.set_font("Arial", 'B', 12)
+                pdf.cell(0, 10, "DIAGNOSTICO ESTRATEGICO FINAL:", ln=True)
+                pdf.set_fill_color(245, 245, 255)
+                pdf.set_font("Arial", 'I', 11)
+                diagnostico = (
+                    f"Por cada $1,000 MXN de venta, la operacion consume ${impacto_1k:.2f}.\n\n"
+                    f"VERDICTO: {veredicto}"
+                )
+                pdf.multi_cell(0, 10, diagnostico, border=1, fill=True)
+                
+                return pdf.output()
         
+            # --- BOTON DE ACCION EN EL DASHBOARD ---
+            st.markdown("---")
+            col_pdf1, col_pdf2 = st.columns([1, 2])
+            with col_pdf1:
+                if st.button("📊 GENERAR ARCHIVO PDF"):
+                    # Recuperamos el veredicto dinámico que ya calculamos arriba
+                    msg_desc_final = msg_desc if 'msg_desc' in locals() else "Analisis generado por el sistema Elite."
+                    
+                    pdf_bytes = crear_pdf_logistico(df_mes, mes_sel, impacto_1k, msg_desc_final)
+                    
+                    st.download_button(
+                        label="💾 DESCARGAR REPORTE AHORA",
+                        data=pdf_bytes,
+                        file_name=f"Reporte_Elite_{mes_sel}.pdf",
+                        mime="application/pdf"  
+                    )
         
         # --- NAVEGACIÓN ---
         st.divider()
@@ -1499,6 +1578,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
