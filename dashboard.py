@@ -7,8 +7,8 @@ import textwrap
 import streamlit.components.v1 as components
 import numpy as np
 import datetime
-from fpdf import FPDF
 import io
+from fpdf import FPDF
 
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
@@ -1550,20 +1550,30 @@ else:
         
             # --- BOTON DE ACCION EN EL DASHBOARD ---
             st.markdown("---")
-            col_pdf1, col_pdf2 = st.columns([1, 2])
-            with col_pdf1:
-                if st.button("📊 GENERAR ARCHIVO PDF"):
-                    # Recuperamos el veredicto dinámico que ya calculamos arriba
-                    msg_desc_final = msg_desc if 'msg_desc' in locals() else "Analisis generado por el sistema Elite."
+            if st.button("📊 GENERAR REPORTE PDF EJECUTIVO"):
+                try:
+                    pdf = FPDF()
+                    pdf.add_page()
+                    pdf.set_font("Arial", 'B', 16)
+                    pdf.cell(0, 10, f"REPORTE DE OPERACIONES: {mes_sel}", ln=True, align='C')
                     
-                    pdf_bytes = crear_pdf_logistico(df_mes, mes_sel, impacto_1k, msg_desc_final)
+                    pdf.set_font("Arial", '', 12)
+                    pdf.ln(10)
+                    pdf.cell(0, 10, f"Costo Logistico: {df_mes['COSTO LOGÍSTICO']:.2f}%", ln=True)
+                    pdf.cell(0, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.2f}", ln=True)
+                    pdf.cell(0, 10, f"Facturacion: ${df_mes['FACTURACIÓN']:,.2f}", ln=True)
+                    
+                    # Generar el archivo en memoria
+                    pdf_output = pdf.output(dest='S').encode('latin-1')
                     
                     st.download_button(
                         label="💾 DESCARGAR REPORTE AHORA",
-                        data=pdf_bytes,
+                        data=pdf_output,
                         file_name=f"Reporte_Elite_{mes_sel}.pdf",
-                        mime="application/pdf"  
+                        mime="application/pdf"
                     )
+                except Exception as e:
+                    st.error(f"Error al generar PDF: {e}. Verifique que fpdf2 esté en requirements.txt")
         
         # --- NAVEGACIÓN ---
         st.divider()
@@ -1578,6 +1588,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
