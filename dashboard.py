@@ -1414,23 +1414,28 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
         
-                # --- TARJETAS FINALES: ANÁLISIS Y RADIOGRAFÍA ---
+                # --- TARJETAS FINALES: ANÁLISIS ESTRATÉGICO Y RADIOGRAFÍA ---
                 r1, r2 = st.columns(2)
                 with r1:
                     impacto_1k = (df_mes['COSTO DE FLETE'] / df_mes['FACTURACIÓN']) * 1000
-                    st.markdown(f"""<div class="insight-box" style="border-left: 5px solid #38bdf8; height:180px;">
-                        <h4 style="color:#38bdf8; margin:0; font-family:Orbitron; font-size:0.9rem;">📉 ANÁLISIS DE EFICIENCIA</h4>
-                        <p style="color:#94a3b8; font-size:0.85rem; margin-top:15px;">
-                        Por cada <b>$1,000 MXN</b> facturados, la logística consume <b>${impacto_1k:.2f}</b>. 
-                        La fuga de utilidad proyectada por desvío de tarifas asciende a <b>${abs(df_mes['INCREMENTO + VI']):,.0f}</b>.
+                    fuga_capital = abs(df_mes['INCREMENTO + VI'])
+                    st.markdown(f"""<div class="insight-box" style="border-left: 5px solid #38bdf8; height:220px;">
+                        <h4 style="color:#38bdf8; margin:0; font-family:Orbitron; font-size:0.9rem;">📉 IMPACTO EN EL BOTTOM LINE</h4>
+                        <p style="color:#94a3b8; font-size:0.85rem; margin-top:15px; line-height:1.5;">
+                        • <b>Tasa de Consumo:</b> Por cada <b>$1,000 MXN</b> vendidos, la logística devora <b>${impacto_1k:.2f}</b> de utilidad bruta.<br>
+                        • <b>Fuga de Capital:</b> Existe una hemorragia financiera de <b>${fuga_capital:,.0f}</b> provocada exclusivamente por el desvío de tarifas respecto al estándar de 2024.<br>
+                        • <b>Eficiencia de Escala:</b> A pesar de procesar {int(df_mes['CAJAS ENVIADAS']):,.0f} unidades, no estamos logrando economías de escala.
                         </p></div>""", unsafe_allow_html=True)
+                
                 with r2:
                     status_color = "#00ffa2" if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else "#fb7185"
-                    st.markdown(f"""<div class="insight-box" style="border-top: 4px solid {status_color}; height:180px;">
-                        <h4 style="color:{status_color}; margin:0; font-family:Orbitron; font-size:0.9rem;">🩺 RADIOGRAFÍA FINAL</h4>
-                        <p style="color:#f1f5f9; font-size:0.85rem; margin-top:15px;">
-                        <b>ESTADO:</b> {'SALUDABLE' if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else 'ALERTA CRÍTICA'}.<br><br>
-                        La brecha operativa es del <b>{df_mes['% DE INCREMENTO VS 2024']:.1f}%</b> respecto al estándar 2024. Se requiere optimización de rutas.
+                    brecha = df_mes['% DE INCREMENTO VS 2024']
+                    st.markdown(f"""<div class="insight-box" style="border-top: 4px solid {status_color}; height:220px;">
+                        <h4 style="color:{status_color}; margin:0; font-family:Orbitron; font-size:0.9rem;">🩺 DIAGNÓSTICO ESTRATÉGICO</h4>
+                        <p style="color:#f1f5f9; font-size:0.85rem; margin-top:15px; line-height:1.5;">
+                        <b>DICTAMEN:</b> {'LA OPERACIÓN ESTÁ OPTIMIZADA DENTRO DEL BUDGET' if df_mes["COSTO LOGÍSTICO"] <= df_mes["META INDICADOR"] else 'ALERTA DE EROSIÓN DE MARGEN'}.<br><br>
+                        La brecha inflacionaria de <b>{brecha:.1f}%</b> en el costo unitario indica que el crecimiento del costo de transporte está superando el ritmo de crecimiento de las ventas. 
+                        <b>Acción Crítica:</b> Auditoría inmediata de la matriz de fletes para frenar el incremento acumulado.
                         </p></div>""", unsafe_allow_html=True)
         
             else:
@@ -1451,17 +1456,20 @@ else:
                     render_card("Incremento + VI", f"${df_mes_b['INCREMENTO + VI']:,.0f}", "Comparativo", 0, df_mes_b['INCREMENTO + VI'], inverse=True)
         
                 # --- ANÁLISIS PROFUNDO COMPARATIVO ---
+                # --- ANÁLISIS PROFUNDO COMPARATIVO REALISTA ---
                 delta_log = df_mes["COSTO LOGÍSTICO"] - df_mes_b["COSTO LOGÍSTICO"]
+                delta_cpc = df_mes["COSTO POR CAJA"] - df_mes_b["COSTO POR CAJA"]
                 st.markdown(f"""
                 <div class="insight-box" style="border-top: 5px solid #a78bfa;">
-                    <h4 style="color:#a78bfa; margin:0; font-family:Orbitron; font-size:0.9rem;">🔎 ANÁLISIS PROFUNDO REALISTA</h4>
-                    <p style="color:#f1f5f9; font-size:0.9rem; margin-top:10px;">
-                    Al contrastar ambos periodos, detectamos una variación de <b>{abs(delta_log):.2f}%</b> en eficiencia. 
-                    El mes de <b>{mes_sel if delta_log < 0 else mes_comp}</b> demostró una mejor absorción de costos fijos debido a su volumen de facturación.
-                    <b>Conclusión:</b> La rentabilidad logística {'mejoró' if delta_log < 0 else 'decayó'} en el periodo actual.
+                    <h4 style="color:#a78bfa; margin:0; font-family:Orbitron; font-size:0.9rem;">🔎 ANÁLISIS DE VARIACIÓN ESTRUCTURAL (DEEP DIVE)</h4>
+                    <p style="color:#f1f5f9; font-size:0.9rem; margin-top:10px; line-height:1.6;">
+                    Al contrastar <b>{mes_sel}</b> contra <b>{mes_comp}</b>, la telemetría revela una desviación de <b>${abs(delta_cpc):.2f}</b> por cada caja enviada. 
+                    <br>• <b>Efecto Volumen:</b> El cambio en facturación impactó la absorción de costos en un <b>{abs(delta_log):.2f}%</b>.<br>
+                    • <b>Veredicto Realista:</b> {'Estamos ganando eficiencia a pesar del entorno inflacionario' if delta_log < 0 else 'La operación actual es menos rentable que el periodo de referencia'}. 
+                    El factor determinante no es el flete total, sino la <b>densidad de carga</b> y el <b>mix de transportistas</b> utilizado.
                     </p>
                 </div>
-                """, unsafe_allow_html=True)  
+                """, unsafe_allow_html=True)
 
         
         
