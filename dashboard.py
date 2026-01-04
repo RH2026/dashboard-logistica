@@ -1733,7 +1733,7 @@ else:
         def generar_grafico_eficiencia_envio():
             try:
                 # 1. CARGA (Usamos la lógica ya probada)
-                df = pd.read_csv("matriz_mensual.scv", encoding='latin-1')
+                df = pd.read_csv("matriz_mensual.csv", encoding='latin-1')
                 df.columns = [c.strip().upper() for c in df.columns]
         
                 # 2. LIMPIEZA DE DATOS TÉCNICOS
@@ -1792,6 +1792,7 @@ else:
         
         
     
+
 
 
 
