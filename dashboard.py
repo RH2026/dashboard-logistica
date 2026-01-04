@@ -76,7 +76,7 @@ else:
 color_fondo_nativo = "#0e1117" 
 color_blanco = "#FFFFFF"
 color_verde = "#00FF00" 
-color_borde_gris = "#333333"
+color_borde_gris = "##00ffa2"
 
 # Colores Globales
 color_fondo_nativo = "#0e1117"
@@ -1667,6 +1667,7 @@ else:
         
         
     
+
 
 
 
