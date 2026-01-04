@@ -1731,7 +1731,58 @@ else:
 
             generar_grafico_fleteras_elite_v2()
         
-        
+     
+            def generar_mapa_calor_destinos():
+                import os
+                try:
+                    # 1. CARGA DE INTELIGENCIA
+                    archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
+                    df = pd.read_csv(archivo, encoding='latin-1')
+                    df.columns = [c.strip().upper() for c in df.columns]
+            
+                    # 2. LIMPIEZA DE VALORES MONETARIOS
+                    df['VALOR FACTURA'] = df['VALOR FACTURA'].replace('[\$,]', '', regex=True).astype(float).fillna(0)
+                    
+                    # Agrupamos por Estado para obtener el total de facturación por destino
+                    df_geo = df.groupby('ESTADO')['VALOR FACTURA'].sum().reset_index()
+            
+                    # 3. CONSTRUCCIÓN DEL MAPA DE CALOR (HEATMAP)
+                    # Usamos un gráfico de rectángulos (TreeMap) o Barras de Calor según prefiera, 
+                    # pero el Heatmap de rectángulos es lo más moderno para Corporativos.
+                    
+                    heatmap = alt.Chart(df_geo).mark_rect(
+                        cornerRadius=8,
+                        stroke='black',
+                        strokeWidth=0.5
+                    ).encode(
+                        x=alt.X('ESTADO:N', title=None, axis=alt.Axis(labelAngle=-45, labelFontSize=11)),
+                        color=alt.Color('VALOR FACTURA:Q', 
+                                       scale=alt.Scale(scheme='goldorange'), # Su gama de amarillos/oros
+                                       title="Venta Total ($)"),
+                        tooltip=[
+                            alt.Tooltip('ESTADO:N', title="Estado Destino"),
+                            alt.Tooltip('VALOR FACTURA:Q', title="Total Facturado", format="$,.0f")
+                        ]
+                    ).properties(
+                        width='container',
+                        height=300,
+                        title=alt.TitleParams(
+                            text="INTELIGENCIA GEOGRÁFICA: DESTINOS DE ALTO VALOR",
+                            subtitle="Concentración de facturación por entidad federativa",
+                            fontSize=20,
+                            color='#eab308',
+                            anchor='start'
+                        )
+                    ).configure_view(strokeWidth=0)
+            
+                    st.altair_chart(heatmap, use_container_width=True)
+            
+                except Exception as e:
+                    st.error(f"⚠️ FALLA EN MAPA DE CALOR: {e}")
+            
+            # --- ACTIVACIÓN EN EL PUENTE DE MANDO ---
+            st.write("---")
+            generar_mapa_calor_destinos()
         
         # --- NAVEGACIÓN NIVEL AMAZON (ESTILO FINAL) ---
         st.divider()
@@ -1752,6 +1803,7 @@ else:
         
         
     
+
 
 
 
