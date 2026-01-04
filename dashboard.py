@@ -1835,80 +1835,77 @@ else:
 
             generar_grafico_fleteras_elite_v2()
         
-            def generar_ranking_destinos_pro():
+            def generar_ranking_destinos_pro_v2():
                 import os
                 try:
                     # 1. LOCALIZACIÓN DE LA INTELIGENCIA
                     archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
                     
                     if not os.path.exists(archivo):
-                        st.error(f"🚨 RADAR: No se detectó la base de destinos ({archivo})")
+                        st.error(f"🚨 RADAR: No se detectó la base de datos.")
                         return
             
-                    # 2. PROCESAMIENTO DE DATOS
+                    # 2. PROCESAMIENTO
                     df = pd.read_csv(archivo, encoding='latin-1')
                     df.columns = [c.strip().upper() for c in df.columns]
                     df['VALOR FACTURA'] = df['VALOR FACTURA'].replace('[\$,]', '', regex=True).astype(float).fillna(0)
                     
-                    # Agrupamos por Estado y seleccionamos los mejores 15
                     df_geo = df.groupby('ESTADO')['VALOR FACTURA'].sum().reset_index()
                     df_geo = df_geo.sort_values('VALOR FACTURA', ascending=False).head(15)
             
-                    # 3. CONSTRUCCIÓN DEL GRÁFICO (SINFONÍA EN ORO ESTILO ESCALERA)
+                    # 3. DISEÑO VERTICAL TÁCTICO
                     base = alt.Chart(df_geo).encode(
-                        y=alt.Y('ESTADO:N', 
+                        x=alt.X('ESTADO:N', 
                                 title=None, 
-                                sort='-x', 
-                                axis=alt.Axis(labelFontSize=14, labelFontWeight='bold', labelColor='#FFFFFF', labelPadding=15)),
-                        x=alt.X('VALOR FACTURA:Q', 
+                                sort='-y', 
+                                axis=alt.Axis(labelAngle=-45, labelFontSize=12, labelColor='#FFFFFF', labelFontWeight='bold')),
+                        y=alt.Y('VALOR FACTURA:Q', 
                                 title=None, 
                                 axis=alt.Axis(format="$,.0f", grid=True, gridColor='#262730', labelColor='#94a3b8'))
                     )
             
-                    # CAPA 1: Barras con grosor premium y esquinas redondeadas
-                    barras = base.mark_bar(
-                        cornerRadiusTopRight=5,
-                        cornerRadiusBottomRight=5,
-                        size=30, # Ajuste para el efecto visual de la imagen
-                        color='#EAB308' 
+                    # CAPA 1: Columnas Estilo "Torre de Energía"
+                    columnas = base.mark_bar(
+                        cornerRadiusTopLeft=8,
+                        cornerRadiusTopRight=8,
+                        size=35, # Grosor para que no se vea "flaco"
+                        color='#EAB308'
                     )
             
-                    # CAPA 2: Etiquetas de Monto Real al final de la barra
+                    # CAPA 2: Etiquetas Superiores (Monto Real)
                     texto = base.mark_text(
-                        align='left',
-                        baseline='middle',
-                        dx=8, 
-                        color='#FFFFFF', # Blanco puro para máximo contraste
+                        align='center',
+                        baseline='bottom',
+                        dy=-10, # Espacio hacia arriba de la columna
+                        color='#FFFFFF',
                         fontWeight='bold',
-                        fontSize=15
+                        fontSize=12
                     ).encode(
                         text=alt.Text('VALOR FACTURA:Q', format="$,.0f")
                     )
             
                     # ENSAMBLAJE FINAL
-                    radar_geo = (barras + texto).properties(
+                    radar_vertical = (columnas + texto).properties(
                         width='container',
-                        height=500, # Más altura para apreciar el escalonamiento
+                        height=400,
                         title=alt.TitleParams(
-                            text="TOP DESTINOS POR FACTURACIÓN",
-                            subtitle="Análisis de los 15 estados con mayor impacto comercial",
-                            fontSize=24,
+                            text="DISTRIBUCIÓN GEOGRÁFICA DE FACTURACIÓN",
+                            subtitle="Ranking vertical de los 15 estados con mayor impacto comercial",
+                            fontSize=22,
                             color='#EAB308',
-                            anchor='start',
-                            dy=-20
+                            anchor='start'
                         )
-                    ).configure_view(strokeWidth=0).configure_axis(domain=False)
+                    ).configure_view(strokeWidth=0)
             
-                    # 4. DESPLIEGUE EN PANTALLA
-                    st.altair_chart(radar_geo, use_container_width=True)
+                    st.altair_chart(radar_vertical, use_container_width=True)
             
                 except Exception as e:
-                    st.error(f"⚠️ FALLA EN RADAR GEOGRÁFICO: {e}")
+                    st.error(f"⚠️ FALLA EN MANIOBRA VERTICAL: {e}")
             
-            # --- ORDEN DE EJECUCIÓN ---
+            # --- ACTIVACIÓN ---
             st.write("---")
-            generar_ranking_destinos_pro()
-            
+            generar_ranking_destinos_pro_v2()
+                        
         
         # --- NAVEGACIÓN NIVEL AMAZON (ESTILO FINAL) ---
         st.divider()
@@ -1929,6 +1926,7 @@ else:
         
         
     
+
 
 
 
