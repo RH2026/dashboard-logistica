@@ -1376,10 +1376,12 @@ else:
                 mes_comp = st.sidebar.selectbox("COMPARAR CONTRA:", meses_limpios, index=0)
                 df_mes_b = df_a[df_a["MES"] == mes_comp].iloc[0]
         
-            # --- 4. CSS PREMIUM ELITE ---
+            # --- 4. CSS PREMIUM ELITE (TARJETAS + NAVEGACIÓN) ---
             st.markdown("""
                 <style>
                 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;800&display=swap');
+                
+                /* Estilos Generales y Tarjetas */
                 .premium-header { font-family: 'Orbitron', sans-serif; color: #f8fafc; letter-spacing: 2px; text-transform: uppercase; border-bottom: 2px solid #38bdf8; padding-bottom: 8px; margin: 25px 0; }
                 .card-container { background-color: #0d1117; border-radius: 10px; padding: 15px; border: 1px solid #30363d; height: 125px; margin-bottom: 10px; transition: all 0.3s; margin-top: 10px;}
                 .card-label { color: #8b949e; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
@@ -1390,10 +1392,29 @@ else:
                 .border-yellow { border-left: 5px solid #eab308; } .border-pink { border-left: 5px solid #f472b6; }
                 .insight-box { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px; margin-top: 10px; }
                 .calc-box { background: rgba(56, 189, 248, 0.05); border: 1px dashed #38bdf8; border-radius: 10px; padding: 15px; margin: 20px 0; font-family: 'Inter', sans-serif; color: #94a3b8; font-size: 0.85rem; }
+                
+                /* Contenedor de Navegación Nivel Amazon */
+                .nav-container div.stButton > button {
+                    background: linear-gradient(145deg, #1e293b, #0f172a);
+                    color: #f8fafc !important;
+                    border: 1px solid #334155;
+                    border-radius: 8px;
+                    padding: 0.7rem;
+                    font-family: 'Inter', sans-serif;
+                    font-weight: 600;
+                    letter-spacing: 0.5px;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    height: 3.5rem;
+                }
+                .nav-container div.stButton > button:hover {
+                    border-color: #38bdf8;
+                    color: #38bdf8 !important;
+                    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
+                    transform: translateY(-2px);
+                }
                 </style>
             """, unsafe_allow_html=True)
-
-                   
+        
             header_txt = f"Resultados: {mes_sel}" if not modo_comp else f"Comparativa Mode: {mes_sel} VS {mes_comp}"
             st.markdown(f"<h4 class='premium-header'>{header_txt}</h4>", unsafe_allow_html=True)
         
@@ -1414,7 +1435,9 @@ else:
                 with c8: render_card("Cajas Enviadas", f"{int(df_mes['CAJAS ENVIADAS']):,.0f}", "Volumen", border_base="border-purple")
                 with c9: render_card("Costo de Flete", f"${df_mes['COSTO DE FLETE']:,.0f}", "Inversión", border_base="border-blue")
         
-                # --- BLOQUE PREMIUM DE CÁLCULOS ---
+                # CÁLCULO DE VARIABLE CRÍTICA PARA EL PDF
+                impacto_1k = (df_mes['COSTO DE FLETE'] / df_mes['FACTURACIÓN']) * 1000 if df_mes['FACTURACIÓN'] > 0 else 0
+        
                 st.markdown(f"""
                 <div class="calc-box">
                     <b style="color:#38bdf8; text-transform:uppercase;">Metodología de Cálculo para {mes_sel}:</b><br><br>
@@ -1424,289 +1447,109 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
         
-               # --- LÓGICA DE NARRATIVA DINÁMICA (EL CEREBRO DEL CAPITÁN) ---
-                impacto_1k = (df_mes['COSTO DE FLETE'] / df_mes['FACTURACIÓN']) * 1000
                 eficiencia_vs_meta = df_mes['META INDICADOR'] - df_mes['COSTO LOGÍSTICO']
-                
-                # Definición de Tono y Mensaje según Desempeño
                 if eficiencia_vs_meta >= 0.5:
-                    msg_clase = "OPTIMIZACIÓN RADICAL"
-                    msg_color = "#00ffa2"
-                    msg_desc = f"La operación está en zona de alta rentabilidad. Estamos operando {eficiencia_vs_meta:.1f}% por debajo del techo presupuestal, lo que inyecta liquidez directa al Bottom Line."
+                    msg_clase, msg_color = "OPTIMIZACIÓN RADICAL", "#00ffa2"
+                    msg_desc = f"La operación está en zona de alta rentabilidad. Estamos {eficiencia_vs_meta:.1f}% bajo presupuesto."
                 elif eficiencia_vs_meta >= 0:
-                    msg_clase = "ESTABILIDAD OPERATIVA"
-                    msg_color = "#38bdf8"
-                    msg_desc = "Cumplimiento de objetivos en curso. El control de fletes se mantiene alineado con la facturación, asegurando un margen neto previsible."
+                    msg_clase, msg_color = "ESTABILIDAD OPERATIVA", "#38bdf8"
+                    msg_desc = "Cumplimiento de objetivos en curso. Control de fletes alineado."
                 else:
-                    msg_clase = "EROSIÓN DE MARGEN"
-                    msg_color = "#fb7185"
-                    msg_desc = f"Alerta roja: La logística está devorando el margen bruto. Superamos el target por {abs(eficiencia_vs_meta):.1f}%, lo que requiere una intervención inmediata en el mix de transporte."
+                    msg_clase, msg_color = "EROSIÓN DE MARGEN", "#fb7185"
+                    msg_desc = f"Alerta: Logística superó el target por {abs(eficiencia_vs_meta):.1f}%."
         
-                # --- VISUALIZACIÓN DE ANÁLISIS DINÁMICO ---
                 r1, r2 = st.columns(2)
                 with r1:
                     st.markdown(f"""<div class="insight-box" style="border-left: 5px solid #38bdf8; height:240px;">
-                        <h4 style="color:#38bdf8; margin:0; font-family:Orbitron; font-size:0.9rem;">DEEP DIVE: EFICIENCIA FINANCIERA</h4>
+                        <h4 style="color:#38bdf8; margin:0; font-family:Orbitron; font-size:0.9rem;">DEEP DIVE: EFICIENCIA</h4>
                         <p style="color:#94a3b8; font-size:0.85rem; margin-top:15px; line-height:1.6;">
-                        • <b>Métrica de Consumo:</b> Cada <b>$1,000</b> de venta genera un 'impuesto logístico' de <b>${impacto_1k:.2f}</b>.<br>
-                        • <b>Punto de Fuga:</b> El desvío tarifario vs 2024 representa una fuga de <b>${abs(df_mes['INCREMENTO + VI']):,.0f}</b>. <br>
-                        • <b>Diagnóstico:</b> El costo por unidad está <b>{'sobre la media' if df_mes['COSTO POR CAJA'] > df_mes['COSTO POR CAJA 2024'] else 'bajo control'}</b>, lo que indica una {'necesidad de renegociación' if df_mes['COSTO POR CAJA'] > df_mes['COSTO POR CAJA 2024'] else 'gestión óptima de activos'}.
+                        • Cada <b>$1,000</b> de venta genera un impacto logístico de <b>${impacto_1k:.2f}</b>.<br>
+                        • El desvío tarifario vs 2024 representa <b>${abs(df_mes['INCREMENTO + VI']):,.0f}</b>.<br>
+                        • Diagnóstico: El costo unitario está <b>{'bajo control' if df_mes['COSTO POR CAJA'] <= df_mes['COSTO POR CAJA 2024'] else 'sobre la media'}</b>.
                         </p></div>""", unsafe_allow_html=True)
-                
                 with r2:
                     st.markdown(f"""<div class="insight-box" style="border-top: 4px solid {msg_color}; height:240px;">
                         <h4 style="color:{msg_color}; margin:0; font-family:Orbitron; font-size:0.9rem;">🩺 RADIOGRAFÍA: {msg_clase}</h4>
                         <p style="color:#f1f5f9; font-size:0.85rem; margin-top:15px; line-height:1.6;">
-                        <b>DICTAMEN TÉCNICO:</b> {msg_desc}<br><br>
-                        <b>ANÁLISIS DE BRECHA:</b> Estamos operando con un incremento unitario del <b>{df_mes['% DE INCREMENTO VS 2024']:.1f}%</b>. Este nivel de inflación logística 
-                        {'es insostenible' if df_mes['% DE INCREMENTO VS 2024'] > 10 else 'es manejable'} bajo el esquema actual de precios de venta.
+                        <b>DICTAMEN:</b> {msg_desc}<br><br>
+                        <b>BRECHA:</b> Operamos con una inflación logística del <b>{df_mes['% DE INCREMENTO VS 2024']:.1f}%</b>.
                         </p></div>""", unsafe_allow_html=True)
         
             else:
-                # --- VISTA COMPARATIVA 3 VS 3 ---
-                
+                # --- VISTA COMPARATIVA ---
+                impacto_1k = (df_mes['COSTO DE FLETE'] / df_mes['FACTURACIÓN']) * 1000 if df_mes['FACTURACIÓN'] > 0 else 0
                 col_a, col_b = st.columns(2)
-                
                 with col_a:
                     st.markdown(f"#### 📍 {mes_sel}")
                     render_card("Costo Logístico", f"{df_mes['COSTO LOGÍSTICO']:.1f}%", "Actual", df_mes['META INDICADOR'], df_mes['COSTO LOGÍSTICO'])
                     render_card("Costo por Caja", f"${df_mes['COSTO POR CAJA']:.1f}", "Actual", df_mes['COSTO POR CAJA 2024'], df_mes['COSTO POR CAJA'])
-                    render_card("Incremento + VI", f"${df_mes['INCREMENTO + VI']:,.0f}", "Actual", 0, df_mes['INCREMENTO + VI'], inverse=True)
-        
                 with col_b:
                     st.markdown(f"#### 📍 {mes_comp}")
                     render_card("Costo Logístico", f"{df_mes_b['COSTO LOGÍSTICO']:.1f}%", "Comparativo", df_mes_b['META INDICADOR'], df_mes_b['COSTO LOGÍSTICO'])
                     render_card("Costo por Caja", f"${df_mes_b['COSTO POR CAJA']:.1f}", "Comparativo", df_mes_b['COSTO POR CAJA 2024'], df_mes_b['COSTO POR CAJA'])
-                    render_card("Incremento + VI", f"${df_mes_b['INCREMENTO + VI']:,.0f}", "Comparativo", 0, df_mes_b['INCREMENTO + VI'], inverse=True)
         
-                # --- ANÁLISIS DE COMBATE (DEEP DIVE COMPARATIVO) ---
-                delta_log = df_mes["COSTO LOGÍSTICO"] - df_mes_b["COSTO LOGÍSTICO"]
-                mejor_mes = mes_sel if delta_log < 0 else mes_comp
-                
-                st.markdown(f"""
-                <div class="insight-box" style="border-top: 5px solid #a78bfa;">
-                    <h4 style="color:#a78bfa; margin:0; font-family:Orbitron; font-size:0.9rem;">ANÁLISIS FORENSE: COMPARATIVA DE RENDIMIENTO</h4>
-                    <p style="color:#f1f5f9; font-size:0.9rem; margin-top:10px; line-height:1.6;">
-                    La telemetría indica que <b>{mejor_mes}</b> es el referente de eficiencia. 
-                    <br>• <b>Variación Estratégica:</b> Existe un diferencial de <b>{abs(delta_log):.2f}%</b> en la absorción del costo sobre la venta bruta.<br>
-                    • <b>Factor Determinante:</b> La diferencia no es el volumen, sino la <b>densidad de costo por caja</b>. {'Mantener el modelo de ' + mejor_mes if delta_log != 0 else 'Ambos periodos presentan paridad operativa'}.
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
-
-            def crear_pdf_logistico(df_mes, mes_sel, impacto_1k, veredicto):
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_auto_page_break(auto=True, margin=15)
-                
-                # --- ENCABEZADO ---
-                pdf.set_font("Arial", 'B', 16)
-                pdf.cell(0, 10, f"REPORTE EJECUTIVO DE LOGISTICA: {mes_sel}", ln=True, align='C')
-                pdf.set_font("Arial", 'I', 10)
-                pdf.cell(0, 10, "Intelligence Operations Command - Logistic Performance Analysis", ln=True, align='C')
-                pdf.ln(5)
-                pdf.line(10, 32, 200, 32) # Línea divisoria
-                pdf.ln(10)
-                
-                # --- TABLA DE KPIS CRITICOS ---
-                pdf.set_fill_color(240, 240, 240)
-                pdf.set_font("Arial", 'B', 12)
-                pdf.cell(100, 10, "INDICADOR CLAVE (KPI)", 1, 0, 'C', True)
-                pdf.cell(90, 10, "VALOR REPORTADO", 1, 1, 'C', True)
-                
-                pdf.set_font("Arial", '', 11)
-                kpis = [
-                    ("Costo Logistico (%)", f"{df_mes['COSTO LOGÍSTICO']:.2f}%"),
-                    ("Costo por Caja ($)", f"${df_mes['COSTO POR CAJA']:.2f}"),
-                    ("Facturacion Mensual", f"${df_mes['FACTURACIÓN']:,.2f}"),
-                    ("Volumen (Cajas)", f"{int(df_mes['CAJAS ENVIADAS']):,.0f}"),
-                    ("Fuga de Utilidad (Delta)", f"${abs(df_mes['INCREMENTO + VI']):,.2f}"),
-                    ("Inflacion vs 2024", f"{df_mes['% DE INCREMENTO VS 2024']:.1f}%")
-                ]
-                
-                for kpi, valor in kpis:
-                    pdf.cell(100, 10, kpi, 1)
-                    pdf.cell(90, 10, valor, 1, 1, 'C')
-                
-                pdf.ln(10)
-                
-                # --- METODOLOGIA DE CALCULO ---
-                pdf.set_font("Arial", 'B', 12)
-                pdf.cell(0, 10, "METODOLOGIA DE CALCULO Y AUDITORIA:", ln=True)
-                pdf.set_font("Arial", '', 10)
-                metodologia = (
-                    f"1. Costo Logistico: Se determina dividiendo el gasto total de fletes (${df_mes['COSTO DE FLETE']:,.2f}) "
-                    f"entre la facturacion bruta (${df_mes['FACTURACIÓN']:,.2f}).\n"
-                    f"2. Costo por Caja: Gasto total entre {int(df_mes['CAJAS ENVIADAS'])} unidades despachadas.\n"
-                    f"3. Impacto de Utilidad: Cruce de valuacion de incidencias contra desviacion tarifaria base 2024."
-                )
-                pdf.multi_cell(0, 8, metodologia)
-                pdf.ln(5)
-            
-                # --- RADIOGRAFIA Y DIAGNOSTICO ---
-                pdf.set_font("Arial", 'B', 12)
-                pdf.cell(0, 10, "DIAGNOSTICO ESTRATEGICO FINAL:", ln=True)
-                pdf.set_fill_color(245, 245, 255)
-                pdf.set_font("Arial", 'I', 11)
-                diagnostico = (
-                    f"Por cada $1,000 MXN de venta, la operacion consume ${impacto_1k:.2f}.\n\n"
-                    f"VERDICTO: {veredicto}"
-                )
-                pdf.multi_cell(0, 10, diagnostico, border=1, fill=True)
-                
-                return pdf.output()
-        
-            # --- BOTON DE ACCION EN EL DASHBOARD ---
-        
+            # --- BLOQUE DE PDF (DENTRO DEL MARCO CORRECTO) ---
             st.write("---")
-
             if PDF_READY:
-                # Botón pequeño (sin use_container_width)
-                if st.button("GENERAR REPORTE"):
+                if st.button("GENERAR REPORTE PDF"):
                     try:
                         st.toast("Compilando estados financieros...", icon="⚙️")
-                        
                         pdf = FPDF()
                         pdf.add_page()
-                        
-                        # --- ENCABEZADO INSTITUCIONAL ---
-                        pdf.set_fill_color(13, 17, 23)  # Azul noche profundo
+                        pdf.set_fill_color(13, 17, 23)
                         pdf.set_text_color(255, 255, 255)
                         pdf.set_font("Arial", 'B', 16)
-                        pdf.cell(0, 15, f"REPORTE EJECUTIVO DE LOGÍSTICA - {mes_sel}", 0, 1, 'C', True)
-                        
+                        pdf.cell(0, 15, f"REPORTE EJECUTIVO - {mes_sel}", 0, 1, 'C', True)
                         pdf.ln(5)
                         pdf.set_text_color(0, 0, 0)
                         
-                        # --- SECCIÓN 1: MÉTRICAS DE RENTABILIDAD (TARJETAS 1-3) ---
-                        pdf.set_font("Arial", 'B', 12)
-                        pdf.set_fill_color(240, 240, 240)
-                        pdf.cell(0, 10, "  I. INDICADORES DE RENTABILIDAD Y COSTO", 0, 1, 'L', True)
-                        pdf.ln(2)
-                        
+                        # SECCIÓN 1
+                        pdf.set_font("Arial", 'B', 12); pdf.set_fill_color(240, 240, 240)
+                        pdf.cell(0, 10, "  I. INDICADORES DE COSTO", 0, 1, 'L', True)
                         pdf.set_font("Arial", '', 10)
-                        pdf.cell(63, 10, f"Costo Logistico: {df_mes['COSTO LOGÍSTICO']:.2f}%", 1, 0, 'C')
+                        pdf.cell(63, 10, f"Logistico: {df_mes['COSTO LOGÍSTICO']:.2f}%", 1, 0, 'C')
                         pdf.cell(63, 10, f"Meta: {df_mes['META INDICADOR']}%", 1, 0, 'C')
-                        pdf.cell(63, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.2f}", 1, 1, 'C')
+                        pdf.cell(63, 10, f"C/Caja: ${df_mes['COSTO POR CAJA']:.2f}", 1, 1, 'C')
                         
-                        pdf.ln(5)
-                        
-                        # --- SECCIÓN 2: IMPACTO FINANCIERO Y FUGAS (TARJETAS 4-6) ---
-                        pdf.set_font("Arial", 'B', 12)
-                        pdf.cell(0, 10, "  II. IMPACTO EN UTILIDAD Y DESVIACIONES", 0, 1, 'L', True)
-                        pdf.ln(2)
-                        
+                        # SECCIÓN 2
+                        pdf.ln(5); pdf.set_font("Arial", 'B', 12)
+                        pdf.cell(0, 10, "  II. IMPACTO FINANCIERO", 0, 1, 'L', True)
                         pdf.set_font("Arial", '', 10)
-                        pdf.cell(63, 10, f"Incidencias: {df_mes['PORCENTAJE DE INCIDENCIAS']:.2f}%", 1, 0, 'C')
-                        pdf.cell(63, 10, f"Valuacion VI: ${df_mes['VALUACION INCIDENCIAS']:,.0f}", 1, 0, 'C')
-                        pdf.cell(63, 10, f"Fuga Total: ${abs(df_mes['INCREMENTO + VI']):,.0f}", 1, 1, 'C')
+                        pdf.cell(95, 10, f"Facturacion: ${df_mes['FACTURACIÓN']:,.0f}", 1, 0, 'C')
+                        pdf.cell(95, 10, f"Fuga Total: ${abs(df_mes['INCREMENTO + VI']):,.0f}", 1, 1, 'C')
                         
-                        pdf.ln(5)
-            
-                        # --- SECCIÓN 3: VOLUMETRÍA Y VENTA (TARJETAS 7-9) ---
-                        pdf.set_font("Arial", 'B', 12)
-                        pdf.cell(0, 10, "  III. DATOS DE OPERACIÓN Y FACTURACIÓN", 0, 1, 'L', True)
-                        pdf.ln(2)
+                        # ANALISIS
+                        pdf.ln(10); pdf.set_font("Arial", 'B', 12); pdf.set_text_color(30, 58, 138)
+                        pdf.cell(0, 10, "DIAGNÓSTICO ESTRATÉGICO", ln=True)
+                        pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", 'I', 11); pdf.set_fill_color(245, 247, 250)
                         
-                        pdf.set_font("Arial", '', 10)
-                        pdf.cell(63, 10, f"Facturacion: ${df_mes['FACTURACIÓN']:,.0f}", 1, 0, 'C')
-                        pdf.cell(63, 10, f"Cajas: {int(df_mes['CAJAS ENVIADAS']):,.0f}", 1, 0, 'C')
-                        pdf.cell(63, 10, f"Gasto Flete: ${df_mes['COSTO DE FLETE']:,.0f}", 1, 1, 'C')
-                        
-                        pdf.ln(10)
-            
-                        # --- BLOQUE DE ANÁLISIS ESTRATÉGICO (EL "CORE") ---
-                        pdf.set_font("Arial", 'B', 13)
-                        pdf.set_text_color(30, 58, 138) # Azul corporativo
-                        pdf.cell(0, 10, "ANÁLISIS DE INTELIGENCIA DE NEGOCIO", ln=True)
-                        
-                        pdf.set_text_color(0, 0, 0)
-                        pdf.set_font("Arial", 'I', 11)
-                        pdf.set_fill_color(245, 247, 250)
-                        
-                        # Diagnóstico redactado dinámicamente
                         status_txt = "CRÍTICO" if df_mes['COSTO LOGÍSTICO'] > df_mes['META INDICADOR'] else "OPTIMO"
-                        analisis_pro = (
-                            f"El desempeño del mes de {mes_sel} muestra un estado {status_txt}. "
-                            f"Se detectó que por cada $1,000 MXN de venta, la logística consume ${impacto_1k:.2f}. "
-                            f"La desviación acumulada (Incremento vs 2024 + Valuación de Incidencias) "
-                            f"ha generado una erosión de margen de ${abs(df_mes['INCREMENTO + VI']):,.2f} MXN. "
-                            "\n\nAcción sugerida: Revisar rutas con mayor incidencia y negociar tarifas en zonas de alta desviación."
-                        )
-                        pdf.multi_cell(0, 10, analisis_pro, 1, 'L', True)
-            
-                        # --- PROTOCOLO DE SALIDA ---
+                        diagnostico = f"Estado: {status_txt}. Impacto de ${impacto_1k:.2f} por cada $1,000. Fuga de utilidad detectada: ${abs(df_mes['INCREMENTO + VI']):,.2f}."
+                        pdf.multi_cell(0, 10, diagnostico, 1, 'L', True)
+        
                         pdf_raw = pdf.output()
                         pdf_final = bytes(pdf_raw) if isinstance(pdf_raw, bytearray) else pdf_raw.encode('latin-1')
-                        
-                        st.download_button(
-                            label="DESCARGAR REPORTE",
-                            data=pdf_final,
-                            file_name=f"Analytics_Elite_{mes_sel}.pdf",
-                            mime="application/pdf"
-                        )
-                        st.toast("Reporte listo para firma.", icon="🔐")
-                        
+                        st.download_button("💾 DESCARGAR REPORTE", data=pdf_final, file_name=f"Reporte_{mes_sel}.pdf", mime="application/pdf")
                     except Exception as e:
-                        st.error(f"Falla en diseño: {e}")
+                        st.error(f"Falla en diseño PDF: {e}")
             else:
-                st.warning("⚠️ El sistema PDF está en proceso de instalación.")
+                st.warning("⚠️ Sistema PDF cargando...")
         
-        # --- NAVEGACIÓN NIVEL AMAZON ---
-
-        st.markdown("""
-                <style>
-                /* Contenedor de Navegación Elite */
-                .nav-container div.stButton > button {
-                    background: linear-gradient(145deg, #1e293b, #0f172a);
-                    color: #f8fafc !important;
-                    border: 1px solid #334155;
-                    border-radius: 8px;
-                    padding: 0.7rem;
-                    font-family: 'Inter', sans-serif;
-                    font-weight: 600;
-                    letter-spacing: 0.5px;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    height: 3rem;
-                }
+            # --- NAVEGACIÓN NIVEL AMAZON ---
+            st.divider()
+            st.markdown('<div class="nav-container">', unsafe_allow_html=True) 
+            n1, n2 = st.columns(2)
+            with n1:
+                if st.button("🏠 ESTATUS AAC", use_container_width=True):
+                    st.session_state.pagina = "principal"; st.rerun()
+            with n2:
+                if st.button("📊 SEGUIMIENTO", use_container_width=True):
+                    st.session_state.pagina = "KPIs"; st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
             
-                /* Efecto Amazon/DHL al pasar el mouse */
-                .nav-container div.stButton > button:hover {
-                    border-color: #38bdf8;
-                    color: #38bdf8 !important;
-                    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
-                    transform: translateY(-2px);
-                }
-            
-                /* Estado Activo (Cuando se presiona) */
-                .nav-container div.stButton > button:active {
-                    transform: scale(0.98);
-                    background: #38bdf8;
-                    color: #0f172a !important;
-                }
-                </style>
-            """, unsafe_allow_html=True)
-        
-        # --- NAVEGACIÓN NIVEL PRO (CUERPO PRINCIPAL) ---
-        st.divider()
-        # Abrimos el contenedor con el estilo CSS que ya inyectamos
-        st.markdown('<div class="nav-container">', unsafe_allow_html=True) 
-        
-        n1, n2 = st.columns(2) # Columnas en el área principal
-        with n1:
-            if st.button("ESTATUS AAC", use_container_width=True):
-                st.session_state.pagina = "principal"
-                st.rerun()
-        with n2:
-            if st.button("SEGUIMIENTO", use_container_width=True):
-                st.session_state.pagina = "KPIs"
-                st.rerun()
-        
-        st.markdown('</div>', unsafe_allow_html=True) # Cerramos el contenedor
+    
 
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
-    
-    
 
 
 
