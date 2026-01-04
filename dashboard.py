@@ -1641,95 +1641,93 @@ else:
                     st.warning("⚠️ Sistema PDF no detectado.")
             else:
                 st.info("💡 **INFO DE COMANDO:** El PDF requiere una vista de mes individual.")
-   
-       
-        
-        def generar_grafico_fleteras_elite_v2():
-            import os # Refuerzo de seguridad para el radar
-            try:
-                # 1. DETECCIÓN DE ARCHIVO
-                posibles_nombres = ["matriz_mensual.scv", "matriz_mensual.csv"]
-                archivo_encontrado = next((n for n in posibles_nombres if os.path.exists(n)), None)
-                
-                if not archivo_encontrado:
-                    st.error("🚨 RADAR: No se encontró 'matriz_mensual.scv'.")
-                    return
-        
-                # 2. CARGA Y LIMPIEZA DE DATOS
-                df = pd.read_csv(archivo_encontrado, encoding='latin-1')
-                df.columns = [c.strip().upper() for c in df.columns]
-        
-                # Limpieza de moneda (Soporta $300,000.00)
-                df['COSTO DE GUIA'] = df['COSTO DE GUIA'].replace('[\$,]', '', regex=True).astype(float).fillna(0)
-                
-                # Procesamiento de Fechas
-                df['FECHA DE FACTURA'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
-                df = df.dropna(subset=['FECHA DE FACTURA'])
-                df['MES_LABEL'] = df['FECHA DE FACTURA'].dt.strftime('%B').str.upper()
-                df['MES_NUM'] = df['FECHA DE FACTURA'].dt.month
-                
-                # 3. CONFIGURACIÓN DEL FILTRO INTEGRADO
-                meses_ordenados = df.sort_values('MES_NUM')['MES_LABEL'].unique().tolist()
-                input_dropdown = alt.binding_select(options=meses_ordenados, name="FILTRAR MES: ")
-                seleccion = alt.selection_point(fields=['MES_LABEL'], bind=input_dropdown, value=meses_ordenados[-1])
-        
-                # --- CONSTRUCCIÓN DEL GRÁFICO MULTI-CAPA ---
-                
-                base = alt.Chart(df).transform_filter(seleccion)
-        
-                # CAPA 1: BARRAS CON TONOS AMBER/GOLD DIFERENCIADOS
-                barras = base.mark_bar(
-                    cornerRadiusTopRight=15,
-                    cornerRadiusBottomRight=15,
-                    size=35
-                ).encode(
-                    x=alt.X('sum(COSTO DE GUIA):Q', title="INVERSIÓN ($)", axis=alt.Axis(format="$,.0f")),
-                    y=alt.Y('FLETERA:N', title=None, sort='-x'),
-                    # CAMBIO TÁCTICO: Escala de tonos Oro y Ámbar
-                    color=alt.Color('FLETERA:N', 
-                                   scale=alt.Scale(scheme='goldorange'), # Paleta de oros y naranjas ejecutivos
-                                   legend=None),
-                    tooltip=[
-                        alt.Tooltip('FLETERA:N'),
-                        alt.Tooltip('sum(COSTO DE GUIA):Q', format="$,.2f")
-                    ]
-                )
-        
-                # CAPA 2: TEXTO CON EL MONTO REAL
-                texto = barras.mark_text(
-                    align='left',
-                    baseline='middle',
-                    dx=8, # Espacio para que no choque con la curva de la barra
-                    color='#f8fafc', # Blanco hueso para legibilidad premium
-                    fontWeight='bold',
-                    fontSize=14
-                ).encode(
-                    text=alt.Text('sum(COSTO DE GUIA):Q', format="$,.0f")
-                )
-        
-                # COMBINACIÓN DE CAPAS
-                grafico_final = (barras + texto).add_params(
-                    seleccion
-                ).properties(
-                    width='container',
-                    height=450,
-                    title=alt.TitleParams(
-                        text="ESTADO DE INVERSIÓN POR FLETERA",
-                        subtitle=["Montos reales consolidados en matices de Amber/Gold Digital"],
-                        fontSize=22,
-                        color='#eab308', # Título ahora también en Ámbar para total armonía
-                        anchor='start'
+                  
+            def generar_grafico_fleteras_elite_v2():
+                import os # Refuerzo de seguridad para el radar
+                try:
+                    # 1. DETECCIÓN DE ARCHIVO
+                    posibles_nombres = ["matriz_mensual.scv", "matriz_mensual.csv"]
+                    archivo_encontrado = next((n for n in posibles_nombres if os.path.exists(n)), None)
+                    
+                    if not archivo_encontrado:
+                        st.error("🚨 RADAR: No se encontró 'matriz_mensual.scv'.")
+                        return
+            
+                    # 2. CARGA Y LIMPIEZA DE DATOS
+                    df = pd.read_csv(archivo_encontrado, encoding='latin-1')
+                    df.columns = [c.strip().upper() for c in df.columns]
+            
+                    # Limpieza de moneda (Soporta $300,000.00)
+                    df['COSTO DE GUIA'] = df['COSTO DE GUIA'].replace('[\$,]', '', regex=True).astype(float).fillna(0)
+                    
+                    # Procesamiento de Fechas
+                    df['FECHA DE FACTURA'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
+                    df = df.dropna(subset=['FECHA DE FACTURA'])
+                    df['MES_LABEL'] = df['FECHA DE FACTURA'].dt.strftime('%B').str.upper()
+                    df['MES_NUM'] = df['FECHA DE FACTURA'].dt.month
+                    
+                    # 3. CONFIGURACIÓN DEL FILTRO INTEGRADO
+                    meses_ordenados = df.sort_values('MES_NUM')['MES_LABEL'].unique().tolist()
+                    input_dropdown = alt.binding_select(options=meses_ordenados, name="FILTRAR MES: ")
+                    seleccion = alt.selection_point(fields=['MES_LABEL'], bind=input_dropdown, value=meses_ordenados[-1])
+            
+                    # --- CONSTRUCCIÓN DEL GRÁFICO MULTI-CAPA ---
+                    
+                    base = alt.Chart(df).transform_filter(seleccion)
+            
+                    # CAPA 1: BARRAS CON TONOS AMBER/GOLD DIFERENCIADOS
+                    barras = base.mark_bar(
+                        cornerRadiusTopRight=15,
+                        cornerRadiusBottomRight=15,
+                        size=35
+                    ).encode(
+                        x=alt.X('sum(COSTO DE GUIA):Q', title="INVERSIÓN ($)", axis=alt.Axis(format="$,.0f")),
+                        y=alt.Y('FLETERA:N', title=None, sort='-x'),
+                        # CAMBIO TÁCTICO: Escala de tonos Oro y Ámbar
+                        color=alt.Color('FLETERA:N', 
+                                       scale=alt.Scale(scheme='goldorange'), # Paleta de oros y naranjas ejecutivos
+                                       legend=None),
+                        tooltip=[
+                            alt.Tooltip('FLETERA:N'),
+                            alt.Tooltip('sum(COSTO DE GUIA):Q', format="$,.2f")
+                        ]
                     )
-                ).configure_view(strokeWidth=0).configure_axis(
-                    labelFontSize=12,
-                    labelFontWeight='bold',
-                    labelColor='#94a3b8'
-                )
-        
-                st.altair_chart(grafico_final, use_container_width=True)
-        
-            except Exception as e:
-                st.error(f"⚠️ FALLA TÁCTICA: {e}")
+            
+                    # CAPA 2: TEXTO CON EL MONTO REAL
+                    texto = barras.mark_text(
+                        align='left',
+                        baseline='middle',
+                        dx=8, # Espacio para que no choque con la curva de la barra
+                        color='#f8fafc', # Blanco hueso para legibilidad premium
+                        fontWeight='bold',
+                        fontSize=14
+                    ).encode(
+                        text=alt.Text('sum(COSTO DE GUIA):Q', format="$,.0f")
+                    )
+            
+                    # COMBINACIÓN DE CAPAS
+                    grafico_final = (barras + texto).add_params(
+                        seleccion
+                    ).properties(
+                        width='container',
+                        height=450,
+                        title=alt.TitleParams(
+                            text="ESTADO DE INVERSIÓN POR FLETERA",
+                            subtitle=["Montos reales consolidados en matices de Amber/Gold Digital"],
+                            fontSize=22,
+                            color='#eab308', # Título ahora también en Ámbar para total armonía
+                            anchor='start'
+                        )
+                    ).configure_view(strokeWidth=0).configure_axis(
+                        labelFontSize=12,
+                        labelFontWeight='bold',
+                        labelColor='#94a3b8'
+                    )
+            
+                    st.altair_chart(grafico_final, use_container_width=True)
+            
+                except Exception as e:
+                    st.error(f"⚠️ FALLA TÁCTICA: {e}")
         
         
         
@@ -1752,6 +1750,7 @@ else:
         
         
     
+
 
 
 
