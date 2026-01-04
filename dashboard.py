@@ -1646,7 +1646,7 @@ else:
         def generar_grafico_fleteras_pro():
             try:
                 # 1. Carga de Datos (Soporta .scv o .csv)
-                archivo = "matriz_mensual.scv" 
+                archivo = "matriz_mensual.csv" 
                 df = pd.read_csv(archivo)
                 
                 # Limpieza de nombres de columnas
@@ -1749,6 +1749,7 @@ else:
         
         
     
+
 
 
 
