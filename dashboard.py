@@ -985,12 +985,12 @@ else:
         col_btn1, col_btn2 = st.columns(2)
         
         with col_btn1:
-            if st.button("📊 Ver KPIs Detallados", use_container_width=True):
+            if st.button("SEGUIMIENTO", use_container_width=True):
                 st.session_state.pagina = "KPIs"
                 st.rerun()
                 
         with col_btn2:
-            if st.button("📅 Reporte Mensual", use_container_width=True):
+            if st.button("REPORTE OPS", use_container_width=True):
                 st.session_state.pagina = "Reporte"
                 st.rerun()
         
@@ -1280,13 +1280,13 @@ else:
         col_nav1, col_nav2 = st.columns(2)
         
         with col_nav1:
-            if st.button("🏠 Volver al Inicio", use_container_width=True):
+            if st.button("ESTATUS AAC", use_container_width=True):
                 st.session_state.pagina = "principal"
                 st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
                 st.rerun()
                 
         with col_nav2:
-            if st.button("📅 Ir a Reporte Mensual", use_container_width=True):
+            if st.button("REPORTE OPS", use_container_width=True):
                 st.session_state.pagina = "Reporte"
                 st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
                 st.rerun()
@@ -1562,7 +1562,7 @@ else:
 
             if PDF_READY:
                 # Botón pequeño (sin use_container_width)
-                if st.button("📊 GENERAR REPORTE ELITE"):
+                if st.button("GENERAR REPORTE"):
                     try:
                         st.toast("Compilando estados financieros...", icon="⚙️")
                         
@@ -1640,7 +1640,7 @@ else:
                         pdf_final = bytes(pdf_raw) if isinstance(pdf_raw, bytearray) else pdf_raw.encode('latin-1')
                         
                         st.download_button(
-                            label="💾 DESCARGAR REPORTE PRO-ELITE",
+                            label="DESCARGAR REPORTE",
                             data=pdf_final,
                             file_name=f"Analytics_Elite_{mes_sel}.pdf",
                             mime="application/pdf"
@@ -1694,11 +1694,11 @@ else:
         
         n1, n2 = st.columns(2) # Columnas en el área principal
         with n1:
-            if st.button("🏠 INICIO", use_container_width=True):
+            if st.button("ESTATUS AAC", use_container_width=True):
                 st.session_state.pagina = "principal"
                 st.rerun()
         with n2:
-            if st.button("📊 METRICAS", use_container_width=True):
+            if st.button("SEGUIMIENTO", use_container_width=True):
                 st.session_state.pagina = "KPIs"
                 st.rerun()
         
@@ -1707,6 +1707,7 @@ else:
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
     
     
+
 
 
 
