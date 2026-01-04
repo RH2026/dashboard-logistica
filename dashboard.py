@@ -197,33 +197,7 @@ elif not st.session_state.splash_completado:
     st.stop()
 
 # 3. CONTENIDO PRIVADO (DASHBOARD)
-else:
-    
-    # --- PROTOCOLO LOGO NEXION (INSERTAR AQUÍ) ---
-    def inyectar_logo_nexion(path):
-        import base64
-        try:
-            with open(path, "rb") as f:
-                data = base64.b64encode(f.read()).decode()
-            st.sidebar.markdown(
-                f"""
-                <style>
-                    [data-testid="stSidebarNav"] {{
-                        background-image: url("data:image/png;base64,{data}");
-                        background-repeat: no-repeat;
-                        padding-top: 100px; /* Ajusta según el alto de tu imagen */
-                        background-position: center 20px;
-                        background-size: 240px auto; /* Basado en tu imagen horizontal */
-                    }}
-                </style>
-                """, unsafe_allow_html=True
-            )
-        except:
-            pass
-
-    # Ejecutar la inyección
-    inyectar_logo_nexion("n1.png")
-    
+else:      
     # --- MOTOR DE DATOS ---
     @st.cache_data
     def cargar_datos():
@@ -246,6 +220,33 @@ else:
     df = cargar_datos()
 
     # BARRA LATERAL
+    
+    # --- RECONEXIÓN DE LOGO NEXION (FUERZA BRUTA) ---
+    import base64
+    def get_base64(path):
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+
+    try:
+        logo_base64 = get_base64("n1.png")
+        # Inyectamos el logo como un bloque HTML real, no como fondo de CSS
+        st.sidebar.markdown(
+            f"""
+            <div style="text-align: center; padding: 10px 0px;">
+                <img src="data:image/png;base64,{logo_base64}" width="220">
+            </div>
+            <style>
+                /* Esto elimina el espacio vacío que Streamlit deja arriba por defecto */
+                [data-testid="stSidebarNav"] {{
+                    padding-top: 20px !important;
+                }}
+            </style>
+            """, 
+            unsafe_allow_html=True
+        )
+    except Exception as e:
+        st.sidebar.warning("Logo n1.png no detectado en el radar.")
+    
     st.sidebar.markdown(f'<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;margin-left:-8px;"><svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" stroke="#00FFAA" stroke-width="1.8"/><path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6" stroke="#00FFAA" stroke-width="1.8" stroke-linecap="round"/></svg><span style="color:#999;font-size:16px;">Sesión: <span style="color:#00FFAA;font-weight:500;">{st.session_state.usuario_actual}</span></span></div>', unsafe_allow_html=True)
     
     st.sidebar.markdown("---")
@@ -1957,6 +1958,7 @@ else:
         
         
     
+
 
 
 
