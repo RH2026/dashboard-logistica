@@ -11,13 +11,18 @@ import io
 
 # --- NUEVO PROTOCOLO DE IMPORTACIÓN PARA FPDF2 (BLOQUE ELITE) ---
 try:
+    # Intentamos la importación estándar
+    import fpdf
     from fpdf import FPDF
     PDF_READY = True
 except ImportError:
     try:
-        from fpdf2 import FPDF 
+        # Si falla, forzamos la búsqueda en fpdf2
+        import fpdf2
+        from fpdf2 import FPDF
         PDF_READY = True
     except ImportError:
+        # Si ambos fallan, el servidor aún no termina la carga
         PDF_READY = False
 
 # 1. CONFIGURACIÓN DE PÁGINA
@@ -1593,6 +1598,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
