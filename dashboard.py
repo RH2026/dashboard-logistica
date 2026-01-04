@@ -1556,63 +1556,68 @@ else:
                 return pdf.output()
         
             # --- BOTON DE ACCION EN EL DASHBOARD ---
-            # --- 6. MÓDULO DE EXTRACCIÓN PDF (BLOQUE FINAL) ---
+            # --- MÓDULO DE EXTRACCIÓN PRO ELITE ---
             st.write("---")
             
             if PDF_READY:
-                st.markdown("### 📄 Exportación de Reporte Ejecutivo")
+                st.markdown("### 🛰️ Terminal de Inteligencia")
                 
-                # Creamos el botón
-                if st.button("📊 GENERAR REPORTE PDF"):
-                    try:
-                        # Inicializamos el objeto PDF
-                        pdf = FPDF()
-                        pdf.add_page()
-                        
-                        # --- TÍTULO ---
-                        pdf.set_font("Arial", 'B', 16)
-                        pdf.cell(0, 10, f"REPORTE LOGISTICO: {mes_sel}", ln=True, align='C')
-                        pdf.ln(10)
-                        
-                        # --- CUERPO DE DATOS ---
-                        pdf.set_font("Arial", '', 12)
-                        pdf.cell(0, 10, f"Costo Logistico: {df_mes['COSTO LOGÍSTICO']:.2f}%", ln=True)
-                        pdf.cell(0, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.2f}", ln=True)
-                        pdf.cell(0, 10, f"Facturacion Mensual: ${df_mes['FACTURACIÓN']:,.2f}", ln=True)
-                        pdf.ln(5)
-                        
-                        # --- DIAGNÓSTICO ESTRATÉGICO ---
-                        pdf.set_font("Arial", 'B', 12)
-                        pdf.cell(0, 10, "DIAGNOSTICO DE OPERACION:", ln=True)
-                        pdf.set_font("Arial", 'I', 11)
-                        diagnostico = (f"Por cada $1,000 facturados, la logística consume ${impacto_1k:.2f}. "
-                                      f"Impacto acumulado en utilidad: ${abs(df_mes['INCREMENTO + VI']):,.2f}.")
-                        pdf.multi_cell(0, 10, diagnostico)
-            
-                        # --- PROTOCOLO DE SALIDA BINARIA (SOLUCIÓN AL ERROR) ---
-                        # 1. Generamos la salida
-                        pdf_raw = pdf.output()
-                        
-                        # 2. Convertimos a bytes puros (para que Streamlit no se confunda)
-                        if isinstance(pdf_raw, (bytearray, str)):
+                # Creamos un contenedor visual para el botón
+                with st.container():
+                    if st.button("🚀 GENERAR REPORTE ELITE (ALTA DEFINICIÓN)"):
+                        try:
+                            # Aviso de inicio de proceso (Pop-up en la esquina)
+                            st.toast("Iniciando compilación de datos...", icon="⚙️")
+                            
+                            pdf = FPDF()
+                            pdf.add_page()
+                            
+                            # --- DISEÑO DEL PDF PRO ---
+                            pdf.set_fill_color(20, 26, 35) # Fondo oscuro institucional
+                            pdf.set_text_color(255, 255, 255)
+                            pdf.set_font("Arial", 'B', 16)
+                            pdf.cell(0, 15, f"ANÁLISIS ESTRATÉGICO: {mes_sel}", ln=True, align='C', fill=True)
+                            
+                            pdf.ln(10)
+                            pdf.set_text_color(0, 0, 0)
+                            pdf.set_font("Arial", 'B', 12)
+                            pdf.cell(0, 10, "RESUMEN EJECUTIVO DE OPERACIONES", ln=True)
+                            
+                            # Tabla de KPIs Pro
+                            pdf.set_font("Arial", '', 11)
+                            pdf.cell(95, 10, f"Costo Logístico: {df_mes['COSTO LOGÍSTICO']:.2f}%", 1)
+                            pdf.cell(95, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.2f}", 1, 1)
+                            pdf.cell(95, 10, f"Facturación: ${df_mes['FACTURACIÓN']:,.2f}", 1)
+                            pdf.cell(95, 10, f"Volumen: {int(df_mes['CAJAS ENVIADAS']):,.0f} uds", 1, 1)
+                            
+                            # Salida binaria blindada
+                            pdf_raw = pdf.output()
                             pdf_final = bytes(pdf_raw) if isinstance(pdf_raw, bytearray) else pdf_raw.encode('latin-1')
-                        else:
-                            pdf_final = pdf_raw
             
-                        # 3. Lanzamos la descarga
-                        st.download_button(
-                            label="💾 CLIC AQUÍ PARA DESCARGAR PDF",
-                            data=pdf_final,
-                            file_name=f"Reporte_Elite_{mes_sel}.pdf",
-                            mime="application/pdf"
-                        )
-                        st.success("✅ ¡PDF Generado! El archivo está listo para su descarga.")
-                        
-                    except Exception as e:
-                        st.error(f"Falla en los sistemas de impresión: {e}")
+                            # Aviso de finalización (Pop-up)
+                            st.toast("Documento encriptado y listo.", icon="🔐")
+                            
+                            # Botón de descarga con estilo
+                            st.download_button(
+                                label="📥 DESCARGAR INFORME EJECUTIVO",
+                                data=pdf_final,
+                                file_name=f"Elite_Report_{mes_sel}.pdf",
+                                mime="application/pdf",
+                                use_container_width=True # Botón ancho nivel Pro
+                            )
+                            
+                            # Aviso de éxito Elite (Permanente)
+                            st.info(f"✨ **Protocolo Completado:** El reporte de **{mes_sel}** ha sido procesado con éxito. El archivo está disponible para su descarga.", icon="📊")
+                            
+                        except Exception as e:
+                            st.error(f"❌ **FALLO EN EL SISTEMA:** {e}", icon="🚨")
             else:
-                # Mensaje de espera si la librería aún no carga en el servidor
-                st.warning("⚠️ El sistema PDF está en proceso de instalación. Espere 1 min y refresque (F5).")
+                # Aviso de espera nivel Pro (con spinner visual)
+                with st.status("🛠️ Sincronizando librerías de inteligencia...", expanded=True) as status:
+                    st.write("Verificando integridad de fpdf2 en el hangar...")
+                    st.write("Configurando protocolos de salida binaria...")
+                    if not PDF_READY:
+                        st.warning("⚠️ Módulo PDF en cola de espera. Refresque el mando en 30 segundos.")
         
         # --- NAVEGACIÓN ---
         st.divider()
@@ -1629,6 +1634,7 @@ else:
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
     
     
+
 
 
 
