@@ -1556,6 +1556,7 @@ else:
                 return pdf.output()
         
             # --- BOTON DE ACCION EN EL DASHBOARD ---
+            # --- MÓDULO PDF BLINDADO V4.0 ---
             st.write("---")
             if PDF_READY:
                 if st.button("📊 GENERAR REPORTE PDF"):
@@ -1569,9 +1570,21 @@ else:
                         pdf.cell(0, 10, f"Costo Logistico: {df_mes['COSTO LOGÍSTICO']:.2f}%", ln=True)
                         pdf.cell(0, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.1f}", ln=True)
                         
-                        # Generar salida segura
-                        pdf_out = pdf.output(dest='S').encode('latin-1')
-                        st.download_button("💾 DESCARGAR REPORTE", data=pdf_out, file_name=f"Reporte_{mes_sel}.pdf")
+                        # --- PROTOCOLO DE SALIDA INTELIGENTE ---
+                        pdf_raw = pdf.output() # fpdf2 entrega bytes directamente
+                        
+                        # Si el resultado es texto (viejas versiones), lo encodamos. 
+                        # Si son bytes (fpdf2), los pasamos directo.
+                        pdf_bytes = pdf_raw.encode('latin-1') if isinstance(pdf_raw, str) else pdf_raw
+                        
+                        st.download_button(
+                            label="💾 DESCARGAR REPORTE AHORA",
+                            data=pdf_bytes,
+                            file_name=f"Reporte_Elite_{mes_sel}.pdf",
+                            mime="application/pdf"
+                        )
+                        st.success("✅ Sistema restaurado. PDF listo para el Bottom Line.")
+                        
                     except Exception as e:
                         st.error(f"Error técnico en el PDF: {e}")
             else:
@@ -1590,6 +1603,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
