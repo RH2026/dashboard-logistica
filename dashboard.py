@@ -1732,57 +1732,67 @@ else:
             generar_grafico_fleteras_elite_v2()
         
      
-            def generar_mapa_calor_destinos():
+            def generar_ranking_destinos_pro():
                 import os
                 try:
-                    # 1. CARGA DE INTELIGENCIA
+                    # 1. CARGA DE DATOS
                     archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
                     df = pd.read_csv(archivo, encoding='latin-1')
                     df.columns = [c.strip().upper() for c in df.columns]
             
-                    # 2. LIMPIEZA DE VALORES MONETARIOS
+                    # 2. LIMPIEZA Y AGRUPACIÓN
                     df['VALOR FACTURA'] = df['VALOR FACTURA'].replace('[\$,]', '', regex=True).astype(float).fillna(0)
                     
-                    # Agrupamos por Estado para obtener el total de facturación por destino
+                    # Agrupamos por Estado y tomamos los mejores 15 para no saturar la vista
                     df_geo = df.groupby('ESTADO')['VALOR FACTURA'].sum().reset_index()
+                    df_geo = df_geo.sort_values('VALOR FACTURA', ascending=False).head(15)
             
-                    # 3. CONSTRUCCIÓN DEL MAPA DE CALOR (HEATMAP)
-                    # Usamos un gráfico de rectángulos (TreeMap) o Barras de Calor según prefiera, 
-                    # pero el Heatmap de rectángulos es lo más moderno para Corporativos.
-                    
-                    heatmap = alt.Chart(df_geo).mark_rect(
-                        cornerRadius=8,
-                        stroke='black',
-                        strokeWidth=0.5
+                    # 3. DISEÑO DE BARRAS DE ALTO NIVEL
+                    base = alt.Chart(df_geo).encode(
+                        y=alt.Y('ESTADO:N', title=None, sort='-x', axis=alt.Axis(labelFontSize=12, labelFontWeight='bold')),
+                        x=alt.X('VALOR FACTURA:Q', title="FACTURACIÓN TOTAL ($)", axis=alt.Axis(format="$,.0f", grid=False))
+                    )
+            
+                    # CAPA 1: Barras en Oro
+                    barras = base.mark_bar(
+                        cornerRadiusTopRight=10,
+                        cornerRadiusBottomRight=10,
+                        size=25,
+                        color='#eab308' # Su amarillo de "Otro Nivel"
+                    )
+            
+                    # CAPA 2: Etiquetas de texto (Monto Real)
+                    texto = base.mark_text(
+                        align='left',
+                        baseline='middle',
+                        dx=5,
+                        color='white',
+                        fontWeight='bold'
                     ).encode(
-                        x=alt.X('ESTADO:N', title=None, axis=alt.Axis(labelAngle=-45, labelFontSize=11)),
-                        color=alt.Color('VALOR FACTURA:Q', 
-                                       scale=alt.Scale(scheme='goldorange'), # Su gama de amarillos/oros
-                                       title="Venta Total ($)"),
-                        tooltip=[
-                            alt.Tooltip('ESTADO:N', title="Estado Destino"),
-                            alt.Tooltip('VALOR FACTURA:Q', title="Total Facturado", format="$,.0f")
-                        ]
-                    ).properties(
+                        text=alt.Text('VALOR FACTURA:Q', format="$,.0f")
+                    )
+            
+                    # CONFIGURACIÓN FINAL
+                    chart_final = (barras + texto).properties(
                         width='container',
-                        height=300,
+                        height=400,
                         title=alt.TitleParams(
-                            text="INTELIGENCIA GEOGRÁFICA: DESTINOS DE ALTO VALOR",
-                            subtitle="Concentración de facturación por entidad federativa",
-                            fontSize=20,
+                            text="TOP DESTINOS POR FACTURACIÓN",
+                            subtitle="Análisis de los 15 estados con mayor impacto comercial",
+                            fontSize=22,
                             color='#eab308',
                             anchor='start'
                         )
                     ).configure_view(strokeWidth=0)
             
-                    st.altair_chart(heatmap, use_container_width=True)
+                    st.altair_chart(chart_final, use_container_width=True)
             
                 except Exception as e:
-                    st.error(f"⚠️ FALLA EN MAPA DE CALOR: {e}")
+                    st.error(f"⚠️ FALLA EN RANKING GEOGRÁFICO: {e}")
             
-            # --- ACTIVACIÓN EN EL PUENTE DE MANDO ---
+            # --- ACTIVACIÓN ---
             st.write("---")
-            generar_mapa_calor_destinos()
+            generar_ranking_destinos_pro()
         
         # --- NAVEGACIÓN NIVEL AMAZON (ESTILO FINAL) ---
         st.divider()
@@ -1803,6 +1813,7 @@ else:
         
         
     
+
 
 
 
