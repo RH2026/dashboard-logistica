@@ -1306,7 +1306,13 @@ else:
             </div>
         """, unsafe_allow_html=True)
              
-       
+       # --- PROTOCOLO DE SEGURIDAD PARA IMPORTACIÓN ---
+        try:
+            from fpdf import FPDF
+            PDF_READY = True
+        except ImportError:
+            PDF_READY = False
+        
         # --- 1. MOTOR DE DATOS NIVEL ELITE ---
         @st.cache_data
         def cargar_analisis_elite():
@@ -1549,31 +1555,26 @@ else:
                 return pdf.output()
         
             # --- BOTON DE ACCION EN EL DASHBOARD ---
-            st.markdown("---")
-            if st.button("📊 GENERAR REPORTE PDF EJECUTIVO"):
-                try:
-                    pdf = FPDF()
-                    pdf.add_page()
-                    pdf.set_font("Arial", 'B', 16)
-                    pdf.cell(0, 10, f"REPORTE DE OPERACIONES: {mes_sel}", ln=True, align='C')
-                    
-                    pdf.set_font("Arial", '', 12)
-                    pdf.ln(10)
-                    pdf.cell(0, 10, f"Costo Logistico: {df_mes['COSTO LOGÍSTICO']:.2f}%", ln=True)
-                    pdf.cell(0, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.2f}", ln=True)
-                    pdf.cell(0, 10, f"Facturacion: ${df_mes['FACTURACIÓN']:,.2f}", ln=True)
-                    
-                    # Generar el archivo en memoria
-                    pdf_output = pdf.output(dest='S').encode('latin-1')
-                    
-                    st.download_button(
-                        label="💾 DESCARGAR REPORTE AHORA",
-                        data=pdf_output,
-                        file_name=f"Reporte_Elite_{mes_sel}.pdf",
-                        mime="application/pdf"
-                    )
-                except Exception as e:
-                    st.error(f"Error al generar PDF: {e}. Verifique que fpdf2 esté en requirements.txt")
+            st.write("---")
+            if PDF_READY:
+                if st.button("📊 GENERAR REPORTE PDF"):
+                    try:
+                        pdf = FPDF()
+                        pdf.add_page()
+                        pdf.set_font("Arial", 'B', 16)
+                        pdf.cell(0, 10, f"REPORTE LOGISTICO: {mes_sel}", ln=True, align='C')
+                        pdf.set_font("Arial", '', 12)
+                        pdf.ln(10)
+                        pdf.cell(0, 10, f"Costo Logistico: {df_mes['COSTO LOGÍSTICO']:.2f}%", ln=True)
+                        pdf.cell(0, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.1f}", ln=True)
+                        
+                        # Generar salida segura
+                        pdf_out = pdf.output(dest='S').encode('latin-1')
+                        st.download_button("💾 DESCARGAR REPORTE", data=pdf_out, file_name=f"Reporte_{mes_sel}.pdf")
+                    except Exception as e:
+                        st.error(f"Error técnico en el PDF: {e}")
+            else:
+                st.warning("⚠️ El sistema PDF se está instalando. Por favor, espera 1 minuto y recarga la página.")
         
         # --- NAVEGACIÓN ---
         st.divider()
@@ -1588,6 +1589,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
