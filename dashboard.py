@@ -1641,6 +1641,95 @@ else:
                     st.warning("⚠️ Sistema PDF no detectado.")
             else:
                 st.info("💡 **INFO DE COMANDO:** El PDF requiere una vista de mes individual.")
+        
+        # --- MOTOR DE INTELIGENCIA VISUAL ---
+        def generar_grafico_fleteras_pro():
+            try:
+                # 1. Carga de Datos (Soporta .scv o .csv)
+                archivo = "matriz_mensual.scv" 
+                df = pd.read_csv(archivo)
+                
+                # Limpieza de nombres de columnas
+                df.columns = [c.strip().upper() for c in df.columns]
+                
+                # 2. Preparación de Datos
+                # Limpieza de Costo de Guía
+                def limpiar_dinero(v):
+                    if pd.isna(v): return 0.0
+                    s = str(v).replace('$', '').replace(',', '').strip()
+                    try: return float(s)
+                    except: return 0.0
+                    
+                df['COSTO DE GUIA'] = df['COSTO DE GUIA'].apply(limpiar_dinero)
+                
+                # Manejo de Fechas y extracción de Mes
+                df['FECHA DE FACTURA'] = pd.to_datetime(df['FECHA DE FACTURA'], errors='coerce')
+                df = df.dropna(subset=['FECHA DE FACTURA'])
+                
+                # Crear etiqueta de Mes (Nombre del mes)
+                # Ordenamos por número de mes para que el filtro sea lógico
+                df['MES_NUM'] = df['FECHA DE FACTURA'].dt.month
+                df['MES'] = df['FECHA DE FACTURA'].dt.strftime('%B').str.upper()
+                
+                # 3. CONFIGURACIÓN DEL FILTRO INTEGRADO (ALTAIR)
+                # Creamos una lista única de meses presentes en los datos
+                lista_meses = sorted(df['MES'].unique().tolist(), key=lambda x: list(df[df['MES']==x]['MES_NUM'])[0])
+                
+                # Widget de selección integrado
+                input_dropdown = alt.binding_select(options=lista_meses, name="Seleccionar Período: ")
+                seleccion = alt.selection_point(fields=['MES'], bind=input_dropdown, value=lista_meses[-1])
+        
+                # 4. CONSTRUCCIÓN DEL GRÁFICO ELITE
+                chart = alt.Chart(df).mark_bar(
+                    cornerRadiusTopRight=10,
+                    cornerRadiusBottomRight=10,
+                    opacity=0.8
+                ).encode(
+                    x=alt.X('sum(COSTO DE GUIA):Q', title="Gasto Total ($)", axis=alt.Axis(grid=False)),
+                    y=alt.Y('FLETERA:N', title=None, sort='-x'),
+                    color=alt.condition(
+                        seleccion,
+                        alt.value('#00ffa2'), # Verde Esmeralda si está seleccionado
+                        alt.value('#333333')  # Gris si no (para el filtro)
+                    ),
+                    tooltip=[
+                        alt.Tooltip('FLETERA:N', title="Fletera"),
+                        alt.Tooltip('sum(COSTO DE GUIA):Q', title="Gasto Total", format="$,.2f"),
+                        alt.Tooltip('count(GUIA):Q', title="Total Guías")
+                    ]
+                ).add_params(
+                    seleccion
+                ).transform_filter(
+                    seleccion
+                ).properties(
+                    width='container',
+                    height=400,
+                    title=alt.TitleParams(
+                        text=f"ANÁLISIS DE COSTO POR FLETERA",
+                        subtitle=["Distribución de inversión logística por proveedor y período"],
+                        anchor='start',
+                        color='#f8fafc',
+                        fontSize=18
+                    )
+                ).configure_view(
+                    strokeWidth=0
+                ).configure_axis(
+                    labelColor='#94a3b8',
+                    titleColor='#94a3b8',
+                    labelFont='Inter',
+                    titleFont='Inter'
+                )
+        
+                st.altair_chart(chart, use_container_width=True)
+        
+            except Exception as e:
+                st.error(f"⚠️ Error en Radar Visual: {e}")
+        
+        # Ejecutar en el dashboard
+        st.write("---")
+        st.markdown("### 🛰️ Inteligencia de Proveedores")
+        generar_grafico_fleteras_pro()
+        
         # --- NAVEGACIÓN NIVEL AMAZON (ESTILO FINAL) ---
         st.divider()
         st.markdown('<div class="nav-container">', unsafe_allow_html=True) 
@@ -1660,6 +1749,7 @@ else:
         
         
     
+
 
 
 
