@@ -10,6 +10,17 @@ import datetime
 import io
 from fpdf import FPDF
 
+# --- NUEVO PROTOCOLO DE IMPORTACIÓN PARA FPDF2 (BLOQUE ELITE) ---
+try:
+    from fpdf import FPDF
+    PDF_READY = True
+except ImportError:
+    try:
+        from fpdf2 import FPDF 
+        PDF_READY = True
+    except ImportError:
+        PDF_READY = False
+
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Control de Envíos", layout="wide", initial_sidebar_state="expanded")
 
@@ -1306,13 +1317,7 @@ else:
             </div>
         """, unsafe_allow_html=True)
              
-       # --- PROTOCOLO DE SEGURIDAD PARA IMPORTACIÓN ---
-        try:
-            from fpdf import FPDF
-            PDF_READY = True
-        except ImportError:
-            PDF_READY = False
-        
+               
         # --- 1. MOTOR DE DATOS NIVEL ELITE ---
         @st.cache_data
         def cargar_analisis_elite():
@@ -1589,6 +1594,7 @@ else:
                 st.rerun()
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
