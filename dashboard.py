@@ -27,42 +27,58 @@ try:
 except (ImportError, ModuleNotFoundError):
     PDF_READY = False
 
-# 1. ESTADO DEL SISTEMA (Debe ir arriba)
-if "sidebar_visible" not in st.session_state:
-    st.session_state.sidebar_visible = False
+# 1. ESTADO DE EMERGENCIA
+if "sidebar_state" not in st.session_state:
+    st.session_state.sidebar_state = False
 
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="expanded")
 
-# 3. CSS QUIRÚRGICO (Elimina basura y controla la Sidebar)
-# Si sidebar_visible es False, escondemos toda la columna de la izquierda
-sidebar_style = "" if st.session_state.sidebar_visible else "div[data-testid='stSidebar'] {display: none;}"
-
-st.markdown(f"""
+# 3. CSS DE SATURACIÓN
+# Este bloque ataca específicamente los elementos que mencionas (corona y calavera)
+st.markdown("""
     <style>
-    /* Oculta corona, calavera, menú y flecha nativa */
-    [data-testid="stToolbar"], [data-testid="stStatusWidget"], 
-    .stAppDeployButton, footer, button[data-testid="sidebar-button"] {{
+    /* 1. ATAQUE A LA CORONA Y TOOLBAR SUPERIOR */
+    header, [data-testid="stHeader"], .stAppDeployButton, [data-testid="stToolbar"] {
         display: none !important;
-    }}
+        visibility: hidden !important;
+    }
+
+    /* 2. ATAQUE A LA CALAVERA Y WIDGETS DE ESTADO (ABAJO A LA DERECHA) */
+    [data-testid="stStatusWidget"], .st-emotion-cache-16p6i60, .st-emotion-cache-kb65p9 {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* 3. ATAQUE AL FOOTER */
+    footer {visibility: hidden !important;}
+
+    /* 4. GESTIÓN DE LA SIDEBAR (La flecha nativa se oculta aquí) */
+    [data-testid="sidebar-button"] {display: none !important;}
     
-    /* Control dinámico de la visibilidad de la barra */
-    {sidebar_style}
-    
-    /* Estilo para nuestro botón de mando */
-    .stButton>button {{
-        border-radius: 5px;
-        background-color: #262730;
-        color: white;
-    }}
+    /* 5. ELIMINAR MÁRGENES SUPERIORES SOBRANTES */
+    .block-container {padding-top: 0rem !important;}
     </style>
     """, unsafe_allow_html=True)
 
-# 4. BOTÓN DE MANDO ÚNICO
-label = "❌ CERRAR PANEL" if st.session_state.sidebar_visible else "☰ ABRIR PANEL"
-if st.button(label):
-    st.session_state.sidebar_visible = not st.session_state.sidebar_visible
-    st.rerun()
+# 4. LÓGICA DE LA SIDEBAR POR CÓDIGO (Sin CSS para no romperla)
+if not st.session_state.sidebar_state:
+    st.markdown("<style>section[data-testid='stSidebar'] {display:none;}</style>", unsafe_allow_html=True)
+
+# 5. BOTÓN DE MANDO INTEGRADO EN LA INTERFAZ
+col1, _ = st.columns([1, 4])
+with col1:
+    if st.button("☰ PANEL DE CONTROL"):
+        st.session_state.sidebar_state = not st.session_state.sidebar_state
+        st.rerun()
+
+# 6. CONTENIDO DEL PANEL
+with st.sidebar:
+    st.title("⚓ COMANDO CENTRAL")
+    if st.button("❌ CERRAR"):
+        st.session_state.sidebar_state = False
+        st.rerun()
+    st.write("Configuraciones activas...")
 
 
 # 2. ESTADOS DE SESIÓN
@@ -2027,6 +2043,7 @@ else:
         
         
     
+
 
 
 
