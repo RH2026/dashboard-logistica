@@ -20,15 +20,28 @@ meses_dict = {
     7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"
 }
 
-# --- 2. CARGA DE INTELIGENCIA (ARCHIVO REAL) ---
+# =========================================================
+# 2. NIVEL 1: CARGA DE DATOS (CON LIMPIEZA DE COLUMNAS)
+# =========================================================
 archivo_matriz = "Matriz_Excel_Dashboard.csv"
 
 if os.path.exists(archivo_matriz):
     df = pd.read_csv(archivo_matriz, encoding='latin-1')
-    df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce')
-    df = df.dropna(subset=["FECHA DE ENVÍO"]) 
+    
+    # --- MANIOBRA CLAVE: Estandarizar nombres de columnas ---
+    # Esto quita espacios y pone todo en MAYÚSCULAS
+    df.columns = [str(c).strip().upper() for c in df.columns]
+    
+    # Ahora buscamos la columna con el nombre estandarizado
+    if "FECHA DE ENVÍO" in df.columns:
+        df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce')
+        df = df.dropna(subset=["FECHA DE ENVÍO"]) 
+    else:
+        # Si aun así no la encuentra, mostramos qué columnas SÍ detecta el radar
+        st.error(f"🚨 COLUMNA NO ENCONTRADA. El radar detecta estas: {list(df.columns)}")
+        st.stop()
 else:
-    st.error(f"🚨 RADAR: No se encontró {archivo_matriz}")
+    st.error(f"🚨 RADAR: No se detectó el archivo {archivo_matriz}")
     st.stop()
 
 # --- FUNCIÓN PARA CARGAR EL LOGO ---
@@ -2155,6 +2168,7 @@ else:
         
         
     
+
 
 
 
