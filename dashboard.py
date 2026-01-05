@@ -27,81 +27,8 @@ try:
 except (ImportError, ModuleNotFoundError):
     PDF_READY = False
 
-# 1. ESTADO DE NAVEGACIÓN
-if "sidebar_open" not in st.session_state:
-    st.session_state.sidebar_open = False
-
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="collapsed")
-
-# 3. CSS DE ATAQUE QUIRÚRGICO (Solo lo que molesta)
-st.markdown("""
-    <style>
-    /* Hundimos los iconos de abajo y el botón de arriba (Corona) */
-    [data-testid="stStatusWidget"], .stAppDeployButton, footer, [data-testid="stToolbar"] {
-        display: none !important;
-    }
-    
-    /* Ocultamos la flecha nativa para que no estorbe */
-    button[data-testid="sidebar-button"] {
-        display: none !important;
-    }
-
-    /* Ajustamos el margen superior para que el botón no flote en el vacío */
-    .block-container { padding-top: 1rem; }
-    </style>
-    """, unsafe_allow_html=True)
-
-# 4. PUENTE DE MANDO (Botón personalizado)
-# Usamos columnas para que el botón no ocupe todo el ancho
-col1, _ = st.columns([1, 5])
-with col1:
-    if st.button("☰ ABRIR / CERRAR PANEL"):
-        st.session_state.sidebar_open = not st.session_state.sidebar_open
-        st.rerun()
-
-# 5. EL TRUCO FINAL: Inyectar la visibilidad SOLO si el botón se presiona
-if st.session_state.sidebar_open:
-    st.markdown("""
-        <style>
-        section[data-testid="stSidebar"] {
-            display: block !important;
-            width: 300px !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-    
-    with st.sidebar:
-        st.title("⚓ PANEL DE CONTROL")
-        st.write("Configuraciones de Logística")
-        # Aquí van sus filtros
-else:
-    st.markdown("""
-        <style>
-        section[data-testid="stSidebar"] {
-            display: none !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
-# 4. LÓGICA DE LA SIDEBAR POR CÓDIGO (Sin CSS para no romperla)
-if not st.session_state.sidebar_state:
-    st.markdown("<style>section[data-testid='stSidebar'] {display:none;}</style>", unsafe_allow_html=True)
-
-# 5. BOTÓN DE MANDO INTEGRADO EN LA INTERFAZ
-col1, _ = st.columns([1, 4])
-with col1:
-    if st.button("☰ PANEL DE CONTROL"):
-        st.session_state.sidebar_state = not st.session_state.sidebar_state
-        st.rerun()
-
-# 6. CONTENIDO DEL PANEL
-with st.sidebar:
-    st.title("⚓ COMANDO CENTRAL")
-    if st.button("❌ CERRAR"):
-        st.session_state.sidebar_state = False
-        st.rerun()
-    st.write("Configuraciones activas...")
 
 
 # 2. ESTADOS DE SESIÓN
@@ -2066,6 +1993,7 @@ else:
         
         
     
+
 
 
 
