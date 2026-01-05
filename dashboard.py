@@ -27,29 +27,42 @@ try:
 except (ImportError, ModuleNotFoundError):
     PDF_READY = False
 
-# 1. CONFIGURACIÓN DE PÁGINA
-st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="collapsed")
+# 1. ESTADO DEL SISTEMA (Debe ir arriba)
+if "sidebar_visible" not in st.session_state:
+    st.session_state.sidebar_visible = False
 
-st.markdown("""
+# 1. CONFIGURACIÓN DE PÁGINA
+st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="expanded")
+
+# 3. CSS QUIRÚRGICO (Elimina basura y controla la Sidebar)
+# Si sidebar_visible es False, escondemos toda la columna de la izquierda
+sidebar_style = "" if st.session_state.sidebar_visible else "div[data-testid='stSidebar'] {display: none;}"
+
+st.markdown(f"""
     <style>
+    /* Oculta corona, calavera, menú y flecha nativa */
     [data-testid="stToolbar"], [data-testid="stStatusWidget"], 
-    .stAppDeployButton, footer, button[data-testid="sidebar-button"] {
+    .stAppDeployButton, footer, button[data-testid="sidebar-button"] {{
         display: none !important;
-    }
+    }}
+    
+    /* Control dinámico de la visibilidad de la barra */
+    {sidebar_style}
+    
+    /* Estilo para nuestro botón de mando */
+    .stButton>button {{
+        border-radius: 5px;
+        background-color: #262730;
+        color: white;
+    }}
     </style>
     """, unsafe_allow_html=True)
 
-# 4. NUESTRO BOTÓN DE MANDO
-col1, _ = st.columns([1, 5])
-with col1:
-    if current_state == "collapsed":
-        if st.button("📂 ABRIR PANEL"):
-            st.query_params["sidebar"] = "expanded"
-            st.rerun()
-    else:
-        if st.button("📁 CERRAR PANEL"):
-            st.query_params["sidebar"] = "collapsed"
-            st.rerun()
+# 4. BOTÓN DE MANDO ÚNICO
+label = "❌ CERRAR PANEL" if st.session_state.sidebar_visible else "☰ ABRIR PANEL"
+if st.button(label):
+    st.session_state.sidebar_visible = not st.session_state.sidebar_visible
+    st.rerun()
 
 
 # 2. ESTADOS DE SESIÓN
@@ -2014,6 +2027,7 @@ else:
         
         
     
+
 
 
 
