@@ -180,8 +180,9 @@ elif not st.session_state.splash_completado:
         else:
             # Mensajes dinámicos de bienvenida
             usuario = st.session_state.usuario_actual.capitalize() if st.session_state.usuario_actual else "Usuario"
+            color_usuario = "#00F2FF"  # Verde Neón Táctico
             mensajes = [
-                f"¡Hola de vuelta, {usuario}!",
+                f"¡Hola de vuelta, <span style='color:{color_usuario};'>{usuario}</span>!",
                 "Actualizando base de datos...",
                 "Sincronizando estatus de envíos...",
                 "Accediendo al sistema..."
@@ -204,7 +205,7 @@ elif not st.session_state.splash_completado:
                             <div class="cube-face bottom" style="width:80px; height:80px; background:#b08d5c; transform: rotateX(-90deg) translateZ(40px);"></div>
                         </div>
                     </div>
-                    <div style="color:#00FFAA; font-family:'JetBrains Mono'; margin-top:25px; letter-spacing:2px; text-transform:none; font-size: 12px; font-weight: normal;">{msg}</div>
+                    <div style="color:#00FFAA; font-family:'monospace'; margin-top:25px; letter-spacing:2px; text-transform:none; font-size: 12px; font-weight: normal;">{msg}</div>
                 </div>
             """, unsafe_allow_html=True)
             
@@ -1985,6 +1986,7 @@ else:
         
         
     
+
 
 
 
