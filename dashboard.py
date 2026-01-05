@@ -11,6 +11,26 @@ import io
 import os
 import datetime
 
+# =========================================================
+# 1. DEFINICIÓN DE DICCIONARIOS (Nivel 0 - Prioridad Máxima)
+# =========================================================
+# Esto DEBE estar aquí arriba para que no te dé NameError abajo
+meses_dict = {
+    1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO", 6: "JUNIO",
+    7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"
+}
+
+# --- 2. CARGA DE INTELIGENCIA (ARCHIVO REAL) ---
+archivo_matriz = "Matriz_Excel_Dashboard.csv"
+
+if os.path.exists(archivo_matriz):
+    df = pd.read_csv(archivo_matriz, encoding='latin-1')
+    df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce')
+    df = df.dropna(subset=["FECHA DE ENVÍO"]) 
+else:
+    st.error(f"🚨 RADAR: No se encontró {archivo_matriz}")
+    st.stop()
+
 # --- FUNCIÓN PARA CARGAR EL LOGO ---
 def get_base64_bin(path):
     try:
@@ -48,10 +68,6 @@ if "ultimo_movimiento" not in st.session_state:
 if "tabla_expandida" not in st.session_state:
     st.session_state.tabla_expandida = False
 if "mes_seleccionado" not in st.session_state:
-    st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
-
-if "mes_seleccionado" not in st.session_state:
-    # Como meses_dict ya se definió arriba, aquí ya no hay error
     st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
 if "fecha_filtro" not in st.session_state:
     st.session_state["fecha_filtro"] = (df["FECHA DE ENVÍO"].min().date(), df["FECHA DE ENVÍO"].max().date())
@@ -371,37 +387,9 @@ else:
                     st.rerun()
                                       
                                        
-        st.divider()    
-     
-       
-
-        # =========================================================
-        # 1. DEFINICIÓN DE DICCIONARIOS (Nivel 0 - Prioridad Máxima)
-        # =========================================================
-        # Esto DEBE estar aquí arriba para que no te dé NameError abajo
-        meses_dict = {
-            1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO", 6: "JUNIO",
-            7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"
-        }
-        
-        # --- 2. CARGA DE INTELIGENCIA (ARCHIVO REAL) ---
-        archivo_matriz = "Matriz_Excel_Dashboard.csv"
-
-        if os.path.exists(archivo_matriz):
-            df = pd.read_csv(archivo_matriz, encoding='latin-1')
-            df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce')
-            df = df.dropna(subset=["FECHA DE ENVÍO"]) 
-        else:
-            st.error(f"🚨 RADAR: No se encontró {archivo_matriz}")
-            st.stop()
-        
-        # --- 3. INICIALIZACIÓN DE ESTADOS (Después de cargar el DF) ---
-        if "mes_seleccionado" not in st.session_state:
-            st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
-        
-        if "fecha_filtro" not in st.session_state:
-            st.session_state["fecha_filtro"] = (df["FECHA DE ENVÍO"].min().date(), df["FECHA DE ENVÍO"].max().date())
-        
+        st.divider()       
+             
+                
         # --- 4. FUNCIÓN DE LIMPIEZA RECALIBRADA ---
         def limpiar_filtros():
             st.session_state.filtro_cliente_actual = ""
@@ -2166,6 +2154,7 @@ else:
         
         
     
+
 
 
 
