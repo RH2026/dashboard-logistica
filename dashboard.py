@@ -179,7 +179,7 @@ elif not st.session_state.splash_completado:
             mensajes = [
             f"Cerrando sesión, <span style='color:{color_usuario};'>{usuario}</span>...", 
             "Guardando cambios...", 
-            "Conexión con Nexion terminada!""
+            "Conexión con Nexion terminada!"
         else:
             # Mensajes dinámicos de bienvenida
             usuario = st.session_state.usuario_actual.capitalize() if st.session_state.usuario_actual else "Usuario"
@@ -1989,6 +1989,7 @@ else:
         
         
     
+
 
 
 
