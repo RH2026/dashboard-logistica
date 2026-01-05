@@ -1067,7 +1067,30 @@ else:
                 <div style='height: 2px; width: 60px; background: #00FFAA; margin: 10px auto;'></div>
             </div>
         """, unsafe_allow_html=True)
+
+        # --- NAVEGACIÓN COMPACTA DE GRADO MILITAR ---
+        # Usamos la proporción [3, 3, 2] para empujar los botones a la derecha y que respiren
+        c1, c2, c3 = st.columns([3, 3, 2]) 
         
+        with c3:
+            # Sub-columnas para que los botones vivan uno al lado del otro
+            btn_col1, btn_col2 = st.columns(2)
+            
+            with btn_col1:
+                # Texto: ESTATUS | Key: Única para evitar el DuplicateElementId
+                if st.button("ESTATUS", use_container_width=True, key="btn_nav_estatus_kpi"):
+                    st.session_state.pagina = "principal"
+                    st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+                    st.rerun()
+                    
+            with btn_col2:
+                # Texto: REPORTE | Key: Única para esta sección
+                if st.button("REPORTE", use_container_width=True, key="btn_nav_reporte_kpi"):
+                    st.session_state.pagina = "Reporte"
+                    st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+                    st.rerun()
+        
+                
         st.divider()
 
         # --- 2. LÓGICA DE DATOS (ESTANDARIZADA) ---
@@ -1432,20 +1455,7 @@ else:
                 
         
         # --- NAVEGACIÓN DESDE KPIs ---
-        st.divider()
-        col_nav1, col_nav2 = st.columns(2)
         
-        with col_nav1:
-            if st.button("ESTATUS AAC", use_container_width=True):
-                st.session_state.pagina = "principal"
-                st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
-                st.rerun()
-                
-        with col_nav2:
-            if st.button("REPORTE OPS", use_container_width=True):
-                st.session_state.pagina = "Reporte"
-                st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
-                st.rerun()
 
         # Pie de página
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
@@ -1939,6 +1949,7 @@ else:
         
         
     
+
 
 
 
