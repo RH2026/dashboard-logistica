@@ -2043,7 +2043,107 @@ else:
             generar_grafico_fleteras_elite_v3_final()
             st.write("---")
             generar_ranking_destinos_v3_final()
+
+            def generar_top_comercial_elite_v3():
+                import os
+                import pandas as pd
+                import altair as alt
+                import streamlit as st
+                
+                try:
+                    # 1. LOCALIZACIÓN DE INTELIGENCIA (matriz_mensual)
+                    posibles = ["matriz_mensual.csv", "matriz_mensual.scv"]
+                    archivo = next((n for n in posibles if os.path.exists(n)), None)
+                    
+                    if not archivo:
+                        st.error("🚨 RADAR: No se detectó 'matriz_mensual' en la carpeta raíz.")
+                        return
+            
+                    # 2. PROCESAMIENTO DE DATOS
+                    df = pd.read_csv(archivo, encoding='latin-1')
+                    df.columns = [c.strip().upper() for c in df.columns]
+                    
+                    # Limpieza de valores monetarios (VALOR FACTURA)
+                    if 'VALOR FACTURA' in df.columns:
+                        df['VALOR FACTURA'] = pd.to_numeric(
+                            df['VALOR FACTURA'].replace('[\$,]', '', regex=True), 
+                            errors='coerce'
+                        ).fillna(0)
+                    else:
+                        st.error("🚨 ERROR: No se encontró la columna 'VALOR FACTURA'.")
+                        return
                         
+                    # Filtro de seguridad para NOMBRE COMERCIAL
+                    if 'NOMBRE COMERCIAL' not in df.columns:
+                        st.error("🚨 ERROR: No se encontró la columna 'NOMBRE COMERCIAL'.")
+                        return
+            
+                    # Agrupación y extracción del Top 20
+                    df_top = df.groupby('NOMBRE COMERCIAL')['VALOR FACTURA'].sum().reset_index()
+                    df_top = df_top.sort_values('VALOR FACTURA', ascending=False).head(20)
+            
+                    # 3. DISEÑO DE COMBATE RESPONSIVO
+                    base = alt.Chart(df_top).encode(
+                        x=alt.X('NOMBRE COMERCIAL:N', 
+                                title=None, 
+                                sort='-y',
+                                scale=alt.Scale(paddingInner=0.2), 
+                                axis=alt.Axis(
+                                    labelAngle=-90,         # Alineación vertical táctica
+                                    labelFontSize=10, 
+                                    labelColor='#FFFFFF', 
+                                    labelFontWeight='bold',
+                                    labelOverlap='parity'
+                                )),
+                        y=alt.Y('VALOR FACTURA:Q', 
+                                title=None, 
+                                axis=alt.Axis(
+                                    format="$,.0s",         # Formato compacto (k, M)
+                                    gridColor='#262730', 
+                                    labelColor='#94a3b8'
+                                ))
+                    )
+            
+                    # CAPA 1: Columnas "Torre de Energía"
+                    columnas = base.mark_bar(
+                        cornerRadiusTopLeft=8, 
+                        cornerRadiusTopRight=8,
+                        color='#EAB308' # Dorado OPS
+                    )
+            
+                    # CAPA 2: Etiquetas de Datos (Blanco Premium)
+                    texto = base.mark_text(
+                        align='center', 
+                        baseline='bottom', 
+                        dy=-10, 
+                        color='#FFFFFF', 
+                        fontWeight='bold', 
+                        fontSize=11
+                    ).encode(
+                        text=alt.Text('VALOR FACTURA:Q', format="$,.2s")
+                    )
+            
+                    # ENSAMBLAJE FINAL
+                    radar_comercial = (columnas + texto).properties(
+                        width='container', 
+                        height=450,
+                        title=alt.TitleParams(
+                            text="TOP 20: FACTURACIÓN POR CLIENTE",
+                            subtitle="Análisis comercial de alto nivel - Matriz Mensual",
+                            fontSize=20,
+                            color='#EAB308',
+                            anchor='start'
+                        )
+                    ).configure_view(strokeWidth=0)
+            
+                    st.altair_chart(radar_comercial, use_container_width=True)
+            
+                except Exception as e:
+                    st.error(f"⚠️ FALLA EN RADAR COMERCIAL: {e}")
+            
+            # --- ACTIVACIÓN ---
+            st.write("---")
+            generar_top_comercial_elite_v3()
         
         # --- PIE DE PAGINA------------------------------------------- ---
                
@@ -2052,6 +2152,7 @@ else:
         
         
     
+
 
 
 
