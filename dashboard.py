@@ -2131,7 +2131,7 @@ else:
                             text="TOP 20: FACTURACIÓN POR CLIENTE",
                             subtitle="Análisis comercial de alto nivel - Matriz Mensual",
                             fontSize=20,
-                            color='#EAB308',
+                            color='#FF707E',
                             anchor='start'
                         )
                     ).configure_view(strokeWidth=0)
@@ -2152,6 +2152,7 @@ else:
         
         
     
+
 
 
 
