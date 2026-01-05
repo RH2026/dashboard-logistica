@@ -28,46 +28,43 @@ except (ImportError, ModuleNotFoundError):
     PDF_READY = False
 
 # 1. CONFIGURACIÓN DE PÁGINA
-st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="collapsed")
 
+# --- 1. GESTIÓN DEL ESTADO DE LA SIDEBAR ---
+if "sidebar_state" not in st.session_state:
+    st.session_state.sidebar_state = "collapsed"
+
+# Función para conmutar la barra
+def toggle_sidebar():
+    if st.session_state.sidebar_state == "collapsed":
+        st.session_state.sidebar_state = "expanded"
+    else:
+        st.session_state.sidebar_state = "collapsed"
+
+# --- 2. CONFIGURACIÓN DE PÁGINA ---
+st.set_page_config(
+    layout="wide", 
+    initial_sidebar_state=st.session_state.sidebar_state
+)
+
+# --- 3. CSS DE CAMUFLAJE TOTAL ---
+# Aquí borramos TODO lo de Streamlit (Corona, Flecha original, Menú, Calavera)
 st.markdown("""
     <style>
-    /* 1. ELIMINAR CORONA (DEPLOY) Y MENÚ DE TRES PUNTOS */
-    /* Apuntamos a la zona superior derecha completa pero respetamos el resto */
-    div[data-testid="stToolbar"] {
-        visibility: hidden;
-        height: 0%;
-    }
-    
-    /* 2. ELIMINAR CALAVERA Y BOTONES DE COMUNIDAD (ABAJO A LA DERECHA) */
-    /* Esto elimina cualquier widget de estado o botones flotantes de la nube */
-    div[data-testid="stStatusWidget"], .stDeployButton, .stAppDeployButton {
+    [data-testid="stToolbar"], [data-testid="stStatusWidget"], 
+    .stAppDeployButton, footer, button[data-testid="sidebar-button"] {
         display: none !important;
     }
-
-    /* 3. ASEGURAR QUE LA FLECHA (SIDEBAR) SEA VISIBLE */
-    /* Forzamos que el botón de la sidebar se mantenga visible y funcional */
-    button[data-testid="sidebar-button"] {
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-
-    /* 4. LIMPIEZA DE FOOTER */
-    footer {
-        visibility: hidden;
-    }
-    
-    /* 5. ELIMINAR ESPACIO EN BLANCO SUPERIOR */
-    .stAppHeader {
-        background-color: rgba(0,0,0,0);
-        visibility: hidden;
-    }
-    /* Pero re-activamos la zona de la flecha específicamente */
-    .stAppHeader > div:first-child {
-        visibility: visible;
-    }
+    /* Quitamos el margen superior para que se vea limpio */
+    .stAppHeader { height: 0px; }
     </style>
     """, unsafe_allow_html=True)
+
+# --- 4. NUESTRO BOTÓN PERSONALIZADO ---
+# Lo colocamos arriba a la izquierda
+if st.button("☰ Menú de Navegación"):
+    toggle_sidebar()
+    st.rerun() # Reiniciamos para aplicar el cambio de estado
 
 
 # 2. ESTADOS DE SESIÓN
@@ -2032,6 +2029,7 @@ else:
         
         
     
+
 
 
 
