@@ -129,24 +129,28 @@ placeholder = st.empty()
 # 4. FLUJO DE PANTALLAS
 # --------------------------------------------------
 
-# --- CASO A: LOGIN (CON LOGO ORIGINAL TRANSPARENTE) ---
+# --- CASO A: LOGIN (CON LOGO ORIGINAL Y TRANSPARENCIA FORZADA) ---
 if not st.session_state.logueado:
     with placeholder.container():
         col1, col2, col3 = st.columns([1.5, 1, 1.5])
         with col2:
             st.markdown('<div style="height:10vh"></div>', unsafe_allow_html=True)
             with st.form("login_form"):
-                # TRUCO DE TRANSPARENCIA: mix-blend-mode elimina el fondo oscuro
-                st.markdown(f"""
-                    <div style="text-align: center; margin-bottom: 25px; background-color: transparent;">
-                        <img src="data:image/png;base64,{logo_b64}" 
-                             style="width: 250px; 
-                                    mix-blend-mode: screen; 
-                                    display: block; 
-                                    margin: 0 auto;">
-                    </div>
-                """, unsafe_allow_html=True)
                 
+                # --- AQUÍ VA EL NUEVO BLOQUE DEL LOGO ---
+                if logo_b64:
+                    st.markdown(f"""
+                        <div style="text-align: center; margin-bottom: 25px;">
+                            <img src="data:image/png;base64,{logo_b64}" 
+                                 style="width: 250px; 
+                                        filter: contrast(1.1) brightness(1.1);
+                                        mix-blend-mode: plus-lighter; 
+                                        display: block; 
+                                        margin: 0 auto;">
+                        </div>
+                    """, unsafe_allow_html=True)
+                
+                # --- EL RESTO DEL FORMULARIO SE QUEDA IGUAL ---
                 st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
                 u_input = st.text_input("Usuario")
                 c_input = st.text_input("Contraseña", type="password")
@@ -1978,6 +1982,7 @@ else:
         
         
     
+
 
 
 
