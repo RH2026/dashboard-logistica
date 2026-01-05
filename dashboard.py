@@ -21,28 +21,48 @@ meses_dict = {
 }
 
 # =========================================================
-# 2. NIVEL 1: CARGA DE DATOS (CON LIMPIEZA DE COLUMNAS)
+# 2. NIVEL 1: CARGA DE DATOS (CON LIMPIEZA DE INTERFERENCIAS)
 # =========================================================
 archivo_matriz = "Matriz_Excel_Dashboard.csv"
 
 if os.path.exists(archivo_matriz):
-    df = pd.read_csv(archivo_matriz, encoding='latin-1')
+    # Probamos con 'utf-8-sig' que elimina automáticamente el ï»¿
+    try:
+        df = pd.read_csv(archivo_matriz, encoding='utf-8-sig')
+    except:
+        df = pd.read_csv(archivo_matriz, encoding='latin-1')
     
-    # --- MANIOBRA CLAVE: Estandarizar nombres de columnas ---
-    # Esto quita espacios y pone todo en MAYÚSCULAS
-    df.columns = [str(c).strip().upper() for c in df.columns]
+    # --- MANIOBRA DE LIMPIEZA PROFUNDA ---
+    # 1. Quitamos espacios y pasamos a mayúsculas
+    # 2. Reemplazamos los caracteres rotos comunes de los acentos
+    df.columns = [
+        str(c).strip().upper()
+        .replace('Ã\x8D', 'Í')
+        .replace('Ã\x9A', 'Ú')
+        .replace('Ã\x91', 'Ñ') 
+        for c in df.columns
+    ]
     
-    # Ahora buscamos la columna con el nombre estandarizado
+    # Limpieza específica para el carácter extraño que detectó el radar en el primer campo
+    df.columns = [c.replace('Ï»¿', '') for c in df.columns]
+
+    # --- VERIFICACIÓN DE COLUMNA CRÍTICA ---
     if "FECHA DE ENVÍO" in df.columns:
         df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce')
         df = df.dropna(subset=["FECHA DE ENVÍO"]) 
     else:
-        # Si aun así no la encuentra, mostramos qué columnas SÍ detecta el radar
-        st.error(f"🚨 COLUMNA NO ENCONTRADA. El radar detecta estas: {list(df.columns)}")
-        st.stop()
-else:
-    st.error(f"🚨 RADAR: No se detectó el archivo {archivo_matriz}")
-    st.stop()
+        # Si el nombre sigue viniendo raro, forzamos la detección por posición
+        # Usualmente la fecha es la cuarta columna según su reporte
+        st.warning(f"Radar detectó nombres alterados. Reintentando mapeo manual...")
+        # Intentar buscar cualquier columna que contenga "FECHA" y "ENV"
+        col_encontrada = [c for c in df.columns if 'FECHA' in c and 'ENV' in c]
+        if col_encontrada:
+            nombre_real = col_encontrada[0]
+            df["FECHA DE ENVÍO"] = pd.to_datetime(df[nombre_real], errors='coerce')
+            df = df.dropna(subset=["FECHA DE ENVÍO"])
+        else:
+            st.error(f"🚨 FALLO CRÍTICO: No se halla columna de fecha. Detectadas: {list(df.columns)}")
+            st.stop()
 
 # --- FUNCIÓN PARA CARGAR EL LOGO ---
 def get_base64_bin(path):
@@ -2168,6 +2188,7 @@ else:
         
         
     
+
 
 
 
