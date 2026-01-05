@@ -1469,20 +1469,19 @@ else:
             </div>
         """, unsafe_allow_html=True)
 
-        # --- NAVEGACIÓN COMPACTA ---
-        # Aumentamos el peso de las primeras columnas para reducir la tercera
-        # [3, 3, 1] significa que las vacías ocupan 6/7 del ancho y los botones solo 1/7
+        # --- NAVEGACIÓN COMPACTA (VERSION REPARADA) ---
         c1, c2, c3 = st.columns([3, 3, 1.5]) 
         
         with c3:
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
-                # Aplicamos un estilo CSS pequeño solo para estos botones si desea encoger el texto
-                if st.button("AAC", use_container_width=True):
+                # Añadimos key="btn_aac_reporte" para diferenciarlo del botón de la otra página
+                if st.button("AAC", use_container_width=True, key="btn_aac_reporte"):
                     st.session_state.pagina = "principal"
                     st.rerun()
             with btn_col2:
-                if st.button("KPIs", use_container_width=True):
+                # Añadimos key="btn_kpi_reporte" 
+                if st.button("KPIs", use_container_width=True, key="btn_kpi_reporte"):
                     st.session_state.pagina = "KPIs"
                     st.rerun()
         
@@ -1940,6 +1939,7 @@ else:
         
         
     
+
 
 
 
