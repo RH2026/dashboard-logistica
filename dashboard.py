@@ -1068,28 +1068,38 @@ else:
             </div>
         """, unsafe_allow_html=True)
 
-        # --- NAVEGACIÓN COMPACTA DE GRADO MILITAR ---
-        # Usamos la proporción [3, 3, 2] para empujar los botones a la derecha y que respiren
-        c1, c2, c3 = st.columns([3, 3, 2]) 
+        # --- PARÁMETROS DE MANDO (Ajuste aquí el tamaño) ---
+        tamanio_fuente = "12px"  # <--- Puede subir a '14px' o bajar a '10px' según necesite
+        
+        # Inyectamos el estilo para que los botones de esta sección obedezcan la orden
+        st.markdown(f"""
+        <style>
+            /* Buscamos los botones dentro del contenedor de navegación y aplicamos el tamaño */
+            div[data-testid="stColumn"] button {{
+                font-size: {tamanio_fuente} !important;
+                font-weight: 700 !important;
+                text-transform: uppercase !important;
+                height: 38px !important; /* Altura controlada para evitar amontonamiento */
+            }}
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # --- ESTRUCTURA DE COLUMNAS ---
+        c1, c2, c3 = st.columns([3, 2, 2.5]) 
         
         with c3:
-            # Sub-columnas para que los botones vivan uno al lado del otro
-            btn_col1, btn_col2 = st.columns(2)
+            btn_col1, btn_col2 = st.columns(2, gap="small")
             
             with btn_col1:
-                # Texto: ESTATUS | Key: Única para evitar el DuplicateElementId
-                if st.button("ESTATUS", use_container_width=True, key="btn_nav_estatus_kpi"):
+                if st.button("AAC", use_container_width=True, key="btn_fuente_est"):
                     st.session_state.pagina = "principal"
-                    st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
                     st.rerun()
                     
             with btn_col2:
-                # Texto: REPORTE | Key: Única para esta sección
-                if st.button("REPORTE", use_container_width=True, key="btn_nav_reporte_kpi"):
+                if st.button("ROPS", use_container_width=True, key="btn_fuente_rep"):
                     st.session_state.pagina = "Reporte"
-                    st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
                     st.rerun()
-        
+                        
                 
         st.divider()
 
@@ -1479,19 +1489,42 @@ else:
             </div>
         """, unsafe_allow_html=True)
 
-        # --- NAVEGACIÓN COMPACTA (VERSION REPARADA) ---
-        c1, c2, c3 = st.columns([3, 3, 1.5]) 
+        # =========================================================
+        # SISTEMA DE NAVEGACIÓN ELITE (CONTROL TOTAL)
+        # =========================================================
+        
+        # 1. PARÁMETROS DE MANDO: Ajuste aquí el tamaño de fuente
+        fuente_botones = "12px" 
+        
+        # 2. INYECCIÓN DE ESTILO DINÁMICO
+        st.markdown(f"""
+            <style>
+                /* Estilo aplicado a los botones dentro de columnas para simetría total */
+                div[data-testid="stColumn"] button {{
+                    font-size: {fuente_botones} !important;
+                    font-weight: 700 !important;
+                    text-transform: uppercase !important;
+                    height: 38px !important;
+                    border-radius: 8px !important;
+                }}
+            </style>
+        """, unsafe_allow_html=True)
+        
+        # 3. ESTRUCTURA DE NAVEGACIÓN COMPACTA
+        # Proporción [3, 2, 2] empuja los botones a la derecha pero les da base firme
+        c1, c2, c3 = st.columns([3, 2, 2]) 
         
         with c3:
-            btn_col1, btn_col2 = st.columns(2)
+            # gap="small" mantiene los botones unidos como una sola unidad de mando
+            btn_col1, btn_col2 = st.columns(2, gap="small")
+            
             with btn_col1:
-                # Añadimos key="btn_aac_reporte" para diferenciarlo del botón de la otra página
                 if st.button("AAC", use_container_width=True, key="btn_aac_reporte"):
                     st.session_state.pagina = "principal"
                     st.rerun()
+                    
             with btn_col2:
-                # Añadimos key="btn_kpi_reporte" 
-                if st.button("KPIs", use_container_width=True, key="btn_kpi_reporte"):
+                if st.button("SEGUIMIENTO", use_container_width=True, key="btn_kpi_reporte"):
                     st.session_state.pagina = "KPIs"
                     st.rerun()
         
@@ -1949,6 +1982,7 @@ else:
         
         
     
+
 
 
 
