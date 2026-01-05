@@ -315,7 +315,7 @@ else:
         # =========================================================
         
         # 1. PARÁMETROS DE MANDO (Control de fuente manual)
-        fuente_nav_2 = "12px" 
+        fuente_nav_2 = "10px" 
         
         # 2. INYECCIÓN DE ESTILO (Asegura que estos botones sean gemelos)
         st.markdown(f"""
@@ -350,7 +350,7 @@ else:
                     st.rerun()
         
                        
-                st.divider()
+        st.divider()
            
         # 1. FUNCIÓN DE LIMPIEZA
         def limpiar_filtros():
@@ -2009,6 +2009,7 @@ else:
         
         
     
+
 
 
 
