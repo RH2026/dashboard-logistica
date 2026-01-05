@@ -30,14 +30,33 @@ except (ImportError, ModuleNotFoundError):
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="expanded")
 
-# 2. EL BLOQUE DE LIMPIEZA (Aquí es donde ocurre la magia)
+# CSS Quirúrgico: Oculta lo innecesario pero deja la flecha de la Sidebar
 st.markdown("""
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    .stAppDeployButton {display:none;}
-    div[data-testid="stStatusWidget"] {display:none;}
-    header {visibility: hidden;}
+    /* Oculta el botón de la corona (Deploy) */
+    .stAppDeployButton {
+        display: none !important;
+    }
+    
+    /* Oculta el menú de la calavera/comunidad abajo a la derecha */
+    div[data-testid="stStatusWidget"] {
+        display: none !important;
+    }
+
+    /* Oculta solo el menú de 3 puntos arriba a la derecha, NO la flecha */
+    #MainMenu {
+        visibility: hidden;
+    }
+
+    /* Quita el espacio extra del header pero permite que se vea la flecha */
+    header {
+        background-color: rgba(0,0,0,0); /* Transparente */
+    }
+    
+    /* Oculta el footer (Hecho con Streamlit) */
+    footer {
+        visibility: hidden;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -2004,6 +2023,7 @@ else:
         
         
     
+
 
 
 
