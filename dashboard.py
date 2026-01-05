@@ -30,32 +30,41 @@ except (ImportError, ModuleNotFoundError):
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="expanded")
 
-# CSS Quirúrgico: Oculta lo innecesario pero deja la flecha de la Sidebar
 st.markdown("""
     <style>
-    /* Oculta el botón de la corona (Deploy) */
-    .stAppDeployButton {
-        display: none !important;
-    }
-    
-    /* Oculta el menú de la calavera/comunidad abajo a la derecha */
-    div[data-testid="stStatusWidget"] {
-        display: none !important;
-    }
-
-    /* Oculta solo el menú de 3 puntos arriba a la derecha, NO la flecha */
-    #MainMenu {
+    /* 1. ELIMINAR CORONA (DEPLOY) Y MENÚ DE TRES PUNTOS */
+    /* Apuntamos a la zona superior derecha completa pero respetamos el resto */
+    div[data-testid="stToolbar"] {
         visibility: hidden;
-    }
-
-    /* Quita el espacio extra del header pero permite que se vea la flecha */
-    header {
-        background-color: rgba(0,0,0,0); /* Transparente */
+        height: 0%;
     }
     
-    /* Oculta el footer (Hecho con Streamlit) */
+    /* 2. ELIMINAR CALAVERA Y BOTONES DE COMUNIDAD (ABAJO A LA DERECHA) */
+    /* Esto elimina cualquier widget de estado o botones flotantes de la nube */
+    div[data-testid="stStatusWidget"], .stDeployButton, .stAppDeployButton {
+        display: none !important;
+    }
+
+    /* 3. ASEGURAR QUE LA FLECHA (SIDEBAR) SEA VISIBLE */
+    /* Forzamos que el botón de la sidebar se mantenga visible y funcional */
+    button[data-testid="sidebar-button"] {
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    /* 4. LIMPIEZA DE FOOTER */
     footer {
         visibility: hidden;
+    }
+    
+    /* 5. ELIMINAR ESPACIO EN BLANCO SUPERIOR */
+    .stAppHeader {
+        background-color: rgba(0,0,0,0);
+        visibility: hidden;
+    }
+    /* Pero re-activamos la zona de la flecha específicamente */
+    .stAppHeader > div:first-child {
+        visibility: visible;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -2023,6 +2032,7 @@ else:
         
         
     
+
 
 
 
