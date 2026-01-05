@@ -365,61 +365,66 @@ else:
                     st.rerun()
                                       
                                        
-        st.divider()     
-      
+        st.divider()    
+     
+       
 
-        # =========================================================
-        #      BLOQUE DE CONTROL TÁCTICO: FILTROS (SIDEBAR)
-        # =========================================================
-        
-        # 1. DICCIONARIO DE MESES
+        # --- 1. DEFINICIÓN ESTRATÉGICA (Debe ir primero) ---
         meses_dict = {
             1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO", 6: "JUNIO",
             7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"
         }
         
-        # 2. FUNCIÓN DE LIMPIEZA (REBORZADA)
+        # --- 2. CARGA DE INTELIGENCIA (ARCHIVO REAL) ---
+        archivo_matriz = "Matriz_Excel_Dashboard.csv"
+        
+        if os.path.exists(archivo_matriz):
+            # Cargamos y aseguramos formato de fecha
+            df = pd.read_csv(archivo_matriz, encoding='latin-1')
+            df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce')
+            df = df.dropna(subset=["FECHA DE ENVÍO"]) # Limpieza de fechas nulas
+        else:
+            st.error(f"🚨 ERROR: No se encontró el archivo {archivo_matriz}")
+            st.stop()
+        
+        # --- 3. INICIALIZACIÓN DE ESTADOS (Después de cargar el DF) ---
+        if "mes_seleccionado" not in st.session_state:
+            st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
+        
+        if "fecha_filtro" not in st.session_state:
+            st.session_state["fecha_filtro"] = (df["FECHA DE ENVÍO"].min().date(), df["FECHA DE ENVÍO"].max().date())
+        
+        # --- 4. FUNCIÓN DE LIMPIEZA RECALIBRADA ---
         def limpiar_filtros():
             st.session_state.filtro_cliente_actual = ""
             st.session_state.filtro_cliente_input = ""
             st.session_state["fletera_filtro"] = ""
-            # Regresamos al mes actual por sistema
             st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
-            # Reseteamos calendario al rango total de la data
             st.session_state["fecha_filtro"] = (df["FECHA DE ENVÍO"].min().date(), df["FECHA DE ENVÍO"].max().date())
         
-        # 3. INICIALIZACIÓN DE ESTADOS (Evita errores de 'KeyNotFound')
-        if "mes_seleccionado" not in st.session_state:
-            st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
-        if "filtro_cliente_actual" not in st.session_state:
-            st.session_state.filtro_cliente_actual = ""
-        
-        # --- INTERFAZ EN SIDEBAR ---
+        # --- 5. INTERFAZ EN SIDEBAR ---
         st.sidebar.button("🗑️ Limpiar Filtros", use_container_width=True, on_click=limpiar_filtros)
         st.sidebar.markdown("---")
         
-        # A. SELECTOR DE MES (Sincronizado con Session State)
-        opciones_mes = ["TODOS"] + list(meses_dict.values())
+        # A. SELECTOR DE MES
         mes_sel = st.sidebar.selectbox(
             "📍 MES DE OPERACIÓN",
-            options=opciones_mes,
-            key="mes_seleccionado"  # Sin 'index' para evitar el conflicto detectado
+            options=["TODOS"] + list(meses_dict.values()),
+            key="mes_seleccionado"
         )
         
-        # B. CALENDARIO DE PRECISIÓN
-        f_min_limite = df["FECHA DE ENVÍO"].min().date()
-        f_max_limite = df["FECHA DE ENVÍO"].max().date()
+        # B. CALENDARIO
         rango_fechas = st.sidebar.date_input(
-            "📅 RANGO DE FECHAS",
-            min_value=f_min_limite,
-            max_value=f_max_limite,
+            "📅 RANGO ESPECÍFICO",
+            min_value=df["FECHA DE ENVÍO"].min().date(),
+            max_value=df["FECHA DE ENVÍO"].max().date(),
             key="fecha_filtro"
         )
         
-        # C. BUSCADOR (CLIENTE / GUÍA)
+        # C. BUSCADOR (CLIENTE/GUÍA)
         st.sidebar.text_input(
             "🔍 NO. CLIENTE O GUÍA",
-            value=st.session_state.filtro_cliente_actual,
+            value=st.session_state.get("filtro_cliente_actual", ""),
             key="filtro_cliente_input",
             on_change=lambda: st.session_state.update({"filtro_cliente_actual": st.session_state.filtro_cliente_input})
         )
@@ -431,21 +436,21 @@ else:
             key="fletera_filtro"
         )
         
-        # --- LÓGICA DE FILTRADO (EL CEREBRO) ---
+        # --- 6. FILTRADO EN CASCADA (EL MOTOR) ---
         df_filtrado = df.copy()
         
-        # 1. Filtro Mes
+        # Filtrado por Mes
         if mes_sel != "TODOS":
             num_mes = [k for k, v in meses_dict.items() if v == mes_sel][0]
             df_filtrado = df_filtrado[df_filtrado["FECHA DE ENVÍO"].dt.month == num_mes]
         
-        # 2. Filtro Calendario (Validado contra selecciones incompletas)
+        # Filtrado por Rango Calendario
         if isinstance(rango_fechas, (list, tuple)) and len(rango_fechas) == 2:
             f_ini, f_fin = pd.to_datetime(rango_fechas[0]), pd.to_datetime(rango_fechas[1])
             df_filtrado = df_filtrado[(df_filtrado["FECHA DE ENVÍO"] >= f_ini) & (df_filtrado["FECHA DE ENVÍO"] <= f_fin)]
         
-        # 3. Prioridad de Búsqueda
-        valor_buscado = str(st.session_state.filtro_cliente_actual).strip().lower()
+        # Prioridad de Búsqueda de Texto
+        valor_buscado = str(st.session_state.get("filtro_cliente_actual", "")).strip().lower()
         if valor_buscado != "":
             c_cli = df_filtrado["NO CLIENTE"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
             c_gui = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
@@ -2153,6 +2158,7 @@ else:
         
         
     
+
 
 
 
