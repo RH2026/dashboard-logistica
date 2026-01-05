@@ -30,6 +30,17 @@ except (ImportError, ModuleNotFoundError):
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="expanded")
 
+# 2. EL BLOQUE DE LIMPIEZA (Aquí es donde ocurre la magia)
+st.markdown("""
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    .stAppDeployButton {display:none;}
+    div[data-testid="stStatusWidget"] {display:none;}
+    header {visibility: hidden;}
+    </style>
+    """, unsafe_allow_html=True)
+
 
 # 2. ESTADOS DE SESIÓN
 if "logueado" not in st.session_state:
@@ -1993,6 +2004,7 @@ else:
         
         
     
+
 
 
 
