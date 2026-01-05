@@ -68,7 +68,8 @@ if "ultimo_movimiento" not in st.session_state:
 if "tabla_expandida" not in st.session_state:
     st.session_state.tabla_expandida = False
 if "mes_seleccionado" not in st.session_state:
-    st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
+    mes_actual_num = datetime.datetime.now().month
+    st.session_state["mes_seleccionado"] = meses_dict[mes_actual_num]
 if "fecha_filtro" not in st.session_state:
     st.session_state["fecha_filtro"] = (df["FECHA DE ENVÍO"].min().date(), df["FECHA DE ENVÍO"].max().date())
 
@@ -2154,6 +2155,7 @@ else:
         
         
     
+
 
 
 
