@@ -2108,7 +2108,7 @@ else:
                     columnas = base.mark_bar(
                         cornerRadiusTopLeft=8, 
                         cornerRadiusTopRight=8,
-                        color='#EAB308' # Dorado OPS
+                        color='#00D4FF' # Dorado OPS
                     )
             
                     # CAPA 2: Etiquetas de Datos (Blanco Premium)
@@ -2131,7 +2131,7 @@ else:
                             text="TOP 20: FACTURACIÓN POR CLIENTE",
                             subtitle="Análisis comercial de alto nivel - Matriz Mensual",
                             fontSize=20,
-                            color='#FF707E',
+                            color='#00D4FF',
                             anchor='start'
                         )
                     ).configure_view(strokeWidth=0)
@@ -2152,6 +2152,7 @@ else:
         
         
     
+
 
 
 
