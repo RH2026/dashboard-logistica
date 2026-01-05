@@ -173,21 +173,23 @@ if not st.session_state.logueado:
 # CASO B: SPLASH SCREEN
 elif not st.session_state.splash_completado:
     with placeholder.container():
+        
+        # --- DEFINICIÓN GLOBAL (Para que no de NameError) ---
+        usuario = st.session_state.usuario_actual.capitalize() if st.session_state.usuario_actual else "Usuario"
+        color_cyan = "#FFFFFF" # Usamos el Cyan que nos gustó
+        
         # Definición de mensajes según el motivo
         if st.session_state.motivo_splash == "logout":
-            color_usuario = "#FFFFFF"  # Verde Neón Táctico
             mensajes = [
-                f"Cerrando sesión, <span style='color:{color_usuario};'>{usuario}</span>...", 
+                f"Cerrando sesión, <span style='color:{color_cyan};'>{usuario}</span>...", 
                 "Guardando cambios...", 
                 "Conexión con Nexion terminada!"
             ]
             c_caja = "#FF4B4B"
         else:
             # Mensajes dinámicos de bienvenida
-            usuario = st.session_state.usuario_actual.capitalize() if st.session_state.usuario_actual else "Usuario"
-            color_usuario = "#FFFFFF"  # Verde Neón Táctico
             mensajes = [
-                f"¡Hola de vuelta, <span style='color:{color_usuario};'>{usuario}</span>!",
+                f"¡Hola de vuelta, <span style='color:{color_cyan};'>{usuario}</span>!",
                 "Actualizando base de datos...",
                 "Sincronizando estatus de envíos...",
                 "Accediendo al sistema..."
@@ -1991,6 +1993,7 @@ else:
         
         
     
+
 
 
 
