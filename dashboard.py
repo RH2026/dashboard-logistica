@@ -177,9 +177,11 @@ elif not st.session_state.splash_completado:
         if st.session_state.motivo_splash == "logout":
             color_usuario = "#FFFFFF"  # Verde Neón Táctico
             mensajes = [
-            f"Cerrando sesión, <span style='color:{color_usuario};'>{usuario}</span>...", 
-            "Guardando cambios...", 
-            "Conexión con Nexion terminada!"
+                f"Cerrando sesión, <span style='color:{color_usuario};'>{usuario}</span>...", 
+                "Guardando cambios...", 
+                "Conexión con Nexion terminada!"
+            ]
+            c_caja = "#FF4B4B"
         else:
             # Mensajes dinámicos de bienvenida
             usuario = st.session_state.usuario_actual.capitalize() if st.session_state.usuario_actual else "Usuario"
@@ -1989,6 +1991,7 @@ else:
         
         
     
+
 
 
 
