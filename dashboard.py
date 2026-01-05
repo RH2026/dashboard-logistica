@@ -1469,23 +1469,24 @@ else:
             </div>
         """, unsafe_allow_html=True)
 
-        # --- CONTENEDOR DE NAVEGACIÓN (Botones a la derecha sobre la línea) ---
-        # Creamos 3 columnas: 
-        # c1 y c2 actúan como espaciadores (60% del ancho)
-        # c3 contiene los botones (40% del ancho)
-        c1, c2, c3 = st.columns([1, 1, 1.5]) 
+        # --- NAVEGACIÓN COMPACTA ---
+        # Aumentamos el peso de las primeras columnas para reducir la tercera
+        # [3, 3, 1] significa que las vacías ocupan 6/7 del ancho y los botones solo 1/7
+        c1, c2, c3 = st.columns([3, 3, 1.5]) 
         
         with c3:
-            # Sub-columnas dentro de la tercera columna para alinear los botones entre sí
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
-                if st.button("ESTATUS AAC", use_container_width=True):
+                # Aplicamos un estilo CSS pequeño solo para estos botones si desea encoger el texto
+                if st.button("AAC", use_container_width=True):
                     st.session_state.pagina = "principal"
                     st.rerun()
             with btn_col2:
-                if st.button("SEGUIMIENTO", use_container_width=True):
+                if st.button("KPIs", use_container_width=True):
                     st.session_state.pagina = "KPIs"
                     st.rerun()
+        
+        st.divider()
                
         # --- 1. MOTOR DE DATOS NIVEL ELITE ---
         @st.cache_data
@@ -1932,25 +1933,14 @@ else:
             generar_ranking_destinos_v3_final()
                         
         
-        # --- NAVEGACIÓN NIVEL AMAZON (ESTILO FINAL) ---
-        st.divider()
-        st.markdown('<div class="nav-container">', unsafe_allow_html=True) 
-        
-        n1, n2 = st.columns(2)
-        with n1:
-            if st.button("ESTATUS AAC", use_container_width=True):
-                st.session_state.pagina = "principal"
-                st.rerun()
-        with n2:
-            if st.button("SEGUIMIENTO", use_container_width=True):
-                st.session_state.pagina = "KPIs"
-                st.rerun()
-        
+        # --- PIE DE PAGINA------------------------------------------- ---
+               
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
         
         
     
+
 
 
 
