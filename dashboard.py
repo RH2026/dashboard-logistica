@@ -9,6 +9,7 @@ import numpy as np
 import datetime
 import io
 import os
+import datetime
 
 # --- FUNCIÓN PARA CARGAR EL LOGO ---
 def get_base64_bin(path):
@@ -364,91 +365,92 @@ else:
                                        
         st.divider()
            
-        # 1. FUNCIÓN DE LIMPIEZA
+        # --- 1. DICCIONARIO TÁCTICO ---
+        meses_dict = {
+            1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO", 6: "JUNIO",
+            7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"
+        }
+        
+        # --- 2. FUNCIÓN DE LIMPIEZA (REFORZADA) ---
         def limpiar_filtros():
             st.session_state.filtro_cliente_actual = ""
             st.session_state.filtro_cliente_input = ""
-            f_min_res = df["FECHA DE ENVÍO"].min()
-            f_max_res = df["FECHA DE ENVÍO"].max()
-            st.session_state["fecha_filtro"] = (f_min_res, f_max_res)
             st.session_state["fletera_filtro"] = ""
+            st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
+            # Reset de calendario al rango total de la data
+            st.session_state["fecha_filtro"] = (df["FECHA DE ENVÍO"].min().date(), df["FECHA DE ENVÍO"].max().date())
             st.rerun()
-    
-        if st.sidebar.button("Limpiar Filtros", use_container_width=True):
-            limpiar_filtros()
-    
+        
+        # --- 3. INTERFAZ SIDEBAR ---
+        st.sidebar.button("Limpiar Filtros", use_container_width=True, on_click=limpiar_filtros)
         st.sidebar.markdown("---")
-                
-        # 3. CALENDARIO
-        f_min_data = df["FECHA DE ENVÍO"].min()
-        f_max_data = df["FECHA DE ENVÍO"].max()
-    
+        
+        # A. MES (Mantiene el default inteligente)
+        if "mes_seleccionado" not in st.session_state:
+            st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
+        
+        mes_sel = st.sidebar.selectbox(
+            "📍 MES DE OPERACIÓN",
+            options=["TODOS"] + list(meses_dict.values()),
+            index=(["TODOS"] + list(meses_dict.values())).index(st.session_state["mes_seleccionado"]),
+            key="mes_seleccionado"
+        )
+        
+        # B. CALENDARIO (Con blindaje de tipo de dato)
+        f_min_limite = df["FECHA DE ENVÍO"].min().date()
+        f_max_limite = df["FECHA DE ENVÍO"].max().date()
+        
         if "fecha_filtro" not in st.session_state:
-            st.session_state["fecha_filtro"] = (f_min_data, f_max_data)
-    
+            st.session_state["fecha_filtro"] = (f_min_limite, f_max_limite)
+        
         rango_fechas = st.sidebar.date_input(
-            "Fecha de envío",
-            min_value=f_min_data,
-            max_value=f_max_data,
+            "📅 RANGO ESPECÍFICO",
+            value=st.session_state["fecha_filtro"],
+            min_value=f_min_limite,
+            max_value=f_max_limite,
             key="fecha_filtro"
         )
-    
-         # 2. BUSCADOR (CLIENTE O GUÍA)
+        
+        # C. BUSCADOR (Mismo sistema que ya funcionaba)
         if "filtro_cliente_actual" not in st.session_state:
             st.session_state.filtro_cliente_actual = ""
-    
-        def actualizar_filtro():
-            st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente_input
-    
+        
         st.sidebar.text_input(
-            "No. Cliente o Número de Guía",
+            "🔍 NO. CLIENTE O GUÍA",
             value=st.session_state.filtro_cliente_actual,
             key="filtro_cliente_input",
-            on_change=actualizar_filtro
+            on_change=lambda: st.session_state.update({"filtro_cliente_actual": st.session_state.filtro_cliente_input})
         )
-                
-        # 4. SELECTOR DE FLETERA
+        
+        # D. FLETERA
         fletera_sel = st.sidebar.selectbox(
-            "Selecciona Fletera",
+            "🚚 FLETERA",
             options=[""] + sorted(df["FLETERA"].dropna().unique()),
-            index=0,
             key="fletera_filtro"
         )
-        # --------------------------------------------------
-        # APLICACIÓN DE FILTROS (CORREGIDO Y REFORZADO)
-        # --------------------------------------------------
+        
+        # --- 4. FILTRADO EN CASCADA (EL MOTOR) ---
         df_filtrado = df.copy()
         
-        # 1. Limpiamos el valor buscado para evitar errores de espacios
+        # 1. Filtro de Mes
+        if mes_sel != "TODOS":
+            num_mes = [k for k, v in meses_dict.items() if v == mes_sel][0]
+            df_filtrado = df_filtrado[df_filtrado["FECHA DE ENVÍO"].dt.month == num_mes]
+        
+        # 2. Filtro de Calendario (Blindado contra selecciones incompletas)
+        if isinstance(rango_fechas, (list, tuple)) and len(rango_fechas) == 2:
+            f_ini, f_fin = pd.to_datetime(rango_fechas[0]), pd.to_datetime(rango_fechas[1])
+            df_filtrado = df_filtrado[(df_filtrado["FECHA DE ENVÍO"] >= f_ini) & (df_filtrado["FECHA DE ENVÍO"] <= f_fin)]
+        
+        # 3. Filtro de Buscador (Prioridad sobre Fletera)
         valor_buscado = str(st.session_state.filtro_cliente_actual).strip().lower()
-    
-        # PRIORIDAD 1: Si el usuario escribió algo en el buscador
         if valor_buscado != "":
-            # Convertimos las columnas a texto y quitamos el .0 que pone Excel a veces
-            col_cliente_txt = df_filtrado["NO CLIENTE"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
-            col_guia_txt = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
-            
-            # Creamos la máscara de búsqueda
-            mask_cliente = col_cliente_txt.str.contains(valor_buscado, na=False)
-            mask_guia = col_guia_txt.str.contains(valor_buscado, na=False)
-            
-            # Filtramos (Si coincide con cliente O con guía)
-            df_filtrado = df_filtrado[mask_cliente | mask_guia]
-            
-        # PRIORIDAD 2: Si el buscador está vacío, aplicamos fechas y fletera
+            # Mantenemos su lógica de limpieza de .0 y texto para que no falle la búsqueda de guías
+            c_cli = df_filtrado["NO CLIENTE"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
+            c_gui = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
+            df_filtrado = df_filtrado[c_cli.str.contains(valor_buscado, na=False) | c_gui.str.contains(valor_buscado, na=False)]
         else:
-            # Validación de fechas
-            if isinstance(rango_fechas, (list, tuple)) and len(rango_fechas) == 2:
-                f_inicio, f_fin = rango_fechas
-                f_ini_dt = pd.to_datetime(f_inicio)
-                f_fin_dt = pd.to_datetime(f_fin)
-                
-                df_filtrado = df_filtrado[
-                    (df_filtrado["FECHA DE ENVÍO"] >= f_ini_dt) & 
-                    (df_filtrado["FECHA DE ENVÍO"] <= f_fin_dt)
-                ]
-            
-            # Filtro de fletera
+            # 4. Filtro de Fletera
             if fletera_sel != "":
                 df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
     
@@ -2152,6 +2154,7 @@ else:
         
         
     
+
 
 
 
