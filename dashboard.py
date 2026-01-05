@@ -10,7 +10,16 @@ import datetime
 import io
 import os
 
-# --- NUEVO PROTOCOLO DE IMPORTACIÓN PARA FPDF2 (BLOQUE ELITE) ---
+# --- FUNCIÓN PARA CARGAR EL LOGO ---
+def get_base64_bin(path):
+    try:
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    except Exception:
+        return ""
+
+# CARGAMOS LA VARIABLE ANTES DE USARLA
+logo_b64 = get_base64_bin("n1.png")# --- NUEVO PROTOCOLO DE IMPORTACIÓN PARA FPDF2 (BLOQUE ELITE) ---
 # --- PROTOCOLO DE CONEXIÓN FINAL ---
 try:
     from fpdf import FPDF
@@ -1969,6 +1978,7 @@ else:
         
         
     
+
 
 
 
