@@ -180,7 +180,7 @@ elif not st.session_state.splash_completado:
         else:
             # Mensajes dinámicos de bienvenida
             usuario = st.session_state.usuario_actual.capitalize() if st.session_state.usuario_actual else "Usuario"
-            color_usuario = "#00F2FF"  # Verde Neón Táctico
+            color_usuario = "#FFFFFF"  # Verde Neón Táctico
             mensajes = [
                 f"¡Hola de vuelta, <span style='color:{color_usuario};'>{usuario}</span>!",
                 "Actualizando base de datos...",
@@ -1986,6 +1986,7 @@ else:
         
         
     
+
 
 
 
