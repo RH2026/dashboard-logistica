@@ -30,41 +30,26 @@ except (ImportError, ModuleNotFoundError):
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="collapsed")
 
-# --- 1. GESTIÓN DEL ESTADO DE LA SIDEBAR ---
-if "sidebar_state" not in st.session_state:
-    st.session_state.sidebar_state = "collapsed"
-
-# Función para conmutar la barra
-def toggle_sidebar():
-    if st.session_state.sidebar_state == "collapsed":
-        st.session_state.sidebar_state = "expanded"
-    else:
-        st.session_state.sidebar_state = "collapsed"
-
-# --- 2. CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(
-    layout="wide", 
-    initial_sidebar_state=st.session_state.sidebar_state
-)
-
-# --- 3. CSS DE CAMUFLAJE TOTAL ---
-# Aquí borramos TODO lo de Streamlit (Corona, Flecha original, Menú, Calavera)
 st.markdown("""
     <style>
     [data-testid="stToolbar"], [data-testid="stStatusWidget"], 
     .stAppDeployButton, footer, button[data-testid="sidebar-button"] {
         display: none !important;
     }
-    /* Quitamos el margen superior para que se vea limpio */
-    .stAppHeader { height: 0px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. NUESTRO BOTÓN PERSONALIZADO ---
-# Lo colocamos arriba a la izquierda
-if st.button("☰ Menú de Navegación"):
-    toggle_sidebar()
-    st.rerun() # Reiniciamos para aplicar el cambio de estado
+# 4. NUESTRO BOTÓN DE MANDO
+col1, _ = st.columns([1, 5])
+with col1:
+    if current_state == "collapsed":
+        if st.button("📂 ABRIR PANEL"):
+            st.query_params["sidebar"] = "expanded"
+            st.rerun()
+    else:
+        if st.button("📁 CERRAR PANEL"):
+            st.query_params["sidebar"] = "collapsed"
+            st.rerun()
 
 
 # 2. ESTADOS DE SESIÓN
@@ -2029,6 +2014,7 @@ else:
         
         
     
+
 
 
 
