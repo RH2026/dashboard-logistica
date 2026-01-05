@@ -21,12 +21,18 @@ meses_dict = {
 }
 
 # 3. DEFINICIÓN DE FUNCIONES (¡ESTO DEBE IR AQUÍ!)
-# El radar necesita leer esto ANTES de llegar a la Sidebar
 def limpiar_filtros():
     st.session_state.filtro_cliente_actual = ""
     st.session_state.filtro_cliente_input = ""
     st.session_state["fletera_filtro"] = ""
     st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
+    
+    # --- AQUÍ VA EL BLOQUE ---
+    fechas_validas = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce').dropna()
+    if not fechas_validas.empty:
+        f_min = fechas_validas.min().date()
+        f_max = fechas_validas.max().date()
+        st.session_state["fecha_filtro"] = (f_min, f_max)
 
 # =========================================================
 # 2. NIVEL 1: CARGA DE DATOS (CON LIMPIEZA DE INTERFERENCIAS)
@@ -450,16 +456,22 @@ else:
             key="mes_seleccionado"
         )
         
-        # B. CALENDARIO (CON VALIDACIÓN DE SEGURIDAD PREVIA)
-        f_min_limite = df["FECHA DE ENVÍO"].min().date()
-        f_max_limite = df["FECHA DE ENVÍO"].max().date()
+        # B. CALENDARIO (CON LIMPIEZA DE DATOS NULOS)
+        # Extraemos solo fechas válidas para evitar el AttributeError
+        fechas_limpias = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce').dropna()
+        
+        if not fechas_limpias.empty:
+            f_min_limite = fechas_limpias.min().date()
+            f_max_limite = fechas_limpias.max().date()
+        else:
+            f_min_limite = datetime.date.today()
+            f_max_limite = datetime.date.today()
         
         # --- MANIOBRA ANTIBLOQUEO ---
-        # Si el valor en memoria está fuera de los límites del archivo actual, lo corregimos
         if "fecha_filtro" in st.session_state:
             val_check = st.session_state["fecha_filtro"]
+            # Si el valor guardado se sale de los bordes del archivo, lo reseteamos al máximo
             if isinstance(val_check, (list, tuple)) and len(val_check) == 2:
-                # Si la fecha de inicio es menor al mínimo o la de fin mayor al máximo, reseteo total
                 if val_check[0] < f_min_limite or val_check[1] > f_max_limite:
                     st.session_state["fecha_filtro"] = (f_min_limite, f_max_limite)
             elif isinstance(val_check, datetime.date):
@@ -498,7 +510,7 @@ else:
             num_mes = [k for k, v in meses_dict.items() if v == mes_sel][0]
             df_filtrado = df_filtrado[df_filtrado["FECHA DE ENVÍO"].dt.month == num_mes]
         
-        # 2. Filtrado por Rango Calendario (Blindado contra selecciones de un solo click)
+        # 2. Filtrado por Rango Calendario
         if isinstance(rango_fechas, (list, tuple)) and len(rango_fechas) == 2:
             f_ini, f_fin = pd.to_datetime(rango_fechas[0]), pd.to_datetime(rango_fechas[1])
             df_filtrado = df_filtrado[(df_filtrado["FECHA DE ENVÍO"] >= f_ini) & (df_filtrado["FECHA DE ENVÍO"] <= f_fin)]
@@ -507,12 +519,12 @@ else:
         valor_buscado = str(st.session_state.get("filtro_cliente_actual", "")).strip().lower()
         
         if valor_buscado != "":
-            # Limpieza de basura en columnas para búsqueda exacta
+            # Aseguramos que la búsqueda ignore errores de formato (.0 de Excel)
             c_cli = df_filtrado["NO CLIENTE"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
             c_gui = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
             df_filtrado = df_filtrado[c_cli.str.contains(valor_buscado, na=False) | c_gui.str.contains(valor_buscado, na=False)]
         else:
-            # 4. Filtro de Fletera (Solo si el buscador está vacío)
+            # 4. Filtro de Fletera (Si el buscador está vacío)
             if fletera_sel != "":
                 df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
     
@@ -2216,6 +2228,7 @@ else:
         
         
     
+
 
 
 
