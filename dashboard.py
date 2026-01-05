@@ -1157,25 +1157,9 @@ else:
                     st.session_state.pagina = "Reporte"
                     st.rerun()
         
-        st.divider()
-        
-        # --- ESTRUCTURA DE COLUMNAS ---
-        c1, c2, c3 = st.columns([3, 2, 2.5]) 
-        
-        with c3:
-            btn_col1, btn_col2 = st.columns(2, gap="small")
-            
-            with btn_col1:
-                if st.button("AAC", use_container_width=True, key="btn_fuente_est"):
-                    st.session_state.pagina = "principal"
-                    st.rerun()
-                    
-            with btn_col2:
-                if st.button("ROPS", use_container_width=True, key="btn_fuente_rep"):
-                    st.session_state.pagina = "Reporte"
-                    st.rerun()
-                        
-                
+              
+                      
+              
         st.divider()
 
         # --- 2. LÓGICA DE DATOS (ESTANDARIZADA) ---
@@ -2068,6 +2052,7 @@ else:
         
         
     
+
 
 
 
