@@ -310,7 +310,47 @@ else:
             </div>
         """, unsafe_allow_html=True)
        
-        st.divider()
+        # =========================================================
+        #      NAVEGACIÓN SECTOR 2: SEGUIMIENTO Y REPORTE
+        # =========================================================
+        
+        # 1. PARÁMETROS DE MANDO (Control de fuente manual)
+        fuente_nav_2 = "12px" 
+        
+        # 2. INYECCIÓN DE ESTILO (Asegura que estos botones sean gemelos)
+        st.markdown(f"""
+            <style>
+                div[data-testid="stColumn"] button {{
+                    font-size: {fuente_nav_2} !important;
+                    font-weight: 700 !important;
+                    text-transform: uppercase !important;
+                    height: 38px !important;
+                }}
+            </style>
+        """, unsafe_allow_html=True)
+        
+        # 3. ESTRUCTURA DE COLUMNAS (Alineación a la derecha)
+        # Proporción [3, 2, 2.5] para que los botones queden en el flanco derecho
+        c1, c2, c3 = st.columns([3, 2, 2.5]) 
+        
+        with c3:
+            # Sub-columnas con gap pequeño para máxima limpieza
+            btn_col1, btn_col2 = st.columns(2, gap="small")
+            
+            with btn_col1:
+                # Texto: SEGUIMIENTO | Key única para evitar errores
+                if st.button("SEGUIMIENTO", use_container_width=True, key="btn_nav_seg_final"):
+                    st.session_state.pagina = "KPIs"
+                    st.rerun()
+                    
+            with btn_col2:
+                # Texto: REPORTE | Key única para evitar errores
+                if st.button("REPORTE", use_container_width=True, key="btn_nav_rep_ops_final"):
+                    st.session_state.pagina = "Reporte"
+                    st.rerun()
+        
+                       
+                st.divider()
            
         # 1. FUNCIÓN DE LIMPIEZA
         def limpiar_filtros():
@@ -1031,22 +1071,9 @@ else:
                 """, unsafe_allow_html=True)
         
         # --------------------------------------------------
-        # FINAL DE PÁGINA Y BOTÓN A KPIs
+        # FINAL DE PÁGINA FOOTER
         # --------------------------------------------------
-        st.divider()
-        # --- FINAL DE PÁGINA PRINCIPAL (Añadir nuevo botón) ---
-        col_btn1, col_btn2 = st.columns(2)
-        
-        with col_btn1:
-            if st.button("SEGUIMIENTO", use_container_width=True):
-                st.session_state.pagina = "KPIs"
-                st.rerun()
                 
-        with col_btn2:
-            if st.button("REPORTE OPS", use_container_width=True):
-                st.session_state.pagina = "Reporte"
-                st.rerun()
-        
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
 
     # ------------------------------------------------------------------
@@ -1982,6 +2009,7 @@ else:
         
         
     
+
 
 
 
