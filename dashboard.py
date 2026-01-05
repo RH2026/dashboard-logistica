@@ -2031,7 +2031,7 @@ else:
                     ).encode(text=alt.Text('VALOR FACTURA:Q', format="$,.2s"))
             
                     radar = (barras + texto).properties(width='container', height=450,
-                        title=alt.TitleParams(text="TOP DESTINOS", color='#EAB308', anchor='start')
+                        title=alt.TitleParams(text="TOP 20: FACTURACION POR DESTINOS", color='#EAB308', anchor='start')
                     ).configure_view(strokeWidth=0)
             
                     st.altair_chart(radar, use_container_width=True)
@@ -2152,6 +2152,7 @@ else:
         
         
     
+
 
 
 
