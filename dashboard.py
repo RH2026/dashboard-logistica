@@ -324,7 +324,7 @@ else:
                     font-size: {fuente_nav_2} !important;
                     font-weight: 700 !important;
                     text-transform: uppercase !important;
-                    height: 38px !important;
+                    height: 30px !important;
                 }}
             </style>
         """, unsafe_allow_html=True)
@@ -2009,6 +2009,7 @@ else:
         
         
     
+
 
 
 
