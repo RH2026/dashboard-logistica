@@ -1468,7 +1468,24 @@ else:
                 <div style='height: 2px; width: 60px; background: #00FFAA; margin: 10px auto;'></div>
             </div>
         """, unsafe_allow_html=True)
-             
+
+        # --- CONTENEDOR DE NAVEGACIÓN (Botones a la derecha sobre la línea) ---
+        # Creamos 3 columnas: 
+        # c1 y c2 actúan como espaciadores (60% del ancho)
+        # c3 contiene los botones (40% del ancho)
+        c1, c2, c3 = st.columns([1, 1, 1.5]) 
+        
+        with c3:
+            # Sub-columnas dentro de la tercera columna para alinear los botones entre sí
+            btn_col1, btn_col2 = st.columns(2)
+            with btn_col1:
+                if st.button("ESTATUS AAC", use_container_width=True):
+                    st.session_state.pagina = "principal"
+                    st.rerun()
+            with btn_col2:
+                if st.button("SEGUIMIENTO", use_container_width=True):
+                    st.session_state.pagina = "KPIs"
+                    st.rerun()
                
         # --- 1. MOTOR DE DATOS NIVEL ELITE ---
         @st.cache_data
@@ -1934,6 +1951,7 @@ else:
         
         
     
+
 
 
 
