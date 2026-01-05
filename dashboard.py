@@ -20,6 +20,14 @@ meses_dict = {
     7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"
 }
 
+# 3. DEFINICIÓN DE FUNCIONES (¡ESTO DEBE IR AQUÍ!)
+# El radar necesita leer esto ANTES de llegar a la Sidebar
+def limpiar_filtros():
+    st.session_state.filtro_cliente_actual = ""
+    st.session_state.filtro_cliente_input = ""
+    st.session_state["fletera_filtro"] = ""
+    st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
+
 # =========================================================
 # 2. NIVEL 1: CARGA DE DATOS (CON LIMPIEZA DE INTERFERENCIAS)
 # =========================================================
@@ -45,6 +53,11 @@ if os.path.exists(archivo_matriz):
     
     # Limpieza específica para el carácter extraño que detectó el radar en el primer campo
     df.columns = [c.replace('Ï»¿', '') for c in df.columns]
+
+    if 'df' in globals():
+        f_min = df["FECHA DE ENVÍO"].min().date()
+        f_max = df["FECHA DE ENVÍO"].max().date()
+        st.session_state["fecha_filtro"] = (f_min, f_max)
 
     # --- VERIFICACIÓN DE COLUMNA CRÍTICA ---
     if "FECHA DE ENVÍO" in df.columns:
@@ -2203,6 +2216,7 @@ else:
         
         
     
+
 
 
 
