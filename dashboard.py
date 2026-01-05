@@ -309,63 +309,62 @@ else:
                 <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
             </div>
         """, unsafe_allow_html=True)
-       
+              
+        
         # =========================================================
-        # CENTRO DE MANDO: MENÚ DESPLEGABLE RESPONSIVE
+        #      PUENTE DE MANDO LATERAL: MENÚ DE HAMBURGUESA
         # =========================================================
         
-        # 1. PARÁMETROS DE ESTILO (Ajuste de fuente y colores)
-        fuente_menu = "14px"
-        
-        st.markdown(f"""
+        # 1. ESTILO CSS PARA EL SIDEBAR (Colores Corporativos)
+        st.markdown("""
             <style>
-                /* Estilizar el selectbox para que parezca un botón de mando */
-                div[data-testid="stSelectbox"] > div {{
+                /* Fondo del Sidebar */
+                [data-testid="stSidebar"] {
                     background-color: #0d1117 !important;
-                    border: 1px solid #00ffa2 !important; /* Borde Esmeralda */
-                    border-radius: 8px !important;
-                    font-size: {fuente_menu} !important;
-                    font-weight: 700 !important;
-                }}
-                div[data-testid="stSelectbox"] label {{
-                    color: #94a3b8 !important; /* Color de la etiqueta arriba */
-                    font-size: 12px !important;
-                    text-transform: uppercase;
-                }}
+                    border-right: 1px solid #30363d;
+                }
+                /* Estilo de los Radio Buttons (Opciones del menú) */
+                div[role="radiogroup"] > label {
+                    background-color: transparent !important;
+                    color: #f8fafc !important;
+                    font-size: 14px !important;
+                    font-weight: 600 !important;
+                    padding: 10px !important;
+                    border-radius: 5px !important;
+                }
+                /* Efecto cuando pasas el mouse o seleccionas */
+                div[role="radiogroup"] > label:hover {
+                    color: #00ffa2 !important; /* Esmeralda al pasar mouse */
+                }
             </style>
         """, unsafe_allow_html=True)
         
-        # 2. ESTRUCTURA DE COLUMNAS (Alineación a la derecha)
-        c1, c2, c3 = st.columns([3, 2, 2]) 
-        
-        with c3:
-            # Definimos las opciones del menú
-            opciones = ["📡 PANEL PRINCIPAL (AAC)", "📊 SEGUIMIENTO KPIs", "📑 REPORTE MENSUAL"]
+        # 2. CONSTRUCCIÓN DEL MENÚ EN EL SIDEBAR
+        with st.sidebar:
+            st.markdown(f"## <span style='color:#eab308'>🛰️ COMANDO</span>", unsafe_allow_html=True)
+            st.write("---")
             
-            # Creamos el índice actual para que el menú sepa dónde está parado
-            indice_actual = 0
-            if st.session_state.get('pagina') == "KPIs": indice_actual = 1
-            if st.session_state.get('pagina') == "Reporte": indice_actual = 2
-        
-            seleccion = st.selectbox(
-                "Navegación del Sistema", 
-                opciones, 
-                index=indice_actual,
-                key="menu_desplegable_elite"
+            # Definimos la navegación
+            opcion = st.radio(
+                "SELECCIONE SECTOR:",
+                ["📡 PANEL PRINCIPAL", "📊 SEGUIMIENTO KPIs", "📑 REPORTE MENSUAL"],
+                key="menu_hamburguesa",
+                index=0 if st.session_state.pagina == "principal" else 
+                      1 if st.session_state.pagina == "KPIs" else 2
             )
+            
+            st.write("---")
+            st.markdown("<p style='color:#475569; font-size:10px;'>LOGISTICS UNIT v3.0</p>", unsafe_allow_html=True)
         
-            # 3. LÓGICA DE SALTO (Redirección automática)
-            if seleccion == "📡 PANEL PRINCIPAL (AAC)" and st.session_state.pagina != "principal":
-                st.session_state.pagina = "principal"
-                st.rerun()
-            elif seleccion == "📊 SEGUIMIENTO KPIs" and st.session_state.pagina != "KPIs":
-                st.session_state.pagina = "KPIs"
-                st.rerun()
-            elif seleccion == "📑 REPORTE MENSUAL" and st.session_state.pagina != "Reporte":
-                st.session_state.pagina = "Reporte"
-                st.rerun()
-                
-                               
+        # 3. LÓGICA DE SALTO (Redirección entre páginas)
+        if "📡 PANEL PRINCIPAL" in opcion:
+            st.session_state.pagina = "principal"
+        elif "📊 SEGUIMIENTO KPIs" in opcion:
+            st.session_state.pagina = "KPIs"
+        elif "📑 REPORTE MENSUAL" in opcion:
+            st.session_state.pagina = "Reporte"
+                        
+                                       
         st.divider()
            
         # 1. FUNCIÓN DE LIMPIEZA
@@ -2025,6 +2024,7 @@ else:
         
         
     
+
 
 
 
