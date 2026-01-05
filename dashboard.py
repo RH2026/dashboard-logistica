@@ -828,55 +828,60 @@ else:
                 """, unsafe_allow_html=True)
     
         # --------------------------------------------------
-        # RANKING DE CALIDAD: MEJOR A PEOR FLETERA (MENOS FALLOS A MÁS)
+        # RANKING DE CALIDAD: MEJOR A PEOR FLETERA
         # --------------------------------------------------
-        # --- RANKING DE CALIDAD (DISEÑO ELITE) ---
         
         # Estética de colores de la central de monitoreo
         color_perfecto = "#059669"  # Esmeralda (Cero fallos)
         color_con_fallo = "#fb7185" # Coral/Rojo (Con retrasos)
-
+        
         st.markdown(f"""
             <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #00FFAA; margin-top: 30px; margin-bottom: 20px;'>
                 <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>🏆 RANKING DE CALIDAD: INCIDENCIAS POR FLETERA</span>
             </div>
         """, unsafe_allow_html=True)
-
+        
         # 1. Procesamiento de incidencias
         df_entregas_tarde = df_filtrado[
             (df_filtrado["FECHA DE ENTREGA REAL"].notna()) & 
             (df_filtrado["FECHA DE ENTREGA REAL"] > df_filtrado["PROMESA DE ENTREGA"])
         ].copy()
-
+        
         df_ranking = df_entregas_tarde.groupby("FLETERA").size().reset_index(name="FALLOS")
         todas_f = pd.DataFrame(df_filtrado["FLETERA"].unique(), columns=["FLETERA"])
         df_rk = pd.merge(todas_f, df_ranking, on="FLETERA", how="left").fillna(0)
-
+        
         if not df_rk.empty:
-            # Asignación de colores segura (Elite Style)
             df_rk["COLOR_HEX"] = df_rk["FALLOS"].apply(lambda x: color_perfecto if x == 0 else color_con_fallo)
-
-            # 2. Gráfico Vertical Premium
+        
+            # 2. Gráfico Vertical Premium RESPONSIVE
             chart_base = alt.Chart(df_rk).encode(
-                x=alt.X("FLETERA:N", title=None, sort='y', axis=alt.Axis(labelAngle=-45, labelColor='white', labelFontSize=11)),
-                y=alt.Y("FALLOS:Q", title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8')),
+                x=alt.X("FLETERA:N", 
+                        title=None, 
+                        sort='y', 
+                        scale=alt.Scale(paddingInner=0.2), # Espaciado dinámico
+                        axis=alt.Axis(
+                            labelAngle=-90, # <--- Títulos Verticales para Móvil
+                            labelColor='white', 
+                            labelFontSize=11,
+                            labelOverlap='parity'
+                        )),
+                y=alt.Y("FALLOS:Q", title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8', format='d')),
                 color=alt.Color("COLOR_HEX:N", scale=None)
             )
-
+        
             bars = chart_base.mark_bar(
                 cornerRadiusTopLeft=10, 
-                cornerRadiusTopRight=10,
-                size=40
+                cornerRadiusTopRight=10
+                # Eliminamos 'size' fijo para que sea responsivo
             )
-
-            # Etiquetas de datos (Los números arriba de las barras)
+        
             labels = chart_base.mark_text(
-                align='center', baseline='bottom', dy=-10, fontSize=15, fontWeight=700, color='white'
+                align='center', baseline='bottom', dy=-10, fontSize=14, fontWeight=700, color='white'
             ).encode(text=alt.Text("FALLOS:Q", format='d'))
-
-            st.altair_chart((bars + labels).properties(height=400).configure_view(strokeOpacity=0), use_container_width=True)
+        
+            st.altair_chart((bars + labels).properties(height=450).configure_view(strokeOpacity=0), use_container_width=True)
             
-            # Guía de lectura rápida
             st.markdown(f"""
                 <p style='text-align:center; color:#94a3b8; font-size:12px; font-style:italic;'>
                     <span style='color:{color_perfecto};'>●</span> <b>Cero Incidencias</b> | 
@@ -890,61 +895,53 @@ else:
         # --------------------------------------------------
         # SECCIÓN UNIFICADA: ANÁLISIS DE EXPERIENCIA (LUPA)
         # --------------------------------------------------
-        # --- ANÁLISIS POR PAQUETERÍA: LUPA DE EXPERIENCIA (NIVEL ELITE) ---
         
-        # Estética de colores OPS MONITOR
-        color_entrega_ok = "#059669" # Esmeralda (A tiempo o antes)
-        color_entrega_late = "#fb7185" # Coral (Retraso)
-
         st.markdown(f"""
             <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 30px; margin-bottom: 20px;'>
-                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>🔍 DISTRIBUCIÓN DE EXPERIENCIA: {fletera_seleccionada if 'fletera_seleccionada' in locals() else 'GENERAL'}</span>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>🔍 DISTRIBUCIÓN DE EXPERIENCIA</span>
             </div>
         """, unsafe_allow_html=True)
-
-        # 1. Selector Elite con mejor espaciado
+        
+        # 1. Selector Elite
         lista_fleteras = ["TODAS"] + sorted(df_filtrado["FLETERA"].unique().tolist())
-        fletera_seleccionada = st.selectbox("🎯 Filtrar por Paquetería:", lista_fleteras, help="Analiza la puntualidad específica de cada proveedor.")
-
-        # 2. Procesamiento de datos de experiencia
+        fletera_seleccionada = st.selectbox("🎯 Filtrar por Paquetería:", lista_fleteras, key="lupa_selector")
+        
+        # 2. Procesamiento
         df_lupa = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
         if fletera_seleccionada != "TODAS":
             df_lupa = df_lupa[df_lupa["FLETERA"] == fletera_seleccionada]
         
         df_lupa["DIAS_DIF"] = (df_lupa["FECHA DE ENTREGA REAL"] - df_lupa["PROMESA DE ENTREGA"]).dt.days
-
+        
         if not df_lupa.empty:
             df_dist_lupa = df_lupa.groupby("DIAS_DIF").size().reset_index(name="PEDIDOS")
-            
-            # --- ASIGNACIÓN DE COLORES SEGURA ---
-            df_dist_lupa["COLOR_HEX"] = df_dist_lupa["DIAS_DIF"].apply(lambda x: color_entrega_ok if x <= 0 else color_entrega_late)
-
-            # 3. Gráfico de Histograma Técnico
+            df_dist_lupa["COLOR_HEX"] = df_dist_lupa["DIAS_DIF"].apply(lambda x: color_perfecto if x <= 0 else color_con_fallo)
+        
+            # 3. Gráfico de Histograma Técnico RESPONSIVE
             base_lupa = alt.Chart(df_dist_lupa).encode(
-                x=alt.X("DIAS_DIF:Q", title="Días vs Promesa (← Antes | Retraso →)", axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8')),
-                y=alt.Y("PEDIDOS:Q", title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8')),
+                x=alt.X("DIAS_DIF:O", # Cambiado a Ordinal para mejor control de etiquetas
+                        title="Días vs Promesa (← Antes | Retraso →)", 
+                        axis=alt.Axis(labelAngle=0, labelColor='#94a3b8', labelOverlap='parity')),
+                y=alt.Y("PEDIDOS:Q", title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8', format='~s')),
                 color=alt.Color("COLOR_HEX:N", scale=None)
             )
-
+        
             bars_lupa = base_lupa.mark_bar(
                 cornerRadiusTopLeft=6, 
-                cornerRadiusTopRight=6,
-                size=35 if len(df_dist_lupa) < 10 else 20 # Ajuste dinámico de ancho
+                cornerRadiusTopRight=6
             )
-
-            # Etiquetas de datos para precisión absoluta
+        
             text_lupa = base_lupa.mark_text(
                 align='center', baseline='bottom', dy=-8, fontWeight=700, color='white', fontSize=12
-            ).encode(text=alt.Text("PEDIDOS:Q"))
-
+            ).encode(text=alt.Text("PEDIDOS:Q", format='~s'))
+        
             st.altair_chart((bars_lupa + text_lupa).properties(height=350).configure_view(strokeOpacity=0), use_container_width=True)
-
-            # 4. Tip Inteligente con Estilo de Tarjeta
+        
             st.markdown(f"""
                 <div style='background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 15px; border-radius: 10px;'>
                     <p style='margin:0; color:#38bdf8; font-size:13px; font-weight:600;'>💡 TIP DE OPERACIONES:</p>
                     <p style='margin:5px 0 0 0; color:#e2e8f0; font-size:14px;'>
-                        Analizando a <b>{fletera_seleccionada}</b>: Las barras a la derecha del '0' representan promesas incumplidas. 
+                        Las barras a la derecha del '0' representan promesas incumplidas. 
                         Busca reducir la dispersión hacia el lado rojo para mejorar la lealtad del cliente.
                     </p>
                 </div>
@@ -1937,6 +1934,7 @@ else:
         
         
     
+
 
 
 
