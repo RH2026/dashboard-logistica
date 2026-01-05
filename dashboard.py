@@ -312,57 +312,43 @@ else:
               
         
         # =========================================================
-        #      PUENTE DE MANDO LATERAL: MENÚ DE HAMBURGUESA
+        #        SISTEMA DE NAVEGACIÓN ELITE (CONTROL TOTAL)
         # =========================================================
         
-        # 1. ESTILO CSS PARA EL SIDEBAR (Colores Corporativos)
-        st.markdown("""
+        # 1. PARÁMETROS DE MANDO: Ajuste aquí el tamaño de fuente
+        fuente_botones = "12px" 
+        
+        # 2. INYECCIÓN DE ESTILO DINÁMICO
+        st.markdown(f"""
             <style>
-                /* Fondo del Sidebar */
-                [data-testid="stSidebar"] {
-                    background-color: #0d1117 !important;
-                    border-right: 1px solid #30363d;
-                }
-                /* Estilo de los Radio Buttons (Opciones del menú) */
-                div[role="radiogroup"] > label {
-                    background-color: transparent !important;
-                    color: #f8fafc !important;
-                    font-size: 14px !important;
-                    font-weight: 600 !important;
-                    padding: 10px !important;
-                    border-radius: 5px !important;
-                }
-                /* Efecto cuando pasas el mouse o seleccionas */
-                div[role="radiogroup"] > label:hover {
-                    color: #00ffa2 !important; /* Esmeralda al pasar mouse */
-                }
+                /* Estilo aplicado a los botones dentro de columnas para simetría total */
+                div[data-testid="stColumn"] button {{
+                    font-size: {fuente_botones} !important;
+                    font-weight: 700 !important;
+                    text-transform: uppercase !important;
+                    height: 38px !important;
+                    border-radius: 8px !important;
+                }}
             </style>
         """, unsafe_allow_html=True)
         
-        # 2. CONSTRUCCIÓN DEL MENÚ EN EL SIDEBAR
-        with st.sidebar:
-            st.markdown(f"## <span style='color:#eab308'>🛰️ COMANDO</span>", unsafe_allow_html=True)
-            st.write("---")
-            
-            # Definimos la navegación
-            opcion = st.radio(
-                "SELECCIONE SECTOR:",
-                ["📡 PANEL PRINCIPAL", "📊 SEGUIMIENTO KPIs", "📑 REPORTE MENSUAL"],
-                key="menu_hamburguesa",
-                index=0 if st.session_state.pagina == "principal" else 
-                      1 if st.session_state.pagina == "KPIs" else 2
-            )
-            
-            st.write("---")
-            st.markdown("<p style='color:#475569; font-size:10px;'>LOGISTICS UNIT v3.0</p>", unsafe_allow_html=True)
+        # 3. ESTRUCTURA DE NAVEGACIÓN COMPACTA
+        # Proporción [3, 2, 2] empuja los botones a la derecha pero les da base firme
+        c1, c2, c3 = st.columns([3, 2, 2]) 
         
-        # 3. LÓGICA DE SALTO (Redirección entre páginas)
-        if "📡 PANEL PRINCIPAL" in opcion:
-            st.session_state.pagina = "principal"
-        elif "📊 SEGUIMIENTO KPIs" in opcion:
-            st.session_state.pagina = "KPIs"
-        elif "📑 REPORTE MENSUAL" in opcion:
-            st.session_state.pagina = "Reporte"
+        with c3:
+            # gap="small" mantiene los botones unidos como una sola unidad de mando
+            btn_col1, btn_col2 = st.columns(2, gap="small")
+            
+            with btn_col1:
+                if st.button("AAC", use_container_width=True, key="btn_aac_reporte"):
+                    st.session_state.pagina = "principal"
+                    st.rerun()
+                    
+            with btn_col2:
+                if st.button("KPIs", use_container_width=True, key="btn_kpi_reporte"):
+                    st.session_state.pagina = "KPIs"
+                    st.rerun()
                         
                                        
         st.divider()
@@ -2024,6 +2010,7 @@ else:
         
         
     
+
 
 
 
