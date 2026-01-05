@@ -1830,7 +1830,6 @@ else:
                     df.columns = [c.strip().upper() for c in df.columns]
                     df['COSTO DE GUIA'] = df['COSTO DE GUIA'].replace('[\$,]', '', regex=True).astype(float).fillna(0)
                     
-                    # Procesamiento de Fechas para el Filtro
                     df['FECHA DE FACTURA'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
                     df = df.dropna(subset=['FECHA DE FACTURA'])
                     df['MES_LABEL'] = df['FECHA DE FACTURA'].dt.strftime('%B').str.upper()
@@ -1841,78 +1840,54 @@ else:
                     input_dropdown = alt.binding_select(options=meses_ordenados, name="PERIODO: ")
                     seleccion = alt.selection_point(fields=['MES_LABEL'], bind=input_dropdown, value=meses_ordenados[-1])
             
-                    # --- CONSTRUCCIÓN VERTICAL ---
+                    # --- CONSTRUCCIÓN VERTICAL RESPONSIVA ---
                     base = alt.Chart(df).transform_filter(seleccion)
             
-                    # CAPA 1: Columnas Estilo "Torre de Control"
+                    # CAPA 1: Columnas con Bandwidth Automático (Se ajusta a móvil/PC)
                     columnas = base.mark_bar(
-                        cornerRadiusTopLeft=12,
-                        cornerRadiusTopRight=12,
-                        size=90 # Columnas más robustas
+                        cornerRadiusTopLeft=10,
+                        cornerRadiusTopRight=10,
+                        size={'bandwidth': 0.7} # Ocupa el 70% del espacio disponible (evita amontonamiento)
                     ).encode(
                         x=alt.X('FLETERA:N', 
                                 title=None, 
                                 sort='-y',
-                                axis=alt.Axis(labelAngle=-45, labelFontSize=12, labelColor='#FFFFFF', labelFontWeight='bold')),
+                                axis=alt.Axis(labelAngle=-45, labelFontSize=11, labelColor='#FFFFFF', labelFontWeight='bold', labelOverlap='parity')),
                         y=alt.Y('sum(COSTO DE GUIA):Q', 
-                                title="INVERSIÓN TOTAL ($)", 
-                                axis=alt.Axis(format="$,.0f", gridColor='#262730', labelColor='#94a3b8')),
-                        color=alt.Color('FLETERA:N', 
-                                       scale=alt.Scale(scheme='goldorange'), 
-                                       legend=None),
-                        tooltip=[
-                            alt.Tooltip('FLETERA:N'),
-                            alt.Tooltip('sum(COSTO DE GUIA):Q', format="$,.2f")
-                        ]
+                                title=None, 
+                                axis=alt.Axis(format="$,.0s", gridColor='#262730', labelColor='#94a3b8')), # Formato corto ($300k)
+                        color=alt.Color('FLETERA:N', scale=alt.Scale(scheme='goldorange'), legend=None),
+                        tooltip=[alt.Tooltip('FLETERA:N'), alt.Tooltip('sum(COSTO DE GUIA):Q', format="$,.2f")]
                     )
             
-                    # CAPA 2: Etiquetas Superiores (Monto Blanco Premium)
+                    # CAPA 2: Etiquetas Superiores (Formato compacto para móvil)
                     texto = columnas.mark_text(
-                        align='center',
-                        baseline='bottom',
-                        dy=-10,
-                        color='#FFFFFF',
-                        fontWeight='bold',
-                        fontSize=13
+                        align='center', baseline='bottom', dy=-10, color='#FFFFFF', fontWeight='bold', fontSize=12
                     ).encode(
-                        text=alt.Text('sum(COSTO DE GUIA):Q', format="$,.0f")
+                        text=alt.Text('sum(COSTO DE GUIA):Q', format="$,.2s") # Muestra $300k en lugar de $300,000
                     )
             
-                    # ENSAMBLAJE FINAL
-                    grafico_final = (columnas + texto).add_params(
-                        seleccion
-                    ).properties(
-                        width='container',
-                        height=450,
-                        title=alt.TitleParams(
-                            text="ESTADO DE INVERSIÓN POR FLETERA",
-                            subtitle="Análisis vertical de gasto real por unidad de transporte",
-                            fontSize=22,
-                            color='#eab308',
-                            anchor='start'
-                        )
+                    grafico_final = (columnas + texto).add_params(seleccion).properties(
+                        width='container', height=400,
+                        title=alt.TitleParams(text="ESTADO DE INVERSIÓN POR FLETERA", fontSize=20, color='#eab308', anchor='start')
                     ).configure_view(strokeWidth=0)
             
                     st.altair_chart(grafico_final, use_container_width=True)
             
                 except Exception as e:
-                    st.error(f"⚠️ FALLA TÁCTICA EN FLETERAS: {e}")
+                    st.error(f"⚠️ FALLA EN FLETERAS: {e}")
             
-            # --- EJECUCIÓN ---
-            st.write("---")
-            generar_grafico_fleteras_elite_v2_vertical()
-        
             def generar_ranking_destinos_pro_v2():
                 import os
+                import pandas as pd
+                import altair as alt
+                import streamlit as st
                 try:
-                    # 1. LOCALIZACIÓN DE LA INTELIGENCIA
                     archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
-                    
                     if not os.path.exists(archivo):
-                        st.error(f"🚨 RADAR: No se detectó la base de datos.")
+                        st.error(f"🚨 RADAR: No detectado.")
                         return
             
-                    # 2. PROCESAMIENTO
                     df = pd.read_csv(archivo, encoding='latin-1')
                     df.columns = [c.strip().upper() for c in df.columns]
                     df['VALOR FACTURA'] = df['VALOR FACTURA'].replace('[\$,]', '', regex=True).astype(float).fillna(0)
@@ -1920,56 +1895,36 @@ else:
                     df_geo = df.groupby('ESTADO')['VALOR FACTURA'].sum().reset_index()
                     df_geo = df_geo.sort_values('VALOR FACTURA', ascending=False).head(15)
             
-                    # 3. DISEÑO VERTICAL TÁCTICO
+                    # --- DISEÑO VERTICAL RESPONSIVO ---
                     base = alt.Chart(df_geo).encode(
-                        x=alt.X('ESTADO:N', 
-                                title=None, 
-                                sort='-y', 
-                                axis=alt.Axis(labelAngle=-45, labelFontSize=12, labelColor='#FFFFFF', labelFontWeight='bold')),
-                        y=alt.Y('VALOR FACTURA:Q', 
-                                title=None, 
-                                axis=alt.Axis(format="$,.0f", grid=True, gridColor='#262730', labelColor='#94a3b8'))
+                        x=alt.X('ESTADO:N', title=None, sort='-y',
+                                axis=alt.Axis(labelAngle=-45, labelFontSize=10, labelColor='#FFFFFF', labelOverlap='parity')),
+                        y=alt.Y('VALOR FACTURA:Q', title=None,
+                                axis=alt.Axis(format="$,.0s", grid=True, gridColor='#262730', labelColor='#94a3b8'))
                     )
             
-                    # CAPA 1: Columnas Estilo "Torre de Energía"
                     columnas = base.mark_bar(
-                        cornerRadiusTopLeft=8,
-                        cornerRadiusTopRight=8,
-                        size=50, # Grosor para que no se vea "flaco"
-                        color='#EAB308'
-                    )
+                        cornerRadiusTopLeft=8, cornerRadiusTopRight=8,
+                        size={'bandwidth': 0.65} # Ajuste dinámico
+                    ).encode(color=alt.value('#EAB308'))
             
-                    # CAPA 2: Etiquetas Superiores (Monto Real)
                     texto = base.mark_text(
-                        align='center',
-                        baseline='bottom',
-                        dy=-10, # Espacio hacia arriba de la columna
-                        color='#FFFFFF',
-                        fontWeight='bold',
-                        fontSize=12
-                    ).encode(
-                        text=alt.Text('VALOR FACTURA:Q', format="$,.0f")
-                    )
+                        align='center', baseline='bottom', dy=-10, color='#FFFFFF', fontWeight='bold', fontSize=11
+                    ).encode(text=alt.Text('VALOR FACTURA:Q', format="$,.2s"))
             
-                    # ENSAMBLAJE FINAL
                     radar_vertical = (columnas + texto).properties(
-                        width='container',
-                        height=400,
-                        title=alt.TitleParams(
-                            text="DISTRIBUCIÓN GEOGRÁFICA DE FACTURACIÓN",
-                            subtitle="Ranking vertical de los 15 estados con mayor impacto comercial",
-                            fontSize=22,
-                            color='#EAB308',
-                            anchor='start'
-                        )
+                        width='container', height=400,
+                        title=alt.TitleParams(text="TOP DESTINOS", fontSize=20, color='#EAB308', anchor='start')
                     ).configure_view(strokeWidth=0)
             
                     st.altair_chart(radar_vertical, use_container_width=True)
             
                 except Exception as e:
-                    st.error(f"⚠️ FALLA EN MANIOBRA VERTICAL: {e}")
+                    st.error(f"⚠️ FALLA EN DESTINOS: {e}")
             
-            # --- ACTIVACIÓN ---
+            # --- EJECUCIÓN ---
+            st.write("---")
+            generar_grafico_fleteras_elite_v2_vertical()
             st.write("---")
             generar_ranking_destinos_pro_v2()
                         
@@ -1993,6 +1948,7 @@ else:
         
         
     
+
 
 
 
