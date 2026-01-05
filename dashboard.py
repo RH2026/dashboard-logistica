@@ -32,7 +32,7 @@ if "sidebar_open" not in st.session_state:
     st.session_state.sidebar_open = False
 
 # 1. CONFIGURACIÓN DE PÁGINA
-st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="colapsed")
+st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="collapsed")
 
 # 3. CSS DE ATAQUE QUIRÚRGICO (Solo lo que molesta)
 st.markdown("""
@@ -2066,6 +2066,7 @@ else:
         
         
     
+
 
 
 
