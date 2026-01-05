@@ -312,44 +312,55 @@ else:
               
         
         # =========================================================
-        #        SISTEMA DE NAVEGACIÓN ELITE (CONTROL TOTAL)
+        #MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
         # =========================================================
         
-        # 1. PARÁMETROS DE MANDO: Ajuste aquí el tamaño de fuente
-        fuente_botones = "12px" 
-        
-        # 2. INYECCIÓN DE ESTILO DINÁMICO
-        st.markdown(f"""
+        # 1. ESTILO PARA QUE EL BOTÓN PAREZCA UN MENÚ DE APP
+        st.markdown("""
             <style>
-                /* Estilo aplicado a los botones dentro de columnas para simetría total */
-                div[data-testid="stColumn"] button {{
-                    font-size: {fuente_botones} !important;
-                    font-weight: 700 !important;
-                    text-transform: uppercase !important;
-                    height: 38px !important;
+                /* Estilizar el botón del menú para que sea cuadrado y discreto */
+                div[data-testid="stPopover"] > button {
+                    background-color: #0d1117 !important;
+                    border: 1px solid #00ffa2 !important;
+                    padding: 5px 15px !important;
                     border-radius: 8px !important;
-                }}
+                    width: auto !important;
+                }
+                /* Ajustar el texto dentro del menú desplegado */
+                div[data-testid="stPopoverContent"] button {
+                    text-align: left !important;
+                    justify-content: flex-start !important;
+                    border: none !important;
+                    background: transparent !important;
+                    font-size: 14px !important;
+                }
+                div[data-testid="stPopoverContent"] button:hover {
+                    color: #00ffa2 !important;
+                    background: rgba(0, 255, 162, 0.1) !important;
+                }
             </style>
         """, unsafe_allow_html=True)
         
-        # 3. ESTRUCTURA DE NAVEGACIÓN COMPACTA
-        # Proporción [3, 2, 2] empuja los botones a la derecha pero les da base firme
-        c1, c2, c3 = st.columns([3, 2, 2]) 
+        # 2. POSICIONAMIENTO DEL MENÚ (Alineado a la derecha del título)
+        c1, c2 = st.columns([0.85, 0.15]) # El 0.15 es el espacio para el cuadro del menú
         
-        with c3:
-            # gap="small" mantiene los botones unidos como una sola unidad de mando
-            btn_col1, btn_col2 = st.columns(2, gap="small")
-            
-            with btn_col1:
-                if st.button("AAC", use_container_width=True, key="btn_aac_reporte"):
+        with c2:
+            # El label "☰" es el icono estándar de hamburguesa
+            with st.popover("☰", use_container_width=True):
+                st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                
+                if st.button("📡 PANEL PRINCIPAL", use_container_width=True, key="h_aac"):
                     st.session_state.pagina = "principal"
                     st.rerun()
                     
-            with btn_col2:
-                if st.button("KPIs", use_container_width=True, key="btn_kpi_reporte"):
+                if st.button("📊 SEGUIMIENTO KPIs", use_container_width=True, key="h_kpi"):
                     st.session_state.pagina = "KPIs"
                     st.rerun()
-                        
+                    
+                if st.button("📑 REPORTE MENSUAL", use_container_width=True, key="h_rep"):
+                    st.session_state.pagina = "Reporte"
+                    st.rerun()
+                                      
                                        
         st.divider()
            
@@ -2010,6 +2021,7 @@ else:
         
         
     
+
 
 
 
