@@ -47,6 +47,8 @@ if "ultimo_movimiento" not in st.session_state:
     st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
 if "tabla_expandida" not in st.session_state:
     st.session_state.tabla_expandida = False
+if "mes_seleccionado" not in st.session_state:
+    st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
 
 
 # --- 2. LÓGICA DE MÁRGENES Y ALTURA (Flecha visible y espacios respetados) ---
@@ -363,58 +365,58 @@ else:
                     st.rerun()
                                       
                                        
-        st.divider()
-           
-        # --- 1. DICCIONARIO TÁCTICO ---
+        st.divider()     
+      
+
+        # =========================================================
+        #      BLOQUE DE CONTROL TÁCTICO: FILTROS (SIDEBAR)
+        # =========================================================
+        
+        # 1. DICCIONARIO DE MESES
         meses_dict = {
             1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO", 6: "JUNIO",
             7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"
         }
         
-        # --- 2. FUNCIÓN DE LIMPIEZA (REFORZADA) ---
+        # 2. FUNCIÓN DE LIMPIEZA (REBORZADA)
         def limpiar_filtros():
             st.session_state.filtro_cliente_actual = ""
             st.session_state.filtro_cliente_input = ""
             st.session_state["fletera_filtro"] = ""
+            # Regresamos al mes actual por sistema
             st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
-            # Reset de calendario al rango total de la data
+            # Reseteamos calendario al rango total de la data
             st.session_state["fecha_filtro"] = (df["FECHA DE ENVÍO"].min().date(), df["FECHA DE ENVÍO"].max().date())
-            st.rerun()
         
-        # --- 3. INTERFAZ SIDEBAR ---
-        st.sidebar.button("Limpiar Filtros", use_container_width=True, on_click=limpiar_filtros)
-        st.sidebar.markdown("---")
-        
-        # A. MES (Mantiene el default inteligente)
+        # 3. INICIALIZACIÓN DE ESTADOS (Evita errores de 'KeyNotFound')
         if "mes_seleccionado" not in st.session_state:
             st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
+        if "filtro_cliente_actual" not in st.session_state:
+            st.session_state.filtro_cliente_actual = ""
         
+        # --- INTERFAZ EN SIDEBAR ---
+        st.sidebar.button("🗑️ Limpiar Filtros", use_container_width=True, on_click=limpiar_filtros)
+        st.sidebar.markdown("---")
+        
+        # A. SELECTOR DE MES (Sincronizado con Session State)
+        opciones_mes = ["TODOS"] + list(meses_dict.values())
         mes_sel = st.sidebar.selectbox(
             "📍 MES DE OPERACIÓN",
-            options=["TODOS"] + list(meses_dict.values()),
-            index=(["TODOS"] + list(meses_dict.values())).index(st.session_state["mes_seleccionado"]),
-            key="mes_seleccionado"
+            options=opciones_mes,
+            key="mes_seleccionado"  # Sin 'index' para evitar el conflicto detectado
         )
         
-        # B. CALENDARIO (Con blindaje de tipo de dato)
+        # B. CALENDARIO DE PRECISIÓN
         f_min_limite = df["FECHA DE ENVÍO"].min().date()
         f_max_limite = df["FECHA DE ENVÍO"].max().date()
-        
-        if "fecha_filtro" not in st.session_state:
-            st.session_state["fecha_filtro"] = (f_min_limite, f_max_limite)
-        
         rango_fechas = st.sidebar.date_input(
-            "📅 RANGO ESPECÍFICO",
-            value=st.session_state["fecha_filtro"],
+            "📅 RANGO DE FECHAS",
             min_value=f_min_limite,
             max_value=f_max_limite,
             key="fecha_filtro"
         )
         
-        # C. BUSCADOR (Mismo sistema que ya funcionaba)
-        if "filtro_cliente_actual" not in st.session_state:
-            st.session_state.filtro_cliente_actual = ""
-        
+        # C. BUSCADOR (CLIENTE / GUÍA)
         st.sidebar.text_input(
             "🔍 NO. CLIENTE O GUÍA",
             value=st.session_state.filtro_cliente_actual,
@@ -422,37 +424,34 @@ else:
             on_change=lambda: st.session_state.update({"filtro_cliente_actual": st.session_state.filtro_cliente_input})
         )
         
-        # D. FLETERA
+        # D. SELECTOR DE FLETERA
         fletera_sel = st.sidebar.selectbox(
             "🚚 FLETERA",
             options=[""] + sorted(df["FLETERA"].dropna().unique()),
             key="fletera_filtro"
         )
         
-        # --- 4. FILTRADO EN CASCADA (EL MOTOR) ---
+        # --- LÓGICA DE FILTRADO (EL CEREBRO) ---
         df_filtrado = df.copy()
         
-        # 1. Filtro de Mes
+        # 1. Filtro Mes
         if mes_sel != "TODOS":
             num_mes = [k for k, v in meses_dict.items() if v == mes_sel][0]
             df_filtrado = df_filtrado[df_filtrado["FECHA DE ENVÍO"].dt.month == num_mes]
         
-        # 2. Filtro de Calendario (Blindado contra selecciones incompletas)
+        # 2. Filtro Calendario (Validado contra selecciones incompletas)
         if isinstance(rango_fechas, (list, tuple)) and len(rango_fechas) == 2:
             f_ini, f_fin = pd.to_datetime(rango_fechas[0]), pd.to_datetime(rango_fechas[1])
             df_filtrado = df_filtrado[(df_filtrado["FECHA DE ENVÍO"] >= f_ini) & (df_filtrado["FECHA DE ENVÍO"] <= f_fin)]
         
-        # 3. Filtro de Buscador (Prioridad sobre Fletera)
+        # 3. Prioridad de Búsqueda
         valor_buscado = str(st.session_state.filtro_cliente_actual).strip().lower()
         if valor_buscado != "":
-            # Mantenemos su lógica de limpieza de .0 y texto para que no falle la búsqueda de guías
             c_cli = df_filtrado["NO CLIENTE"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
             c_gui = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
             df_filtrado = df_filtrado[c_cli.str.contains(valor_buscado, na=False) | c_gui.str.contains(valor_buscado, na=False)]
-        else:
-            # 4. Filtro de Fletera
-            if fletera_sel != "":
-                df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
+        elif fletera_sel != "":
+            df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
     
             # --------------------------------------------------
             # ACTUALIZACIÓN DE MÉTRICAS (Para que los círculos cambien)
@@ -2154,6 +2153,7 @@ else:
         
         
     
+
 
 
 
