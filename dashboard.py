@@ -120,17 +120,28 @@ placeholder = st.empty()
 # 4. FLUJO DE PANTALLAS
 # --------------------------------------------------
 
-# CASO A: LOGIN
+# --- CASO A: LOGIN (CON LOGO ORIGINAL TRANSPARENTE) ---
 if not st.session_state.logueado:
     with placeholder.container():
         col1, col2, col3 = st.columns([1.5, 1, 1.5])
         with col2:
             st.markdown('<div style="height:10vh"></div>', unsafe_allow_html=True)
             with st.form("login_form"):
-                st.markdown('<div class="scene"><div class="cube"><div class="cube-face front"></div><div class="cube-face back"></div><div class="cube-face right"></div><div class="cube-face left"></div><div class="cube-face top"></div><div class="cube-face bottom"></div></div></div>', unsafe_allow_html=True)
+                # TRUCO DE TRANSPARENCIA: mix-blend-mode elimina el fondo oscuro
+                st.markdown(f"""
+                    <div style="text-align: center; margin-bottom: 25px; background-color: transparent;">
+                        <img src="data:image/png;base64,{logo_b64}" 
+                             style="width: 250px; 
+                                    mix-blend-mode: screen; 
+                                    display: block; 
+                                    margin: 0 auto;">
+                    </div>
+                """, unsafe_allow_html=True)
+                
                 st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
                 u_input = st.text_input("Usuario")
                 c_input = st.text_input("Contraseña", type="password")
+                
                 if st.form_submit_button("INGRESAR", use_container_width=True):
                     usuarios = st.secrets["usuarios"]
                     if u_input in usuarios and str(usuarios[u_input]) == str(c_input):
@@ -1958,6 +1969,7 @@ else:
         
         
     
+
 
 
 
