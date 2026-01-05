@@ -311,45 +311,61 @@ else:
         """, unsafe_allow_html=True)
        
         # =========================================================
-        #      NAVEGACIÓN SECTOR 2: SEGUIMIENTO Y REPORTE
+        # CENTRO DE MANDO: MENÚ DESPLEGABLE RESPONSIVE
         # =========================================================
         
-        # 1. PARÁMETROS DE MANDO (Control de fuente manual)
-        fuente_nav_2 = "10px" 
+        # 1. PARÁMETROS DE ESTILO (Ajuste de fuente y colores)
+        fuente_menu = "14px"
         
-        # 2. INYECCIÓN DE ESTILO (Asegura que estos botones sean gemelos)
         st.markdown(f"""
             <style>
-                div[data-testid="stColumn"] button {{
-                    font-size: {fuente_nav_2} !important;
+                /* Estilizar el selectbox para que parezca un botón de mando */
+                div[data-testid="stSelectbox"] > div {{
+                    background-color: #0d1117 !important;
+                    border: 1px solid #00ffa2 !important; /* Borde Esmeralda */
+                    border-radius: 8px !important;
+                    font-size: {fuente_menu} !important;
                     font-weight: 700 !important;
-                    text-transform: uppercase !important;
-                    height: 30px !important;
+                }}
+                div[data-testid="stSelectbox"] label {{
+                    color: #94a3b8 !important; /* Color de la etiqueta arriba */
+                    font-size: 12px !important;
+                    text-transform: uppercase;
                 }}
             </style>
         """, unsafe_allow_html=True)
         
-        # 3. ESTRUCTURA DE COLUMNAS (Alineación a la derecha)
-        # Proporción [3, 2, 2.5] para que los botones queden en el flanco derecho
-        c1, c2, c3 = st.columns([3, 2, 2.5]) 
+        # 2. ESTRUCTURA DE COLUMNAS (Alineación a la derecha)
+        c1, c2, c3 = st.columns([3, 2, 2]) 
         
         with c3:
-            # Sub-columnas con gap pequeño para máxima limpieza
-            btn_col1, btn_col2 = st.columns(2, gap="small")
+            # Definimos las opciones del menú
+            opciones = ["📡 PANEL PRINCIPAL (AAC)", "📊 SEGUIMIENTO KPIs", "📑 REPORTE MENSUAL"]
             
-            with btn_col1:
-                # Texto: SEGUIMIENTO | Key única para evitar errores
-                if st.button("SEGUIMIENTO", use_container_width=True, key="btn_nav_seg_final"):
-                    st.session_state.pagina = "KPIs"
-                    st.rerun()
-                    
-            with btn_col2:
-                # Texto: REPORTE | Key única para evitar errores
-                if st.button("REPORTE", use_container_width=True, key="btn_nav_rep_ops_final"):
-                    st.session_state.pagina = "Reporte"
-                    st.rerun()
+            # Creamos el índice actual para que el menú sepa dónde está parado
+            indice_actual = 0
+            if st.session_state.get('pagina') == "KPIs": indice_actual = 1
+            if st.session_state.get('pagina') == "Reporte": indice_actual = 2
         
-                       
+            seleccion = st.selectbox(
+                "Navegación del Sistema", 
+                opciones, 
+                index=indice_actual,
+                key="menu_desplegable_elite"
+            )
+        
+            # 3. LÓGICA DE SALTO (Redirección automática)
+            if seleccion == "📡 PANEL PRINCIPAL (AAC)" and st.session_state.pagina != "principal":
+                st.session_state.pagina = "principal"
+                st.rerun()
+            elif seleccion == "📊 SEGUIMIENTO KPIs" and st.session_state.pagina != "KPIs":
+                st.session_state.pagina = "KPIs"
+                st.rerun()
+            elif seleccion == "📑 REPORTE MENSUAL" and st.session_state.pagina != "Reporte":
+                st.session_state.pagina = "Reporte"
+                st.rerun()
+                
+                               
         st.divider()
            
         # 1. FUNCIÓN DE LIMPIEZA
@@ -2009,6 +2025,7 @@ else:
         
         
     
+
 
 
 
