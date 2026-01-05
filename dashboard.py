@@ -27,39 +27,62 @@ try:
 except (ImportError, ModuleNotFoundError):
     PDF_READY = False
 
-# 1. ESTADO DE EMERGENCIA
-if "sidebar_state" not in st.session_state:
-    st.session_state.sidebar_state = False
+# 1. ESTADO DE NAVEGACIÓN
+if "sidebar_open" not in st.session_state:
+    st.session_state.sidebar_open = False
 
 # 1. CONFIGURACIÓN DE PÁGINA
-st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="colapsed")
 
-# 3. CSS DE SATURACIÓN
-# Este bloque ataca específicamente los elementos que mencionas (corona y calavera)
+# 3. CSS DE ATAQUE QUIRÚRGICO (Solo lo que molesta)
 st.markdown("""
     <style>
-    /* 1. ATAQUE A LA CORONA Y TOOLBAR SUPERIOR */
-    header, [data-testid="stHeader"], .stAppDeployButton, [data-testid="stToolbar"] {
+    /* Hundimos los iconos de abajo y el botón de arriba (Corona) */
+    [data-testid="stStatusWidget"], .stAppDeployButton, footer, [data-testid="stToolbar"] {
         display: none !important;
-        visibility: hidden !important;
     }
-
-    /* 2. ATAQUE A LA CALAVERA Y WIDGETS DE ESTADO (ABAJO A LA DERECHA) */
-    [data-testid="stStatusWidget"], .st-emotion-cache-16p6i60, .st-emotion-cache-kb65p9 {
-        display: none !important;
-        visibility: hidden !important;
-    }
-
-    /* 3. ATAQUE AL FOOTER */
-    footer {visibility: hidden !important;}
-
-    /* 4. GESTIÓN DE LA SIDEBAR (La flecha nativa se oculta aquí) */
-    [data-testid="sidebar-button"] {display: none !important;}
     
-    /* 5. ELIMINAR MÁRGENES SUPERIORES SOBRANTES */
-    .block-container {padding-top: 0rem !important;}
+    /* Ocultamos la flecha nativa para que no estorbe */
+    button[data-testid="sidebar-button"] {
+        display: none !important;
+    }
+
+    /* Ajustamos el margen superior para que el botón no flote en el vacío */
+    .block-container { padding-top: 1rem; }
     </style>
     """, unsafe_allow_html=True)
+
+# 4. PUENTE DE MANDO (Botón personalizado)
+# Usamos columnas para que el botón no ocupe todo el ancho
+col1, _ = st.columns([1, 5])
+with col1:
+    if st.button("☰ ABRIR / CERRAR PANEL"):
+        st.session_state.sidebar_open = not st.session_state.sidebar_open
+        st.rerun()
+
+# 5. EL TRUCO FINAL: Inyectar la visibilidad SOLO si el botón se presiona
+if st.session_state.sidebar_open:
+    st.markdown("""
+        <style>
+        section[data-testid="stSidebar"] {
+            display: block !important;
+            width: 300px !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    with st.sidebar:
+        st.title("⚓ PANEL DE CONTROL")
+        st.write("Configuraciones de Logística")
+        # Aquí van sus filtros
+else:
+    st.markdown("""
+        <style>
+        section[data-testid="stSidebar"] {
+            display: none !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
 # 4. LÓGICA DE LA SIDEBAR POR CÓDIGO (Sin CSS para no romperla)
 if not st.session_state.sidebar_state:
@@ -2043,6 +2066,7 @@ else:
         
         
     
+
 
 
 
