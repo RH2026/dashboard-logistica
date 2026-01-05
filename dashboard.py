@@ -28,7 +28,7 @@ except (ImportError, ModuleNotFoundError):
     PDF_READY = False
 
 # 1. CONFIGURACIÓN DE PÁGINA
-st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="extended")
 
 
 # 2. ESTADOS DE SESIÓN
@@ -2052,6 +2052,7 @@ else:
         
         
     
+
 
 
 
