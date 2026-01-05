@@ -129,7 +129,20 @@ placeholder = st.empty()
 # 4. FLUJO DE PANTALLAS
 # --------------------------------------------------
 
-# --- CASO A: LOGIN (CON LOGO ORIGINAL Y TRANSPARENCIA FORZADA) ---
+# --- 1. PREPARACIÓN DE RECURSOS (Asegúrate de tener esto al inicio) ---
+import base64
+import streamlit as st
+
+def get_base64_file(path):
+    try:
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    except:
+        return None
+
+logo_b64 = get_base64_file("n1.png")
+
+# --- 2. CASO A: LOGIN (ENSAMBLADO FINAL) ---
 if not st.session_state.logueado:
     with placeholder.container():
         col1, col2, col3 = st.columns([1.5, 1, 1.5])
@@ -137,17 +150,43 @@ if not st.session_state.logueado:
             st.markdown('<div style="height:10vh"></div>', unsafe_allow_html=True)
             with st.form("login_form"):
                 
-                # --- AQUÍ VA EL NUEVO BLOQUE DEL LOGO ---
+                # --- SECCIÓN VISUAL: LOGO + ANIMACIÓN ---
                 if logo_b64:
                     st.markdown(f"""
-                        <div style="text-align: center; margin-bottom: 25px;">
+                        <div style="text-align: center; margin-bottom: 10px;">
                             <img src="data:image/png;base64,{logo_b64}" 
-                                 style="width: 250px; 
-                                        filter: contrast(1.1) brightness(1.1);
-                                        mix-blend-mode: plus-lighter; 
-                                        display: block; 
-                                        margin: 0 auto;">
+                                 style="width: 250px; mix-blend-mode: screen; filter: brightness(1.1);">
+                            
+                            <div style="margin-top: 15px;">
+                                <div style="
+                                    width: 160px; 
+                                    height: 2px; 
+                                    background: #00FFAA; 
+                                    margin: 0 auto; 
+                                    box-shadow: 0 0 12px #00FFAA;
+                                    animation: scan-pulse 2.5s infinite ease-in-out;
+                                "></div>
+                                <div style="
+                                    font-family: 'Courier New', monospace; 
+                                    color: #00FFAA; 
+                                    font-size: 11px; 
+                                    margin-top: 10px;
+                                    letter-spacing: 4px;
+                                    animation: blink-text 1.5s infinite;
+                                ">NEXION CORE: ACTIVE</div>
+                            </div>
                         </div>
+
+                        <style>
+                            @keyframes scan-pulse {{
+                                0%, 100% {{ width: 0%; opacity: 0; }}
+                                50% {{ width: 80%; opacity: 1; }}
+                            }}
+                            @keyframes blink-text {{
+                                0%, 100% {{ opacity: 1; font-weight: bold; }}
+                                50% {{ opacity: 0.3; font-weight: normal; }}
+                            }}
+                        </style>
                     """, unsafe_allow_html=True)
                 
                 # --- EL RESTO DEL FORMULARIO SE QUEDA IGUAL ---
@@ -1982,6 +2021,7 @@ else:
         
         
     
+
 
 
 
