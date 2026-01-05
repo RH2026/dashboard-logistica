@@ -1810,7 +1810,7 @@ else:
                   
             
 
-            def generar_grafico_fleteras_elite_v3_responsive():
+            def generar_grafico_fleteras_elite_v3_final():
                 import os
                 import pandas as pd
                 import altair as alt
@@ -1822,7 +1822,7 @@ else:
                     archivo_encontrado = next((n for n in posibles_nombres if os.path.exists(n)), None)
                     
                     if not archivo_encontrado:
-                        st.error("🚨 RADAR: No detectado.")
+                        st.error("🚨 RADAR: Base de fleteras no detectada.")
                         return
             
                     df = pd.read_csv(archivo_encontrado, encoding='latin-1')
@@ -1837,21 +1837,24 @@ else:
                     meses = df['MES_LABEL'].unique().tolist()
                     sel_mes = alt.selection_point(fields=['MES_LABEL'], bind=alt.binding_select(options=meses, name="MES: "), value=meses[-1])
             
-                    # 3. CONSTRUCCIÓN RESPONSIVA
-                    # Usamos 'step' en el eje X para que las barras se ajusten solas
+                    # 3. CONSTRUCCIÓN RESPONSIVA VERTICAL
                     base = alt.Chart(df).transform_filter(sel_mes)
             
                     columnas = base.mark_bar(
                         cornerRadiusTopLeft=10,
-                        cornerRadiusTopRight=10,
-                        # Eliminamos el diccionario 'bandwidth' de aquí para evitar el ValueError
+                        cornerRadiusTopRight=10
                     ).encode(
                         x=alt.X('FLETERA:N', 
                                 title=None, 
                                 sort='-y',
-                                # 'padding' controla qué tan juntas están las barras (0.1 = 10% de espacio)
                                 scale=alt.Scale(paddingInner=0.15, paddingOuter=0.2),
-                                axis=alt.Axis(labelAngle=-45, labelFontSize=11, labelColor='#FFFFFF', labelOverlap='parity')),
+                                axis=alt.Axis(
+                                    labelAngle=-90, # <--- CAMBIO TÁCTICO: Títulos en Vertical
+                                    labelFontSize=11, 
+                                    labelColor='#FFFFFF', 
+                                    labelFontWeight='bold',
+                                    labelOverlap='parity'
+                                )),
                         y=alt.Y('sum(COSTO DE GUIA):Q', 
                                 title=None, 
                                 axis=alt.Axis(format="$,.0s", gridColor='#262730', labelColor='#94a3b8')),
@@ -1863,17 +1866,16 @@ else:
             
                     # ENSAMBLAJE
                     grafico = (columnas + texto).add_params(sel_mes).properties(
-                        width='container', # Esto lo hace responsivo
-                        height=400,
+                        width='container', height=450, # Aumentamos altura para dar espacio a los títulos verticales
                         title=alt.TitleParams(text="INVERSIÓN POR FLETERA", color='#eab308', anchor='start')
                     ).configure_view(strokeWidth=0)
             
                     st.altair_chart(grafico, use_container_width=True)
             
                 except Exception as e:
-                    st.error(f"⚠️ FALLA TÁCTICA: {e}")
+                    st.error(f"⚠️ FALLA EN FLETERAS: {e}")
             
-            def generar_ranking_destinos_v3_responsive():
+            def generar_ranking_destinos_v3_final():
                 import os
                 try:
                     archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
@@ -1884,9 +1886,16 @@ else:
                     df_geo = df.groupby('ESTADO')['VALOR FACTURA'].sum().reset_index().sort_values('VALOR FACTURA', ascending=False).head(15)
             
                     base = alt.Chart(df_geo).encode(
-                        x=alt.X('ESTADO:N', title=None, sort='-y',
-                                scale=alt.Scale(paddingInner=0.2), # Controla el grosor relativo
-                                axis=alt.Axis(labelAngle=-45, labelFontSize=10, labelColor='#FFFFFF', labelOverlap='parity')),
+                        x=alt.X('ESTADO:N', 
+                                title=None, 
+                                sort='-y',
+                                scale=alt.Scale(paddingInner=0.2),
+                                axis=alt.Axis(
+                                    labelAngle=-90, # <--- CAMBIO TÁCTICO: Títulos en Vertical
+                                    labelFontSize=10, 
+                                    labelColor='#FFFFFF',
+                                    labelFontWeight='bold',
+                                    labelOverlap='parity')),
                         y=alt.Y('VALOR FACTURA:Q', title=None, axis=alt.Axis(format="$,.0s", labelColor='#94a3b8'))
                     )
             
@@ -1894,7 +1903,7 @@ else:
                     texto = base.mark_text(align='center', baseline='bottom', dy=-10, color='#FFFFFF', fontWeight='bold', fontSize=11
                     ).encode(text=alt.Text('VALOR FACTURA:Q', format="$,.2s"))
             
-                    radar = (barras + texto).properties(width='container', height=400,
+                    radar = (barras + texto).properties(width='container', height=450,
                         title=alt.TitleParams(text="TOP DESTINOS", color='#EAB308', anchor='start')
                     ).configure_view(strokeWidth=0)
             
@@ -1904,9 +1913,9 @@ else:
             
             # --- ACTIVACIÓN ---
             st.write("---")
-            generar_grafico_fleteras_elite_v3_responsive()
+            generar_grafico_fleteras_elite_v3_final()
             st.write("---")
-            generar_ranking_destinos_v3_responsive()
+            generar_ranking_destinos_v3_final()
                         
         
         # --- NAVEGACIÓN NIVEL AMAZON (ESTILO FINAL) ---
@@ -1928,6 +1937,7 @@ else:
         
         
     
+
 
 
 
