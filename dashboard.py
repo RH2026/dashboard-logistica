@@ -152,42 +152,7 @@ if not st.session_state.logueado:
                 
                 # --- SECCIÓN VISUAL: LOGO + ANIMACIÓN ---
                 if logo_b64:
-                    st.markdown(f"""
-                        <div style="text-align: center; margin-bottom: 10px;">
-                            <img src="data:image/png;base64,{logo_b64}" 
-                                 style="width: 250px; mix-blend-mode: screen; filter: brightness(1.1);">
-                            
-                            <div style="margin-top: 15px;">
-                                <div style="
-                                    width: 160px; 
-                                    height: 2px; 
-                                    background: #00FFAA; 
-                                    margin: 0 auto; 
-                                    box-shadow: 0 0 12px #00FFAA;
-                                    animation: scan-pulse 2.5s infinite ease-in-out;
-                                "></div>
-                                <div style="
-                                    font-family: 'Courier New', monospace; 
-                                    color: #00FFAA; 
-                                    font-size: 11px; 
-                                    margin-top: 10px;
-                                    letter-spacing: 4px;
-                                    animation: blink-text 1.5s infinite;
-                                ">NEXION CORE: ACTIVE</div>
-                            </div>
-                        </div>
-
-                        <style>
-                            @keyframes scan-pulse {{
-                                0%, 100% {{ width: 0%; opacity: 0; }}
-                                50% {{ width: 80%; opacity: 1; }}
-                            }}
-                            @keyframes blink-text {{
-                                0%, 100% {{ opacity: 1; font-weight: bold; }}
-                                50% {{ opacity: 0.3; font-weight: normal; }}
-                            }}
-                        </style>
-                    """, unsafe_allow_html=True)
+                    st.markdown(f'<div style="text-align:center;margin-bottom:20px;"><img src="data:image/png;base64,{logo_b64}" style="width:250px;mix-blend-mode:screen;display:block;margin:0 auto;"><div style="width:160px;height:2px;background:#00FFAA;margin:15px auto 5px auto;box-shadow:0 0 12px #00FFAA;animation:s 2.5s infinite ease-in-out;"></div><div style="font-family:monospace;color:#00FFAA;font-size:11px;letter-spacing:4px;animation:b 1.5s infinite;">NEXION CORE: ACTIVE</div></div><style>@keyframes s{{0%,100%{{width:0%;opacity:0;}}50%{{width:80%;opacity:1;}}}}@keyframes b{{0%,100%{{opacity:1;}}50%{{opacity:0.3;}}}}</style>', unsafe_allow_html=True)
                 
                 # --- EL RESTO DEL FORMULARIO SE QUEDA IGUAL ---
                 st.markdown('<div class="login-header">Acceso al Sistema</div>', unsafe_allow_html=True)
@@ -2021,6 +1986,7 @@ else:
         
         
     
+
 
 
 
