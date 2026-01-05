@@ -20,20 +20,25 @@ meses_dict = {
     7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"
 }
 
-# 3. DEFINICIÓN DE FUNCIONES (¡ESTO DEBE IR AQUÍ!)
 def limpiar_filtros():
     st.session_state.filtro_cliente_actual = ""
     st.session_state.filtro_cliente_input = ""
     st.session_state["fletera_filtro"] = ""
     st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
     
-    # --- AQUÍ VA EL BLOQUE ---
-    fechas_validas = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce').dropna()
-    if not fechas_validas.empty:
-        f_min = fechas_validas.min().date()
-        f_max = fechas_validas.max().date()
-        st.session_state["fecha_filtro"] = (f_min, f_max)
-
+    # --- BLOQUE DE SEGURIDAD PARA LA LÍNEA 64 ---
+    # Convertimos a fecha y quitamos nulos para que .min() no falle
+    fechas_v = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce').dropna()
+    
+    if not fechas_v.empty:
+        # Solo aplicamos .date() si estamos seguros de que existe una fecha
+        st.session_state["fecha_filtro"] = (fechas_v.min().date(), fechas_v.max().date())
+    else:
+        # Si el archivo está vacío, usamos hoy para no romper la app
+        hoy = datetime.date.today()
+        st.session_state["fecha_filtro"] = (hoy, hoy)
+    
+    st.rerun()
 # =========================================================
 # 2. NIVEL 1: CARGA DE DATOS (CON LIMPIEZA DE INTERFERENCIAS)
 # =========================================================
@@ -2228,6 +2233,7 @@ else:
         
         
     
+
 
 
 
