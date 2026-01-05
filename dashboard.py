@@ -175,8 +175,11 @@ elif not st.session_state.splash_completado:
     with placeholder.container():
         # Definición de mensajes según el motivo
         if st.session_state.motivo_splash == "logout":
-            mensajes = ["Cerrando sesión...", "Guardando cambios...", "Sesión finalizada."]
-            c_caja = "#FF4B4B"
+            color_usuario = "#FFFFFF"  # Verde Neón Táctico
+            mensajes = [
+            f"Cerrando sesión, <span style='color:{color_usuario};'>{usuario}</span>...", 
+            "Guardando cambios...", 
+            "Conexión con Nexion terminada!""
         else:
             # Mensajes dinámicos de bienvenida
             usuario = st.session_state.usuario_actual.capitalize() if st.session_state.usuario_actual else "Usuario"
@@ -205,7 +208,7 @@ elif not st.session_state.splash_completado:
                             <div class="cube-face bottom" style="width:80px; height:80px; background:#b08d5c; transform: rotateX(-90deg) translateZ(40px);"></div>
                         </div>
                     </div>
-                    <div style="color:#00FFAA; font-family:'monospace'; margin-top:25px; letter-spacing:2px; text-transform:none; font-size: 12px; font-weight: normal;">{msg}</div>
+                    <div style="color:#00FFAA; font-family:'monospace'; margin-top:25px; letter-spacing:2px; text-transform:none; font-size: 13px; font-weight: normal;">{msg}</div>
                 </div>
             """, unsafe_allow_html=True)
             
@@ -1986,6 +1989,7 @@ else:
         
         
     
+
 
 
 
