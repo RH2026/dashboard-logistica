@@ -1253,6 +1253,8 @@ else:
             color_ef = "#00FFAA" if eficiencia_p >= 95 else "#f97316"
             st.markdown(f"<div class='main-card-kpi' style='border-left-color: {color_ef};'><div class='kpi-label'>Eficiencia Real</div><div class='kpi-value' style='color:{color_ef};'>{eficiencia_p:.1f}%</div></div>", unsafe_allow_html=True)
         
+        st.divider()
+        
         # --- DIBUJAR FILA DE ATRASOS ---
         st.markdown("<p style='color:#9CA3AF; font-size:13px; font-weight:bold; letter-spacing:1px; margin-bottom:20px;'>⚠️ MONITOREO DE ATRASOS (PERIODO ACTUAL)</p>", unsafe_allow_html=True)
         a1, a2, a3 = st.columns(3)
@@ -1807,6 +1809,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
