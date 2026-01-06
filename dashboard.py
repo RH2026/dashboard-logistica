@@ -1414,63 +1414,71 @@ else:
        
         # =========================================================
         # ISTEMA DE ARMAMENTO: MÓDULO ZEUS
-        # --- COLORES DE COMBATE ---
+       
+        # --- COLORES DE COMBATE (AZUL VOLT Y NEONES) ---
         azul_volt = "#00D4FF"
         verde_neon = "#39FF14"
-        rojo_neon = "#FF003C"
         
-        # --- PROCESAMIENTO PARA GRÁFICOS ---
-        df_g = df_kpi.copy()
+        # =========================================================
+        # 1. PREPARACIÓN DE DATOS (MÉTRICAS ESPECÍFICAS)
+        # =========================================================
+        df_analisis = df_kpi.copy()
         
-        # 1. Calcular Eficiencia (Si ya entregó y fue antes de la promesa)
-        df_g['A_TIEMPO'] = (df_g['FECHA DE ENTREGA REAL'] <= df_g['PROMESA DE ENTREGA']).astype(int)
+        # Cálculo de Costo por Caja
+        df_analisis['COSTO_X_CAJA'] = df_analisis['COSTO DE LA GUÍA'] / df_analisis['CANTIDAD DE CAJAS'].replace(0, 1)
         
-        # 2. Calcular Costo por Caja
-        df_g['COSTO_X_CAJA'] = df_g['COSTO DE LA GUÍA'] / df_g['CANTIDAD DE CAJAS'].replace(0, 1)
+        # Cálculo de Lead Time (Días de Tránsito) - Solo para pedidos ya entregados
+        df_entregados = df_analisis[df_analisis['FECHA DE ENTREGA REAL'].notna()].copy()
+        df_entregados['LEAD_TIME'] = (df_entregados['FECHA DE ENTREGA REAL'] - df_entregados['FECHA DE ENVÍO']).dt.days
         
-        # 3. Calcular Días de Tránsito (Solo para los entregados)
-        df_entregados = df_g[df_g['FECHA DE ENTREGA REAL'].notna()].copy()
-        df_entregados['DIAS_TRANSITO'] = (df_entregados['FECHA DE ENTREGA REAL'] - df_entregados['FECHA DE ENVÍO']).dt.days
+        # =========================================================
+        # 2. GRÁFICO: COSTO PROMEDIO POR CAJA
+        # =========================================================
+        titulo_grafico_elite("Costo Promedio por Caja por Fletera", "💰")
         
-        # --- RENDER DE GRÁFICOS ---
-        col_izq, col_der = st.columns(2)
+        # Agrupamos por fletera
+        costo_flet = df_analisis.groupby('FLETERA')['COSTO_X_CAJA'].mean().reset_index()
         
-        with col_izq:
-            st.markdown("#### 🏆 Eficiencia de Cumplimiento")
-            # Ranking de Eficiencia
-            rank_ef = df_entregados.groupby('FLETERA')['A_TIEMPO'].mean().reset_index()
-            rank_ef['A_TIEMPO'] *= 100
-            
-            chart_ef = alt.Chart(rank_ef).mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5).encode(
-                x=alt.X('A_TIEMPO:Q', title="Cumplimiento %", scale=alt.Scale(domain=[0, 100])),
-                y=alt.Y('FLETERA:N', sort='-x', title=None),
-                color=alt.value(verde_neon)
-            ).properties(height=300)
-            st.altair_chart(chart_ef, use_container_width=True)
+        chart_costo = alt.Chart(costo_flet).mark_bar(
+            cornerRadiusTopRight=10,
+            cornerRadiusBottomRight=10,
+            size=30  # Grosor de la barra
+        ).encode(
+            x=alt.X('COSTO_X_CAJA:Q', title="Costo Promedio ($)", axis=alt.Axis(gridOpacity=0.1, labelColor='#94a3b8')),
+            y=alt.Y('FLETERA:N', sort='-x', title=None, axis=alt.Axis(labelFontSize=12, labelColor='white')),
+            color=alt.value(azul_volt),
+            tooltip=[alt.Tooltip('FLETERA'), alt.Tooltip('COSTO_X_CAJA', format='.2f', title='Costo x Caja ($)')]
+        ).properties(
+            height=400 # Altura fija, el ancho es responsivo
+        ).configure_view(strokeOpacity=0)
         
-        with col_der:
-            st.markdown("#### 💰 Costo Promedio por Caja")
-            # Costo por caja
-            rank_costo = df_g.groupby('FLETERA')['COSTO_X_CAJA'].mean().reset_index()
-            
-            chart_costo = alt.Chart(rank_costo).mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5).encode(
-                x=alt.X('COSTO_X_CAJA:Q', title="USD / Caja"),
-                y=alt.Y('FLETERA:N', sort='x', title=None),
-                color=alt.value(azul_volt)
-            ).properties(height=300)
-            st.altair_chart(chart_costo, use_container_width=True)
+        st.altair_chart(chart_costo, use_container_width=True)
         
-        st.write("##")
+        st.write("##") # Espacio de separación
+        st.divider() # Línea de horizonte
         
-        # --- GRÁFICO DE TIEMPOS DE ENTREGA ---
-        st.markdown("#### ⏱️ Días Promedio de Entrega (Lead Time)")
-        df_tiempos = df_entregados.groupby('FLETERA')['DIAS_TRANSITO'].mean().reset_index()
+        # =========================================================
+        # 3. GRÁFICO: LEAD TIME (DÍAS PROMEDIO DE ENTREGA)
+        # =========================================================
+        titulo_grafico_elite("Días Promedio de Entrega (Lead Time)", "⏱️")
         
-        chart_tiempos = alt.Chart(df_tiempos).mark_line(point=True, color=azul_volt).encode(
-            x=alt.X('FLETERA:N', title=None),
-            y=alt.Y('DIAS_TRANSITO:Q', title="Días"),
-            tooltip=['FLETERA', 'DIAS_TRANSITO']
-        ).properties(height=300)
+        # Agrupamos por fletera y calculamos el promedio de días
+        lead_time_flet = df_entregados.groupby('FLETERA')['LEAD_TIME'].mean().reset_index()
+        
+        chart_lead = alt.Chart(lead_time_flet).mark_bar(
+            cornerRadiusTopRight=10,
+            cornerRadiusBottomRight=10,
+            size=30
+        ).encode(
+            x=alt.X('LEAD_TIME:Q', title="Días Promedio en Tránsito", axis=alt.Axis(gridOpacity=0.1, labelColor='#94a3b8')),
+            y=alt.Y('FLETERA:N', sort='x', title=None, axis=alt.Axis(labelFontSize=12, labelColor='white')),
+            color=alt.value(verde_neon), # Verde para diferenciar que es tiempo
+            tooltip=[alt.Tooltip('FLETERA'), alt.Tooltip('LEAD_TIME', format='.1f', title='Promedio Días')]
+        ).properties(
+            height=400
+        ).configure_view(strokeOpacity=0)
+        
+        st.altair_chart(chart_lead, use_container_width=True)
                         
         
         # --- NAVEGACIÓN DESDE KPIs ---
@@ -1787,6 +1795,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
