@@ -1176,7 +1176,7 @@ else:
             
             # El filtro de calendario
             rango_fechas = st.date_input(
-                "Selecciona Rango de Envío:",
+                "Seleccionar Fecha:",
                 value=(f_inicio_default, f_fin_default),
                 min_value=f_inicio_default,
                 max_value=f_fin_default,
@@ -1807,6 +1807,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
