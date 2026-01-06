@@ -1578,7 +1578,6 @@ else:
             </style>
         """, unsafe_allow_html=True)
         
-        # --- 1. MOTOR DE DATOS (CÁLCULO DINÁMICO DE PORCENTAJE) ---
         @st.cache_data
         def cargar_datos_matriz_elite():
             import os
@@ -1587,37 +1586,43 @@ else:
                 df = pd.read_csv(archivo, encoding='latin-1')
                 df.columns = [c.strip().upper() for c in df.columns]
 
+                # 1. Limpieza de números (Vital)
                 def limpiar_num(v):
                     if pd.isna(v): return 0.0
                     s = str(v).replace('$', '').replace(',', '').replace('%', '').strip()
                     try: return float(s)
                     except: return 0.0
 
-                # Ajuste de nombre de columna: 'CAJAS'
                 c_cajas = 'CAJAS' if 'CAJAS' in df.columns else 'CAJAS ENVIADAS'
-                
                 for col in ['COSTO DE GUIA', 'VALOR FACTURA', c_cajas, 'VALUACION INCIDENCIAS']:
                     if col in df.columns: df[col] = df[col].apply(limpiar_num)
 
+                # 2. Manejo de Fechas
                 df['FECHA_DT'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
                 meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
                              7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
                 df['MES'] = df['FECHA_DT'].dt.month.map(meses_map)
                 df = df.dropna(subset=['MES'])
 
+                # 3. AGRUPACIÓN (Aquí sumamos los totales del mes)
                 resumen = df.groupby('MES').agg({
-                    'COSTO DE GUIA': 'sum', 'VALOR FACTURA': 'sum',
-                    c_cajas: 'sum', 'VALUACION INCIDENCIAS': 'sum'
+                    'COSTO DE GUIA': 'sum', 
+                    'VALOR FACTURA': 'sum',
+                    c_cajas: 'sum', 
+                    'VALUACION INCIDENCIAS': 'sum'
                 }).reset_index()
 
-                # CÁLCULOS CRÍTICOS
+                # 4. LA FÓRMULA MAESTRA (Aquí creamos la columna que falta)
+                # Costo Logístico = (Flete / Facturación) * 100
                 resumen['COSTO LOGÍSTICO'] = (resumen['COSTO DE GUIA'] / resumen['VALOR FACTURA']) * 100
                 resumen['COSTO POR CAJA'] = resumen['COSTO DE GUIA'] / resumen[c_cajas]
+                
+                # Targets fijos
                 resumen['META INDICADOR'] = 7.0        
                 resumen['COSTO POR CAJA 2024'] = 59.0  
                 resumen['PORCENTAJE DE INCIDENCIAS'] = (resumen['VALUACION INCIDENCIAS'] / resumen['VALOR FACTURA']) * 100
-                resumen['INCREMENTO + VI'] = resumen['VALUACION INCIDENCIAS']
                 resumen['% DE INCREMENTO VS 2024'] = 0.0
+                resumen['INCREMENTO + VI'] = resumen['VALUACION INCIDENCIAS']
 
                 return resumen.rename(columns={'COSTO DE GUIA': 'COSTO DE FLETE', 'VALOR FACTURA': 'FACTURACIÓN', c_cajas: 'CAJAS ENVIADAS'})
             except Exception as e:
@@ -1828,6 +1833,7 @@ else:
         st.warning("⚠️ No se detectaron datos en 'matriz_mensual.csv'. Por favor, cargue la base de datos en la pestaña correspondiente.")
 
         
+
 
 
 
