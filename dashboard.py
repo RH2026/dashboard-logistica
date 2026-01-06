@@ -1166,8 +1166,7 @@ else:
         # --- 1. FILTRO DE FECHAS EN LA SIDEBAR (CONTROL MAESTRO) ---
         # =========================================================
         with st.sidebar:
-            st.header("⚙️ Panel de Control")
-            
+                       
             # Aseguramos que la columna sea datetime para el filtro
             df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"])
             
@@ -1808,6 +1807,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
