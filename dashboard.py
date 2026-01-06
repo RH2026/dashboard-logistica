@@ -1637,6 +1637,18 @@ else:
                 </style>
             """, unsafe_allow_html=True)
 
+            st.markdown("""
+            <hr style="
+                border: 0;
+                height: 2px;
+                background: #00D4FF;
+                box-shadow: 0px 0px 15px 2px rgba(0, 212, 255, 0.7);
+                margin-top: 20px;
+                margin-bottom: 20px;
+                border-radius: 10px;
+            ">
+            """, unsafe_allow_html=True)
+            
                    
             header_txt = f"Resultados: {mes_sel}" if not modo_comp else f"Comparativa Mode: {mes_sel} VS {mes_comp}"
             st.markdown(f"<h4 class='premium-header'>{header_txt}</h4>", unsafe_allow_html=True)
@@ -2107,6 +2119,7 @@ else:
                
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
