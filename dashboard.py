@@ -1709,140 +1709,135 @@ else:
         else:
             st.warning("⚠️ El archivo 'matriz_mensual.csv' no fue detectado en el sistema.")
         
-        # ==================================================================
-        # BLOQUE FINAL: REPORTE DE LOGÍSTICA ELITE (SINCRO TOTAL)
-        # ==================================================================
-        elif st.session_state.pagina == "Reporte":
-            st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
-    
-            # --- 1. MOTOR DE INTELIGENCIA (CÁLCULOS AUTOMÁTICOS) ---
-            # --- 1. MOTOR DE INTELIGENCIA (CÁLCULOS AUTOMÁTICOS) ---
-            @st.cache_data
-            def cargar_datos_matriz_elite():
-                import os
-                try:
-                    # Localizar archivo
-                    archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
-                    df = pd.read_csv(archivo, encoding='latin-1')
-                    df.columns = [c.strip().upper() for c in df.columns]
-    
-                    # Limpiador de moneda y números
-                    def limpiar_num(v):
-                        if pd.isna(v): return 0.0
-                        s = str(v).replace('$', '').replace(',', '').replace('%', '').strip()
-                        try: return float(s)
-                        except: return 0.0
-    
-                    # Mapeo de columnas (CAJAS o CAJAS ENVIADAS)
-                    c_cajas = 'CAJAS' if 'CAJAS' in df.columns else 'CAJAS ENVIADAS'
-                    
-                    cols_fijar = ['COSTO DE GUIA', 'VALOR FACTURA', c_cajas, 'VALUACION INCIDENCIAS']
-                    for col in cols_fijar:
-                        if col in df.columns: df[col] = df[col].apply(limpiar_num)
-    
-                    # Procesamiento de Fechas
-                    df['FECHA_DT'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
-                    meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
-                                 7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
-                    df['MES'] = df['FECHA_DT'].dt.month.map(meses_map)
-                    df = df.dropna(subset=['MES'])
-    
-                    # Agrupación Mensual
-                    resumen = df.groupby('MES').agg({
-                        'COSTO DE GUIA': 'sum', 'VALOR FACTURA': 'sum',
-                        c_cajas: 'sum', 'VALUACION INCIDENCIAS': 'sum'
-                    }).reset_index()
-    
-                    # --- EL CEREBRO: CÁLCULO DE KPIS QUE NO EXISTEN EN LA TABLA ---
-                    resumen['COSTO LOGÍSTICO'] = (resumen['COSTO DE GUIA'] / resumen['VALOR FACTURA']) * 100
-                    resumen['COSTO POR CAJA'] = resumen['COSTO DE GUIA'] / resumen[c_cajas]
-                    resumen['META INDICADOR'] = 7.0        # Target Fijo
-                    resumen['COSTO POR CAJA 2024'] = 59.0  # Target Fijo
-                    resumen['PORCENTAJE DE INCIDENCIAS'] = (resumen['VALUACION INCIDENCIAS'] / resumen['VALOR FACTURA']) * 100
-                    resumen['INCREMENTO + VI'] = resumen['VALUACION INCIDENCIAS']
-                    resumen['% DE INCREMENTO VS 2024'] = 0.0
-    
-                    return resumen.rename(columns={'COSTO DE GUIA': 'COSTO DE FLETE', 'VALOR FACTURA': 'FACTURACIÓN', c_cajas: 'CAJAS ENVIADAS'})
-                except Exception as e:
-                    st.error(f"Error en Motor: {e}")
-                    return None
-    
-            # --- 2. EJECUCIÓN Y SIDEBAR ---
-            df_a = cargar_datos_matriz_elite()
-            
-            if df_a is not None:
-                meses_list = df_a["MES"].unique().tolist()
-                mes_sel = st.sidebar.selectbox("MES DEL REPORTE", meses_list)
-                modo_comp = st.sidebar.checkbox("Activar comparativa")
+        
+        # --- 1. MOTOR DE INTELIGENCIA (CÁLCULOS AUTOMÁTICOS) ---
+        @st.cache_data
+        def cargar_datos_matriz_elite():
+            import os
+            try:
+                # Localizar archivo
+                archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
+                df = pd.read_csv(archivo, encoding='latin-1')
+                df.columns = [c.strip().upper() for c in df.columns]
+
+                # Limpiador de moneda y números
+                def limpiar_num(v):
+                    if pd.isna(v): return 0.0
+                    s = str(v).replace('$', '').replace(',', '').replace('%', '').strip()
+                    try: return float(s)
+                    except: return 0.0
+
+                # Mapeo de columnas (CAJAS o CAJAS ENVIADAS)
+                c_cajas = 'CAJAS' if 'CAJAS' in df.columns else 'CAJAS ENVIADAS'
                 
-                # Fila de datos del mes elegido
-                df_mes = df_a[df_a["MES"] == mes_sel].iloc[0]
-    
-                # --- 3. DISEÑO DE INTERFAZ (CSS) ---
-                st.markdown("""<style>
-                    .premium-header { font-family: 'Orbitron'; color: #f8fafc; border-bottom: 2px solid #00FFAA; padding-bottom: 8px; margin-bottom: 20px; }
-                    .card-container { background-color: #0d1117; border-radius: 10px; padding: 15px; border: 1px solid #30363d; border-left: 5px solid #38bdf8; margin-bottom: 15px; }
-                    .card-label { color: #8b949e; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
-                    .card-value { font-size: 1.8rem; font-weight: 800; font-family: 'Inter'; }
-                </style>""", unsafe_allow_html=True)
-    
-                st.markdown(f"<h2 class='premium-header'>REPORT: {mes_sel}</h2>", unsafe_allow_html=True)
-    
-                if not modo_comp:
-                    # --- VISTA 9 TARJETAS ---
-                    row1 = st.columns(3)
-                    with row1[0]: render_card("Costo Logístico", f"{df_mes['COSTO LOGÍSTICO']:.1f}%", "TARGET: 7.0%", 7.0, df_mes['COSTO LOGÍSTICO'])
-                    with row1[1]: render_card("Costo por Caja", f"${df_mes['COSTO POR CAJA']:.1f}", "TARGET: $59.0", 59.0, df_mes['COSTO POR CAJA'])
-                    with row1[2]: render_card("Flete Total", f"${df_mes['COSTO DE FLETE']:,.0f}", "Inversión", border_base="border-blue")
-    
-                    row2 = st.columns(3)
-                    with row2[0]: render_card("Facturación", f"${df_mes['FACTURACIÓN']:,.0f}", "Venta Mes", border_base="border-blue")
-                    with row2[1]: render_card("Cajas Enviadas", f"{int(df_mes['CAJAS ENVIADAS']):,.0f}", "Volumen", border_base="border-purple")
-                    with row2[2]: render_card("Incidencias", f"${df_mes['VALUACION INCIDENCIAS']:,.0f}", "Mermas", border_base="border-yellow")
-    
-                    # --- 4. ANÁLISIS DE GRÁFICOS ---
-                    st.write("---")
-                    st.markdown(f"### 📊 DESGLOSE OPERATIVO: {mes_sel}")
-                    
-                    try:
-                        # Carga rápida para gráficos
-                        archivo_csv = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
-                        df_g = pd.read_csv(archivo_csv, encoding='latin-1')
-                        df_g.columns = [c.strip().upper() for c in df_g.columns]
-                        df_g['FECHA_DT'] = pd.to_datetime(df_g['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
-                        df_g['MES_LLAVE'] = df_g['FECHA_DT'].dt.month.map(meses_map)
-                        df_f = df_g[df_g['MES_LLAVE'] == mes_sel].copy()
-                        
-                        # Limpieza para gráficos
-                        df_f['COSTO DE GUIA'] = pd.to_numeric(df_f['COSTO DE GUIA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
-                        df_f['VALOR FACTURA'] = pd.to_numeric(df_f['VALOR FACTURA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
-    
-                        # Función de dibujo
-                        def draw_bar(data, x, y, title, color):
-                            p_data = data.groupby(x)[y].sum().reset_index().sort_values(y, ascending=False).head(15)
-                            chart = alt.Chart(p_data).mark_bar(color=color, cornerRadiusTopLeft=8).encode(
-                                x=alt.X(f'{x}:N', sort='-y', axis=alt.Axis(labelAngle=-90, labelColor='white')),
-                                y=alt.Y(f'{y}:Q', axis=alt.Axis(format="$,.0s")),
-                                tooltip=[x, y]
-                            ).properties(width='container', height=350, title=title)
-                            st.altair_chart(chart, use_container_width=True)
-    
-                        draw_bar(df_f, 'FLETERA', 'COSTO DE GUIA', "INVERSIÓN POR TRANSPORTE", '#eab308')
-                        draw_bar(df_f, 'ESTADO', 'VALOR FACTURA', "FACTURACIÓN POR DESTINO", '#00FFAA')
-                    except:
-                        st.info("Cargando radar de gráficos...")
-    
-                # --- 5. BOTÓN PDF ---
+                cols_fijar = ['COSTO DE GUIA', 'VALOR FACTURA', c_cajas, 'VALUACION INCIDENCIAS']
+                for col in cols_fijar:
+                    if col in df.columns: df[col] = df[col].apply(limpiar_num)
+
+                # Procesamiento de Fechas
+                df['FECHA_DT'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
+                meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
+                             7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
+                df['MES'] = df['FECHA_DT'].dt.month.map(meses_map)
+                df = df.dropna(subset=['MES'])
+
+                # Agrupación Mensual
+                resumen = df.groupby('MES').agg({
+                    'COSTO DE GUIA': 'sum', 'VALOR FACTURA': 'sum',
+                    c_cajas: 'sum', 'VALUACION INCIDENCIAS': 'sum'
+                }).reset_index()
+
+                # --- EL CEREBRO: CÁLCULO DE KPIS QUE NO EXISTEN EN LA TABLA ---
+                resumen['COSTO LOGÍSTICO'] = (resumen['COSTO DE GUIA'] / resumen['VALOR FACTURA']) * 100
+                resumen['COSTO POR CAJA'] = resumen['COSTO DE GUIA'] / resumen[c_cajas]
+                resumen['META INDICADOR'] = 7.0        # Target Fijo
+                resumen['COSTO POR CAJA 2024'] = 59.0  # Target Fijo
+                resumen['PORCENTAJE DE INCIDENCIAS'] = (resumen['VALUACION INCIDENCIAS'] / resumen['VALOR FACTURA']) * 100
+                resumen['INCREMENTO + VI'] = resumen['VALUACION INCIDENCIAS']
+                resumen['% DE INCREMENTO VS 2024'] = 0.0
+
+                return resumen.rename(columns={'COSTO DE GUIA': 'COSTO DE FLETE', 'VALOR FACTURA': 'FACTURACIÓN', c_cajas: 'CAJAS ENVIADAS'})
+            except Exception as e:
+                st.error(f"Error en Motor: {e}")
+                return None
+
+        # --- 2. EJECUCIÓN Y SIDEBAR ---
+        df_a = cargar_datos_matriz_elite()
+        
+        if df_a is not None:
+            meses_list = df_a["MES"].unique().tolist()
+            mes_sel = st.sidebar.selectbox("MES DEL REPORTE", meses_list)
+            modo_comp = st.sidebar.checkbox("Activar comparativa")
+            
+            # Fila de datos del mes elegido
+            df_mes = df_a[df_a["MES"] == mes_sel].iloc[0]
+
+            # --- 3. DISEÑO DE INTERFAZ (CSS) ---
+            st.markdown("""<style>
+                .premium-header { font-family: 'Orbitron'; color: #f8fafc; border-bottom: 2px solid #00FFAA; padding-bottom: 8px; margin-bottom: 20px; }
+                .card-container { background-color: #0d1117; border-radius: 10px; padding: 15px; border: 1px solid #30363d; border-left: 5px solid #38bdf8; margin-bottom: 15px; }
+                .card-label { color: #8b949e; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+                .card-value { font-size: 1.8rem; font-weight: 800; font-family: 'Inter'; }
+            </style>""", unsafe_allow_html=True)
+
+            st.markdown(f"<h2 class='premium-header'>REPORT: {mes_sel}</h2>", unsafe_allow_html=True)
+
+            if not modo_comp:
+                # --- VISTA 9 TARJETAS ---
+                row1 = st.columns(3)
+                with row1[0]: render_card("Costo Logístico", f"{df_mes['COSTO LOGÍSTICO']:.1f}%", "TARGET: 7.0%", 7.0, df_mes['COSTO LOGÍSTICO'])
+                with row1[1]: render_card("Costo por Caja", f"${df_mes['COSTO POR CAJA']:.1f}", "TARGET: $59.0", 59.0, df_mes['COSTO POR CAJA'])
+                with row1[2]: render_card("Flete Total", f"${df_mes['COSTO DE FLETE']:,.0f}", "Inversión", border_base="border-blue")
+
+                row2 = st.columns(3)
+                with row2[0]: render_card("Facturación", f"${df_mes['FACTURACIÓN']:,.0f}", "Venta Mes", border_base="border-blue")
+                with row2[1]: render_card("Cajas Enviadas", f"{int(df_mes['CAJAS ENVIADAS']):,.0f}", "Volumen", border_base="border-purple")
+                with row2[2]: render_card("Incidencias", f"${df_mes['VALUACION INCIDENCIAS']:,.0f}", "Mermas", border_base="border-yellow")
+
+                # --- 4. ANÁLISIS DE GRÁFICOS ---
                 st.write("---")
-                if not modo_comp:
-                    if st.button("📥 GENERAR REPORTE OFICIAL PDF"):
-                        st.success(f"Reporte de {mes_sel} listo para impresión (Simulado)")
-    
-            else:
-                st.warning("⚠️ El archivo 'matriz_mensual.csv' no fue detectado en el sistema.")
-    
-            # --- PIE DE PÁGINA ---
-            st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+                st.markdown(f"### 📊 DESGLOSE OPERATIVO: {mes_sel}")
+                
+                try:
+                    # Carga rápida para gráficos
+                    archivo_csv = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
+                    df_g = pd.read_csv(archivo_csv, encoding='latin-1')
+                    df_g.columns = [c.strip().upper() for c in df_g.columns]
+                    df_g['FECHA_DT'] = pd.to_datetime(df_g['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
+                    df_g['MES_LLAVE'] = df_g['FECHA_DT'].dt.month.map(meses_map)
+                    df_f = df_g[df_g['MES_LLAVE'] == mes_sel].copy()
+                    
+                    # Limpieza para gráficos
+                    df_f['COSTO DE GUIA'] = pd.to_numeric(df_f['COSTO DE GUIA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+                    df_f['VALOR FACTURA'] = pd.to_numeric(df_f['VALOR FACTURA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+
+                    # Función de dibujo
+                    def draw_bar(data, x, y, title, color):
+                        p_data = data.groupby(x)[y].sum().reset_index().sort_values(y, ascending=False).head(15)
+                        chart = alt.Chart(p_data).mark_bar(color=color, cornerRadiusTopLeft=8).encode(
+                            x=alt.X(f'{x}:N', sort='-y', axis=alt.Axis(labelAngle=-90, labelColor='white')),
+                            y=alt.Y(f'{y}:Q', axis=alt.Axis(format="$,.0s")),
+                            tooltip=[x, y]
+                        ).properties(width='container', height=350, title=title)
+                        st.altair_chart(chart, use_container_width=True)
+
+                    draw_bar(df_f, 'FLETERA', 'COSTO DE GUIA', "INVERSIÓN POR TRANSPORTE", '#eab308')
+                    draw_bar(df_f, 'ESTADO', 'VALOR FACTURA', "FACTURACIÓN POR DESTINO", '#00FFAA')
+                except:
+                    st.info("Cargando radar de gráficos...")
+
+            # --- 5. BOTÓN PDF ---
+            st.write("---")
+            if not modo_comp:
+                if st.button("📥 GENERAR REPORTE OFICIAL PDF"):
+                    st.success(f"Reporte de {mes_sel} listo para impresión (Simulado)")
+
+        else:
+            st.warning("⚠️ El archivo 'matriz_mensual.csv' no fue detectado en el sistema.")
+
+        # --- PIE DE PÁGINA ---
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
