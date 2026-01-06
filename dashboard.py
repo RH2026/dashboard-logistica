@@ -1268,7 +1268,7 @@ else:
         df_criticos = df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] > 0].copy()
         
         if not df_criticos.empty:
-            with st.expander("⚠️ VER DETALLE DE PEDIDOS VENCIDOS (EN ESTE RANGO)", expanded=False):
+            with st.expander("Ver detalle de pedidos vencidos de la fecha seleccionada)", expanded=False):
                 df_ver = df_criticos.copy()
                 df_ver["FECHA DE ENVÍO"] = df_ver["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
                 df_ver["PROMESA DE ENTREGA"] = df_ver["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y')
@@ -1311,7 +1311,7 @@ else:
             """, unsafe_allow_html=True)
 
         # --- GRÁFICO 1: VOLUMEN DE OPERACIÓN (CON ETIQUETAS DE DATOS) ---
-        titulo_grafico_elite("Volumen Diario de Envíos", "📈")
+        titulo_grafico_elite("Volumen Diario de Envíos", "")
         df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="Pedidos")
         
         # Base del gráfico
@@ -1325,7 +1325,7 @@ else:
             line={'color': color_excelencia, 'strokeWidth': 2.5},
             color=alt.Gradient(
                 gradient='linear',
-                stops=[alt.GradientStop(color=color_excelencia, offset=0), alt.GradientStop(color='transparent', offset=1)],
+                stops=[alt.GradientStop(color='#39FF14', offset=0), alt.GradientStop(color='transparent', offset=1)],
                 x1=1, x2=1, y1=1, y2=0
             ),
             interpolate='linear'
@@ -1352,7 +1352,7 @@ else:
         st.write("##")
 
         # --- GRÁFICO 2: EFICIENCIA POR FLETERA (SEMÁFORO) ---
-        titulo_grafico_elite("Ranking de Eficiencia por Fletera", "🏆")
+        titulo_grafico_elite("Ranking de Eficiencia por Fletera", "")
         df_ent = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].notna()].copy()
         
         if not df_ent.empty:
@@ -1807,6 +1807,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
