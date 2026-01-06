@@ -1648,8 +1648,23 @@ else:
                    
             header_txt = f"Resultados: {mes_sel}" if not modo_comp else f"Comparativa Mode: {mes_sel} VS {mes_comp}"
 
-            # Añadimos 'border:none' y 'padding:0' para asegurar que la línea desaparezca
-            st.markdown(f"<h4 class='premium-header' style='border:none !important; padding-bottom:0;'>{header_txt}</h4>", unsafe_allow_html=True)
+            # Aplicamos un reseteo total de bordes, sombras y elementos decorativos internos
+            st.markdown(f"""
+                <style>
+                    .premium-header {{
+                        border: none !important;
+                        border-bottom: none !important;
+                        box-shadow: none !important;
+                    }}
+                    .premium-header::after, .premium-header::before {{
+                        content: none !important;
+                        display: none !important;
+                    }}
+                </style>
+                <h4 class='premium-header' style='border:none !important; box-shadow:none !important;'>
+                    {header_txt}
+                </h4>
+            """, unsafe_allow_html=True)
 
                 
             st.markdown("""
@@ -2132,6 +2147,7 @@ else:
                
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
