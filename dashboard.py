@@ -308,19 +308,8 @@ else:
                 <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>Logística & Rendimiento de Paqueterías</p>
                 <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
             </div>
-        """, unsafe_allow_html=True)
-              
-        st.markdown("""
-            <hr style="
-                border: 0;
-                height: 2px;
-                background: #00D4FF;
-                box-shadow: 0px 0px 15px 2px rgba(0, 212, 255, 0.7);
-                margin-top: 20px;
-                margin-bottom: 20px;
-                border-radius: 10px;
-            ">
-        """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)    
+    
         # =========================================================
         #MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
         # =========================================================
@@ -372,7 +361,17 @@ else:
                     st.rerun()
                                       
                                        
-        st.divider()
+        st.markdown("""
+            <hr style="
+                border: 0;
+                height: 2px;
+                background: #00D4FF;
+                box-shadow: 0px 0px 15px 2px rgba(0, 212, 255, 0.7);
+                margin-top: 20px;
+                margin-bottom: 20px;
+                border-radius: 10px;
+            ">
+        """, unsafe_allow_html=True)
            
         # 1. FUNCIÓN DE LIMPIEZA
         def limpiar_filtros():
@@ -1819,6 +1818,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
