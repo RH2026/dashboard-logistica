@@ -1503,7 +1503,7 @@ else:
     elif st.session_state.pagina == "Reporte":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
-        # Título con estilo minimalista
+        # Título con estilo minimalista (SIN LÍNEA)
         st.markdown("""
             <div style='text-align: center; padding: 10px 0px 30px 0px;'>
                 <h1 style='color: white; font-family: "Inter", sans-serif; font-weight: 800; font-size: 42px; margin-bottom: 5px; letter-spacing: -1px;'>
@@ -1512,10 +1512,8 @@ else:
                 <p style='color: #94a3b8; font-size: 16px; font-weight: 400; letter-spacing: 1px;'>
                     Análisis de Eficiencia Logística y Rentabilidad
                 </p>
-                <div style='height: 2px; width: 60px; background: #00FFAA; margin: 10px auto;'></div>
             </div>
         """, unsafe_allow_html=True)
-
         # =========================================================
         # MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
         # =========================================================
@@ -1649,7 +1647,11 @@ else:
                        
                    
             header_txt = f"Resultados: {mes_sel}" if not modo_comp else f"Comparativa Mode: {mes_sel} VS {mes_comp}"
-            
+
+            # Añadimos 'border:none' y 'padding:0' para asegurar que la línea desaparezca
+            st.markdown(f"<h4 class='premium-header' style='border:none !important; padding-bottom:0;'>{header_txt}</h4>", unsafe_allow_html=True)
+
+                
             st.markdown("""
             <hr style="
                 border: 0;
@@ -2130,6 +2132,7 @@ else:
                
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
