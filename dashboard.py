@@ -1578,61 +1578,64 @@ else:
             </style>
         """, unsafe_allow_html=True)
         
-        # --- 1. MOTOR DE DATOS DINÁMICO (CALCULADO DESDE MATRIZ) ---
         @st.cache_data
         def cargar_datos_matriz_elite():
             import os
             try:
-                # Localización de archivo con redundancia
                 archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
                 df = pd.read_csv(archivo, encoding='latin-1')
                 df.columns = [c.strip().upper() for c in df.columns]
-        
-                # Limpieza de valores numéricos profesional
+
                 def limpiar_num(v):
                     if pd.isna(v): return 0.0
                     s = str(v).replace('$', '').replace(',', '').replace('%', '').strip()
-                    try: 
-                        return float(s)
-                    except: 
-                        return 0.0
-        
-                cols_ops = ['COSTO DE GUIA', 'VALOR FACTURA', 'CAJAS ENVIADAS', 'VALUACION INCIDENCIAS']
-                for col in cols_ops:
-                    if col in df.columns: 
-                        df[col] = df[col].apply(limpiar_num)
-        
-                # Procesamiento de Fechas y Creación de Columna MES
+                    try: return float(s)
+                    except: return 0.0
+
+                # --- MAPEADOR DE COLUMNAS REALES ---
+                # Ajustamos 'CAJAS ENVIADAS' por 'CAJAS'
+                col_cajas = 'CAJAS' if 'CAJAS' in df.columns else 'CAJAS ENVIADAS'
+                col_incidencias = 'VALUACION INCIDENCIAS' if 'VALUACION INCIDENCIAS' in df.columns else None
+
+                for col in ['COSTO DE GUIA', 'VALOR FACTURA', col_cajas]:
+                    if col in df.columns: df[col] = df[col].apply(limpiar_num)
+                
+                if col_incidencias:
+                    df[col_incidencias] = df[col_incidencias].apply(limpiar_num)
+                else:
+                    df['VALUACION INCIDENCIAS'] = 0.0 # Crear columna vacía si no existe
+
+                # Procesamiento de Fechas
                 df['FECHA_DT'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
-                meses_map = {
-                    1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
-                    7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"
-                }
+                meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
+                             7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
                 df['MES'] = df['FECHA_DT'].dt.month.map(meses_map)
                 df = df.dropna(subset=['MES'])
-        
-                # AGRUPACIÓN Y FÓRMULAS SEGÚN TARGETS DEL CAPITÁN
+
+                # AGRUPACIÓN TÁCTICA
                 resumen = df.groupby('MES').agg({
-                    'COSTO DE GUIA': 'sum',
+                    'COSTO DE GUIA': 'sum', 
                     'VALOR FACTURA': 'sum',
-                    'CAJAS ENVIADAS': 'sum',
+                    col_cajas: 'sum', 
                     'VALUACION INCIDENCIAS': 'sum'
                 }).reset_index()
-        
-                # Aplicación de KPI's
+
+                # FÓRMULAS CON NOMBRES ESTANDARIZADOS PARA LAS TARJETAS
                 resumen['COSTO LOGÍSTICO'] = (resumen['COSTO DE GUIA'] / resumen['VALOR FACTURA']) * 100
-                resumen['COSTO POR CAJA'] = resumen['COSTO DE GUIA'] / resumen['CAJAS ENVIADAS']
-                resumen['META INDICADOR'] = 7.0        # Target % pedido
-                resumen['COSTO POR CAJA 2024'] = 59.0  # Target $ pedido
+                resumen['COSTO POR CAJA'] = resumen['COSTO DE GUIA'] / resumen[col_cajas]
+                resumen['META INDICADOR'] = 7.0        
+                resumen['COSTO POR CAJA 2024'] = 59.0  
                 resumen['PORCENTAJE DE INCIDENCIAS'] = (resumen['VALUACION INCIDENCIAS'] / resumen['VALOR FACTURA']) * 100
-                
-                # Columnas adicionales para análisis de brecha (evitar errores de NameError)
-                resumen['% DE INCREMENTO VS 2024'] = 0.0 # Puede calcularse si hay histórico
+                resumen['% DE INCREMENTO VS 2024'] = 0.0
                 resumen['INCREMENTO + VI'] = resumen['VALUACION INCIDENCIAS'] 
-        
-                return resumen.rename(columns={'COSTO DE GUIA': 'COSTO DE FLETE', 'VALOR FACTURA': 'FACTURACIÓN'})
+
+                return resumen.rename(columns={
+                    'COSTO DE GUIA': 'COSTO DE FLETE', 
+                    'VALOR FACTURA': 'FACTURACIÓN',
+                    col_cajas: 'CAJAS ENVIADAS'
+                })
             except Exception as e:
-                st.error(f"Error en Motor: {e}")
+                st.error(f"Error Motor: {e}")
                 return None
         
         # --- 2. ACTIVACIÓN DE DATOS Y SIDEBAR ---
@@ -1837,6 +1840,7 @@ else:
         st.warning("⚠️ No se detectaron datos en 'matriz_mensual.csv'. Por favor, cargue la base de datos en la pestaña correspondiente.")
 
         
+
 
 
 
