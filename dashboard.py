@@ -3,188 +3,161 @@ import pandas as pd
 import altair as alt
 import time
 import base64
-import textwrap
-import streamlit.components.v1 as components
-import numpy as np
 import datetime
 import io
 import os
-import datetime
+import streamlit.components.v1 as components
+import numpy as np
+
+# Protocolo PDF
+try:
+    from fpdf import FPDF
+    PDF_READY = True
+except:
+    PDF_READY = False
 
 # =========================================================
-# 1. DEFINICIÓN DE DICCIONARIOS (Nivel 0 - Prioridad Máxima)
+# 1. DICCIONARIOS Y CONFIGURACIÓN GLOBAL
 # =========================================================
-# Esto DEBE estar aquí arriba para que no te dé NameError abajo
+st.set_page_config(page_title="Distribución y Logística Inteligente", layout="wide", initial_sidebar_state="expanded")
+
 meses_dict = {
     1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO", 6: "JUNIO",
     7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"
 }
 
-def limpiar_filtros():
-    st.session_state.filtro_cliente_actual = ""
-    st.session_state.filtro_cliente_input = ""
-    st.session_state["fletera_filtro"] = ""
-    st.session_state["mes_seleccionado"] = meses_dict[datetime.datetime.now().month]
-    
-    # --- BLOQUE DE SEGURIDAD PARA LA LÍNEA 64 ---
-    # Convertimos a fecha y quitamos nulos para que .min() no falle
-    fechas_v = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce').dropna()
-    
-    if not fechas_v.empty:
-        # Solo aplicamos .date() si estamos seguros de que existe una fecha
-        st.session_state["fecha_filtro"] = (fechas_v.min().date(), fechas_v.max().date())
-    else:
-        # Si el archivo está vacío, usamos hoy para no romper la app
-        hoy = datetime.date.today()
-        st.session_state["fecha_filtro"] = (hoy, hoy)
-    
-    st.rerun()
 # =========================================================
-# 2. NIVEL 1: CARGA DE DATOS (CON LIMPIEZA DE INTERFERENCIAS)
+# 2. MOTOR DE DATOS (LIMPIEZA PROFUNDA)
 # =========================================================
-archivo_matriz = "Matriz_Excel_Dashboard.csv"
-
-if os.path.exists(archivo_matriz):
-    # Probamos con 'utf-8-sig' que elimina automáticamente el ï»¿
+@st.cache_data
+def cargar_datos():
+    archivo_matriz = "Matriz_Excel_Dashboard.csv"
+    if not os.path.exists(archivo_matriz):
+        st.error("🚨 Archivo no encontrado.")
+        st.stop()
+    
     try:
         df = pd.read_csv(archivo_matriz, encoding='utf-8-sig')
     except:
         df = pd.read_csv(archivo_matriz, encoding='latin-1')
-    
-    # --- MANIOBRA DE LIMPIEZA PROFUNDA ---
-    # 1. Quitamos espacios y pasamos a mayúsculas
-    # 2. Reemplazamos los caracteres rotos comunes de los acentos
+
+    # Limpieza de basura en nombres de columnas
     df.columns = [
         str(c).strip().upper()
-        .replace('Ã\x8D', 'Í')
-        .replace('Ã\x9A', 'Ú')
-        .replace('Ã\x91', 'Ñ') 
+        .replace('Ã\x8D', 'Í').replace('Ã\x9A', 'Ú').replace('Ã\x91', 'Ñ').replace('Ï»¿', '') 
         for c in df.columns
     ]
-    
-    # Limpieza específica para el carácter extraño que detectó el radar en el primer campo
-    df.columns = [c.replace('Ï»¿', '') for c in df.columns]
 
-    if 'df' in globals():
-        f_min = df["FECHA DE ENVÍO"].min().date()
-        f_max = df["FECHA DE ENVÍO"].max().date()
-        st.session_state["fecha_filtro"] = (f_min, f_max)
-
-    # --- VERIFICACIÓN DE COLUMNA CRÍTICA ---
-    if "FECHA DE ENVÍO" in df.columns:
-        df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce')
-        df = df.dropna(subset=["FECHA DE ENVÍO"]) 
+    # Validación de Fecha Crítica
+    col_fecha = next((c for c in df.columns if 'FECHA' in c and 'ENV' in c), None)
+    if col_fecha:
+        df["FECHA DE ENVÍO"] = pd.to_datetime(df[col_fecha], errors='coerce', dayfirst=True)
+        df = df.dropna(subset=["FECHA DE ENVÍO"])
     else:
-        # Si el nombre sigue viniendo raro, forzamos la detección por posición
-        # Usualmente la fecha es la cuarta columna según su reporte
-        st.warning(f"Radar detectó nombres alterados. Reintentando mapeo manual...")
-        # Intentar buscar cualquier columna que contenga "FECHA" y "ENV"
-        col_encontrada = [c for c in df.columns if 'FECHA' in c and 'ENV' in c]
-        if col_encontrada:
-            nombre_real = col_encontrada[0]
-            df["FECHA DE ENVÍO"] = pd.to_datetime(df[nombre_real], errors='coerce')
-            df = df.dropna(subset=["FECHA DE ENVÍO"])
-        else:
-            st.error(f"🚨 FALLO CRÍTICO: No se halla columna de fecha. Detectadas: {list(df.columns)}")
-            st.stop()
+        st.error("No se detectó columna de FECHA.")
+        st.stop()
 
-# --- FUNCIÓN PARA CARGAR EL LOGO ---
-def get_base64_bin(path):
+    # Formateo de IDs y Estatus
+    df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+    df["NÚMERO DE GUÍA"] = df["NÚMERO DE GUÍA"].astype(str).str.strip()
+    
+    df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
+    df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
+    
+    hoy = pd.Timestamp.today().normalize()
+    df["ESTATUS_CALCULADO"] = df.apply(
+        lambda r: "ENTREGADO" if pd.notna(r["FECHA DE ENTREGA REAL"]) 
+        else ("RETRASADO" if pd.notna(r["PROMESA DE ENTREGA"]) and r["PROMESA DE ENTREGA"] < hoy 
+        else "EN TRANSITO"), axis=1
+    )
+    return df
+
+df = cargar_datos()
+
+# =========================================================
+# 3. GESTIÓN DE ESTADOS (SESSION STATE)
+# =========================================================
+if "logueado" not in st.session_state: st.session_state.logueado = False
+if "pagina" not in st.session_state: st.session_state.pagina = "principal"
+if "filtro_cliente_actual" not in st.session_state: st.session_state.filtro_cliente_actual = ""
+
+# Inicialización segura de fechas para los filtros
+f_min_limite = df["FECHA DE ENVÍO"].min().date()
+f_max_limite = df["FECHA DE ENVÍO"].max().date()
+
+if "fecha_filtro" not in st.session_state:
+    st.session_state["fecha_filtro"] = (f_min_limite, f_max_limite)
+if "mes_seleccionado" not in st.session_state:
+    st.session_state["mes_seleccionado"] = "TODOS"
+
+# =========================================================
+# 4. FUNCIONES DE LIMPIEZA
+# =========================================================
+def limpiar_filtros():
+    st.session_state.filtro_cliente_actual = ""
+    st.session_state.filtro_cliente_input = ""
+    st.session_state["fletera_filtro"] = ""
+    st.session_state["mes_seleccionado"] = "TODOS"
+    st.session_state["fecha_filtro"] = (f_min_limite, f_max_limite)
+
+def get_base64_file(path):
     try:
         with open(path, "rb") as f:
             return base64.b64encode(f.read()).decode()
-    except Exception:
-        return ""
+    except: return None
 
-# CARGAMOS LA VARIABLE ANTES DE USARLA
-logo_b64 = get_base64_bin("n1.png")# --- NUEVO PROTOCOLO DE IMPORTACIÓN PARA FPDF2 (BLOQUE ELITE) ---
-# --- PROTOCOLO DE CONEXIÓN FINAL ---
-try:
-    from fpdf import FPDF
-    PDF_READY = True
-except (ImportError, ModuleNotFoundError):
-    PDF_READY = False
+# =========================================================
+# 5. SIDEBAR Y LÓGICA DE FILTRADO (EL CORRECAMINOS)
+# =========================================================
+st.sidebar.button("🗑️ Limpiar Filtros", use_container_width=True, on_click=limpiar_filtros)
 
-# 1. CONFIGURACIÓN DE PÁGINA
-st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="expanded")
+mes_sel = st.sidebar.selectbox("📍 MES DE OPERACIÓN", options=["TODOS"] + list(meses_dict.values()), key="mes_seleccionado")
 
+rango_fechas = st.sidebar.date_input("📅 RANGO ESPECÍFICO", min_value=f_min_limite, max_value=f_max_limite, key="fecha_filtro")
 
-# 2. ESTADOS DE SESIÓN
-if "logueado" not in st.session_state:
-    st.session_state.logueado = False
-if "splash_completado" not in st.session_state:
-    st.session_state.splash_completado = False
-if "motivo_splash" not in st.session_state:
-    st.session_state.motivo_splash = "inicio"
-if "usuario_actual" not in st.session_state:
-    st.session_state.usuario_actual = None
-if "pagina" not in st.session_state:
-    st.session_state.pagina = "principal"  # Controla qué sección del dashboard se ve
-if "ultimo_movimiento" not in st.session_state:
-    st.session_state.ultimo_movimiento = time.time() # Para control de inactividad
-if "tabla_expandida" not in st.session_state:
-    st.session_state.tabla_expandida = False
-if "mes_seleccionado" not in st.session_state:
-    mes_actual_num = datetime.datetime.now().month
-    st.session_state["mes_seleccionado"] = meses_dict[mes_actual_num]
-if "fecha_filtro" not in st.session_state:
-    st.session_state["fecha_filtro"] = (df["FECHA DE ENVÍO"].min().date(), df["FECHA DE ENVÍO"].max().date())
+st.sidebar.text_input("🔍 NO. CLIENTE O GUÍA", key="filtro_cliente_input", 
+                      on_change=lambda: st.session_state.update({"filtro_cliente_actual": st.session_state.filtro_cliente_input}))
 
+fletera_sel = st.sidebar.selectbox("🚚 FLETERA", options=[""] + sorted(df["FLETERA"].dropna().unique().tolist()), key="fletera_filtro")
 
-# --- 2. LÓGICA DE MÁRGENES Y ALTURA (Flecha visible y espacios respetados) ---
-st.markdown("""
-    <style>
-        /* Margen general del dashboard */
-        .block-container {
-            padding-top: 1.5rem !important;
-            padding-bottom: 1rem !important;
-            padding-left: 1.5rem !important;
-            padding-right: 1.5rem !important;
-        }
+# --- APLICACIÓN DE FILTROS EN CASCADA ---
+df_filtrado = df.copy()
 
-        /* Ocultamos solo el footer (la marca de Streamlit) */
-        footer {visibility: hidden;}
-        
-        /* ESPACIO DE BOTONES: Mantiene la cercanía profesional a la tabla */
-        div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
-            margin-bottom: -0.5rem !important;
-        }
-        
-        /* ESPACIO DE DONITAS: Mantiene el despegue de los indicadores */
-        div[data-testid="stHorizontalBlock"]:has(div[style*="text-align:center"]) {
-            margin-bottom: 2rem !important;
-        }
-    </style>
-""", unsafe_allow_html=True)
+if st.session_state.mes_seleccionado != "TODOS":
+    num_mes = [k for k, v in meses_dict.items() if v == st.session_state.mes_seleccionado][0]
+    df_filtrado = df_filtrado[df_filtrado["FECHA DE ENVÍO"].dt.month == num_mes]
 
-# Altura dinámica según el botón presionado (Esto no cambia)
-if st.session_state.tabla_expandida:
-    h_dinamica = 850
-else:
-    h_dinamica = 200
+if isinstance(rango_fechas, (list, tuple)) and len(rango_fechas) == 2:
+    df_filtrado = df_filtrado[(df_filtrado["FECHA DE ENVÍO"].dt.date >= rango_fechas[0]) & (df_filtrado["FECHA DE ENVÍO"].dt.date <= rango_fechas[1])]
 
-#---------------------------------------------------
+busqueda = str(st.session_state.filtro_cliente_actual).strip().lower()
+if busqueda:
+    df_filtrado = df_filtrado[
+        df_filtrado["NO CLIENTE"].str.lower().contains(busqueda, na=False) | 
+        df_filtrado["NÚMERO DE GUÍA"].str.lower().contains(busqueda, na=False)
+    ]
 
-# Colores
-color_fondo_nativo = "#0e1117" 
-color_blanco = "#FFFFFF"
-color_verde = "#00FF00" 
+if fletera_sel:
+    df_filtrado = df_filtrado[df_filtrado["FLETERA"] == fletera_sel]
+
+# =========================================================
+# 6. ESTILOS CSS (DISEÑO ELITE Y CORRECCIONES DE INTERFAZ)
+# =========================================================
+color_fondo_nativo = "#0e1117"
 color_borde_gris = "#00ffa2"
-# --------------------------------------------------
-# 3. ESTILOS CSS (Corregido para NO ocultar la flecha)
-# --------------------------------------------------
+
 st.markdown(f"""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;800&family=Courier+Prime&display=swap');
     
     .stApp {{ background-color: {color_fondo_nativo} !important; }}
     
-    /* Mostrar flecha de sidebar pero ocultar decoradores innecesarios */
+    /* Mostrar flecha de sidebar y limpiar headers */
     header[data-testid="stHeader"] {{ background: rgba(0,0,0,0) !important; }}
     footer {{ visibility: hidden !important; }}
     div[data-testid="stDecoration"] {{ display: none !important; }}
 
-    /* Caja 3D Logística Sellada */
+    /* Caja 3D Logística Animada */
     .scene {{ width: 100%; height: 120px; perspective: 600px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }}
     .cube {{ width: 60px; height: 60px; position: relative; transform-style: preserve-3d; transform: rotateX(-20deg) rotateY(45deg); animation: move-pkg 6s infinite ease-in-out; }}
     .cube-face {{ position: absolute; width: 60px; height: 60px; background: #d2a679; border: 1.5px solid #b08d5c; box-shadow: inset 0 0 15px rgba(0,0,0,0.1); }}
@@ -199,45 +172,37 @@ st.markdown(f"""
     
     @keyframes move-pkg {{ 0%, 100% {{ transform: translateY(0px) rotateX(-20deg) rotateY(45deg); }} 50% {{ transform: translateY(-15px) rotateX(-20deg) rotateY(225deg); }} }}
     
-    /* Login Form */
+    /* Login Form Premium */
     .stForm {{ background-color: {color_fondo_nativo} !important; border: 1.5px solid {color_borde_gris} !important; border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
-    .login-header {{ text-align: center; color: white; font-family: Arial; font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; }}
     input {{ font-family: 'Arial', monospace !important; color: white !important; }}
 </style>
 """, unsafe_allow_html=True)
 
+# --- CARGA ÚNICA DE LOGO ---
+logo_b64 = get_base64_file("n1.png")
 placeholder = st.empty()
 
-# --------------------------------------------------
-# 4. FLUJO DE PANTALLAS
-# --------------------------------------------------
+# =========================================================
+# 7. FLUJO DE PANTALLAS: LOGIN Y SPLASH
+# =========================================================
 
-# --- 1. PREPARACIÓN DE RECURSOS (Asegúrate de tener esto al inicio) ---
-import base64
-import streamlit as st
-
-def get_base64_file(path):
-    try:
-        with open(path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    except:
-        return None
-
-logo_b64 = get_base64_file("n1.png")
-
-# --- 2. CASO A: LOGIN (ENSAMBLADO FINAL) ---
+# CASO A: PANTALLA DE LOGIN
 if not st.session_state.logueado:
     with placeholder.container():
-        col1, col2, col3 = st.columns([1.5, 1, 1.5])
+        col1, col2, col3 = st.columns([1.2, 1, 1.2])
         with col2:
             st.markdown('<div style="height:10vh"></div>', unsafe_allow_html=True)
             with st.form("login_form"):
-                
-                # --- SECCIÓN VISUAL: LOGO + ANIMACIÓN ---
                 if logo_b64:
-                    st.markdown(f'<div style="text-align:center;margin-bottom:20px;"><img src="data:image/png;base64,{logo_b64}" style="width:250px;mix-blend-mode:screen;display:block;margin:0 auto;"><div style="width:160px;height:2px;background:#00FFAA;margin:15px auto 5px auto;box-shadow:0 0 12px #00FFAA;animation:s 2.5s infinite ease-in-out;"></div><div style="font-family:monospace;color:#00FFAA;font-size:11px;letter-spacing:4px;animation:b 1.5s infinite;">Distribucion y Logística: Inteligente</div></div><style>@keyframes s{{0%,100%{{width:0%;opacity:0;}}50%{{width:80%;opacity:1;}}}}@keyframes b{{0%,100%{{opacity:1;}}50%{{opacity:0.3;}}}}</style>', unsafe_allow_html=True)
+                    st.markdown(f'''
+                        <div style="text-align:center;margin-bottom:20px;">
+                            <img src="data:image/png;base64,{logo_b64}" style="width:250px;mix-blend-mode:screen;">
+                            <div style="width:160px;height:2px;background:#00FFAA;margin:15px auto 5px auto;box-shadow:0 0 12px #00FFAA;animation:s 2.5s infinite ease-in-out;"></div>
+                            <div style="font-family:monospace;color:#00FFAA;font-size:11px;letter-spacing:4px;">Distribucion y Logística: Inteligente</div>
+                        </div>
+                        <style>@keyframes s{{0%,100%{{width:0%;opacity:0;}}50%{{width:80%;opacity:1;}}}}</style>
+                    ''', unsafe_allow_html=True)
                 
-                # --- EL RESTO DEL FORMULARIO SE QUEDA IGUAL ---
                 u_input = st.text_input("Usuario")
                 c_input = st.text_input("Contraseña", type="password")
                 
@@ -253,62 +218,41 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# CASO B: SPLASH SCREEN
+# CASO B: SPLASH SCREEN (ANIMACIÓN DE CARGA)
 elif not st.session_state.splash_completado:
     with placeholder.container():
+        usuario_nom = st.session_state.usuario_actual.capitalize()
         
-        # --- DEFINICIÓN GLOBAL (Para que no de NameError) ---
-        usuario = st.session_state.usuario_actual.capitalize() if st.session_state.usuario_actual else "Usuario"
-        color_cyan = "#FFFFFF" # Usamos el Cyan que nos gustó
-        
-        # Definición de mensajes según el motivo
         if st.session_state.motivo_splash == "logout":
-            mensajes = [
-                f"Cerrando sesión, <span style='color:{color_cyan};'>{usuario}</span>...", 
-                "Guardando cambios...", 
-                "Conexión con Nexion terminada!"
-            ]
+            mensajes = ["Cerrando sesión...", "Guardando cambios...", "¡Conexión terminada!"]
             c_caja = "#FF4B4B"
         else:
-            # Mensajes dinámicos de bienvenida
-            mensajes = [
-                f"¡Hola de vuelta, <span style='color:{color_cyan};'>{usuario}</span>!",
-                "Actualizando base de datos...",
-                "Sincronizando estatus de envíos...",
-                "Accediendo al sistema..."
-            ]
+            mensajes = [f"¡Hola, {usuario_nom}!", "Actualizando base de datos...", "Sincronizando estatus...", "Accediendo al sistema..."]
             c_caja = "#d2a679"
 
-        # Contenedor vacío para actualizar el texto sin refrescar toda la página
         splash_placeholder = st.empty()
-
         for i, msg in enumerate(mensajes):
             splash_placeholder.markdown(f"""
                 <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0e1117; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                     <div class="scene">
-                        <div class="cube" style="width:80px; height:80px; animation: move-pkg 3s infinite linear;">
-                            <div class="cube-face front"  style="width:80px; height:80px; background:{c_caja}; transform: rotateY(0deg) translateZ(40px);"></div>
-                            <div class="cube-face back"   style="width:80px; height:80px; background:{c_caja}; transform: rotateY(180deg) translateZ(40px);"></div>
-                            <div class="cube-face right"  style="width:80px; height:80px; background:{c_caja}; transform: rotateY(90deg) translateZ(40px);"></div>
-                            <div class="cube-face left"   style="width:80px; height:80px; background:{c_caja}; transform: rotateY(-90deg) translateZ(40px);"></div>
-                            <div class="cube-face top"    style="width:80px; height:80px; background:#e3bc94; transform: rotateX(90deg) translateZ(40px);"></div>
+                        <div class="cube" style="width:80px; height:80px;">
+                            <div class="cube-face front" style="width:80px; height:80px; background:{c_caja}; transform: rotateY(0deg) translateZ(40px);"></div>
+                            <div class="cube-face back" style="width:80px; height:80px; background:{c_caja}; transform: rotateY(180deg) translateZ(40px);"></div>
+                            <div class="cube-face right" style="width:80px; height:80px; background:{c_caja}; transform: rotateY(90deg) translateZ(40px);"></div>
+                            <div class="cube-face left" style="width:80px; height:80px; background:{c_caja}; transform: rotateY(-90deg) translateZ(40px);"></div>
+                            <div class="cube-face top" style="width:80px; height:80px; background:#e3bc94; transform: rotateX(90deg) translateZ(40px);"></div>
                             <div class="cube-face bottom" style="width:80px; height:80px; background:#b08d5c; transform: rotateX(-90deg) translateZ(40px);"></div>
                         </div>
                     </div>
-                    <div style="color:#00FFAA; font-family:'monospace'; margin-top:25px; letter-spacing:2px; text-transform:none; font-size: 14px; font-weight: normal;">{msg}</div>
+                    <div style="color:#00FFAA; font-family:monospace; margin-top:25px; letter-spacing:2px; font-size: 14px;">{msg}</div>
                 </div>
             """, unsafe_allow_html=True)
-            
-            # Tiempo entre cada mensaje (ajustable)
-            time.sleep(0.8 if i < len(mensajes)-1 else 1.0)
+            time.sleep(0.8)
         
-        # Lógica de cierre de sesión
         if st.session_state.motivo_splash == "logout":
             st.session_state.logueado = False
             st.session_state.usuario_actual = None
             st.session_state.pagina = "principal"
-            st.session_state.motivo_splash = "inicio"
-            st.cache_data.clear()
         
         st.session_state.splash_completado = True
         st.rerun()
@@ -316,56 +260,32 @@ elif not st.session_state.splash_completado:
 
 # 3. CONTENIDO PRIVADO (DASHBOARD)
 else:      
-    # --- MOTOR DE DATOS ---
-    @st.cache_data
-    def cargar_datos():
-        df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
-        df.columns = df.columns.str.strip().str.upper()
-        df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.strip()
-        df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors="coerce", dayfirst=True)
-        df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
-        df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
-        
-        hoy = pd.Timestamp.today().normalize()
-        def calcular_estatus(row):
-            if pd.notna(row["FECHA DE ENTREGA REAL"]): return "ENTREGADO"
-            if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy: return "RETRASADO"
-            return "EN TRANSITO"
-        
-        df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
-        return df
-
-    df = cargar_datos()
-
-    # BARRA LATERAL
-    
-    # --- RECONEXIÓN DE LOGO NEXION (FUERZA BRUTA) ---
-    import base64
-    def get_base64(path):
-        with open(path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-
-    try:
-        logo_base64 = get_base64("n1.png")
-        # Inyectamos el logo como un bloque HTML real, no como fondo de CSS
+    # --- BARRA LATERAL (LOGO Y SESIÓN) ---
+    if logo_b64:
         st.sidebar.markdown(
             f"""
             <div style="text-align: center; padding: 10px 0px;">
-                <img src="data:image/png;base64,{logo_base64}" width="220">
+                <img src="data:image/png;base64,{logo_b64}" width="220">
             </div>
             <style>
-                /* Esto elimina el espacio vacío que Streamlit deja arriba por defecto */
-                [data-testid="stSidebarNav"] {{
-                    padding-top: 20px !important;
-                }}
+                [data-testid="stSidebarNav"] {{ padding-top: 20px !important; }}
             </style>
             """, 
             unsafe_allow_html=True
         )
-    except Exception as e:
-        st.sidebar.warning("Logo n1.png no detectado en el radar.")
     
-    st.sidebar.markdown(f'<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;margin-left:-8px;"><svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" stroke="#00FFAA" stroke-width="1.8"/><path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6" stroke="#00FFAA" stroke-width="1.8" stroke-linecap="round"/></svg><span style="color:#999;font-size:16px;">Sesión: <span style="color:#00FFAA;font-weight:500;">{st.session_state.usuario_actual}</span></span></div>', unsafe_allow_html=True)
+    st.sidebar.markdown(
+        f"""
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;margin-left:-8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="8" r="4" stroke="#00FFAA" stroke-width="1.8"/>
+                <path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6" stroke="#00FFAA" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span style="color:#999;font-size:16px;">Sesión: <span style="color:#00FFAA;font-weight:500;">{st.session_state.usuario_actual}</span></span>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
     
     st.sidebar.markdown("---")
     
@@ -374,15 +294,10 @@ else:
         st.session_state.motivo_splash = "logout"
         st.rerun()
 
-        
     # --------------------------------------------------
-    # 🛣️ INICIO DE LA LÓGICA DE NAVEGACIÓN
+    # 🛣️ LÓGICA DE NAVEGACIÓN Y TÍTULOS
     # --------------------------------------------------
     if st.session_state.pagina == "principal":
-        # A partir de aquí pondremos todo lo del Dashboard Principal
-        # --------------------------------------------------
-        # TÍTULO Y ENCABEZADO
-        # --------------------------------------------------
         st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
         st.markdown("""
             <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>
@@ -392,105 +307,47 @@ else:
                 <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
             </div>
         """, unsafe_allow_html=True)
-              
-        
-        # =========================================================
-        #MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
-        # =========================================================
-        
-        # 1. ESTILO PARA QUE EL BOTÓN PAREZCA UN MENÚ DE APP
-        st.markdown("""
-            <style>
-                /* Estilizar el botón del menú para que sea cuadrado y discreto */
-                div[data-testid="stPopover"] > button {
-                    background-color: #0d1117 !important;
-                    border: 1px solid #00ffa2 !important;
-                    padding: 5px 15px !important;
-                    border-radius: 8px !important;
-                    width: auto !important;
-                }
-                /* Ajustar el texto dentro del menú desplegado */
-                div[data-testid="stPopoverContent"] button {
-                    text-align: left !important;
-                    justify-content: flex-start !important;
-                    border: none !important;
-                    background: transparent !important;
-                    font-size: 14px !important;
-                }
-                div[data-testid="stPopoverContent"] button:hover {
-                    color: #00ffa2 !important;
-                    background: rgba(0, 255, 162, 0.1) !important;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-        
-        # 2. POSICIONAMIENTO DEL MENÚ (Alineado a la derecha del título)
-        c1, c2 = st.columns([0.85, 0.15]) # El 0.15 es el espacio para el cuadro del menú
-        
+
+        # --- MENÚ DE NAVEGACIÓN FLOTANTE (POPOVER) ---
+        c1, c2 = st.columns([0.85, 0.15])
         with c2:
-            # El label "☰" es el icono estándar de hamburguesa
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                
-                if st.button("PANEL PRINCIPAL", use_container_width=True, key="h_aac"):
+                if st.button("PANEL PRINCIPAL", use_container_width=True, key="nav_main"):
                     st.session_state.pagina = "principal"
                     st.rerun()
-                    
-                if st.button("SEGUIMIENTO KPIs", use_container_width=True, key="h_kpi"):
+                if st.button("SEGUIMIENTO KPIs", use_container_width=True, key="nav_kpis"):
                     st.session_state.pagina = "KPIs"
                     st.rerun()
-                    
-                if st.button("REPORTE MENSUAL", use_container_width=True, key="h_rep"):
+                if st.button("REPORTE MENSUAL", use_container_width=True, key="nav_report"):
                     st.session_state.pagina = "Reporte"
                     st.rerun()
-                                      
-                                       
-        st.divider()        
+
+        st.divider()
 
         # =========================================================
-        # 5. INTERFAZ EN SIDEBAR (PROTOCOLO ANTIBLOQUEO)
+        # 🛡️ MOTOR DE FILTRADO (SIDEBAR INTERFACE)
         # =========================================================
-        
         st.sidebar.button("🗑️ Limpiar Filtros", use_container_width=True, on_click=limpiar_filtros)
         st.sidebar.markdown("---")
         
-        # A. SELECTOR DE MES
+        # Selector de Mes
         mes_sel = st.sidebar.selectbox(
             "📍 MES DE OPERACIÓN",
             options=["TODOS"] + list(meses_dict.values()),
             key="mes_seleccionado"
         )
         
-        # B. CALENDARIO (CON LIMPIEZA DE DATOS NULOS)
-        # Extraemos solo fechas válidas para evitar el AttributeError
-        fechas_limpias = pd.to_datetime(df["FECHA DE ENVÍO"], errors='coerce').dropna()
-        
-        if not fechas_limpias.empty:
-            f_min_limite = fechas_limpias.min().date()
-            f_max_limite = fechas_limpias.max().date()
-        else:
-            f_min_limite = datetime.date.today()
-            f_max_limite = datetime.date.today()
-        
-        # --- MANIOBRA ANTIBLOQUEO ---
-        if "fecha_filtro" in st.session_state:
-            val_check = st.session_state["fecha_filtro"]
-            # Si el valor guardado se sale de los bordes del archivo, lo reseteamos al máximo
-            if isinstance(val_check, (list, tuple)) and len(val_check) == 2:
-                if val_check[0] < f_min_limite or val_check[1] > f_max_limite:
-                    st.session_state["fecha_filtro"] = (f_min_limite, f_max_limite)
-            elif isinstance(val_check, datetime.date):
-                if val_check < f_min_limite or val_check > f_max_limite:
-                    st.session_state["fecha_filtro"] = (f_min_limite, f_max_limite)
-        
+        # Rango de Calendario
         rango_fechas = st.sidebar.date_input(
             "📅 RANGO ESPECÍFICO",
-            min_value=f_min_limite,
-            max_value=f_max_limite,
-            key="fecha_filtro"
+            value=st.session_state["fecha_filtro"],
+            min_value=df["FECHA DE ENVÍO"].min().date(),
+            max_value=df["FECHA DE ENVÍO"].max().date(),
+            key="fecha_input"
         )
         
-        # C. BUSCADOR (CLIENTE/GUÍA)
+        # Buscador de Texto (Cliente/Guía)
         st.sidebar.text_input(
             "🔍 NO. CLIENTE O GUÍA",
             value=st.session_state.get("filtro_cliente_actual", ""),
@@ -498,42 +355,38 @@ else:
             on_change=lambda: st.session_state.update({"filtro_cliente_actual": st.session_state.filtro_cliente_input})
         )
         
-        # D. SELECTOR DE FLETERA
+        # Selector de Fletera
         fletera_sel = st.sidebar.selectbox(
             "🚚 FLETERA",
-            options=[""] + sorted(df["FLETERA"].dropna().unique()),
+            options=[""] + sorted(df["FLETERA"].dropna().unique().tolist()),
             key="fletera_filtro"
         )
-        
-        # =========================================================
-        # 6. FILTRADO EN CASCADA (EL MOTOR DE INTELIGENCIA)
-        # =========================================================
+
+        # --- EJECUCIÓN DEL FILTRADO EN CASCADA ---
         df_filtrado = df.copy()
-        
-        # 1. Filtrado por Mes
+
+        # 1. Filtro por Mes
         if mes_sel != "TODOS":
             num_mes = [k for k, v in meses_dict.items() if v == mes_sel][0]
             df_filtrado = df_filtrado[df_filtrado["FECHA DE ENVÍO"].dt.month == num_mes]
-        
-        # 2. Filtrado por Rango Calendario
+
+        # 2. Filtro por Rango Calendario
         if isinstance(rango_fechas, (list, tuple)) and len(rango_fechas) == 2:
             f_ini, f_fin = pd.to_datetime(rango_fechas[0]), pd.to_datetime(rango_fechas[1])
             df_filtrado = df_filtrado[(df_filtrado["FECHA DE ENVÍO"] >= f_ini) & (df_filtrado["FECHA DE ENVÍO"] <= f_fin)]
-        
-        # 3. Prioridad de Búsqueda de Texto
+
+        # 3. Filtro por Buscador de Texto
         valor_buscado = str(st.session_state.get("filtro_cliente_actual", "")).strip().lower()
-        
-        if valor_buscado != "":
-            # Aseguramos que la búsqueda ignore errores de formato (.0 de Excel)
-            c_cli = df_filtrado["NO CLIENTE"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
-            c_gui = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
+        if valor_buscado:
+            c_cli = df_filtrado["NO CLIENTE"].astype(str).str.lower()
+            c_gui = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.lower()
             df_filtrado = df_filtrado[c_cli.str.contains(valor_buscado, na=False) | c_gui.str.contains(valor_buscado, na=False)]
-        else:
-            # 4. Filtro de Fletera (Si el buscador está vacío)
-            if fletera_sel != "":
-                df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
+
+        # 4. Filtro por Fletera
+        if fletera_sel:
+            df_filtrado = df_filtrado[df_filtrado["FLETERA"] == fletera_sel]    
     
-            # --------------------------------------------------
+            # codigo viejo inicio--------------------------------------------------
             # ACTUALIZACIÓN DE MÉTRICAS (Para que los círculos cambien)
             # --------------------------------------------------
             total = len(df_filtrado)
@@ -2233,6 +2086,7 @@ else:
         
         
     
+
 
 
 
