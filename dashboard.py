@@ -1486,7 +1486,7 @@ else:
 
         # Pie de página
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
-    # ----------------------------------------------
+    
     # ------------------------------------------------------------------
     # BLOQUE 10: REPORTE EJECUTIVO DE ALTO NIVEL
     # ------------------------------------------------------------------
@@ -1536,265 +1536,579 @@ else:
             </style>
         """, unsafe_allow_html=True)
         
-        # ==================================================================
-    # BLOQUE FINAL: REPORTE DE LOGÍSTICA ELITE (SINCRO TOTAL)
-    # ==================================================================
-    elif st.session_state.pagina == "Reporte":
-        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
-
-        # --- 1. MOTOR DE INTELIGENCIA (CÁLCULOS AUTOMÁTICOS) ---
+        # 2. POSICIONAMIENTO DEL MENÚ (Alineado a la derecha del título)
+        c1, c2 = st.columns([0.85, 0.15]) # El 0.15 es el espacio para el cuadro del menú
+        
+        with c2:
+            # El label "☰" es el icono estándar de hamburguesa
+            with st.popover("☰", use_container_width=True):
+                st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                
+                if st.button("PANEL PRINCIPAL", use_container_width=True, key="h_aac"):
+                    st.session_state.pagina = "principal"
+                    st.rerun()
+                    
+                if st.button("SEGUIMIENTO KPIs", use_container_width=True, key="h_kpi"):
+                    st.session_state.pagina = "KPIs"
+                    st.rerun()
+                    
+                if st.button("REPORTE MENSUAL", use_container_width=True, key="h_rep"):
+                    st.session_state.pagina = "Reporte"
+                    st.rerun()
+        
+        st.divider()
+               
+        # --- 1. MOTOR DE DATOS NIVEL ELITE ---
         @st.cache_data
-        def cargar_datos_matriz_elite():
-            import os
+        def cargar_analisis_elite():
             try:
-                # Localizar archivo
-                archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
-                df = pd.read_csv(archivo, encoding='latin-1')
-                df.columns = [c.strip().upper() for c in df.columns]
-
-                # Limpiador de moneda y números
-                def limpiar_num(v):
+                df = pd.read_csv("analisis.csv", encoding="utf-8")
+                df.columns = [str(c).strip().upper() for c in df.columns]
+                df = df.dropna(subset=['MES'])
+                df = df[df['MES'].str.contains('Unnamed|TOTAL', case=False) == False]
+                
+                def limpiar_a_numero(v):
                     if pd.isna(v): return 0.0
-                    s = str(v).replace('$', '').replace(',', '').replace('%', '').strip()
+                    if isinstance(v, (int, float)): return float(v)
+                    s = str(v).replace('$', '').replace(',', '').replace('%', '').replace('(', '-').replace(')', '').strip()
                     try: return float(s)
                     except: return 0.0
-
-                # Mapeo de columnas (CAJAS o CAJAS ENVIADAS)
-                c_cajas = 'CAJAS' if 'CAJAS' in df.columns else 'CAJAS ENVIADAS'
+        
+                cols_numericas = [
+                    "COSTO DE FLETE", "FACTURACIÓN", "CAJAS ENVIADAS", "COSTO LOGÍSTICO", 
+                    "COSTO POR CAJA", "META INDICADOR", "VALUACION INCIDENCIAS", 
+                    "INCREMENTO + VI", "% DE INCREMENTO VS 2024", "COSTO POR CAJA 2024", "PORCENTAJE DE INCIDENCIAS"
+                ]
                 
-                cols_fijar = ['COSTO DE GUIA', 'VALOR FACTURA', c_cajas, 'VALUACION INCIDENCIAS']
-                for col in cols_fijar:
-                    if col in df.columns: df[col] = df[col].apply(limpiar_num)
-
-                # Procesamiento de Fechas
-                df['FECHA_DT'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
-                meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
-                             7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
-                df['MES'] = df['FECHA_DT'].dt.month.map(meses_map)
-                df = df.dropna(subset=['MES'])
-
-                # Agrupación Mensual
-                resumen = df.groupby('MES').agg({
-                    'COSTO DE GUIA': 'sum', 'VALOR FACTURA': 'sum',
-                    c_cajas: 'sum', 'VALUACION INCIDENCIAS': 'sum'
-                }).reset_index()
-
-                # --- EL CEREBRO: CÁLCULO DE KPIS QUE NO EXISTEN EN LA TABLA ---
-                resumen['COSTO LOGÍSTICO'] = (resumen['COSTO DE GUIA'] / resumen['VALOR FACTURA']) * 100
-                resumen['COSTO POR CAJA'] = resumen['COSTO DE GUIA'] / resumen[c_cajas]
-                resumen['META INDICADOR'] = 7.0        # Target Fijo
-                resumen['COSTO POR CAJA 2024'] = 59.0  # Target Fijo
-                resumen['PORCENTAJE DE INCIDENCIAS'] = (resumen['VALUACION INCIDENCIAS'] / resumen['VALOR FACTURA']) * 100
-                resumen['INCREMENTO + VI'] = resumen['VALUACION INCIDENCIAS']
-                resumen['% DE INCREMENTO VS 2024'] = 0.0
-
-                return resumen.rename(columns={'COSTO DE GUIA': 'COSTO DE FLETE', 'VALOR FACTURA': 'FACTURACIÓN', c_cajas: 'CAJAS ENVIADAS'})
+                for col in cols_numericas:
+                    if col in df.columns:
+                        df[col] = df[col].apply(limpiar_a_numero)
+                return df
             except Exception as e:
                 st.error(f"Error en Motor: {e}")
                 return None
-
-        # --- 2. EJECUCIÓN Y SIDEBAR ---
-        df_a = cargar_datos_matriz_elite()
+        
+        # --- 2. FUNCIÓN DE RENDERIZADO BLINDADA ---
+        def render_card(label, value, footer, target_val=None, actual_val=None, inverse=False, border_base="border-blue"):
+            if target_val is None or actual_val is None:
+                color = "#f0f6fc"
+                border = border_base
+            else:
+                is_alert = actual_val > target_val if not inverse else actual_val < target_val
+                color = "#fb7185" if is_alert else "#00ffa2"
+                border = "border-red" if is_alert else "border-green"
+            
+            st.markdown(f"""
+                <div class='card-container {border}'>
+                    <div class='card-label'>{label}</div>
+                    <div class='card-value' style='color:{color}'>{value}</div>
+                    <div class='card-footer'>{footer}</div>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        df_a = cargar_analisis_elite()
         
         if df_a is not None:
-            meses_list = df_a["MES"].unique().tolist()
-            mes_sel = st.sidebar.selectbox("MES DEL REPORTE", meses_list)
-            modo_comp = st.sidebar.checkbox("Activar comparativa")
-            
-            # Fila de datos del mes elegido
+            # --- 3. SIDEBAR ---
+            st.sidebar.markdown("## ")
+            meses_limpios = [m for m in df_a["MES"].unique() if str(m).strip() != ""]
+            mes_sel = st.sidebar.selectbox("MES ACTUAL / BASE", meses_limpios)
             df_mes = df_a[df_a["MES"] == mes_sel].iloc[0]
+            
+            modo_comp = st.sidebar.checkbox("Activar comparativa Mes vs Mes")
+            if modo_comp:
+                mes_comp = st.sidebar.selectbox("COMPARAR CONTRA:", meses_limpios, index=0)
+                df_mes_b = df_a[df_a["MES"] == mes_comp].iloc[0]
+        
+            # --- 4. CSS PREMIUM ELITE ---
+            st.markdown("""
+                <style>
+                @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;800&display=swap');
+                .premium-header { font-family: 'Orbitron', sans-serif; color: #f8fafc; letter-spacing: 2px; text-transform: uppercase; border-bottom: 2px solid #38bdf8; padding-bottom: 8px; margin: 25px 0; }
+                .card-container { background-color: #0d1117; border-radius: 10px; padding: 15px; border: 1px solid #30363d; height: 125px; margin-bottom: 10px; transition: all 0.3s; margin-top: 10px;}
+                .card-label { color: #8b949e; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
+                .card-value { font-size: 1.6rem; font-weight: 800; margin: 4px 0; font-family: 'Inter', sans-serif; }
+                .card-footer { color: #484f58; font-size: 0.6rem; font-weight: 600; }
+                .border-blue { border-left: 5px solid #38bdf8; } .border-green { border-left: 5px solid #00ffa2; }
+                .border-red { border-left: 5px solid #fb7185; } .border-purple { border-left: 5px solid #a78bfa; }
+                .border-yellow { border-left: 5px solid #eab308; } .border-pink { border-left: 5px solid #f472b6; }
+                .insight-box { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px; margin-top: 10px; }
+                .calc-box { background: rgba(56, 189, 248, 0.05); border: 1px dashed #38bdf8; border-radius: 10px; padding: 15px; margin: 20px 0; font-family: 'Inter', sans-serif; color: #94a3b8; font-size: 0.85rem; }
+                </style>
+            """, unsafe_allow_html=True)
 
-            # --- 3. DISEÑO DE INTERFAZ (CSS) ---
-            st.markdown("""<style>
-                .premium-header { font-family: 'Orbitron'; color: #f8fafc; border-bottom: 2px solid #00FFAA; padding-bottom: 8px; margin-bottom: 20px; }
-                .card-container { background-color: #0d1117; border-radius: 10px; padding: 15px; border: 1px solid #30363d; border-left: 5px solid #38bdf8; margin-bottom: 15px; }
-                .card-label { color: #8b949e; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
-                .card-value { font-size: 1.8rem; font-weight: 800; font-family: 'Inter'; }
-            </style>""", unsafe_allow_html=True)
+                   
+            header_txt = f"Resultados: {mes_sel}" if not modo_comp else f"Comparativa Mode: {mes_sel} VS {mes_comp}"
+            st.markdown(f"<h4 class='premium-header'>{header_txt}</h4>", unsafe_allow_html=True)
+        
+            if not modo_comp:
+                # --- VISTA NORMAL 9 TARJETAS ---
+                c1, c2, c3 = st.columns(3)
+                with c1: render_card("Costo Logístico", f"{df_mes['COSTO LOGÍSTICO']:.1f}%", f"META: {df_mes['META INDICADOR']}%", df_mes['META INDICADOR'], df_mes['COSTO LOGÍSTICO'])
+                with c2: render_card("Incremento + VI", f"${df_mes['INCREMENTO + VI']:,.0f}", "Impacto Real", 0, df_mes['INCREMENTO + VI'], inverse=True)
+                with c3: render_card("% Incr. vs 2024", f"{df_mes['% DE INCREMENTO VS 2024']:.1f}%", "Inflación", border_base="border-pink")
+        
+                c4, c5, c6 = st.columns(3)
+                with c4: render_card("Costo por Caja", f"${df_mes['COSTO POR CAJA']:.1f}", f"Target 2024: ${df_mes['COSTO POR CAJA 2024']:.1f}", df_mes['COSTO POR CAJA 2024'], df_mes['COSTO POR CAJA'])
+                with c5: render_card("Valuación Incidencias", f"${df_mes['VALUACION INCIDENCIAS']:,.0f}", "Mermas", border_base="border-yellow")
+                with c6: render_card("% Incidencias", f"{df_mes['PORCENTAJE DE INCIDENCIAS']:.2f}%", "Calidad", border_base="border-purple")
+        
+                c7, c8, c9 = st.columns(3)
+                with c7: render_card("Facturación", f"${df_mes['FACTURACIÓN']:,.0f}", "Venta Mes", border_base="border-blue")
+                with c8: render_card("Cajas Enviadas", f"{int(df_mes['CAJAS ENVIADAS']):,.0f}", "Volumen", border_base="border-purple")
+                with c9: render_card("Costo de Flete", f"${df_mes['COSTO DE FLETE']:,.0f}", "Inversión", border_base="border-blue")
+        
+                # --- BLOQUE PREMIUM DE CÁLCULOS ---
+                st.markdown(f"""
+                <div class="calc-box">
+                    <b style="color:#38bdf8; text-transform:uppercase;">Metodología de Cálculo para {mes_sel}:</b><br><br>
+                    • <b>Logístico:</b> (${df_mes['COSTO DE FLETE']:,.2f} / ${df_mes['FACTURACIÓN']:,.2f}) = {df_mes['COSTO LOGÍSTICO']:.2f}%<br>
+                    • <b>C/Caja:</b> ${df_mes['COSTO DE FLETE']:,.2f} / {int(df_mes['CAJAS ENVIADAS'])} cajas = ${df_mes['COSTO POR CAJA']:.2f}<br>
+                    • <b>Impacto:</b> (Ahorro Incidencias) - (Variación Tarifaria vs 2024 * Cajas) = ${df_mes['INCREMENTO + VI']:,.2f}
+                </div>
+                """, unsafe_allow_html=True)
+        
+               # --- LÓGICA DE NARRATIVA DINÁMICA (EL CEREBRO DEL CAPITÁN) ---
+                impacto_1k = (df_mes['COSTO DE FLETE'] / df_mes['FACTURACIÓN']) * 1000
+                eficiencia_vs_meta = df_mes['META INDICADOR'] - df_mes['COSTO LOGÍSTICO']
+                
+                # Definición de Tono y Mensaje según Desempeño
+                if eficiencia_vs_meta >= 0.5:
+                    msg_clase = "OPTIMIZACIÓN RADICAL"
+                    msg_color = "#00ffa2"
+                    msg_desc = f"La operación está en zona de alta rentabilidad. Estamos operando {eficiencia_vs_meta:.1f}% por debajo del techo presupuestal, lo que inyecta liquidez directa al Bottom Line."
+                elif eficiencia_vs_meta >= 0:
+                    msg_clase = "ESTABILIDAD OPERATIVA"
+                    msg_color = "#38bdf8"
+                    msg_desc = "Cumplimiento de objetivos en curso. El control de fletes se mantiene alineado con la facturación, asegurando un margen neto previsible."
+                else:
+                    msg_clase = "EROSIÓN DE MARGEN"
+                    msg_color = "#fb7185"
+                    msg_desc = f"Alerta roja: La logística está devorando el margen bruto. Superamos el target por {abs(eficiencia_vs_meta):.1f}%, lo que requiere una intervención inmediata en el mix de transporte."
+        
+                # --- VISUALIZACIÓN DE ANÁLISIS DINÁMICO ---
+                r1, r2 = st.columns(2)
+                with r1:
+                    st.markdown(f"""<div class="insight-box" style="border-left: 5px solid #38bdf8; height:240px;">
+                        <h4 style="color:#38bdf8; margin:0; font-family:Orbitron; font-size:0.9rem;">DEEP DIVE: EFICIENCIA FINANCIERA</h4>
+                        <p style="color:#94a3b8; font-size:0.85rem; margin-top:15px; line-height:1.6;">
+                        • <b>Métrica de Consumo:</b> Cada <b>$1,000</b> de venta genera un 'impuesto logístico' de <b>${impacto_1k:.2f}</b>.<br>
+                        • <b>Punto de Fuga:</b> El desvío tarifario vs 2024 representa una fuga de <b>${abs(df_mes['INCREMENTO + VI']):,.0f}</b>. <br>
+                        • <b>Diagnóstico:</b> El costo por unidad está <b>{'sobre la media' if df_mes['COSTO POR CAJA'] > df_mes['COSTO POR CAJA 2024'] else 'bajo control'}</b>, lo que indica una {'necesidad de renegociación' if df_mes['COSTO POR CAJA'] > df_mes['COSTO POR CAJA 2024'] else 'gestión óptima de activos'}.
+                        </p></div>""", unsafe_allow_html=True)
+                
+                with r2:
+                    st.markdown(f"""<div class="insight-box" style="border-top: 4px solid {msg_color}; height:240px;">
+                        <h4 style="color:{msg_color}; margin:0; font-family:Orbitron; font-size:0.9rem;">🩺 RADIOGRAFÍA: {msg_clase}</h4>
+                        <p style="color:#f1f5f9; font-size:0.85rem; margin-top:15px; line-height:1.6;">
+                        <b>DICTAMEN TÉCNICO:</b> {msg_desc}<br><br>
+                        <b>ANÁLISIS DE BRECHA:</b> Estamos operando con un incremento unitario del <b>{df_mes['% DE INCREMENTO VS 2024']:.1f}%</b>. Este nivel de inflación logística 
+                        {'es insostenible' if df_mes['% DE INCREMENTO VS 2024'] > 10 else 'es manejable'} bajo el esquema actual de precios de venta.
+                        </p></div>""", unsafe_allow_html=True)
+        
+            else:
+                # --- VISTA COMPARATIVA 3 VS 3 ---
+                
+                col_a, col_b = st.columns(2)
+                
+                with col_a:
+                    st.markdown(f"#### 📍 {mes_sel}")
+                    render_card("Costo Logístico", f"{df_mes['COSTO LOGÍSTICO']:.1f}%", "Actual", df_mes['META INDICADOR'], df_mes['COSTO LOGÍSTICO'])
+                    render_card("Costo por Caja", f"${df_mes['COSTO POR CAJA']:.1f}", "Actual", df_mes['COSTO POR CAJA 2024'], df_mes['COSTO POR CAJA'])
+                    render_card("Incremento + VI", f"${df_mes['INCREMENTO + VI']:,.0f}", "Actual", 0, df_mes['INCREMENTO + VI'], inverse=True)
+        
+                with col_b:
+                    st.markdown(f"#### 📍 {mes_comp}")
+                    render_card("Costo Logístico", f"{df_mes_b['COSTO LOGÍSTICO']:.1f}%", "Comparativo", df_mes_b['META INDICADOR'], df_mes_b['COSTO LOGÍSTICO'])
+                    render_card("Costo por Caja", f"${df_mes_b['COSTO POR CAJA']:.1f}", "Comparativo", df_mes_b['COSTO POR CAJA 2024'], df_mes_b['COSTO POR CAJA'])
+                    render_card("Incremento + VI", f"${df_mes_b['INCREMENTO + VI']:,.0f}", "Comparativo", 0, df_mes_b['INCREMENTO + VI'], inverse=True)
+        
+                # --- ANÁLISIS DE COMBATE (DEEP DIVE COMPARATIVO) ---
+                delta_log = df_mes["COSTO LOGÍSTICO"] - df_mes_b["COSTO LOGÍSTICO"]
+                mejor_mes = mes_sel if delta_log < 0 else mes_comp
+                
+                st.markdown(f"""
+                <div class="insight-box" style="border-top: 5px solid #a78bfa;">
+                    <h4 style="color:#a78bfa; margin:0; font-family:Orbitron; font-size:0.9rem;">ANÁLISIS FORENSE: COMPARATIVA DE RENDIMIENTO</h4>
+                    <p style="color:#f1f5f9; font-size:0.9rem; margin-top:10px; line-height:1.6;">
+                    La telemetría indica que <b>{mejor_mes}</b> es el referente de eficiencia. 
+                    <br>• <b>Variación Estratégica:</b> Existe un diferencial de <b>{abs(delta_log):.2f}%</b> en la absorción del costo sobre la venta bruta.<br>
+                    • <b>Factor Determinante:</b> La diferencia no es el volumen, sino la <b>densidad de costo por caja</b>. {'Mantener el modelo de ' + mejor_mes if delta_log != 0 else 'Ambos periodos presentan paridad operativa'}.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
 
-            st.markdown(f"<h2 class='premium-header'>REPORT: {mes_sel}</h2>", unsafe_allow_html=True)
+            def crear_pdf_logistico(df_mes, mes_sel, impacto_1k, veredicto):
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_auto_page_break(auto=True, margin=15)
+                
+                # --- ENCABEZADO ---
+                pdf.set_font("Arial", 'B', 16)
+                pdf.cell(0, 10, f"REPORTE EJECUTIVO DE LOGISTICA: {mes_sel}", ln=True, align='C')
+                pdf.set_font("Arial", 'I', 10)
+                pdf.cell(0, 10, "Intelligence Operations Command - Logistic Performance Analysis", ln=True, align='C')
+                pdf.ln(5)
+                pdf.line(10, 32, 200, 32) # Línea divisoria
+                pdf.ln(10)
+                
+                # --- TABLA DE KPIS CRITICOS ---
+                pdf.set_fill_color(240, 240, 240)
+                pdf.set_font("Arial", 'B', 12)
+                pdf.cell(100, 10, "INDICADOR CLAVE (KPI)", 1, 0, 'C', True)
+                pdf.cell(90, 10, "VALOR REPORTADO", 1, 1, 'C', True)
+                
+                pdf.set_font("Arial", '', 11)
+                kpis = [
+                    ("Costo Logistico (%)", f"{df_mes['COSTO LOGÍSTICO']:.2f}%"),
+                    ("Costo por Caja ($)", f"${df_mes['COSTO POR CAJA']:.2f}"),
+                    ("Facturacion Mensual", f"${df_mes['FACTURACIÓN']:,.2f}"),
+                    ("Volumen (Cajas)", f"{int(df_mes['CAJAS ENVIADAS']):,.0f}"),
+                    ("Fuga de Utilidad (Delta)", f"${abs(df_mes['INCREMENTO + VI']):,.2f}"),
+                    ("Inflacion vs 2024", f"{df_mes['% DE INCREMENTO VS 2024']:.1f}%")
+                ]
+                
+                for kpi, valor in kpis:
+                    pdf.cell(100, 10, kpi, 1)
+                    pdf.cell(90, 10, valor, 1, 1, 'C')
+                
+                pdf.ln(10)
+                
+                # --- METODOLOGIA DE CALCULO ---
+                pdf.set_font("Arial", 'B', 12)
+                pdf.cell(0, 10, "METODOLOGIA DE CALCULO Y AUDITORIA:", ln=True)
+                pdf.set_font("Arial", '', 10)
+                metodologia = (
+                    f"1. Costo Logistico: Se determina dividiendo el gasto total de fletes (${df_mes['COSTO DE FLETE']:,.2f}) "
+                    f"entre la facturacion bruta (${df_mes['FACTURACIÓN']:,.2f}).\n"
+                    f"2. Costo por Caja: Gasto total entre {int(df_mes['CAJAS ENVIADAS'])} unidades despachadas.\n"
+                    f"3. Impacto de Utilidad: Cruce de valuacion de incidencias contra desviacion tarifaria base 2024."
+                )
+                pdf.multi_cell(0, 8, metodologia)
+                pdf.ln(5)
+            
+                # --- RADIOGRAFIA Y DIAGNOSTICO ---
+                pdf.set_font("Arial", 'B', 12)
+                pdf.cell(0, 10, "DIAGNOSTICO ESTRATEGICO FINAL:", ln=True)
+                pdf.set_fill_color(245, 245, 255)
+                pdf.set_font("Arial", 'I', 11)
+                diagnostico = (
+                    f"Por cada $1,000 MXN de venta, la operacion consume ${impacto_1k:.2f}.\n\n"
+                    f"VERDICTO: {veredicto}"
+                )
+                pdf.multi_cell(0, 10, diagnostico, border=1, fill=True)
+                
+                return pdf.output()
+        
+            # --- PROTOCOLO DE EXTRACCIÓN SEGURO (LAS 9 TARJETAS) ---
+            st.write("---")
 
             if not modo_comp:
-                # --- VISTA 9 TARJETAS ---
-                row1 = st.columns(3)
-                with row1[0]: render_card("Costo Logístico", f"{df_mes['COSTO LOGÍSTICO']:.1f}%", "TARGET: 7.0%", 7.0, df_mes['COSTO LOGÍSTICO'])
-                with row1[1]: render_card("Costo por Caja", f"${df_mes['COSTO POR CAJA']:.1f}", "TARGET: $59.0", 59.0, df_mes['COSTO POR CAJA'])
-                with row1[2]: render_card("Flete Total", f"${df_mes['COSTO DE FLETE']:,.0f}", "Inversión", border_base="border-blue")
+                if PDF_READY:
+                    if st.button("GENERAR REPORTE"):
+                        try:
+                            st.toast("Compilando información...", icon="⚙️")
+                            
+                            # RE-CÁLCULO DE SEGURIDAD
+                            impacto_1k = (df_mes['COSTO DE FLETE'] / df_mes['FACTURACIÓN']) * 1000 if df_mes['FACTURACIÓN'] > 0 else 0
+                            
+                            pdf = FPDF()
+                            pdf.add_page()
+                            
+                            # --- ENCABEZADO INSTITUCIONAL ---
+                            pdf.set_fill_color(13, 17, 23)
+                            pdf.set_text_color(255, 255, 255)
+                            pdf.set_font("Arial", 'B', 16)
+                            pdf.cell(0, 15, f"REPORTE EJECUTIVO DE LOGÍSTICA - {mes_sel}", 0, 1, 'C', True)
+                            
+                            pdf.ln(5)
+                            pdf.set_text_color(0, 0, 0)
+                            
+                            # --- SECCIÓN 1: RENTABILIDAD (TARJETAS 1, 2, 3) ---
+                            pdf.set_font("Arial", 'B', 11)
+                            pdf.set_fill_color(240, 240, 240)
+                            pdf.cell(0, 8, "  I. INDICADORES DE RENTABILIDAD Y COSTO", 0, 1, 'L', True)
+                            pdf.ln(1)
+                            pdf.set_font("Arial", '', 10)
+                            pdf.cell(63, 10, f"Costo Logistico: {df_mes['COSTO LOGÍSTICO']:.1f}%", 1, 0, 'C')
+                            pdf.cell(63, 10, f"Incr. vs 2024: {df_mes['% DE INCREMENTO VS 2024']:.1f}%", 1, 0, 'C')
+                            pdf.cell(63, 10, f"Meta Mes: {df_mes['META INDICADOR']}%", 1, 1, 'C')
+                            
+                            pdf.ln(3)
+                            
+                            # --- SECCIÓN 2: IMPACTO Y DESVIACIÓN (TARJETAS 4, 5, 6) ---
+                            pdf.set_font("Arial", 'B', 11)
+                            pdf.cell(0, 8, "  II. IMPACTO EN UTILIDAD Y CALIDAD", 0, 1, 'L', True)
+                            pdf.ln(1)
+                            pdf.set_font("Arial", '', 10)
+                            pdf.cell(63, 10, f"Costo por Caja: ${df_mes['COSTO POR CAJA']:.1f}", 1, 0, 'C')
+                            pdf.cell(63, 10, f"Incidencias: {df_mes['PORCENTAJE DE INCIDENCIAS']:.2f}%", 1, 0, 'C')
+                            pdf.cell(63, 10, f"Val. Incidencias: ${df_mes['VALUACION INCIDENCIAS']:,.0f}", 1, 1, 'C')
+                            
+                            pdf.ln(3)
 
-                row2 = st.columns(3)
-                with row2[0]: render_card("Facturación", f"${df_mes['FACTURACIÓN']:,.0f}", "Venta Mes", border_base="border-blue")
-                with row2[1]: render_card("Cajas Enviadas", f"{int(df_mes['CAJAS ENVIADAS']):,.0f}", "Volumen", border_base="border-purple")
-                with row2[2]: render_card("Incidencias", f"${df_mes['VALUACION INCIDENCIAS']:,.0f}", "Mermas", border_base="border-yellow")
+                            # --- SECCIÓN 3: OPERACIÓN (TARJETAS 7, 8, 9) --- [NUEVA SECCIÓN AGREGADA]
+                            pdf.set_font("Arial", 'B', 11)
+                            pdf.cell(0, 8, "  III. DATOS DE OPERACIÓN Y VOLUMETRÍA", 0, 1, 'L', True)
+                            pdf.ln(1)
+                            pdf.set_font("Arial", '', 10)
+                            pdf.cell(63, 10, f"Facturacion: ${df_mes['FACTURACIÓN']:,.0f}", 1, 0, 'C')
+                            pdf.cell(63, 10, f"Cajas Enviadas: {int(df_mes['CAJAS ENVIADAS']):,.0f}", 1, 0, 'C')
+                            pdf.cell(63, 10, f"Gasto Flete: ${df_mes['COSTO DE FLETE']:,.0f}", 1, 1, 'C')
+                            
+                            pdf.ln(6)
 
-                # --- 4. ANÁLISIS DE GRÁFICOS ---
-                st.write("---")
-                st.markdown(f"### 📊 DESGLOSE OPERATIVO: {mes_sel}")
+                            # --- BLOQUE DE ANÁLISIS ---
+                            pdf.set_font("Arial", 'B', 12)
+                            pdf.set_text_color(30, 58, 138)
+                            pdf.cell(0, 10, "DIAGNÓSTICO ESTRATÉGICO FINAL", ln=True)
+                            
+                            pdf.set_text_color(0, 0, 0)
+                            pdf.set_font("Arial", 'I', 11)
+                            pdf.set_fill_color(245, 247, 250)
+                            
+                            status_txt = "CRÍTICO" if df_mes['COSTO LOGÍSTICO'] > df_mes['META INDICADOR'] else "ÓPTIMO"
+                            analisis_pro = (
+                                f"En el periodo de {mes_sel}, la operacion registra un estado {status_txt}. "
+                                f"Cada $1,000 MXN de venta consumen ${impacto_1k:.2f} de flete. "
+                                f"El impacto acumulado por desviacion y mermas asciende a ${abs(df_mes['INCREMENTO + VI']):,.2f} MXN."
+                            )
+                            pdf.multi_cell(0, 10, analisis_pro, 1, 'L', True)
+
+                            # --- SALIDA SEGURA ---
+                            pdf_raw = pdf.output()
+                            pdf_final = bytes(pdf_raw) if isinstance(pdf_raw, bytearray) else pdf_raw.encode('latin-1')
+                            
+                            st.download_button(
+                                label="DESCARGAR REPORTE",
+                                data=pdf_final,
+                                file_name=f"Reporte_Elite_{mes_sel}.pdf",
+                                mime="application/pdf"
+                            )
+                            
+                        except Exception as e:
+                            st.error(f"Falla en diseño: {e}")
+                else:
+                    st.warning("⚠️ Sistema PDF no detectado.")
+            else:
+                st.info("💡 **INFO DE COMANDO:** El PDF requiere una vista de mes individual.")
+                  
+            
+
+            def generar_grafico_fleteras_elite_v3_final():
+                import os
+                import pandas as pd
+                import altair as alt
+                import streamlit as st
                 
                 try:
-                    # Carga rápida para gráficos
-                    archivo_csv = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
-                    df_g = pd.read_csv(archivo_csv, encoding='latin-1')
-                    df_g.columns = [c.strip().upper() for c in df_g.columns]
-                    df_g['FECHA_DT'] = pd.to_datetime(df_g['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
-                    df_g['MES_LLAVE'] = df_g['FECHA_DT'].dt.month.map(meses_map)
-                    df_f = df_g[df_g['MES_LLAVE'] == mes_sel].copy()
+                    # 1. CARGA DE SEGURIDAD
+                    posibles_nombres = ["matriz_mensual.scv", "matriz_mensual.csv"]
+                    archivo_encontrado = next((n for n in posibles_nombres if os.path.exists(n)), None)
                     
-                    # Limpieza para gráficos
-                    df_f['COSTO DE GUIA'] = pd.to_numeric(df_f['COSTO DE GUIA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
-                    df_f['VALOR FACTURA'] = pd.to_numeric(df_f['VALOR FACTURA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
-
-                    # Función de dibujo
-                    def draw_bar(data, x, y, title, color):
-                        p_data = data.groupby(x)[y].sum().reset_index().sort_values(y, ascending=False).head(15)
-                        chart = alt.Chart(p_data).mark_bar(color=color, cornerRadiusTopLeft=8).encode(
-                            x=alt.X(f'{x}:N', sort='-y', axis=alt.Axis(labelAngle=-90, labelColor='white')),
-                            y=alt.Y(f'{y}:Q', axis=alt.Axis(format="$,.0s")),
-                            tooltip=[x, y]
-                        ).properties(width='container', height=350, title=title)
-                        st.altair_chart(chart, use_container_width=True)
-
-                    draw_bar(df_f, 'FLETERA', 'COSTO DE GUIA', "INVERSIÓN POR TRANSPORTE", '#eab308')
-                    draw_bar(df_f, 'ESTADO', 'VALOR FACTURA', "FACTURACIÓN POR DESTINO", '#00FFAA')
-                except:
-                    st.info("Cargando radar de gráficos...")
-
-            # --- 5. BOTÓN PDF ---
-            st.write("---")
-            if not modo_comp:
-                if st.button("📥 GENERAR REPORTE OFICIAL PDF"):
-                    st.success(f"Reporte de {mes_sel} listo para impresión (Simulado)")
-
-        else:
-            st.warning("⚠️ El archivo 'matriz_mensual.csv' no fue detectado en el sistema.")
-        
-        
-        # --- 1. MOTOR DE INTELIGENCIA (CÁLCULOS AUTOMÁTICOS) ---
-        @st.cache_data
-        def cargar_datos_matriz_elite():
-            import os
-            try:
-                # Localizar archivo
-                archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
-                df = pd.read_csv(archivo, encoding='latin-1')
-                df.columns = [c.strip().upper() for c in df.columns]
-
-                # Limpiador de moneda y números
-                def limpiar_num(v):
-                    if pd.isna(v): return 0.0
-                    s = str(v).replace('$', '').replace(',', '').replace('%', '').strip()
-                    try: return float(s)
-                    except: return 0.0
-
-                # Mapeo de columnas (CAJAS o CAJAS ENVIADAS)
-                c_cajas = 'CAJAS' if 'CAJAS' in df.columns else 'CAJAS ENVIADAS'
-                
-                cols_fijar = ['COSTO DE GUIA', 'VALOR FACTURA', c_cajas, 'VALUACION INCIDENCIAS']
-                for col in cols_fijar:
-                    if col in df.columns: df[col] = df[col].apply(limpiar_num)
-
-                # Procesamiento de Fechas
-                df['FECHA_DT'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
-                meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
-                             7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
-                df['MES'] = df['FECHA_DT'].dt.month.map(meses_map)
-                df = df.dropna(subset=['MES'])
-
-                # Agrupación Mensual
-                resumen = df.groupby('MES').agg({
-                    'COSTO DE GUIA': 'sum', 'VALOR FACTURA': 'sum',
-                    c_cajas: 'sum', 'VALUACION INCIDENCIAS': 'sum'
-                }).reset_index()
-
-                # --- EL CEREBRO: CÁLCULO DE KPIS QUE NO EXISTEN EN LA TABLA ---
-                resumen['COSTO LOGÍSTICO'] = (resumen['COSTO DE GUIA'] / resumen['VALOR FACTURA']) * 100
-                resumen['COSTO POR CAJA'] = resumen['COSTO DE GUIA'] / resumen[c_cajas]
-                resumen['META INDICADOR'] = 7.0        # Target Fijo
-                resumen['COSTO POR CAJA 2024'] = 59.0  # Target Fijo
-                resumen['PORCENTAJE DE INCIDENCIAS'] = (resumen['VALUACION INCIDENCIAS'] / resumen['VALOR FACTURA']) * 100
-                resumen['INCREMENTO + VI'] = resumen['VALUACION INCIDENCIAS']
-                resumen['% DE INCREMENTO VS 2024'] = 0.0
-
-                return resumen.rename(columns={'COSTO DE GUIA': 'COSTO DE FLETE', 'VALOR FACTURA': 'FACTURACIÓN', c_cajas: 'CAJAS ENVIADAS'})
-            except Exception as e:
-                st.error(f"Error en Motor: {e}")
-                return None
-
-        # --- 2. EJECUCIÓN Y SIDEBAR ---
-        df_a = cargar_datos_matriz_elite()
-        
-        if df_a is not None:
-            meses_list = df_a["MES"].unique().tolist()
-            mes_sel = st.sidebar.selectbox("MES DEL REPORTE", meses_list)
-            modo_comp = st.sidebar.checkbox("Activar comparativa")
+                    if not archivo_encontrado:
+                        st.error("🚨 RADAR: Base de fleteras no detectada.")
+                        return
             
-            # Fila de datos del mes elegido
-            df_mes = df_a[df_a["MES"] == mes_sel].iloc[0]
+                    df = pd.read_csv(archivo_encontrado, encoding='latin-1')
+                    df.columns = [c.strip().upper() for c in df.columns]
+                    df['COSTO DE GUIA'] = pd.to_numeric(df['COSTO DE GUIA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+                    
+                    df['FECHA DE FACTURA'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
+                    df = df.dropna(subset=['FECHA DE FACTURA'])
+                    df['MES_LABEL'] = df['FECHA DE FACTURA'].dt.strftime('%B').str.upper()
+                    
+                    # 2. FILTRO
+                    meses = df['MES_LABEL'].unique().tolist()
+                    sel_mes = alt.selection_point(fields=['MES_LABEL'], bind=alt.binding_select(options=meses, name="MES: "), value=meses[-1])
+            
+                    # 3. CONSTRUCCIÓN RESPONSIVA VERTICAL
+                    base = alt.Chart(df).transform_filter(sel_mes)
+            
+                    columnas = base.mark_bar(
+                        cornerRadiusTopLeft=10,
+                        cornerRadiusTopRight=10
+                    ).encode(
+                        x=alt.X('FLETERA:N', 
+                                title=None, 
+                                sort='-y',
+                                scale=alt.Scale(paddingInner=0.15, paddingOuter=0.2),
+                                axis=alt.Axis(
+                                    labelAngle=-90, # <--- CAMBIO TÁCTICO: Títulos en Vertical
+                                    labelFontSize=11, 
+                                    labelColor='#FFFFFF', 
+                                    labelFontWeight='bold',
+                                    labelOverlap='parity'
+                                )),
+                        y=alt.Y('sum(COSTO DE GUIA):Q', 
+                                title=None, 
+                                axis=alt.Axis(format="$,.0s", gridColor='#262730', labelColor='#94a3b8')),
+                        color=alt.Color('FLETERA:N', scale=alt.Scale(scheme='goldorange'), legend=None)
+                    )
+            
+                    texto = columnas.mark_text(align='center', baseline='bottom', dy=-10, color='#FFFFFF', fontWeight='bold', fontSize=12
+                    ).encode(text=alt.Text('sum(COSTO DE GUIA):Q', format="$,.2s"))
+            
+                    # ENSAMBLAJE
+                    grafico = (columnas + texto).add_params(sel_mes).properties(
+                        width='container', height=450, # Aumentamos altura para dar espacio a los títulos verticales
+                        title=alt.TitleParams(text="INVERSIÓN POR FLETERA", color='#eab308', anchor='start')
+                    ).configure_view(strokeWidth=0)
+            
+                    st.altair_chart(grafico, use_container_width=True)
+            
+                except Exception as e:
+                    st.error(f"⚠️ FALLA EN FLETERAS: {e}")
+            
+            def generar_ranking_destinos_v3_final():
+                import os
+                try:
+                    archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
+                    df = pd.read_csv(archivo, encoding='latin-1')
+                    df.columns = [c.strip().upper() for c in df.columns]
+                    df['VALOR FACTURA'] = pd.to_numeric(df['VALOR FACTURA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+                    
+                    df_geo = df.groupby('ESTADO')['VALOR FACTURA'].sum().reset_index().sort_values('VALOR FACTURA', ascending=False).head(15)
+            
+                    base = alt.Chart(df_geo).encode(
+                        x=alt.X('ESTADO:N', 
+                                title=None, 
+                                sort='-y',
+                                scale=alt.Scale(paddingInner=0.2),
+                                axis=alt.Axis(
+                                    labelAngle=-90, # <--- CAMBIO TÁCTICO: Títulos en Vertical
+                                    labelFontSize=10, 
+                                    labelColor='#FFFFFF',
+                                    labelFontWeight='bold',
+                                    labelOverlap='parity')),
+                        y=alt.Y('VALOR FACTURA:Q', title=None, axis=alt.Axis(format="$,.0s", labelColor='#94a3b8'))
+                    )
+            
+                    barras = base.mark_bar(cornerRadiusTopLeft=8, cornerRadiusTopRight=8, color='#EAB308')
+                    texto = base.mark_text(align='center', baseline='bottom', dy=-10, color='#FFFFFF', fontWeight='bold', fontSize=11
+                    ).encode(text=alt.Text('VALOR FACTURA:Q', format="$,.2s"))
+            
+                    radar = (barras + texto).properties(width='container', height=450,
+                        title=alt.TitleParams(text="TOP 20: FACTURACION POR DESTINOS", color='#EAB308', anchor='start')
+                    ).configure_view(strokeWidth=0)
+            
+                    st.altair_chart(radar, use_container_width=True)
+                except Exception as e:
+                    st.error(f"⚠️ FALLA EN DESTINOS: {e}")
+            
+            # --- ACTIVACIÓN ---
+            st.write("---")
+            generar_grafico_fleteras_elite_v3_final()
+            st.write("---")
+            generar_ranking_destinos_v3_final()
 
-            # --- 3. DISEÑO DE INTERFAZ (CSS) ---
-            st.markdown("""<style>
-                .premium-header { font-family: 'Orbitron'; color: #f8fafc; border-bottom: 2px solid #00FFAA; padding-bottom: 8px; margin-bottom: 20px; }
-                .card-container { background-color: #0d1117; border-radius: 10px; padding: 15px; border: 1px solid #30363d; border-left: 5px solid #38bdf8; margin-bottom: 15px; }
-                .card-label { color: #8b949e; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
-                .card-value { font-size: 1.8rem; font-weight: 800; font-family: 'Inter'; }
-            </style>""", unsafe_allow_html=True)
-
-            st.markdown(f"<h2 class='premium-header'>REPORT: {mes_sel}</h2>", unsafe_allow_html=True)
-
-            if not modo_comp:
-                # --- VISTA 9 TARJETAS ---
-                row1 = st.columns(3)
-                with row1[0]: render_card("Costo Logístico", f"{df_mes['COSTO LOGÍSTICO']:.1f}%", "TARGET: 7.0%", 7.0, df_mes['COSTO LOGÍSTICO'])
-                with row1[1]: render_card("Costo por Caja", f"${df_mes['COSTO POR CAJA']:.1f}", "TARGET: $59.0", 59.0, df_mes['COSTO POR CAJA'])
-                with row1[2]: render_card("Flete Total", f"${df_mes['COSTO DE FLETE']:,.0f}", "Inversión", border_base="border-blue")
-
-                row2 = st.columns(3)
-                with row2[0]: render_card("Facturación", f"${df_mes['FACTURACIÓN']:,.0f}", "Venta Mes", border_base="border-blue")
-                with row2[1]: render_card("Cajas Enviadas", f"{int(df_mes['CAJAS ENVIADAS']):,.0f}", "Volumen", border_base="border-purple")
-                with row2[2]: render_card("Incidencias", f"${df_mes['VALUACION INCIDENCIAS']:,.0f}", "Mermas", border_base="border-yellow")
-
-                # --- 4. ANÁLISIS DE GRÁFICOS ---
-                st.write("---")
-                st.markdown(f"### 📊 DESGLOSE OPERATIVO: {mes_sel}")
+            def generar_top_comercial_elite_v3():
+                import os
+                import pandas as pd
+                import altair as alt
+                import streamlit as st
                 
                 try:
-                    # Carga rápida para gráficos
-                    archivo_csv = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
-                    df_g = pd.read_csv(archivo_csv, encoding='latin-1')
-                    df_g.columns = [c.strip().upper() for c in df_g.columns]
-                    df_g['FECHA_DT'] = pd.to_datetime(df_g['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
-                    df_g['MES_LLAVE'] = df_g['FECHA_DT'].dt.month.map(meses_map)
-                    df_f = df_g[df_g['MES_LLAVE'] == mes_sel].copy()
+                    # 1. LOCALIZACIÓN DE INTELIGENCIA (matriz_mensual)
+                    posibles = ["matriz_mensual.csv", "matriz_mensual.scv"]
+                    archivo = next((n for n in posibles if os.path.exists(n)), None)
                     
-                    # Limpieza para gráficos
-                    df_f['COSTO DE GUIA'] = pd.to_numeric(df_f['COSTO DE GUIA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
-                    df_f['VALOR FACTURA'] = pd.to_numeric(df_f['VALOR FACTURA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
-
-                    # Función de dibujo
-                    def draw_bar(data, x, y, title, color):
-                        p_data = data.groupby(x)[y].sum().reset_index().sort_values(y, ascending=False).head(15)
-                        chart = alt.Chart(p_data).mark_bar(color=color, cornerRadiusTopLeft=8).encode(
-                            x=alt.X(f'{x}:N', sort='-y', axis=alt.Axis(labelAngle=-90, labelColor='white')),
-                            y=alt.Y(f'{y}:Q', axis=alt.Axis(format="$,.0s")),
-                            tooltip=[x, y]
-                        ).properties(width='container', height=350, title=title)
-                        st.altair_chart(chart, use_container_width=True)
-
-                    draw_bar(df_f, 'FLETERA', 'COSTO DE GUIA', "INVERSIÓN POR TRANSPORTE", '#eab308')
-                    draw_bar(df_f, 'ESTADO', 'VALOR FACTURA', "FACTURACIÓN POR DESTINO", '#00FFAA')
-                except:
-                    st.info("Cargando radar de gráficos...")
-
-            # --- 5. BOTÓN PDF ---
+                    if not archivo:
+                        st.error("🚨 RADAR: No se detectó 'matriz_mensual' en la carpeta raíz.")
+                        return
+            
+                    # 2. PROCESAMIENTO DE DATOS
+                    df = pd.read_csv(archivo, encoding='latin-1')
+                    df.columns = [c.strip().upper() for c in df.columns]
+                    
+                    # Limpieza de valores monetarios (VALOR FACTURA)
+                    if 'VALOR FACTURA' in df.columns:
+                        df['VALOR FACTURA'] = pd.to_numeric(
+                            df['VALOR FACTURA'].replace('[\$,]', '', regex=True), 
+                            errors='coerce'
+                        ).fillna(0)
+                    else:
+                        st.error("🚨 ERROR: No se encontró la columna 'VALOR FACTURA'.")
+                        return
+                        
+                    # Filtro de seguridad para NOMBRE COMERCIAL
+                    if 'NOMBRE COMERCIAL' not in df.columns:
+                        st.error("🚨 ERROR: No se encontró la columna 'NOMBRE COMERCIAL'.")
+                        return
+            
+                    # Agrupación y extracción del Top 20
+                    df_top = df.groupby('NOMBRE COMERCIAL')['VALOR FACTURA'].sum().reset_index()
+                    df_top = df_top.sort_values('VALOR FACTURA', ascending=False).head(20)
+            
+                    # 3. DISEÑO DE COMBATE RESPONSIVO
+                    base = alt.Chart(df_top).encode(
+                        x=alt.X('NOMBRE COMERCIAL:N', 
+                                title=None, 
+                                sort='-y',
+                                scale=alt.Scale(paddingInner=0.2), 
+                                axis=alt.Axis(
+                                    labelAngle=-90,         # Alineación vertical táctica
+                                    labelFontSize=10, 
+                                    labelColor='#FFFFFF', 
+                                    labelFontWeight='bold',
+                                    labelOverlap='parity'
+                                )),
+                        y=alt.Y('VALOR FACTURA:Q', 
+                                title=None, 
+                                axis=alt.Axis(
+                                    format="$,.0s",         # Formato compacto (k, M)
+                                    gridColor='#262730', 
+                                    labelColor='#94a3b8'
+                                ))
+                    )
+            
+                    # CAPA 1: Columnas "Torre de Energía"
+                    columnas = base.mark_bar(
+                        cornerRadiusTopLeft=8, 
+                        cornerRadiusTopRight=8,
+                        color='#00D4FF' # Dorado OPS
+                    )
+            
+                    # CAPA 2: Etiquetas de Datos (Blanco Premium)
+                    texto = base.mark_text(
+                        align='center', 
+                        baseline='bottom', 
+                        dy=-10, 
+                        color='#FFFFFF', 
+                        fontWeight='bold', 
+                        fontSize=11
+                    ).encode(
+                        text=alt.Text('VALOR FACTURA:Q', format="$,.2s")
+                    )
+            
+                    # ENSAMBLAJE FINAL
+                    radar_comercial = (columnas + texto).properties(
+                        width='container', 
+                        height=450,
+                        title=alt.TitleParams(
+                            text="TOP 20: FACTURACIÓN POR CLIENTE",
+                            subtitle="Análisis comercial de alto nivel - Matriz Mensual",
+                            fontSize=20,
+                            color='#00D4FF',
+                            anchor='start'
+                        )
+                    ).configure_view(strokeWidth=0)
+            
+                    st.altair_chart(radar_comercial, use_container_width=True)
+            
+                except Exception as e:
+                    st.error(f"⚠️ FALLA EN RADAR COMERCIAL: {e}")
+            
+            # --- ACTIVACIÓN ---
             st.write("---")
-            if not modo_comp:
-                if st.button("📥 GENERAR REPORTE OFICIAL PDF"):
-                    st.success(f"Reporte de {mes_sel} listo para impresión (Simulado)")
+            generar_top_comercial_elite_v3()
+        
+        # --- PIE DE PAGINA------------------------------------------- ---
+               
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
 
-        else:
-            st.warning("⚠️ El archivo 'matriz_mensual.csv' no fue detectado en el sistema.")
 
-        # --- PIE DE PÁGINA ---
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
 
 
 
