@@ -1163,42 +1163,51 @@ else:
         st.divider()
 
         # =========================================================
-        # --- 1. FILTRO GLOBAL EN LA SIDEBAR (BARRA LATERAL) ---
+        # --- 1. FILTRO DE FECHAS EN LA SIDEBAR (CONTROL MAESTRO) ---
         # =========================================================
         with st.sidebar:
             st.header("⚙️ Panel de Control")
             
-            # Obtenemos la lista de fleteras del dataframe original
-            # Usamos .unique() para que no se repitan
-            opciones_fletera = sorted(df["FLETERA"].unique())
+            # Aseguramos que la columna sea datetime para el filtro
+            df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"])
             
-            # El filtro que controlará TODO el dashboard
-            seleccion_global = st.multiselect(
-                "Filtrar por Fletera (General):",
-                options=opciones_fletera,
-                default=[],
-                help="Si dejas vacío, se mostrarán todas las fleteras."
+            # Definimos el rango mínimo y máximo basado en los datos
+            f_inicio_default = df["FECHA DE ENVÍO"].min().date()
+            f_fin_default = df["FECHA DE ENVÍO"].max().date()
+            
+            # El filtro de calendario
+            rango_fechas = st.date_input(
+                "Selecciona Rango de Envío:",
+                value=(f_inicio_default, f_fin_default),
+                min_value=f_inicio_default,
+                max_value=f_fin_default,
+                help="Todas las métricas y tablas mostrarán solo pedidos enviados en este rango."
             )
         
         # =========================================================
-        # --- 2. LÓGICA DE DATOS FILTRADA (ESTANDARIZADA) ---
+        # --- 2. LÓGICA DE DATOS FILTRADA (POR FECHA) ---
         # =========================================================
         hoy = pd.Timestamp.today().normalize()
         
-        # Creamos la copia de trabajo
+        # Creamos la copia de trabajo y estandarizamos columnas
         df_kpi = df.copy()
         df_kpi.columns = [c.upper() for c in df_kpi.columns]
         
-        # APLICAMOS EL FILTRO GLOBAL ANTES DE CUALQUIER CÁLCULO
-        if seleccion_global:
-            df_kpi = df_kpi[df_kpi["FLETERA"].isin(seleccion_global)]
+        # APLICAMOS EL FILTRO DE FECHAS ANTES DE CUALQUIER CÁLCULO
+        # Validamos que el usuario haya seleccionado un rango completo (inicio y fin)
+        if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
+            start_date, end_date = rango_fechas
+            df_kpi = df_kpi[
+                (df_kpi["FECHA DE ENVÍO"].dt.date >= start_date) & 
+                (df_kpi["FECHA DE ENVÍO"].dt.date <= end_date)
+            ]
         
-        # Cálculos sobre los datos (YA FILTRADOS)
+        # Cálculos sobre los datos (YA FILTRADOS POR FECHA)
         df_kpi["COSTO DE LA GUÍA"] = pd.to_numeric(df_kpi["COSTO DE LA GUÍA"], errors='coerce').fillna(0)
         df_kpi["CANTIDAD DE CAJAS"] = pd.to_numeric(df_kpi["CANTIDAD DE CAJAS"], errors='coerce').fillna(1).replace(0, 1)
         df_kpi["COSTO_UNITARIO"] = df_kpi["COSTO DE LA GUÍA"] / df_kpi["CANTIDAD DE CAJAS"]
         
-        # Segmentación de pendientes
+        # Segmentación de pendientes (solo los del rango de fecha seleccionado)
         df_sin_entregar = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].isna()].copy()
         df_sin_entregar["DIAS_ATRASO_KPI"] = (hoy - df_sin_entregar["PROMESA DE ENTREGA"]).dt.days
         df_sin_entregar["DIAS_ATRASO_KPI"] = df_sin_entregar["DIAS_ATRASO_KPI"].apply(lambda x: x if x > 0 else 0)
@@ -1209,9 +1218,8 @@ else:
         # =========================================================
         df_criticos = df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] > 0].copy()
         
-        # Solo mostramos la tabla si hay pedidos vencidos en la selección actual
         if not df_criticos.empty:
-            with st.expander("⚠️ VER DETALLE DE PEDIDOS VENCIDOS", expanded=False):
+            with st.expander("⚠️ VER DETALLE DE PEDIDOS VENCIDOS (EN ESTE RANGO)", expanded=False):
                 df_ver = df_criticos.copy()
                 df_ver["FECHA DE ENVÍO"] = df_ver["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
                 df_ver["PROMESA DE ENTREGA"] = df_ver["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y')
@@ -1243,6 +1251,7 @@ else:
         # =========================================================
         total_p = len(df_kpi)
         pend_p = len(df_sin_entregar)
+        # Asegúrate de que 'ESTATUS_CALCULADO' existe en tu df original
         eficiencia_p = (len(df_kpi[df_kpi['ESTATUS_CALCULADO'] == 'ENTREGADO']) / total_p * 100) if total_p > 0 else 0
         
         # Valores para monitoreo de atrasos
@@ -1250,15 +1259,13 @@ else:
         a2_val = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] == 2])
         a5_val = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] >= 5])
         
-        # --- ESTILO CSS --- (Se mantiene igual)
+        # --- ESTILO CSS ---
         st.markdown("""
             <style>
             .main-card-kpi {
                 background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
                 border-left: 6px solid #38bdf8;
-                border-radius: 15px;
-                padding: 45px 25px;       
-                min-height: 140px;        
+                border-radius: 15px; padding: 45px 25px; min-height: 140px;        
                 display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
                 box-shadow: 0 15px 30px rgba(0,0,0,0.3); margin-bottom: 15px;
             }
@@ -1279,12 +1286,11 @@ else:
             st.markdown(f"<div class='main-card-kpi' style='border-left-color: {color_ef};'><div class='kpi-label'>Eficiencia Real</div><div class='kpi-value' style='color:{color_ef};'>{eficiencia_p:.1f}%</div></div>", unsafe_allow_html=True)
         
         # --- DIBUJAR FILA DE ATRASOS ---
-        st.markdown("<p style='color:#9CA3AF; font-size:13px; font-weight:bold; letter-spacing:1px; margin-bottom:20px;'>⚠️ MONITOREO DE ATRASOS</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#9CA3AF; font-size:13px; font-weight:bold; letter-spacing:1px; margin-bottom:20px;'>⚠️ MONITOREO DE ATRASOS (PERIODO ACTUAL)</p>", unsafe_allow_html=True)
         a1, a2, a3 = st.columns(3)
-        a1.markdown(f"<div class='card-alerta' style='border-left: 6px solid yellow;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold;'>1 Día Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a1_val}</div></div>", unsafe_allow_html=True)
-        a2.markdown(f"<div class='card-alerta' style='border-left: 6px solid #f97316;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold;'>2 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a2_val}</div></div>", unsafe_allow_html=True)
-        a3.markdown(f"<div class='card-alerta' style='border-left: 6px solid #FF4B4B;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold;'>+5 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a5_val}</div></div>", unsafe_allow_html=True)
-               
+        a1.markdown(f"<div class='card-alerta' style='border-left: 6px solid yellow;'><div style='color:#9CA3AF; font-size:11px;'>1 Día Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a1_val}</div></div>", unsafe_allow_html=True)
+        a2.markdown(f"<div class='card-alerta' style='border-left: 6px solid #f97316;'><div style='color:#9CA3AF; font-size:11px;'>2 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a2_val}</div></div>", unsafe_allow_html=True)
+        a3.markdown(f"<div class='card-alerta' style='border-left: 6px solid #FF4B4B;'><div style='color:#9CA3AF; font-size:11px;'>+5 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a5_val}</div></div>", unsafe_allow_html=True)
                 
         # --- 8. SECCIÓN DE GRÁFICOS ELITE (CONTROL & RENDIMIENTO) ---
                        
@@ -1798,6 +1804,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
