@@ -1322,7 +1322,7 @@ else:
 
         # Capa 1: El área sombreada y la línea recta (Estilo Trading)
         area = line_base.mark_area(
-            line={'color': color_excelencia, 'strokeWidth': 2.5},
+            line={'color': '#FFD700', 'strokeWidth': 2.5},
             color=alt.Gradient(
                 gradient='linear',
                 stops=[alt.GradientStop(color='#FFFF00', offset=0), alt.GradientStop(color='transparent', offset=1)],
@@ -1807,6 +1807,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
