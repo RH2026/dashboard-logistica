@@ -1169,7 +1169,17 @@ else:
               
                       
               
-        st.divider()
+        st.markdown("""
+            <hr style="
+                border: 0;
+                height: 2px;
+                background: #00D4FF;
+                box-shadow: 0px 0px 15px 2px rgba(0, 212, 255, 0.7);
+                margin-top: 20px;
+                margin-bottom: 20px;
+                border-radius: 10px;
+            ">
+        """, unsafe_allow_html=True)
 
         # =========================================================
         # --- 1. FILTRO DE FECHAS EN LA SIDEBAR (CONTROL MAESTRO) ---
@@ -1818,6 +1828,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
