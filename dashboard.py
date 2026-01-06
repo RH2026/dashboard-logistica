@@ -1298,7 +1298,7 @@ else:
         # --- 8. SECCIÓN DE GRÁFICOS ELITE (CONTROL & RENDIMIENTO) ---
                        
         # Paleta de colores ejecutiva (Semáforo de alto contraste)
-        color_excelencia = "#059669" # Esmeralda (>= 95%)
+        color_excelencia = "#39FF14" # Esmeralda (>= 95%)
         color_alerta = "#fbbf24"     # Ámbar (85% - 94%)
         color_critico = "#fb7185"    # Coral/Rojo (< 85%)
 
@@ -1807,6 +1807,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
