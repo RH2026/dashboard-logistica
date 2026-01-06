@@ -1409,79 +1409,76 @@ else:
             ).encode(text=alt.Text('AT:Q', format='.1f'))
 
             st.altair_chart((bars + chart_text).properties(height=400), use_container_width=True)
-            
-        # =========================================================
-        # --- CONFIGURACIÓN DE BLOQUES RESPONSIVE ---
-        # =========================================================
+                    
         
-        # Estilo para separar los bloques y darles aire
-        st.markdown("""
-            <style>
-            .block-container { padding-top: 2rem; }
-            .stVegaLiteChart { margin-top: 2rem; margin-bottom: 2rem; }
-            </style>
-        """, unsafe_allow_html=True)
-        
-        # --- COLORES DEL PUENTE DE MANDO ---
-        azul_volt = "#00D4FF"
-        verde_cyber = "#39FF14"
+        # --- PALETA DE COLORES ELÉCTRICA ---
+        azul_volt = "#00D4FF"        # Para Costos
+        verde_esmeralda = "#00FF9F"  # Esmeralda Eléctrico (Versión vibrante)
         
         # =========================================================
-        # --- BLOQUE 1: COSTO PROMEDIO POR CAJA ---
+        # --- BLOQUE 1: COSTO PROMEDIO POR CAJA (AZUL VOLT) ---
         # =========================================================
         with st.container():
             titulo_grafico_elite("Costo Promedio por Caja", "💰")
             
-            # Lógica de datos
+            # Procesamiento de datos
             df_kpi['COSTO_X_CAJA'] = df_kpi['COSTO DE LA GUÍA'] / df_kpi['CANTIDAD DE CAJAS'].replace(0, 1)
             costo_data = df_kpi.groupby('FLETERA')['COSTO_X_CAJA'].mean().reset_index()
             
-            # El gráfico se ajusta al ancho del contenedor automáticamente
-            chart_costo = alt.Chart(costo_data).mark_bar(
-                cornerRadiusTopRight=10,
-                cornerRadiusBottomRight=10,
-                size=25 # Grosor de barra para que no se vea amontonado
-            ).encode(
-                x=alt.X('COSTO_X_CAJA:Q', title="Costo ($)", axis=alt.Axis(gridOpacity=0.1)),
-                y=alt.Y('FLETERA:N', sort='-x', title=None),
-                color=alt.value(azul_volt),
-                tooltip=['FLETERA', alt.Tooltip('COSTO_X_CAJA:Q', format='.2f')]
-            ).properties(
-                width='container', # Esto lo hace responsive al 100%
-                height=400        # Altura fija para evitar que se aplaste
-            ).configure_view(strokeOpacity=0)
-        
-            st.altair_chart(chart_costo, use_container_width=True)
-        
-        # --- ESPACIO DIVISOR ---
-        st.write("##")
-        
-        # =========================================================
-        # --- BLOQUE 2: TIEMPO DE ENTREGA (LEAD TIME) ---
-        # =========================================================
-        with st.container():
-            titulo_grafico_elite("Días Promedio de Entrega", "⏱️")
-            
-            # Lógica de datos (Solo entregados para no ensuciar el promedio)
-            df_entregados = df_kpi[df_kpi['FECHA DE ENTREGA REAL'].notna()].copy()
-            df_entregados['LEAD_TIME'] = (df_entregados['FECHA DE ENTREGA REAL'] - df_entregados['FECHA DE ENVÍO']).dt.days
-            lead_data = df_entregados.groupby('FLETERA')['LEAD_TIME'].mean().reset_index()
-            
-            chart_lead = alt.Chart(lead_data).mark_bar(
+            # Capa de Barras
+            bars_costo = alt.Chart(costo_data).mark_bar(
                 cornerRadiusTopRight=10,
                 cornerRadiusBottomRight=10,
                 size=25
             ).encode(
-                x=alt.X('LEAD_TIME:Q', title="Días en Tránsito", axis=alt.Axis(gridOpacity=0.1)),
-                y=alt.Y('FLETERA:N', sort='x', title=None),
-                color=alt.value(verde_cyber),
-                tooltip=['FLETERA', alt.Tooltip('LEAD_TIME:Q', format='.1f')]
-            ).properties(
-                width='container',
-                height=400
-            ).configure_view(strokeOpacity=0)
+                x=alt.X('COSTO_X_CAJA:Q', title="Inversión ($)"),
+                y=alt.Y('FLETERA:N', sort='-x', title=None),
+                color=alt.value(azul_volt) # <--- AZUL ELÉCTRICO
+            )
         
-            st.altair_chart(chart_lead, use_container_width=True)
+            # Capa de Etiquetas (Texto)
+            text_costo = bars_costo.mark_text(
+                align='left', baseline='middle', dx=8,
+                color='white', fontSize=13, fontWeight='bold'
+            ).encode(
+                text=alt.Text('COSTO_X_CAJA:Q', format='$.2f')
+            )
+        
+            st.altair_chart((bars_costo + text_costo).properties(height=400), use_container_width=True)
+        
+        st.write("##") # Espacio entre bloques
+        
+        # =========================================================
+        # --- BLOQUE 2: LEAD TIME (VERDE ESMERALDA ELÉCTRICO) ---
+        # =========================================================
+        with st.container():
+            titulo_grafico_elite("Días Promedio de Entrega (Lead Time)", "⏱️")
+            
+            # Solo pedidos entregados para el cálculo de tiempo real
+            df_entregados = df_kpi[df_kpi['FECHA DE ENTREGA REAL'].notna()].copy()
+            df_entregados['LEAD_TIME'] = (df_entregados['FECHA DE ENTREGA REAL'] - df_entregados['FECHA DE ENVÍO']).dt.days
+            lead_data = df_entregados.groupby('FLETERA')['LEAD_TIME'].mean().reset_index()
+            
+            # Capa de Barras
+            bars_lead = alt.Chart(lead_data).mark_bar(
+                cornerRadiusTopRight=10,
+                cornerRadiusBottomRight=10,
+                size=25
+            ).encode(
+                x=alt.X('LEAD_TIME:Q', title="Días en Tránsito"),
+                y=alt.Y('FLETERA:N', sort='x', title=None),
+                color=alt.value(verde_esmeralda) # <--- VERDE ESMERALDA ELÉCTRICO
+            )
+        
+            # Capa de Etiquetas (Texto)
+            text_lead = bars_lead.mark_text(
+                align='left', baseline='middle', dx=8,
+                color='white', fontSize=13, fontWeight='bold'
+            ).encode(
+                text=alt.Text('LEAD_TIME:Q', format='.1f')
+            )
+        
+            st.altair_chart((bars_lead + text_lead).properties(height=400), use_container_width=True)
                         
         
         # --- NAVEGACIÓN DESDE KPIs ---
@@ -1798,6 +1795,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
