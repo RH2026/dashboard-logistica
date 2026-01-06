@@ -1936,48 +1936,42 @@ else:
                 st.info("💡 **INFO DE COMANDO:** El PDF requiere una vista de mes individual.")         
 
             # =========================================================
-            # 📊 MOTOR DE GRÁFICOS SINCRONIZADOS (MATRIZ MENSUAL)
+            # 📊 MOTOR DE GRÁFICOS ELITE: RESPONSIVE + ETIQUETAS + VERTICAL
             # =========================================================
             
             def generar_grafico_fleteras_elite(mes_seleccionado):
                 import os
                 try:
-                    # Localización de archivo
                     archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
                     df = pd.read_csv(archivo, encoding='latin-1')
                     df.columns = [c.strip().upper() for c in df.columns]
-                    
-                    # Limpieza y Conversión
                     df['COSTO DE GUIA'] = pd.to_numeric(df['COSTO DE GUIA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
                     df['FECHA_DT'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
                     
-                    # Sincronizador de Mes (Traducción de Fecha a Texto)
                     meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
                                  7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
                     df['MES_LLAVE'] = df['FECHA_DT'].dt.month.map(meses_map)
                     
-                    # Filtrado por el selector del Sidebar
                     mes_target = str(mes_seleccionado).strip().upper()
                     df_f = df[df['MES_LLAVE'] == mes_target]
+                    if df_f.empty: return st.warning(f"Radar: Sin datos de Fleteras para {mes_target}")
             
-                    if df_f.empty:
-                        return st.warning(f"⚠️ Sin datos de Fleteras para {mes_target} en la Matriz.")
-            
-                    # Gráfico Altair
+                    # Gráfico Base
                     base = alt.Chart(df_f).encode(
-                        x=alt.X('FLETERA:N', sort='-y', title=None, axis=alt.Axis(labelAngle=-45, labelColor='white')),
-                        y=alt.Y('sum(COSTO DE GUIA):Q', title=None, axis=alt.Axis(format="$,.0s", labelColor='#94a3b8')),
-                        color=alt.Color('FLETERA:N', scale=alt.Scale(scheme='goldorange'), legend=None)
+                        x=alt.X('FLETERA:N', sort='-y', title=None, 
+                                axis=alt.Axis(labelAngle=-90, labelColor='white', labelFontSize=11, labelFontWeight='bold')),
+                        y=alt.Y('sum(COSTO DE GUIA):Q', title=None, axis=alt.Axis(format="$,.0s", labelColor='#94a3b8'))
                     )
                     
-                    chart = (base.mark_bar(cornerRadiusTopLeft=10, cornerRadiusTopRight=10) + 
-                             base.mark_text(align='center', baseline='bottom', dy=-10, color='white', fontWeight='bold')
-                             .encode(text=alt.Text('sum(COSTO DE GUIA):Q', format="$,.2s"))
-                            ).properties(width='container', height=400, title=f"INVERSIÓN POR FLETERA - {mes_target}")
+                    # Capas: Barras + Etiquetas
+                    barras = base.mark_bar(cornerRadiusTopLeft=10, cornerRadiusTopRight=10, color='#eab308')
+                    texto = base.mark_text(align='center', baseline='bottom', dy=-10, color='white', fontWeight='bold', fontSize=12
+                                          ).encode(text=alt.Text('sum(COSTO DE GUIA):Q', format="$,.2s"))
                     
+                    chart = (barras + texto).properties(width='container', height=450, 
+                                                        title=f"INVERSIÓN POR FLETERA - {mes_target}")
                     st.altair_chart(chart, use_container_width=True)
-                except Exception as e:
-                    st.error(f"Error en Fleteras: {e}")
+                except: pass
             
             def generar_ranking_destinos_elite(mes_seleccionado):
                 import os
@@ -1988,21 +1982,25 @@ else:
                     df['VALOR FACTURA'] = pd.to_numeric(df['VALOR FACTURA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
                     df['FECHA_DT'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
                     
-                    meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
-                                 7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
-                    df['MES_LLAVE'] = df['FECHA_DT'].dt.month.map(meses_map)
+                    df['MES_LLAVE'] = df['FECHA_DT'].dt.month.map({1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
+                                                                  7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"})
                     
                     mes_target = str(mes_seleccionado).strip().upper()
                     df_f = df[df['MES_LLAVE'] == mes_target]
                     df_geo = df_f.groupby('ESTADO')['VALOR FACTURA'].sum().reset_index().sort_values('VALOR FACTURA', ascending=False).head(15)
             
-                    if not df_geo.empty:
-                        chart = alt.Chart(df_geo).mark_bar(color='#00FFAA', cornerRadiusTopLeft=8, cornerRadiusTopRight=8).encode(
-                            x=alt.X('ESTADO:N', sort='-y', title=None, axis=alt.Axis(labelAngle=-45, labelColor='white')),
-                            y=alt.Y('VALOR FACTURA:Q', title=None, axis=alt.Axis(format="$,.0s")),
-                            tooltip=['ESTADO', 'VALOR FACTURA']
-                        ).properties(width='container', height=400, title=f"TOP 15 DESTINOS (VENTA) - {mes_target}")
-                        st.altair_chart(chart, use_container_width=True)
+                    base = alt.Chart(df_geo).encode(
+                        x=alt.X('ESTADO:N', sort='-y', title=None, 
+                                axis=alt.Axis(labelAngle=-90, labelColor='white', labelFontSize=11, labelFontWeight='bold')),
+                        y=alt.Y('VALOR FACTURA:Q', title=None, axis=alt.Axis(format="$,.0s"))
+                    )
+                    
+                    barras = base.mark_bar(color='#00FFAA', cornerRadiusTopLeft=8, cornerRadiusTopRight=8)
+                    texto = base.mark_text(align='center', baseline='bottom', dy=-10, color='white', fontWeight='bold', fontSize=11
+                                          ).encode(text=alt.Text('VALOR FACTURA:Q', format="$,.2s"))
+                    
+                    chart = (barras + texto).properties(width='container', height=450, title=f"TOP DESTINOS - {mes_target}")
+                    st.altair_chart(chart, use_container_width=True)
                 except: pass
             
             def generar_top_comercial_elite(mes_seleccionado):
@@ -2014,21 +2012,25 @@ else:
                     df['VALOR FACTURA'] = pd.to_numeric(df['VALOR FACTURA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
                     df['FECHA_DT'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
                     
-                    meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
-                                 7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
-                    df['MES_LLAVE'] = df['FECHA_DT'].dt.month.map(meses_map)
+                    df['MES_LLAVE'] = df['FECHA_DT'].dt.month.map({1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
+                                                                  7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"})
                     
                     mes_target = str(mes_seleccionado).strip().upper()
                     df_f = df[df['MES_LLAVE'] == mes_target]
                     df_top = df_f.groupby('NOMBRE COMERCIAL')['VALOR FACTURA'].sum().reset_index().sort_values('VALOR FACTURA', ascending=False).head(20)
             
-                    if not df_top.empty:
-                        chart = alt.Chart(df_top).mark_bar(color='#00D4FF', cornerRadiusTopLeft=8, cornerRadiusTopRight=8).encode(
-                            x=alt.X('NOMBRE COMERCIAL:N', sort='-y', title=None, axis=alt.Axis(labelAngle=-45, labelColor='white')),
-                            y=alt.Y('VALOR FACTURA:Q', title=None, axis=alt.Axis(format="$,.0s")),
-                            tooltip=['NOMBRE COMERCIAL', 'VALOR FACTURA']
-                        ).properties(width='container', height=400, title=f"TOP 20 CLIENTES (VENTA) - {mes_target}")
-                        st.altair_chart(chart, use_container_width=True)
+                    base = alt.Chart(df_top).encode(
+                        x=alt.X('NOMBRE COMERCIAL:N', sort='-y', title=None, 
+                                axis=alt.Axis(labelAngle=-90, labelColor='white', labelFontSize=10, labelFontWeight='bold')),
+                        y=alt.Y('VALOR FACTURA:Q', title=None, axis=alt.Axis(format="$,.0s"))
+                    )
+                    
+                    barras = base.mark_bar(color='#00D4FF', cornerRadiusTopLeft=8, cornerRadiusTopRight=8)
+                    texto = base.mark_text(align='center', baseline='bottom', dy=-10, color='white', fontWeight='bold', fontSize=10
+                                          ).encode(text=alt.Text('VALOR FACTURA:Q', format="$,.2s"))
+                    
+                    chart = (barras + texto).properties(width='container', height=450, title=f"TOP CLIENTES - {mes_target}")
+                    st.altair_chart(chart, use_container_width=True)
                 except: pass
     
         # --- SECCIÓN DE GRÁFICOS DINÁMICOS ---
@@ -2049,6 +2051,7 @@ else:
         
         
     
+
 
 
 
