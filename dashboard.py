@@ -1600,34 +1600,55 @@ else:
         
         st.divider()
                
-        # --- 1. MOTOR DE DATOS NIVEL ELITE ---
+        # --- 1. NUEVO MOTOR DE DATOS DINÁMICO (DESDE MATRIZ) ---
         @st.cache_data
-        def cargar_analisis_elite():
+        def cargar_datos_matriz_elite():
+            import os
             try:
-                df = pd.read_csv("analisis.csv", encoding="utf-8")
-                df.columns = [str(c).strip().upper() for c in df.columns]
-                df = df.dropna(subset=['MES'])
-                df = df[df['MES'].str.contains('Unnamed|TOTAL', case=False) == False]
-                
-                def limpiar_a_numero(v):
+                # Detectar archivo de matriz
+                archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
+                df = pd.read_csv(archivo, encoding='latin-1')
+                df.columns = [c.strip().upper() for c in df.columns]
+        
+                # Limpieza de valores numéricos
+                def limpiar_num(v):
                     if pd.isna(v): return 0.0
-                    if isinstance(v, (int, float)): return float(v)
-                    s = str(v).replace('$', '').replace(',', '').replace('%', '').replace('(', '-').replace(')', '').strip()
+                    s = str(v).replace('$', '').replace(',', '').replace('%', '').strip()
                     try: return float(s)
                     except: return 0.0
         
-                cols_numericas = [
-                    "COSTO DE FLETE", "FACTURACIÓN", "CAJAS ENVIADAS", "COSTO LOGÍSTICO", 
-                    "COSTO POR CAJA", "META INDICADOR", "VALUACION INCIDENCIAS", 
-                    "INCREMENTO + VI", "% DE INCREMENTO VS 2024", "COSTO POR CAJA 2024", "PORCENTAJE DE INCIDENCIAS"
-                ]
+                cols_ops = ['COSTO DE GUIA', 'VALOR FACTURA', 'CAJAS ENVIADAS', 'VALUACION INCIDENCIAS']
+                for col in cols_ops:
+                    if col in df.columns: df[col] = df[col].apply(limpiar_num)
+        
+                # Crear columna de Mes para agrupar
+                df['FECHA_DT'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
+                meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
+                             7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
+                df['MES'] = df['FECHA_DT'].dt.month.map(meses_map)
+                df = df.dropna(subset=['MES'])
+        
+                # CÁLCULOS CON TARGETS DEL CAPITÁN
+                resumen = df.groupby('MES').agg({
+                    'COSTO DE GUIA': 'sum',           # Ahora es COSTO DE FLETE
+                    'VALOR FACTURA': 'sum',           # Ahora es FACTURACIÓN
+                    'CAJAS ENVIADAS': 'sum',
+                    'VALUACION INCIDENCIAS': 'sum'
+                }).reset_index()
+        
+                # Fórmulas de Operación
+                resumen['COSTO LOGÍSTICO'] = (resumen['COSTO DE GUIA'] / resumen['VALOR FACTURA']) * 100
+                resumen['COSTO POR CAJA'] = resumen['COSTO DE GUIA'] / resumen['CAJAS ENVIADAS']
                 
-                for col in cols_numericas:
-                    if col in df.columns:
-                        df[col] = df[col].apply(limpiar_a_numero)
-                return df
+                # Asignación de Metas Fijas
+                resumen['META INDICADOR'] = 7.0        # Target % pedido
+                resumen['COSTO POR CAJA 2024'] = 59.0  # Target $ pedido
+                resumen['PORCENTAJE DE INCIDENCIAS'] = (resumen['VALUACION INCIDENCIAS'] / resumen['VALOR FACTURA']) * 100
+                
+                # Renombrar para compatibilidad con tarjetas
+                return resumen.rename(columns={'COSTO DE GUIA': 'COSTO DE FLETE', 'VALOR FACTURA': 'FACTURACIÓN'})
             except Exception as e:
-                st.error(f"Error en Motor: {e}")
+                st.error(f"Error en Motor de Matriz: {e}")
                 return None
         
         # --- 2. FUNCIÓN DE RENDERIZADO BLINDADA ---
@@ -1651,17 +1672,16 @@ else:
         df_a = cargar_analisis_elite()
         
         if df_a is not None:
-            # --- 3. SIDEBAR ---
-            st.sidebar.markdown("## ")
-            meses_limpios = [m for m in df_a["MES"].unique() if str(m).strip() != ""]
-            mes_sel = st.sidebar.selectbox("MES ACTUAL / BASE", meses_limpios)
-            df_mes = df_a[df_a["MES"] == mes_sel].iloc[0]
+            # --- 3. SIDEBAR ---            
+            df_a = cargar_datos_matriz_elite()
             
-            modo_comp = st.sidebar.checkbox("Activar comparativa Mes vs Mes")
-            if modo_comp:
-                mes_comp = st.sidebar.selectbox("COMPARAR CONTRA:", meses_limpios, index=0)
-                df_mes_b = df_a[df_a["MES"] == mes_comp].iloc[0]
-        
+            if df_a is not None:
+                # Usar los meses calculados de la matriz
+                meses_disponibles = df_a["MES"].unique().tolist()
+                mes_sel = st.sidebar.selectbox("MES DEL REPORTE", meses_disponibles)
+                
+                # Extraer datos del mes para las tarjetas
+                df_mes = df_a[df_a["MES"] == mes_sel].iloc[0]
             # --- 4. CSS PREMIUM ELITE ---
             st.markdown("""
                 <style>
@@ -2034,16 +2054,61 @@ else:
                 except: pass
     
         # --- SECCIÓN DE GRÁFICOS DINÁMICOS ---
-            st.write("---")
-            st.markdown(f"<h3 style='color:#00FFAA; font-family:Orbitron; font-size:1.2rem;'>DETALLE OPERATIVO: {mes_sel}</h3>", unsafe_allow_html=True)
+        # =========================================================
+        # --- ZONA DE GRÁFICOS DINÁMICOS (AL FINAL DEL REPORTE) ---
+        # =========================================================
+        st.write("---")
+        st.markdown(f"<h3 style='color:#00FFAA; font-family:Orbitron; font-size:1.2rem; letter-spacing:2px;'>📊 DESGLOSE TÁCTICO: {mes_sel}</h3>", unsafe_allow_html=True)
+
+        try:
+            # 1. Carga rápida de la matriz para el detalle de los gráficos
+            archivo_m = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
+            df_raw = pd.read_csv(archivo_m, encoding='latin-1')
+            df_raw.columns = [c.strip().upper() for c in df_raw.columns]
             
-            # Llamamos a las 3 funciones pasando el mes que eligió en el sidebar
-            generar_grafico_fleteras_elite(mes_sel)
+            # 2. Convertir fechas y filtrar por el mes seleccionado
+            df_raw['FECHA_DT'] = pd.to_datetime(df_raw['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
+            meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
+                         7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
+            df_raw['MES_LLAVE'] = df_raw['FECHA_DT'].dt.month.map(meses_map)
+            
+            # FILTRO MAESTRO
+            df_filt = df_raw[df_raw['MES_LLAVE'] == mes_sel].copy()
+
+            # 3. Limpieza de valores para los ejes
+            df_filt['COSTO DE GUIA'] = pd.to_numeric(df_filt['COSTO DE GUIA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+            df_filt['VALOR FACTURA'] = pd.to_numeric(df_filt['VALOR FACTURA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+
+            # --- FUNCIÓN INTERNA DE RENDERIZADO ---
+            def dibujar_radar(data, x_col, y_col, titulo, color_bar, topping=15):
+                # Agrupar para que no salgan barras repetidas
+                data_plot = data.groupby(x_col)[y_col].sum().reset_index().sort_values(y_col, ascending=False).head(topping)
+                
+                base = alt.Chart(data_plot).encode(
+                    x=alt.X(f'{x_col}:N', sort='-y', title=None, 
+                            axis=alt.Axis(labelAngle=-90, labelColor='white', labelFontSize=10, labelFontWeight='bold')),
+                    y=alt.Y(f'{y_col}:Q', title=None, axis=alt.Axis(format="$,.0s", labelColor='#94a3b8'))
+                )
+                
+                barras = base.mark_bar(cornerRadiusTopLeft=8, cornerRadiusTopRight=8, color=color_bar)
+                texto = base.mark_text(align='center', baseline='bottom', dy=-10, color='white', fontWeight='bold', fontSize=10
+                                      ).encode(text=alt.Text(f'{y_col}:Q', format="$,.2s"))
+                
+                st.altair_chart((barras + texto).properties(width='container', height=400, title=titulo), use_container_width=True)
+
+            # --- DESPLIEGUE DE LOS 3 RADAR ---
+            # A. Fleteras
+            dibujar_radar(df_filt, 'FLETERA', 'COSTO DE GUIA', "INVERSIÓN POR FLETERA (FLETES)", '#eab308')
             st.write("---")
-            generar_ranking_destinos_elite(mes_sel)
+            # B. Destinos
+            dibujar_radar(df_filt, 'ESTADO', 'VALOR FACTURA', "TOP 15: FACTURACIÓN POR ESTADO", '#00FFAA')
             st.write("---")
-            generar_top_comercial_elite(mes_sel)
-               
+            # C. Clientes
+            dibujar_radar(df_filt, 'NOMBRE COMERCIAL', 'VALOR FACTURA', "TOP 15: FACTURACIÓN POR CLIENTE", '#00D4FF')
+
+        except Exception as e:
+            st.info(f"Esperando datos de Matriz Mensual para {mes_sel}...")
+           
         # --- PIE DE PAGINA------------------------------------------- ---
                
         st.markdown('</div>', unsafe_allow_html=True)
@@ -2051,6 +2116,7 @@ else:
         
         
     
+
 
 
 
