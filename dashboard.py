@@ -1029,11 +1029,12 @@ else:
         df_score["Eficiencia"] = ((1 - (df_score["Pedidos_Tarde"] / df_score["Total_Entregas"])) * 100).round(1)
         df_score = df_score.sort_values(by="Eficiencia", ascending=False)
 
-        # 2. CSS para el Botón Desplegable Ultra-Moderno
+        # # 2. CSS para el Botón Desplegable Ultra-Moderno
         st.markdown("""
-            <style>
+        <style>
+            /* Estilo para la cabecera del expander */
             .streamlit-expanderHeader {
-                background: rgba(255, 255, 255, 0.03) !important;
+                background-color: rgba(255, 255, 255, 0.03) !important;
                 border: 1px solid rgba(255, 255, 255, 0.1) !important;
                 border-radius: 12px !important;
                 padding: 18px !important;
@@ -1041,16 +1042,25 @@ else:
                 font-weight: 800 !important;
                 transition: 0.3s all ease;
             }
+        
+            /* Efecto Hover */
             .streamlit-expanderHeader:hover {
-                background: rgba(0, 255, 170, 0.05) !important;
+                background-color: rgba(0, 255, 170, 0.05) !important;
                 border: 1px solid #00FFAA !important;
             }
+        
+            /* Estilo para el contenido de adentro */
             .streamlit-expanderContent {
                 border: none !important;
-                background: transparent !important;
+                background-color: transparent !important;
                 padding-top: 20px !important;
             }
-            </style>
+            
+            /* Eliminar la línea predeterminada de Streamlit */
+            .streamlit-expanderHeader + div {
+                border: none !important;
+            }
+        </style>
         """, unsafe_allow_html=True)
 
         # 3. El Botón y el Contenido
@@ -2119,6 +2129,7 @@ else:
                
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
 
 
 
