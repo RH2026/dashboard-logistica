@@ -1325,7 +1325,7 @@ else:
             line={'color': '#FFD700', 'strokeWidth': 2.5},
             color=alt.Gradient(
                 gradient='linear',
-                stops=[alt.GradientStop(color='#FFFF00', offset=0), alt.GradientStop(color='transparent', offset=1)],
+                stops=[alt.GradientStop(color='#FFD700', offset=0), alt.GradientStop(color='transparent', offset=1)],
                 x1=1, x2=1, y1=1, y2=0
             ),
             interpolate='linear'
@@ -1807,6 +1807,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
