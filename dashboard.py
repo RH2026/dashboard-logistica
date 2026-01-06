@@ -1162,34 +1162,57 @@ else:
               
         st.divider()
 
-        # --- 2. LÓGICA DE DATOS (ESTANDARIZADA) ---
-        hoy = pd.Timestamp.today().normalize()
-        df_kpi = df.copy()
-        df_kpi.columns = [c.upper() for c in df_kpi.columns] # Blindaje contra KeyErrors
+        # =========================================================
+        # --- 1. FILTRO GLOBAL EN LA SIDEBAR (BARRA LATERAL) ---
+        # =========================================================
+        with st.sidebar:
+            st.header("⚙️ Panel de Control")
+            
+            # Obtenemos la lista de fleteras del dataframe original
+            # Usamos .unique() para que no se repitan
+            opciones_fletera = sorted(df["FLETERA"].unique())
+            
+            # El filtro que controlará TODO el dashboard
+            seleccion_global = st.multiselect(
+                "Filtrar por Fletera (General):",
+                options=opciones_fletera,
+                default=[],
+                help="Si dejas vacío, se mostrarán todas las fleteras."
+            )
         
+        # =========================================================
+        # --- 2. LÓGICA DE DATOS FILTRADA (ESTANDARIZADA) ---
+        # =========================================================
+        hoy = pd.Timestamp.today().normalize()
+        
+        # Creamos la copia de trabajo
+        df_kpi = df.copy()
+        df_kpi.columns = [c.upper() for c in df_kpi.columns]
+        
+        # APLICAMOS EL FILTRO GLOBAL ANTES DE CUALQUIER CÁLCULO
+        if seleccion_global:
+            df_kpi = df_kpi[df_kpi["FLETERA"].isin(seleccion_global)]
+        
+        # Cálculos sobre los datos (YA FILTRADOS)
         df_kpi["COSTO DE LA GUÍA"] = pd.to_numeric(df_kpi["COSTO DE LA GUÍA"], errors='coerce').fillna(0)
         df_kpi["CANTIDAD DE CAJAS"] = pd.to_numeric(df_kpi["CANTIDAD DE CAJAS"], errors='coerce').fillna(1).replace(0, 1)
         df_kpi["COSTO_UNITARIO"] = df_kpi["COSTO DE LA GUÍA"] / df_kpi["CANTIDAD DE CAJAS"]
         
+        # Segmentación de pendientes
         df_sin_entregar = df_kpi[df_kpi["FECHA DE ENTREGA REAL"].isna()].copy()
         df_sin_entregar["DIAS_ATRASO_KPI"] = (hoy - df_sin_entregar["PROMESA DE ENTREGA"]).dt.days
         df_sin_entregar["DIAS_ATRASO_KPI"] = df_sin_entregar["DIAS_ATRASO_KPI"].apply(lambda x: x if x > 0 else 0)
         df_sin_entregar["DIAS_TRANS"] = (hoy - df_sin_entregar["FECHA DE ENVÍO"]).dt.days
-
-        # --- 3. FILTRO DINÁMICO DE RETRASOS CRÍTICOS ---       
-        df_criticos = df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] > 0].copy()
-        paqueterias_con_retraso = sorted(df_criticos["FLETERA"].unique())
         
-        if len(paqueterias_con_retraso) > 0:
-            seleccion = st.multiselect(
-                "Selecciona paqueterías con pedidos vencidos:", 
-                options=paqueterias_con_retraso
-            )
-            
-            if seleccion:
-                df_ver = df_criticos[df_criticos["FLETERA"].isin(seleccion)].copy()
-                
-                # Formatear fechas como texto antes de mostrar para asegurar alineación izquierda
+        # =========================================================
+        # --- 3. SECCIÓN DE ALERTAS (TABLA DINÁMICA) ---
+        # =========================================================
+        df_criticos = df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] > 0].copy()
+        
+        # Solo mostramos la tabla si hay pedidos vencidos en la selección actual
+        if not df_criticos.empty:
+            with st.expander("⚠️ VER DETALLE DE PEDIDOS VENCIDOS", expanded=False):
+                df_ver = df_criticos.copy()
                 df_ver["FECHA DE ENVÍO"] = df_ver["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
                 df_ver["PROMESA DE ENTREGA"] = df_ver["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y')
                 
@@ -1203,126 +1226,64 @@ else:
                     "DIAS_ATRASO_KPI": "DÍAS ATRASO",
                     "DIAS_TRANS": "DÍAS TRANS."
                 })
-
-                # CONFIGURACIÓN MAESTRA DE ALINEACIÓN
+        
                 st.dataframe(
                     df_tabla_ver.sort_values("DÍAS ATRASO", ascending=False),
                     use_container_width=True,
                     hide_index=True,
                     column_config={
-                        "NÚMERO DE PEDIDO": st.column_config.TextColumn("NÚMERO DE PEDIDO"),
                         "NOMBRE DEL CLIENTE": st.column_config.TextColumn("NOMBRE DEL CLIENTE", width="large"),
-                        "FLETERA": st.column_config.TextColumn("FLETERA"),
-                        "FECHA DE ENVÍO": st.column_config.TextColumn("FECHA DE ENVÍO"),
-                        "PROMESA DE ENTREGA": st.column_config.TextColumn("PROMESA DE ENTREGA"),
-                        "NÚMERO DE GUÍA": st.column_config.TextColumn("NÚMERO DE GUÍA"),
-                        "DÍAS TRANS.": st.column_config.TextColumn("DÍAS TRANS."),
                         "DÍAS ATRASO": st.column_config.TextColumn("DÍAS ATRASO ⚠️")
                     }
                 )
-                st.divider()
-
-        # --- 4. CÁLCULO DE MÉTRICAS Y TARJETAS ---
+        st.divider()
+        
+        # =========================================================
+        # --- 4. CÁLCULO DE MÉTRICAS PARA TARJETAS ---
+        # =========================================================
         total_p = len(df_kpi)
         pend_p = len(df_sin_entregar)
         eficiencia_p = (len(df_kpi[df_kpi['ESTATUS_CALCULADO'] == 'ENTREGADO']) / total_p * 100) if total_p > 0 else 0
-
+        
         # Valores para monitoreo de atrasos
         a1_val = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] == 1])
         a2_val = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] == 2])
         a5_val = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] >= 5])
-
-        # --- ESTILO CSS PREMIUM (TARJETAS ALTAS Y NÚMEROS GRANDES) ---
+        
+        # --- ESTILO CSS --- (Se mantiene igual)
         st.markdown("""
             <style>
             .main-card-kpi {
                 background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
                 border-left: 6px solid #38bdf8;
                 border-radius: 15px;
-                
-                /* AJUSTE DE ALTURA Y ESPACIADO */
                 padding: 45px 25px;       
                 min-height: 140px;        
-                
-                display: flex;
-                flex-direction: column;
-                justify-content: center;   
-                align-items: center;
-                text-align: center;
-                
-                box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-                margin-bottom: 15px;
+                display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+                box-shadow: 0 15px 30px rgba(0,0,0,0.3); margin-bottom: 15px;
             }
-            .kpi-label { 
-                color: #94a3b8; 
-                font-size: 14px; 
-                font-weight: 700; 
-                text-transform: uppercase; 
-                letter-spacing: 2px; 
-                margin-bottom: 15px; 
-            }
-            .kpi-value { 
-                color: #f8fafc; 
-                font-size: 32px; /* Número extra grande */
-                font-weight: 800; 
-                font-family: 'Inter', sans-serif;
-                line-height: 1;
-            }
-            
-            /* Tarjetas de Alerta Inferiores */
-            .card-alerta {
-                background-color:#161B22; 
-                padding:25px; 
-                border-radius:12px; 
-                border-top:1px solid #2D333F; 
-                border-right:1px solid #2D333F; 
-                border-bottom:1px solid #2D333F; 
-                text-align:center;
-            }
+            .kpi-label { color: #94a3b8; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }
+            .kpi-value { color: #f8fafc; font-size: 32px; font-weight: 800; line-height: 1; }
+            .card-alerta { background-color:#161B22; padding:25px; border-radius:12px; border:1px solid #2D333F; text-align:center; }
             </style>
         """, unsafe_allow_html=True)
-
-        # --- FILA 1: MÉTRICAS PRINCIPALES (ANCHAS Y ALTAS) ---
+        
+        # --- DIBUJAR TARJETAS ---
         m1, m2, m3 = st.columns(3)
-        
         with m1:
-            st.markdown(f"""
-                <div class='main-card-kpi' style='border-left-color: #f1f5f9;'>
-                    <div class='kpi-label'>Pedidos Totales</div>
-                    <div class='kpi-value'>{total_p}</div>
-                </div>
-            """, unsafe_allow_html=True)
-            
+            st.markdown(f"<div class='main-card-kpi' style='border-left-color: #f1f5f9;'><div class='kpi-label'>Pedidos Totales</div><div class='kpi-value'>{total_p}</div></div>", unsafe_allow_html=True)
         with m2:
-            st.markdown(f"""
-                <div class='main-card-kpi' style='border-left-color: #38bdf8;'>
-                    <div class='kpi-label'>Sin Entregar</div>
-                    <div class='kpi-value' style='color:#38bdf8;'>{pend_p}</div>
-                </div>
-            """, unsafe_allow_html=True)
-            
+            st.markdown(f"<div class='main-card-kpi' style='border-left-color: #38bdf8;'><div class='kpi-label'>Sin Entregar</div><div class='kpi-value' style='color:#38bdf8;'>{pend_p}</div></div>", unsafe_allow_html=True)
         with m3:
-            # Color dinámico para eficiencia
             color_ef = "#00FFAA" if eficiencia_p >= 95 else "#f97316"
-            st.markdown(f"""
-                <div class='main-card-kpi' style='border-left-color: {color_ef};'>
-                    <div class='kpi-label'>Eficiencia Real</div>
-                    <div class='kpi-value' style='color:{color_ef};'>{eficiencia_p:.1f}%</div>
-                </div>
-            """, unsafe_allow_html=True)
-
-        st.write("##")
+            st.markdown(f"<div class='main-card-kpi' style='border-left-color: {color_ef};'><div class='kpi-label'>Eficiencia Real</div><div class='kpi-value' style='color:{color_ef};'>{eficiencia_p:.1f}%</div></div>", unsafe_allow_html=True)
         
-        # --- FILA 2: MONITOREO DE ATRASOS ---
-        st.markdown("<p style='color:#9CA3AF; font-size:13px; font-weight:bold; letter-spacing:1px; margin-bottom:20px;'>⚠️ MONITOREO DE ATRASOS (SOLO PENDIENTES)</p>", unsafe_allow_html=True)
+        # --- DIBUJAR FILA DE ATRASOS ---
+        st.markdown("<p style='color:#9CA3AF; font-size:13px; font-weight:bold; letter-spacing:1px; margin-bottom:20px;'>⚠️ MONITOREO DE ATRASOS</p>", unsafe_allow_html=True)
         a1, a2, a3 = st.columns(3)
-        
-        a1.markdown(f"<div class='card-alerta' style='border-left: 6px solid yellow;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold; text-transform:uppercase;'>1 Día Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a1_val}</div></div>", unsafe_allow_html=True)
-        a2.markdown(f"<div class='card-alerta' style='border-left: 6px solid #f97316;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold; text-transform:uppercase;'>2 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a2_val}</div></div>", unsafe_allow_html=True)
-        a3.markdown(f"<div class='card-alerta' style='border-left: 6px solid #FF4B4B;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold; text-transform:uppercase;'>+5 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a5_val}</div></div>", unsafe_allow_html=True)
-
-        st.write("##")
-        st.divider()
+        a1.markdown(f"<div class='card-alerta' style='border-left: 6px solid yellow;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold;'>1 Día Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a1_val}</div></div>", unsafe_allow_html=True)
+        a2.markdown(f"<div class='card-alerta' style='border-left: 6px solid #f97316;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold;'>2 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a2_val}</div></div>", unsafe_allow_html=True)
+        a3.markdown(f"<div class='card-alerta' style='border-left: 6px solid #FF4B4B;'><div style='color:#9CA3AF; font-size:11px; font-weight:bold;'>+5 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a5_val}</div></div>", unsafe_allow_html=True)
                
                 
         # --- 8. SECCIÓN DE GRÁFICOS ELITE (CONTROL & RENDIMIENTO) ---
@@ -1837,6 +1798,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
