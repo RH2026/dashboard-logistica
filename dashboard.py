@@ -1332,7 +1332,7 @@ else:
         )
 
         # Capa 2: Puntos en cada vértice
-        points = line_base.mark_point(color=color_excelencia, size=60, fill="#0f172a")
+        points = line_base.mark_point(color='#FFFF00', size=60, fill="#0f172a")
 
         # Capa 3: ETIQUETAS DE DATOS (Los números sobre los puntos)
         labels = line_base.mark_text(
@@ -1807,6 +1807,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
