@@ -1413,106 +1413,65 @@ else:
        
        
         # =========================================================
-        #             SISTEMA DE ARMAMENTO: MÓDULO ZEUS
-        # =========================================================
-        import os
-        import math
+        # ISTEMA DE ARMAMENTO: MÓDULO ZEUS
+        # --- COLORES DE COMBATE ---
+        azul_volt = "#00D4FF"
+        verde_neon = "#39FF14"
+        rojo_neon = "#FF003C"
         
-        # --- FASE 1: CARGA DE DATOS (HANGAR SEGURO) ---
-        def hangar_zeus(nombre_base):
-            # El radar busca variaciones de nombre y extensión
-            variaciones = [
-                f"{nombre_base}.csv", f"{nombre_base}.scv",
-                f"{nombre_base.upper()}.csv", "Matriz_Excel_Dasgboard.csv", "Matriz_Excel_Dashboard.csv"
-            ]
-            for archivo in variaciones:
-                if os.path.exists(archivo):
-                    df = pd.read_csv(archivo, encoding='latin-1')
-                    df.columns = [c.strip().upper() for c in df.columns]
-                    return df
-            return None
+        # --- PROCESAMIENTO PARA GRÁFICOS ---
+        df_g = df_kpi.copy()
         
-        # Activación de variables de flota
-        df_mensual = hangar_zeus("matriz_mensual")
-        df_dashboard = hangar_zeus("Matriz_Excel_Dashboard")
+        # 1. Calcular Eficiencia (Si ya entregó y fue antes de la promesa)
+        df_g['A_TIEMPO'] = (df_g['FECHA DE ENTREGA REAL'] <= df_g['PROMESA DE ENTREGA']).astype(int)
         
-        # --- FASE 2: EJECUCIÓN DEL MÓDULO ---
-        if df_mensual is not None and df_dashboard is not None:
-            st.markdown(f"## <span style='color:#00ffa2'>⚙️ MÓDULO ZEUS: ANÁLISIS POR PAQUETERÍA</span>", unsafe_allow_html=True)
+        # 2. Calcular Costo por Caja
+        df_g['COSTO_X_CAJA'] = df_g['COSTO DE LA GUÍA'] / df_g['CANTIDAD DE CAJAS'].replace(0, 1)
         
-            # 1. FILTRO MAESTRO
-            fleteras = sorted(df_mensual['FLETERA'].unique().tolist())
-            paqueteria = st.selectbox("🎯 SELECCIONE UNIDAD A ANALIZAR:", fleteras)
+        # 3. Calcular Días de Tránsito (Solo para los entregados)
+        df_entregados = df_g[df_g['FECHA DE ENTREGA REAL'].notna()].copy()
+        df_entregados['DIAS_TRANSITO'] = (df_entregados['FECHA DE ENTREGA REAL'] - df_entregados['FECHA DE ENVÍO']).dt.days
         
-            # 2. FILTRADO Y LIMPIEZA TÁCTICA
-            f_mensual = df_mensual[df_mensual['FLETERA'] == paqueteria].copy()
-            f_dash = df_dashboard[df_dashboard['FLETERA'] == paqueteria].copy()
+        # --- RENDER DE GRÁFICOS ---
+        col_izq, col_der = st.columns(2)
         
-            # Limpieza de moneda y números
-            for col in ['COSTO DE GUIA', 'VALOR FACTURA']:
-                if col in f_mensual.columns:
-                    f_mensual[col] = pd.to_numeric(f_mensual[col].astype(str).replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+        with col_izq:
+            st.markdown("#### 🏆 Eficiencia de Cumplimiento")
+            # Ranking de Eficiencia
+            rank_ef = df_entregados.groupby('FLETERA')['A_TIEMPO'].mean().reset_index()
+            rank_ef['A_TIEMPO'] *= 100
             
-            f_mensual['CAJAS'] = pd.to_numeric(f_mensual['CAJAS'], errors='coerce').fillna(0)
-            f_mensual['FECHA_F'] = pd.to_datetime(f_mensual['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
+            chart_ef = alt.Chart(rank_ef).mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5).encode(
+                x=alt.X('A_TIEMPO:Q', title="Cumplimiento %", scale=alt.Scale(domain=[0, 100])),
+                y=alt.Y('FLETERA:N', sort='-x', title=None),
+                color=alt.value(verde_neon)
+            ).properties(height=300)
+            st.altair_chart(chart_ef, use_container_width=True)
         
-            # 3. CÁLCULOS KPI (CON BLINDAJE ANTI-NaN)
-            t_costo = f_mensual['COSTO DE GUIA'].sum()
-            t_cajas = f_mensual['CAJAS'].sum()
+        with col_der:
+            st.markdown("#### 💰 Costo Promedio por Caja")
+            # Costo por caja
+            rank_costo = df_g.groupby('FLETERA')['COSTO_X_CAJA'].mean().reset_index()
             
-            # Ecuación Almirante: Costo / Cajas
-            raw_costo_caja = t_costo / t_cajas if t_cajas > 0 else 0
-            costo_display = "$0.00" if math.isnan(raw_costo_caja) or math.isinf(raw_costo_caja) else f"${raw_costo_caja:,.2f}"
+            chart_costo = alt.Chart(rank_costo).mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5).encode(
+                x=alt.X('COSTO_X_CAJA:Q', title="USD / Caja"),
+                y=alt.Y('FLETERA:N', sort='x', title=None),
+                color=alt.value(azul_volt)
+            ).properties(height=300)
+            st.altair_chart(chart_costo, use_container_width=True)
         
-            # Puntualidad
-            total_envios = len(f_dash)
-            if total_envios > 0:
-                f_dash['ENTREGA_REAL'] = pd.to_datetime(f_dash['FECHA DE ENTREGA REAL'], dayfirst=True, errors='coerce')
-                f_dash['PROMESA'] = pd.to_datetime(f_dash['PROMESA DE ENTREGA'], dayfirst=True, errors='coerce')
-                retraso_pct = ((f_dash['ENTREGA_REAL'] > f_dash['PROMESA']).sum() / total_envios) * 100
-                retraso_display = f"{retraso_pct:.1f}%"
-            else:
-                retraso_display = "0.0%"
+        st.write("##")
         
-            # 4. DESPLIEGUE DE TARJETAS KPI
-            st.markdown("### 📊 INDICADORES DE EFICIENCIA")
-            k1, k2, k3, k4 = st.columns(4)
-            with k1:
-                st.markdown(f"<div class='kpi-container'><div class='kpi-title'>COSTO X CAJA</div><div class='kpi-value'>{costo_display}</div><div class='kpi-description'>Gasto Guía / Cajas</div></div>", unsafe_allow_html=True)
-            with k2:
-                st.markdown(f"<div class='kpi-container'><div class='kpi-title'>% RETRASO</div><div class='kpi-value'>{retraso_display}</div><div class='kpi-description'>Puntualidad de Entrega</div></div>", unsafe_allow_html=True)
-            with k3:
-                fact_t = f_mensual['VALOR FACTURA'].sum()
-                st.markdown(f"<div class='kpi-container'><div class='kpi-title'>FACTURACIÓN</div><div class='kpi-value'>${fact_t:,.0f}</div><div class='kpi-description'>Venta por Paquetería</div></div>", unsafe_allow_html=True)
-            with k4:
-                st.markdown(f"<div class='kpi-container'><div class='kpi-title'>VOLUMEN CAJAS</div><div class='kpi-value'>{int(t_cajas):,}</div><div class='kpi-description'>Total Unidades Enviadas</div></div>", unsafe_allow_html=True)
+        # --- GRÁFICO DE TIEMPOS DE ENTREGA ---
+        st.markdown("#### ⏱️ Días Promedio de Entrega (Lead Time)")
+        df_tiempos = df_entregados.groupby('FLETERA')['DIAS_TRANSITO'].mean().reset_index()
         
-            # 5. RADARES VISUALES
-            st.write("---")
-            c1, c2 = st.columns(2)
-            
-            with c1:
-                trend = f_mensual.groupby(f_mensual['FECHA_F'].dt.strftime('%Y-%m')).agg({'COSTO DE GUIA':'sum', 'CAJAS':'sum'}).reset_index()
-                trend['EFICIENCIA'] = (trend['COSTO DE GUIA'] / trend['CAJAS']).replace([math.inf, -math.inf], 0).fillna(0)
-                chart_line = alt.Chart(trend).mark_line(point=True, color='#00ffa2').encode(
-                    x=alt.X('FECHA_F:O', title="Mes"),
-                    y=alt.Y('EFICIENCIA:Q', title="Costo por Caja ($)"),
-                    tooltip=['FECHA_F', alt.Tooltip('EFICIENCIA:Q', format="$,.2f")]
-                ).properties(title="TENDENCIA DE COSTO POR CAJA", height=300)
-                st.altair_chart(chart_line, use_container_width=True)
-        
-            with c2:
-                top_c = f_mensual.groupby('RAZON SOCIAL')['VALOR FACTURA'].sum().reset_index().sort_values('VALOR FACTURA', ascending=False).head(10)
-                chart_bar = alt.Chart(top_c).mark_bar(color='#eab308', cornerRadiusTopRight=10).encode(
-                    x=alt.X('VALOR FACTURA:Q', title="Venta Real ($)"),
-                    y=alt.Y('RAZON SOCIAL:N', sort='-x', title=None)
-                ).properties(title="TOP 10 CLIENTES ASIGNADOS", height=300)
-                st.altair_chart(chart_bar, use_container_width=True)
-        
-        else:
-            st.error("🚨 ERROR: Tablas Maestras no detectadas. Verifique archivos en el hangar.")
-        # =========================================================
-                
+        chart_tiempos = alt.Chart(df_tiempos).mark_line(point=True, color=azul_volt).encode(
+            x=alt.X('FLETERA:N', title=None),
+            y=alt.Y('DIAS_TRANSITO:Q', title="Días"),
+            tooltip=['FLETERA', 'DIAS_TRANSITO']
+        ).properties(height=300)
+                        
         
         # --- NAVEGACIÓN DESDE KPIs ---
         
@@ -1828,6 +1787,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
