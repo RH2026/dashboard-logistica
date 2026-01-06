@@ -1213,38 +1213,7 @@ else:
         df_sin_entregar["DIAS_ATRASO_KPI"] = df_sin_entregar["DIAS_ATRASO_KPI"].apply(lambda x: x if x > 0 else 0)
         df_sin_entregar["DIAS_TRANS"] = (hoy - df_sin_entregar["FECHA DE ENVÍO"]).dt.days
         
-        # =========================================================
-        # --- 3. SECCIÓN DE ALERTAS (TABLA DINÁMICA) ---
-        # =========================================================
-        df_criticos = df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] > 0].copy()
         
-        if not df_criticos.empty:
-            with st.expander("⚠️ VER DETALLE DE PEDIDOS VENCIDOS (EN ESTE RANGO)", expanded=False):
-                df_ver = df_criticos.copy()
-                df_ver["FECHA DE ENVÍO"] = df_ver["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
-                df_ver["PROMESA DE ENTREGA"] = df_ver["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y')
-                
-                columnas_finales = [
-                    "NÚMERO DE PEDIDO", "NOMBRE DEL CLIENTE", "FLETERA", 
-                    "FECHA DE ENVÍO", "PROMESA DE ENTREGA", "NÚMERO DE GUÍA", 
-                    "DIAS_TRANS", "DIAS_ATRASO_KPI"
-                ]
-                
-                df_tabla_ver = df_ver[columnas_finales].rename(columns={
-                    "DIAS_ATRASO_KPI": "DÍAS ATRASO",
-                    "DIAS_TRANS": "DÍAS TRANS."
-                })
-        
-                st.dataframe(
-                    df_tabla_ver.sort_values("DÍAS ATRASO", ascending=False),
-                    use_container_width=True,
-                    hide_index=True,
-                    column_config={
-                        "NOMBRE DEL CLIENTE": st.column_config.TextColumn("NOMBRE DEL CLIENTE", width="large"),
-                        "DÍAS ATRASO": st.column_config.TextColumn("DÍAS ATRASO ⚠️")
-                    }
-                )
-        st.divider()
         
         # =========================================================
         # --- 4. CÁLCULO DE MÉTRICAS PARA TARJETAS ---
@@ -1839,6 +1808,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LIU - STRATEGIC COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
