@@ -1937,214 +1937,103 @@ else:
                   
             
 
-            def generar_grafico_fleteras_elite_v3_final():
-                import os
-                import pandas as pd
-                import altair as alt
-                import streamlit as st
-                
-                try:
-                    # 1. CARGA DE SEGURIDAD
-                    posibles_nombres = ["matriz_mensual.scv", "matriz_mensual.csv"]
-                    archivo_encontrado = next((n for n in posibles_nombres if os.path.exists(n)), None)
-                    
-                    if not archivo_encontrado:
-                        st.error("🚨 RADAR: Base de fleteras no detectada.")
-                        return
+            # =========================================================
+            # MOTOR DE GRÁFICOS DINÁMICOS (CONECTADOS AL MES)
+            # =========================================================
             
-                    df = pd.read_csv(archivo_encontrado, encoding='latin-1')
+            def generar_grafico_fleteras_elite(mes_seleccionado):
+                import os
+                try:
+                    archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
+                    df = pd.read_csv(archivo, encoding='latin-1')
                     df.columns = [c.strip().upper() for c in df.columns]
                     df['COSTO DE GUIA'] = pd.to_numeric(df['COSTO DE GUIA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
-                    
                     df['FECHA DE FACTURA'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
-                    df = df.dropna(subset=['FECHA DE FACTURA'])
-                    df['MES_LABEL'] = df['FECHA DE FACTURA'].dt.strftime('%B').str.upper()
                     
-                    # 2. FILTRO
-                    meses = df['MES_LABEL'].unique().tolist()
-                    sel_mes = alt.selection_point(fields=['MES_LABEL'], bind=alt.binding_select(options=meses, name="MES: "), value=meses[-1])
+                    # Mapeo de Mes
+                    meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
+                                 7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
+                    df['MES_TXT'] = df['FECHA DE FACTURA'].dt.month.map(meses_map)
+                    
+                    # Filtrado
+                    df_f = df[df['MES_TXT'] == mes_seleccionado.upper()]
+                    if df_f.empty: return st.info(f"Sin datos de flete para {mes_seleccionado}")
             
-                    # 3. CONSTRUCCIÓN RESPONSIVA VERTICAL
-                    base = alt.Chart(df).transform_filter(sel_mes)
-            
-                    columnas = base.mark_bar(
-                        cornerRadiusTopLeft=10,
-                        cornerRadiusTopRight=10
-                    ).encode(
-                        x=alt.X('FLETERA:N', 
-                                title=None, 
-                                sort='-y',
-                                scale=alt.Scale(paddingInner=0.15, paddingOuter=0.2),
-                                axis=alt.Axis(
-                                    labelAngle=-90, # <--- CAMBIO TÁCTICO: Títulos en Vertical
-                                    labelFontSize=11, 
-                                    labelColor='#FFFFFF', 
-                                    labelFontWeight='bold',
-                                    labelOverlap='parity'
-                                )),
-                        y=alt.Y('sum(COSTO DE GUIA):Q', 
-                                title=None, 
-                                axis=alt.Axis(format="$,.0s", gridColor='#262730', labelColor='#94a3b8')),
+                    base = alt.Chart(df_f).encode(
+                        x=alt.X('FLETERA:N', sort='-y', title=None, axis=alt.Axis(labelAngle=-45, labelColor='white')),
+                        y=alt.Y('sum(COSTO DE GUIA):Q', title=None, axis=alt.Axis(format="$,.0s")),
                         color=alt.Color('FLETERA:N', scale=alt.Scale(scheme='goldorange'), legend=None)
                     )
+                    
+                    chart = (base.mark_bar(cornerRadiusTopLeft=10, cornerRadiusTopRight=10) + 
+                             base.mark_text(align='center', baseline='bottom', dy=-10, color='white', fontWeight='bold')
+                             .encode(text=alt.Text('sum(COSTO DE GUIA):Q', format="$,.2s"))
+                            ).properties(width='container', height=400, title=f"INVERSIÓN POR FLETERA - {mes_seleccionado}")
+                    
+                    st.altair_chart(chart, use_container_width=True)
+                except: pass
             
-                    texto = columnas.mark_text(align='center', baseline='bottom', dy=-10, color='#FFFFFF', fontWeight='bold', fontSize=12
-                    ).encode(text=alt.Text('sum(COSTO DE GUIA):Q', format="$,.2s"))
-            
-                    # ENSAMBLAJE
-                    grafico = (columnas + texto).add_params(sel_mes).properties(
-                        width='container', height=450, # Aumentamos altura para dar espacio a los títulos verticales
-                        title=alt.TitleParams(text="INVERSIÓN POR FLETERA", color='#eab308', anchor='start')
-                    ).configure_view(strokeWidth=0)
-            
-                    st.altair_chart(grafico, use_container_width=True)
-            
-                except Exception as e:
-                    st.error(f"⚠️ FALLA EN FLETERAS: {e}")
-            
-            def generar_ranking_destinos_v3_final():
+            def generar_ranking_destinos_elite(mes_seleccionado):
                 import os
                 try:
                     archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
                     df = pd.read_csv(archivo, encoding='latin-1')
                     df.columns = [c.strip().upper() for c in df.columns]
                     df['VALOR FACTURA'] = pd.to_numeric(df['VALOR FACTURA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+                    df['FECHA DE FACTURA'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
                     
-                    df_geo = df.groupby('ESTADO')['VALOR FACTURA'].sum().reset_index().sort_values('VALOR FACTURA', ascending=False).head(15)
+                    meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
+                                 7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
+                    df['MES_TXT'] = df['FECHA DE FACTURA'].dt.month.map(meses_map)
+                    
+                    df_f = df[df['MES_TXT'] == mes_seleccionado.upper()]
+                    df_geo = df_f.groupby('ESTADO')['VALOR FACTURA'].sum().reset_index().sort_values('VALOR FACTURA', ascending=False).head(15)
             
-                    base = alt.Chart(df_geo).encode(
-                        x=alt.X('ESTADO:N', 
-                                title=None, 
-                                sort='-y',
-                                scale=alt.Scale(paddingInner=0.2),
-                                axis=alt.Axis(
-                                    labelAngle=-90, # <--- CAMBIO TÁCTICO: Títulos en Vertical
-                                    labelFontSize=10, 
-                                    labelColor='#FFFFFF',
-                                    labelFontWeight='bold',
-                                    labelOverlap='parity')),
-                        y=alt.Y('VALOR FACTURA:Q', title=None, axis=alt.Axis(format="$,.0s", labelColor='#94a3b8'))
-                    )
+                    chart = alt.Chart(df_geo).mark_bar(color='#00FFAA', cornerRadiusTopLeft=8, cornerRadiusTopRight=8).encode(
+                        x=alt.X('ESTADO:N', sort='-y', title=None, axis=alt.Axis(labelAngle=-45, labelColor='white')),
+                        y=alt.Y('VALOR FACTURA:Q', title=None, axis=alt.Axis(format="$,.0s")),
+                        tooltip=['ESTADO', 'VALOR FACTURA']
+                    ).properties(width='container', height=400, title=f"TOP DESTINOS: FACTURACIÓN - {mes_seleccionado}")
+                    
+                    st.altair_chart(chart, use_container_width=True)
+                except: pass
             
-                    barras = base.mark_bar(cornerRadiusTopLeft=8, cornerRadiusTopRight=8, color='#EAB308')
-                    texto = base.mark_text(align='center', baseline='bottom', dy=-10, color='#FFFFFF', fontWeight='bold', fontSize=11
-                    ).encode(text=alt.Text('VALOR FACTURA:Q', format="$,.2s"))
-            
-                    radar = (barras + texto).properties(width='container', height=450,
-                        title=alt.TitleParams(text="TOP 20: FACTURACION POR DESTINOS", color='#EAB308', anchor='start')
-                    ).configure_view(strokeWidth=0)
-            
-                    st.altair_chart(radar, use_container_width=True)
-                except Exception as e:
-                    st.error(f"⚠️ FALLA EN DESTINOS: {e}")
-            
-            # --- ACTIVACIÓN ---
-            st.write("---")
-            generar_grafico_fleteras_elite_v3_final()
-            st.write("---")
-            generar_ranking_destinos_v3_final()
-
-            def generar_top_comercial_elite_v3():
+            def generar_top_comercial_elite(mes_seleccionado):
                 import os
-                import pandas as pd
-                import altair as alt
-                import streamlit as st
-                
                 try:
-                    # 1. LOCALIZACIÓN DE INTELIGENCIA (matriz_mensual)
-                    posibles = ["matriz_mensual.csv", "matriz_mensual.scv"]
-                    archivo = next((n for n in posibles if os.path.exists(n)), None)
-                    
-                    if not archivo:
-                        st.error("🚨 RADAR: No se detectó 'matriz_mensual' en la carpeta raíz.")
-                        return
-            
-                    # 2. PROCESAMIENTO DE DATOS
+                    archivo = "matriz_mensual.scv" if os.path.exists("matriz_mensual.scv") else "matriz_mensual.csv"
                     df = pd.read_csv(archivo, encoding='latin-1')
                     df.columns = [c.strip().upper() for c in df.columns]
+                    df['VALOR FACTURA'] = pd.to_numeric(df['VALOR FACTURA'].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+                    df['FECHA DE FACTURA'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
                     
-                    # Limpieza de valores monetarios (VALOR FACTURA)
-                    if 'VALOR FACTURA' in df.columns:
-                        df['VALOR FACTURA'] = pd.to_numeric(
-                            df['VALOR FACTURA'].replace('[\$,]', '', regex=True), 
-                            errors='coerce'
-                        ).fillna(0)
-                    else:
-                        st.error("🚨 ERROR: No se encontró la columna 'VALOR FACTURA'.")
-                        return
-                        
-                    # Filtro de seguridad para NOMBRE COMERCIAL
-                    if 'NOMBRE COMERCIAL' not in df.columns:
-                        st.error("🚨 ERROR: No se encontró la columna 'NOMBRE COMERCIAL'.")
-                        return
+                    meses_map = {1:"ENERO", 2:"FEBRERO", 3:"MARZO", 4:"ABRIL", 5:"MAYO", 6:"JUNIO",
+                                 7:"JULIO", 8:"AGOSTO", 9:"SEPTIEMBRE", 10:"OCTUBRE", 11:"NOVIEMBRE", 12:"DICIEMBRE"}
+                    df['MES_TXT'] = df['FECHA DE FACTURA'].dt.month.map(meses_map)
+                    
+                    df_f = df[df['MES_TXT'] == mes_seleccionado.upper()]
+                    df_top = df_f.groupby('NOMBRE COMERCIAL')['VALOR FACTURA'].sum().reset_index().sort_values('VALOR FACTURA', ascending=False).head(20)
             
-                    # Agrupación y extracción del Top 20
-                    df_top = df.groupby('NOMBRE COMERCIAL')['VALOR FACTURA'].sum().reset_index()
-                    df_top = df_top.sort_values('VALOR FACTURA', ascending=False).head(20)
-            
-                    # 3. DISEÑO DE COMBATE RESPONSIVO
-                    base = alt.Chart(df_top).encode(
-                        x=alt.X('NOMBRE COMERCIAL:N', 
-                                title=None, 
-                                sort='-y',
-                                scale=alt.Scale(paddingInner=0.2), 
-                                axis=alt.Axis(
-                                    labelAngle=-90,         # Alineación vertical táctica
-                                    labelFontSize=10, 
-                                    labelColor='#FFFFFF', 
-                                    labelFontWeight='bold',
-                                    labelOverlap='parity'
-                                )),
-                        y=alt.Y('VALOR FACTURA:Q', 
-                                title=None, 
-                                axis=alt.Axis(
-                                    format="$,.0s",         # Formato compacto (k, M)
-                                    gridColor='#262730', 
-                                    labelColor='#94a3b8'
-                                ))
-                    )
-            
-                    # CAPA 1: Columnas "Torre de Energía"
-                    columnas = base.mark_bar(
-                        cornerRadiusTopLeft=8, 
-                        cornerRadiusTopRight=8,
-                        color='#00D4FF' # Dorado OPS
-                    )
-            
-                    # CAPA 2: Etiquetas de Datos (Blanco Premium)
-                    texto = base.mark_text(
-                        align='center', 
-                        baseline='bottom', 
-                        dy=-10, 
-                        color='#FFFFFF', 
-                        fontWeight='bold', 
-                        fontSize=11
-                    ).encode(
-                        text=alt.Text('VALOR FACTURA:Q', format="$,.2s")
-                    )
-            
-                    # ENSAMBLAJE FINAL
-                    radar_comercial = (columnas + texto).properties(
-                        width='container', 
-                        height=450,
-                        title=alt.TitleParams(
-                            text="TOP 20: FACTURACIÓN POR CLIENTE",
-                            subtitle="Análisis comercial de alto nivel - Matriz Mensual",
-                            fontSize=20,
-                            color='#00D4FF',
-                            anchor='start'
-                        )
-                    ).configure_view(strokeWidth=0)
-            
-                    st.altair_chart(radar_comercial, use_container_width=True)
-            
-                except Exception as e:
-                    st.error(f"⚠️ FALLA EN RADAR COMERCIAL: {e}")
-            
-            # --- ACTIVACIÓN ---
+                    chart = alt.Chart(df_top).mark_bar(color='#00D4FF', cornerRadiusTopLeft=8, cornerRadiusTopRight=8).encode(
+                        x=alt.X('NOMBRE COMERCIAL:N', sort='-y', title=None, axis=alt.Axis(labelAngle=-45, labelColor='white')),
+                        y=alt.Y('VALOR FACTURA:Q', title=None, axis=alt.Axis(format="$,.0s")),
+                        tooltip=['NOMBRE COMERCIAL', 'VALOR FACTURA']
+                    ).properties(width='container', height=400, title=f"TOP CLIENTES: FACTURACIÓN - {mes_seleccionado}")
+                    
+                    st.altair_chart(chart, use_container_width=True)
+                except: pass
+
+        # --- DESPLIEGUE TÁCTICO DE GRÁFICOS ---
             st.write("---")
-            generar_top_comercial_elite_v3()
-        
+            st.markdown(f"### 📊 Análisis Detallado: {mes_sel}")
+            
+            # Llamada a los 3 gráficos pasando el mes del sidebar
+            generar_grafico_fleteras_elite(mes_sel)
+            st.write("---")
+            generar_ranking_destinos_elite(mes_sel)
+            st.write("---")
+            generar_top_comercial_elite(mes_sel)
+               
         # --- PIE DE PAGINA------------------------------------------- ---
                
         st.markdown('</div>', unsafe_allow_html=True)
@@ -2152,6 +2041,7 @@ else:
         
         
     
+
 
 
 
