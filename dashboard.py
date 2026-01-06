@@ -1578,6 +1578,7 @@ else:
             </style>
         """, unsafe_allow_html=True)
         
+        # --- 1. MOTOR DE DATOS (CÁLCULO DINÁMICO DE PORCENTAJE) ---
         @st.cache_data
         def cargar_datos_matriz_elite():
             import os
@@ -1586,24 +1587,19 @@ else:
                 df = pd.read_csv(archivo, encoding='latin-1')
                 df.columns = [c.strip().upper() for c in df.columns]
 
+                # Limpieza de números
                 def limpiar_num(v):
                     if pd.isna(v): return 0.0
                     s = str(v).replace('$', '').replace(',', '').replace('%', '').strip()
                     try: return float(s)
                     except: return 0.0
 
-                # --- MAPEADOR DE COLUMNAS REALES ---
-                # Ajustamos 'CAJAS ENVIADAS' por 'CAJAS'
-                col_cajas = 'CAJAS' if 'CAJAS' in df.columns else 'CAJAS ENVIADAS'
-                col_incidencias = 'VALUACION INCIDENCIAS' if 'VALUACION INCIDENCIAS' in df.columns else None
-
-                for col in ['COSTO DE GUIA', 'VALOR FACTURA', col_cajas]:
-                    if col in df.columns: df[col] = df[col].apply(limpiar_num)
+                # Identificar columnas reales (Soporte para 'CAJAS' o 'CAJAS ENVIADAS')
+                c_cajas = 'CAJAS' if 'CAJAS' in df.columns else 'CAJAS ENVIADAS'
                 
-                if col_incidencias:
-                    df[col_incidencias] = df[col_incidencias].apply(limpiar_num)
-                else:
-                    df['VALUACION INCIDENCIAS'] = 0.0 # Crear columna vacía si no existe
+                cols_to_fix = ['COSTO DE GUIA', 'VALOR FACTURA', c_cajas, 'VALUACION INCIDENCIAS']
+                for col in cols_to_fix:
+                    if col in df.columns: df[col] = df[col].apply(limpiar_num)
 
                 # Procesamiento de Fechas
                 df['FECHA_DT'] = pd.to_datetime(df['FECHA DE FACTURA'], dayfirst=True, errors='coerce')
@@ -1612,51 +1608,62 @@ else:
                 df['MES'] = df['FECHA_DT'].dt.month.map(meses_map)
                 df = df.dropna(subset=['MES'])
 
-                # AGRUPACIÓN TÁCTICA
+                # --- AGRUPACIÓN Y CÁLCULO DE PORCENTAJE ---
                 resumen = df.groupby('MES').agg({
                     'COSTO DE GUIA': 'sum', 
                     'VALOR FACTURA': 'sum',
-                    col_cajas: 'sum', 
+                    c_cajas: 'sum',
                     'VALUACION INCIDENCIAS': 'sum'
                 }).reset_index()
 
-                # FÓRMULAS CON NOMBRES ESTANDARIZADOS PARA LAS TARJETAS
+                # CÁLCULO MANUAL SEGÚN SU PROTOCOLO: (Guía / Factura) * 100
                 resumen['COSTO LOGÍSTICO'] = (resumen['COSTO DE GUIA'] / resumen['VALOR FACTURA']) * 100
-                resumen['COSTO POR CAJA'] = resumen['COSTO DE GUIA'] / resumen[col_cajas]
+                resumen['COSTO POR CAJA'] = resumen['COSTO DE GUIA'] / resumen[c_cajas]
+                
+                # Targets y Campos de Seguridad
                 resumen['META INDICADOR'] = 7.0        
                 resumen['COSTO POR CAJA 2024'] = 59.0  
                 resumen['PORCENTAJE DE INCIDENCIAS'] = (resumen['VALUACION INCIDENCIAS'] / resumen['VALOR FACTURA']) * 100
+                resumen['INCREMENTO + VI'] = resumen['VALUACION INCIDENCIAS']
                 resumen['% DE INCREMENTO VS 2024'] = 0.0
-                resumen['INCREMENTO + VI'] = resumen['VALUACION INCIDENCIAS'] 
 
                 return resumen.rename(columns={
                     'COSTO DE GUIA': 'COSTO DE FLETE', 
                     'VALOR FACTURA': 'FACTURACIÓN',
-                    col_cajas: 'CAJAS ENVIADAS'
+                    c_cajas: 'CAJAS ENVIADAS'
                 })
             except Exception as e:
                 st.error(f"Error Motor: {e}")
                 return None
         
-        # --- 2. ACTIVACIÓN DE DATOS Y SIDEBAR ---
+        # --- 2. ACTIVACIÓN DE DATOS Y SIDEBAR (CON ESCUDO ANTI-ERROR) ---
         df_a = cargar_datos_matriz_elite()
         
+        # Inicializamos variables de seguridad para que siempre existan
+        mes_sel = None
+        mes_comp = None
+        modo_comp = False
+        df_mes = None
+        df_mes_b = None
+
         if df_a is not None:
-            # Configuración de meses para el selector
+            # 1. Configuración de meses
             meses_disponibles = df_a["MES"].unique().tolist()
             
-            # Selector de Mes en Sidebar
+            # 2. Selectores en Sidebar
             mes_sel = st.sidebar.selectbox("MES DEL REPORTE", meses_disponibles)
-            
-            # Modo Comparativo
             modo_comp = st.sidebar.checkbox("Activar comparativa Mes vs Mes")
             
-            # Extracción de Datos del Mes Principal
+            # 3. Datos del mes principal (Obligatorio)
             df_mes = df_a[df_a["MES"] == mes_sel].iloc[0]
             
+            # 4. Datos del mes comparativo (Solo si se activa)
             if modo_comp:
                 mes_comp = st.sidebar.selectbox("COMPARAR CONTRA:", meses_disponibles, index=0)
                 df_mes_b = df_a[df_a["MES"] == mes_comp].iloc[0]
+            else:
+                # Si no hay comparativa, mes_comp toma el mismo valor para no romper el título
+                mes_comp = mes_sel
         
         # --- 3. CSS PARA TARJETAS ELITE ---
         st.markdown("""
@@ -1840,6 +1847,7 @@ else:
         st.warning("⚠️ No se detectaron datos en 'matriz_mensual.csv'. Por favor, cargue la base de datos en la pestaña correspondiente.")
 
         
+
 
 
 
