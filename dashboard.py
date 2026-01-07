@@ -2162,21 +2162,34 @@ else:
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
 
     # ------------------------------------------------------------------
-    # BLOQUE 11: LOGISTICS INTELLIGENCE HUB (MOTOR DE RECOMENDACIÓN)
+    # MAIN 4: LOGISTICS INTELLIGENCE HUB (MOTOR DE RECOMENDACIÓN
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "HubLogistico":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
         # --- ENCABEZADO MINIMALISTA (ESTILO PRO) ---
         st.markdown("""
-            <div style='text-align: center; padding: 10px 0px 30px 0px;'>
-                <h1 style='color: white; font-family: "Inter", sans-serif; font-weight: 800; font-size: 42px; margin-bottom: 5px; letter-spacing: -1px;'>
-                    LOGISTICS<span style='color: #00D4FF;'>HUB</span>
+            <div style='text-align: center; padding: 20px 0px 10px 0px;'>
+                <h1 style='color: #FFFFFF; font-family: "Inter", sans-serif; font-weight: 900; font-size: 48px; margin-bottom: 0px; letter-spacing: 2px; text-transform: uppercase;'>
+                    LOGISTICS <span style='color: #FFFFFF;'>HUB</span>
                 </h1>
-                <p style='color: #94a3b8; font-size: 16px; font-weight: 400; letter-spacing: 1px;'>
-                    Optimización Automática de Fleteras y Costos
+                <p style='color: #4FB3A2; font-size: 18px; font-weight: 500; letter-spacing: 0.5px; margin-top: 10px;'>
+                    Logística & Rendimiento de Paqueterías
                 </p>
+                <center>
+                    <div style='background-color: #00FFAA; height: 3px; width: 60px; margin-top: 15px; border-radius: 2px;'></div>
+                </center>
             </div>
+            
+            <hr style="
+                border: 0;
+                height: 2px;
+                background: #00D4FF;
+                box-shadow: 0px 0px 15px 2px rgba(0, 212, 255, 0.7);
+                margin-top: 20px;
+                margin-bottom: 30px;
+                border-radius: 10px;
+            ">
         """, unsafe_allow_html=True)
 
         # --- MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA) ---
@@ -2257,6 +2270,7 @@ else:
 
         # --- PIE DE PÁGINA (ESTILO ORIGINAL) ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:40px; padding-bottom: 20px;'>LOGISTICS INTELLIGENCE UNIT - HUB ENGINE V1.0</div>", unsafe_allow_html=True)
+
 
 
 
