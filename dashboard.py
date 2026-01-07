@@ -2239,48 +2239,49 @@ else:
 
         if dict_rec:
             try:
-                # 2. Cargar Matriz de Pedidos
-                p = pd.read_csv("matriz_pedidos.csv", encoding='latin-1')
+            # 2. Cargar Matriz de Pedidos
+            p = pd.read_csv("matriz_pedidos.csv", encoding='latin-1')
+            
+            # --- LIMPIEZA CRÍTICA DE COLUMNAS ---
+            # Esto quita espacios, acentos y pone todo en mayúsculas para que coincida sí o sí
+            p.columns = [str(c).strip().upper() for c in p.columns]
+            # Normalizamos la palabra para evitar problemas con la Ó
+            p.columns = [c.replace('RECOMENDACION', 'RECOMENDACIÓN') for c in p.columns]
+
+            # 3. Asignar recomendación
+            # Buscamos si existe alguna columna que se parezca a RECOMENDACIÓN
+            col_destino_final = [c for c in p.columns if 'RECOMENDACIÓN' in c or 'RECOMENDACION' in c]
+
+            if col_destino_final:
+                target_col = col_destino_final[0] # Usamos la que encontró
                 
-                # --- LIMPIEZA CRÍTICA DE COLUMNAS ---
-                # Esto quita espacios, acentos y pone todo en mayúsculas para que coincida sí o sí
-                p.columns = [str(c).strip().upper() for c in p.columns]
-                # Normalizamos la palabra para evitar problemas con la Ó
-                p.columns = [c.replace('RECOMENDACION', 'RECOMENDACIÓN') for c in p.columns]
-
-                # 3. Asignar recomendación
-                # Buscamos si existe alguna columna que se parezca a RECOMENDACIÓN
-                col_destino_final = [c for c in p.columns if 'RECOMENDACIÓN' in c or 'RECOMENDACION' in c]
-
-                if col_destino_final:
-                    target_col = col_destino_final[0] # Usamos la que encontró
-                    
-                    # Inyectar datos del historial
-                    p[target_col] = p[col_destino_ref].map(dict_rec).fillna("Sin datos previos")
-                    
-                    st.success(f"🎯 Análisis completado: Columna '{target_col}' actualizada.")
-                    
-                    # --- INTERFAZ DE TABLA ---
-                    st.write("### 📋 Planificación de Envíos")
-                    st.dataframe(p, use_container_width=True)
-                    
-                    # Botón de Descarga
-                    csv_export = p.to_csv(index=False).encode('utf-8')
-                    st.download_button(
-                        label="📥 DESCARGAR MATRIZ PROCESADA",
-                        data=csv_export,
-                        file_name="matriz_pedidos_analizada.csv",
-                        mime="text/csv"
-                    )
-                else:
-                    # Si falla, mostramos qué columnas sí detectó Python para diagnosticar
-                    st.error(f"❌ No encontré 'RECOMENDACIÓN'. Columnas detectadas: {list(p.columns)}")
+                # Inyectar datos del historial
+                p[target_col] = p[col_destino_ref].map(dict_rec).fillna("Sin datos previos")
+                
+                st.success(f"🎯 Análisis completado: Columna '{target_col}' actualizada.")
+                
+                # --- INTERFAZ DE TABLA ---
+                st.write("### 📋 Planificación de Envíos")
+                st.dataframe(p, use_container_width=True)
+                
+                # Botón de Descarga
+                csv_export = p.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 DESCARGAR MATRIZ PROCESADA",
+                    data=csv_export,
+                    file_name="matriz_pedidos_analizada.csv",
+                    mime="text/csv"
+                )
+            else:
+                # Si falla, mostramos qué columnas sí detectó Python para diagnosticar
+                st.error(f"❌ No encontré 'RECOMENDACIÓN'. Columnas detectadas: {list(p.columns)}")
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
 
         # --- PIE DE PÁGINA (ESTILO ORIGINAL) ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:40px; padding-bottom: 20px;'>LOGISTICS INTELLIGENCE UNIT - HUB ENGINE V1.0</div>", unsafe_allow_html=True)
+
 
 
 
