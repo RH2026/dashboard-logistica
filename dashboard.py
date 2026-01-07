@@ -2198,25 +2198,26 @@ else:
         @st.cache_data
         def motor_logistico_direcciones():
             try:
-                # 1. ANALIZAR HISTORIAL
-                h = pd.read_csv("matriz_historial.csv", encoding='latin-1')
-                h.columns = [str(c).strip().upper() for c in h.columns]
+                # 1. ANALIZAR HISTORIAL (Usamos utf-8-sig para ignorar el BOM)
+                h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
                 
-                # Normalizar columna DIRECCION (quitar acento para búsqueda interna)
-                h.columns = [c.replace('DIRECCIÓN', 'DIRECCION') for c in h.columns]
+                # Normalización total de columnas
+                h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
+                h.columns = [str(c).strip().upper() for c in h.columns]
                 
                 # Detectar columnas críticas
                 col_costo = [c for c in h.columns if 'COSTO' in c or 'GUIA' in c][0]
                 col_flete = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
+                col_h_dir = [c for c in h.columns if 'DIRECCION' in c][0]
                 
                 # Limpiar costos
                 h[col_costo] = pd.to_numeric(h[col_costo].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
                 
                 # Encontrar la mejor fletera por cada DIRECCION única
-                mejores = h.loc[h.groupby('DIRECCION')[col_costo].idxmin()]
+                mejores = h.loc[h.groupby(col_h_dir)[col_costo].idxmin()]
                 
                 # Crear diccionario {Dirección: "Fletera ($)"}
-                mapeo = mejores.set_index('DIRECCION').apply(
+                mapeo = mejores.set_index(col_h_dir).apply(
                     lambda x: f"{x[col_flete]} (${x[col_costo]:,.2f})", axis=1
                 ).to_dict()
                 
@@ -2230,33 +2231,35 @@ else:
 
         if dict_rec:
             try:
-                p = pd.read_csv("matriz_pedidos.csv", encoding='latin-1')
-                # Normalizar cabeceras de pedidos
+                # Cargamos con utf-8-sig para limpiar el 'Ï»¿'
+                p = pd.read_csv("matriz_pedidos.csv", encoding='utf-8-sig')
+                
+                # NORMALIZACIÓN QUIRÚRGICA: Quita acentos, espacios y caracteres raros
+                p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
                 p.columns = [str(c).strip().upper() for c in p.columns]
-                p.columns = [c.replace('DIRECCIÓN', 'DIRECCION') for c in p.columns]
-                p.columns = [c.replace('RECOMENDACION', 'RECOMENDACIÓN') for c in p.columns]
 
-                if 'DIRECCION' in p.columns and 'RECOMENDACIÓN' in p.columns:
+                # Ahora las columnas se llaman simplemente DIRECCION y RECOMENDACION (sin acento)
+                if 'DIRECCION' in p.columns and 'RECOMENDACION' in p.columns:
                     # ASIGNACIÓN DIRECTA
-                    p['RECOMENDACIÓN'] = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
+                    p['RECOMENDACION'] = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
                     
-                    st.success("✅ Análisis por DIRECCIÓN completado con éxito.")
+                    st.success("✅ Análisis por DIRECCIÓN completado. Caracteres especiales normalizados.")
                     
                     # Mostrar resultados
                     st.dataframe(p, use_container_width=True)
                     
                     # Botón de Descarga
-                    csv_data = p.to_csv(index=False).encode('utf-8')
+                    csv_data = p.to_csv(index=False).encode('utf-8-sig')
                     st.download_button("📥 DESCARGAR MATRIZ ANALIZADA", csv_data, "matriz_pedidos_analizada.csv", "text/csv")
                 else:
-                    st.error(f"Columnas no encontradas. Detecté: {list(p.columns)}")
-                    st.info("Asegúrate de que 'matriz_pedidos.csv' tenga las columnas: DIRECCION y RECOMENDACIÓN")
+                    st.error(f"Columnas no detectadas después de limpiar: {list(p.columns)}")
                     
             except Exception as e:
                 st.warning(f"Error en matriz_pedidos: {e}")
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
+
 
 
 
