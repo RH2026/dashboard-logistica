@@ -2193,6 +2193,8 @@ else:
         """, unsafe_allow_html=True)                   
     
         # --- MOTOR DE INTELIGENCIA (BASE MAESTRA) ---
+        # --- MOTOR DE INTELIGENCIA ---
+        @st.cache_data
         def motor_logistico_central():
             try:
                 h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
@@ -2217,12 +2219,14 @@ else:
                 p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
 
                 if 'DIRECCION' in p.columns:
-                    # PROCESO
+                    # PROCESO DE ANÁLISIS
                     recomendaciones = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
                     idx_dir = p.columns.get_loc('DIRECCION')
                     
-                    if 'RECOMENDACION' in p.columns: p['RECOMENDACION'] = recomendaciones
-                    else: p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
+                    if 'RECOMENDACION' in p.columns: 
+                        p['RECOMENDACION'] = recomendaciones
+                    else: 
+                        p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
                     
                     st.success("🎯 Análisis completado con éxito.")
                     st.dataframe(p, use_container_width=True)
@@ -2232,19 +2236,22 @@ else:
                     
                     with col_btn1:
                         if st.button("💾 GUARDAR EN LOG MAESTRO", use_container_width=True):
-                            p['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            # Sellar con fecha y hora
+                            p_log = p.copy()
+                            p_log['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             archivo_log = "log_maestro_envios.csv"
-                            # Guardado acumulativo (Append)
-                            modo = 'a' if os.path.exists(archivo_log) else 'w'
-                            encabezado = not os.path.exists(archivo_log)
-                            p.to_csv(archivo_log, mode=modo, index=False, header=encabezado, encoding='utf-8-sig')
-                            st.toast("Archivo guardado en el servidor", icon="✅")
+                            
+                            # Lógica de guardado (Append)
+                            existe = os.path.exists(archivo_log)
+                            p_log.to_csv(archivo_log, mode='a', index=False, header=not existe, encoding='utf-8-sig')
+                            st.toast("Archivo guardado exitosamente", icon="✅")
 
                     with col_btn2:
+                        # VARIABLE CORREGIDA: csv_final
                         csv_final = p.to_csv(index=False).encode('utf-8-sig')
                         st.download_button(
                             label="📥 DESCARGAR RESULTADOS",
-                            data=csv_data,
+                            data=csv_final,
                             file_name=f"Analisis_{datetime.date.today()}.csv",
                             mime="text/csv",
                             use_container_width=True
@@ -2252,18 +2259,19 @@ else:
                 else:
                     st.error("No se encontró la columna DIRECCION")
             except Exception as e:
-                st.error(f"Error: {e}")
+                st.error(f"Error procesando archivo: {e}")
 
         # --- VISUALIZADOR DEL LOG ---
-        with st.expander("📂 Consultar Histórico Acumulado"):
+        with st.expander("📂 Consultar Histórico Acumulado (Log Maestro)"):
             if os.path.exists("log_maestro_envios.csv"):
                 log_df = pd.read_csv("log_maestro_envios.csv", encoding='utf-8-sig')
                 st.write(f"Registros en memoria: {len(log_df)}")
-                st.dataframe(log_df.tail(50), use_container_width=True) # Muestra los últimos 50
+                st.dataframe(log_df.tail(100), use_container_width=True)
             else:
                 st.info("Aún no hay datos guardados en el Log Maestro.")
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
+
 
 
 
