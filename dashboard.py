@@ -2194,67 +2194,97 @@ else:
     
         # --- MOTOR DE INTELIGENCIA (BASE MAESTRA) ---
         @st.cache_data
-        def cargar_inteligencia_maestra():
+        def motor_logistico_excel_vFinal():
             try:
+                # 1. ANALIZAR HISTORIAL LOCAL
                 h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
                 h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
                 h.columns = [str(c).strip().upper() for c in h.columns]
                 
-                col_h_precio = [c for c in h.columns if 'PRECIO POR CAJA' in c][0]
+                # Ubicar columnas por palabras clave
+                col_h_precio = [c for c in h.columns if 'PRECIO POR CAJA' in c or 'PRECIO_X_CAJA' in c][0]
                 col_h_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
                 col_h_dir = [c for c in h.columns if 'DIRECCION' in c][0]
                 
                 h[col_h_precio] = pd.to_numeric(h[col_h_precio], errors='coerce').fillna(0)
                 h = h[h[col_h_precio] > 0.1].copy()
                 
+                # Seleccionar la mejor tarifa por dirección
                 mejores = h.loc[h.groupby(col_h_dir)[col_h_precio].idxmin()]
-                return mejores.set_index(col_h_dir).apply(
+                
+                # Diccionario: {DIRECCION: "FLETERA ($X.XX p/caja)"}
+                mapeo = mejores.set_index(col_h_dir).apply(
                     lambda x: f"{x[col_h_flet]} (${x[col_h_precio]:,.2f} p/caja)", axis=1
                 ).to_dict()
+                
+                return mapeo
             except Exception as e:
                 st.error(f"Error en base maestra: {e}")
                 return None
 
-        dict_rec = cargar_inteligencia_maestra()
+        # Cargar conocimiento
+        dict_rec = motor_logistico_excel_vFinal()
 
-        # --- ZONA DE CARGA ---
-        st.markdown("### 📥 Carga de Pedidos")
-        file_p = st.file_uploader("Suba su archivo de pedidos (Cualquier formato de columnas)", type="csv")
+        # --- ZONA DE CARGA DINÁMICA ---
+        st.markdown("### 📥 Carga de Manifiesto para Análisis")
+        file_p = st.file_uploader("Arrastre su archivo de pedidos (CSV)", type="csv")
 
         if file_p and dict_rec:
             try:
+                # Leer el archivo subido
                 p = pd.read_csv(file_p, encoding='utf-8-sig')
-                # Normalizamos nombres de columnas para encontrarlas fácil
-                original_cols = list(p.columns)
+                
+                # Guardar nombres originales para el Excel final, pero normalizar para el proceso
                 p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
                 p.columns = [str(c).strip().upper() for c in p.columns]
 
                 if 'DIRECCION' in p.columns:
-                    # 1. Realizar el mapeo de inteligencia
+                    # 1. Aplicar Inteligencia
                     recomendaciones = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
                     
-                    # 2. Localizar la posición de DIRECCION para insertar después
+                    # 2. Insertar columna automáticamente después de DIRECCION
                     idx_dir = p.columns.get_loc('DIRECCION')
-                    
-                    # 3. Insertar la columna (si ya existe la sobreescribe, si no la crea)
                     if 'RECOMENDACION' in p.columns:
                         p['RECOMENDACION'] = recomendaciones
                     else:
                         p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
                     
-                    st.success("🎯 Análisis completado. Columna 'RECOMENDACION' generada dinámicamente.")
+                    st.success("🎯 Análisis completado con éxito.")
                     st.dataframe(p, use_container_width=True)
+
+                    # --- MOTOR DE EXPORTACIÓN A EXCEL (.XLSX) ---
+                    output = io.BytesIO()
+                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                        p.to_excel(writer, index=False, sheet_name='Analisis_Logistico')
+                        
+                        # Formateo de celdas
+                        workbook  = writer.book
+                        worksheet = writer.sheets['Analisis_Logistico']
+                        
+                        # Ajuste automático de columnas
+                        for i, col in enumerate(p.columns):
+                            column_len = max(p[col].astype(str).str.len().max(), len(col)) + 2
+                            worksheet.set_column(i, i, column_len)
                     
-                    csv_final = p.to_csv(index=False).encode('utf-8-sig')
-                    st.download_button("📥 DESCARGAR ANÁLISIS", csv_final, "pedidos_procesados.csv", "text/csv")
+                    # Botón de Descarga Excel
+                    st.download_button(
+                        label="📥 DESCARGAR RESULTADOS EN EXCEL",
+                        data=output.getvalue(),
+                        file_name=f"Plan_Logistico_{datetime.date.today()}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
                 else:
                     st.error("❌ El archivo no contiene la columna 'DIRECCION'.")
+            
             except Exception as e:
                 st.error(f"Error procesando archivo: {e}")
+        
         elif not file_p:
-            st.info("💡 Capitán, suba cualquier archivo que contenga una columna llamada 'DIRECCION'.")
+            st.info("💡 Capitán, suba el archivo de pedidos. El sistema creará la columna RECOMENDACION automáticamente.")
 
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT - V. AUTO-COL</div>", unsafe_allow_html=True)
+        # --- PIE DE PÁGINA ---
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT - EXCEL COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
