@@ -2171,9 +2171,10 @@ else:
         
         st.markdown("""
             <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>                
-                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>LOGISTIC <span style='color:#FFFFFF;'>HUB</span></h1>
-                <div style='background-color: #00FFAA; height: 3px; width: 60px; margin-top: 15px; border-radius: 2px;'></div></center>
-                <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>Optimización Automática de Fleteras y Costos</p>                
+                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>LOGISTIC <span style='color:#FFFFFF;'>HUB</span></h1>                
+                <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>Optimización Automática de Fleteras y Costos</p>
+                <div style='background-color: #00FFAA; height: 3px; width: 60px; margin-top: 15px; border-radius: 2px;'></div>
+                </center>
             </div>
         """, unsafe_allow_html=True)    
 
@@ -2255,6 +2256,7 @@ else:
 
         # --- PIE DE PÁGINA (ESTILO ORIGINAL) ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:40px; padding-bottom: 20px;'>LOGISTICS INTELLIGENCE UNIT - HUB ENGINE V1.0</div>", unsafe_allow_html=True)
+
 
 
 
