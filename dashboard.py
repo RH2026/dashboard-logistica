@@ -359,7 +359,11 @@ else:
                 if st.button("REPORTE MENSUAL", use_container_width=True, key="h_rep"):
                     st.session_state.pagina = "Reporte"
                     st.rerun()
-                                      
+
+                if st.button("INTELIGENCIA LOGÍSTICA", use_container_width=True, key="h_hub"):
+                st.session_state.pagina = "HubLogistico"
+                st.rerun()
+                                                  
                                        
         st.markdown("""
             <hr style="
@@ -1107,8 +1111,9 @@ else:
                 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
 
+    
     # ------------------------------------------------------------------
-    # BLOQUE 9: PÁGINA DE KPIs (VISTA GERENCIAL DEFINITIVA)
+    # MAIN 2: SEGUIMIENTO
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "KPIs":
         # 1. Fuerza el scroll hacia arriba
@@ -1175,6 +1180,10 @@ else:
                 if st.button("REPORTE MENSUAL", use_container_width=True, key="h_rep"):
                     st.session_state.pagina = "Reporte"
                     st.rerun()
+
+                if st.button("INTELIGENCIA LOGÍSTICA", use_container_width=True, key="h_hub"):
+                st.session_state.pagina = "HubLogistico"
+                st.rerun()
         
               
                       
@@ -1498,7 +1507,7 @@ else:
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
     
     # ------------------------------------------------------------------
-    # BLOQUE 10: REPORTE EJECUTIVO DE ALTO NIVEL
+    # MAIN 03: REPORTE OPS
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "Reporte":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
@@ -1563,6 +1572,10 @@ else:
                 if st.button("REPORTE MENSUAL", use_container_width=True, key="h_rep"):
                     st.session_state.pagina = "Reporte"
                     st.rerun()
+
+                if st.button("INTELIGENCIA LOGÍSTICA", use_container_width=True, key="h_hub"):
+                st.session_state.pagina = "HubLogistico"
+                st.rerun()
         
         st.divider()
                
@@ -2148,6 +2161,102 @@ else:
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
 
+    # ------------------------------------------------------------------
+    # BLOQUE 11: LOGISTICS INTELLIGENCE HUB (MOTOR DE RECOMENDACIÓN)
+    # ------------------------------------------------------------------
+    elif st.session_state.pagina == "HubLogistico":
+        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+        
+        # --- ENCABEZADO MINIMALISTA (ESTILO PRO) ---
+        st.markdown("""
+            <div style='text-align: center; padding: 10px 0px 30px 0px;'>
+                <h1 style='color: white; font-family: "Inter", sans-serif; font-weight: 800; font-size: 42px; margin-bottom: 5px; letter-spacing: -1px;'>
+                    LOGISTICS<span style='color: #00D4FF;'>HUB</span>
+                </h1>
+                <p style='color: #94a3b8; font-size: 16px; font-weight: 400; letter-spacing: 1px;'>
+                    Optimización Automática de Fleteras y Costos
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # --- MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA) ---
+        c1, c2 = st.columns([0.85, 0.15])
+        with c2:
+            with st.popover("☰", use_container_width=True):
+                st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                if st.button("PANEL PRINCIPAL", use_container_width=True, key="hub_btn_1"):
+                    st.session_state.pagina = "principal"
+                    st.rerun()
+                if st.button("REPORTE MENSUAL", use_container_width=True, key="hub_btn_2"):
+                    st.session_state.pagina = "Reporte"
+                    st.rerun()
+
+        st.divider()
+
+        # --- MOTOR DE INTELIGENCIA LOGÍSTICA ---
+        @st.cache_data
+        def procesar_recomendaciones():
+            try:
+                # 1. Cargar Historial para "Aprender"
+                h = pd.read_csv("matriz_historial.csv", encoding='latin-1')
+                h.columns = [c.strip().upper() for c in h.columns]
+                
+                # Limpiar columna de costo (Busca 'COSTO' o 'FLETE')
+                cost_col = [c for c in h.columns if 'COSTO' in c or 'FLETE' in c][0]
+                h[cost_col] = pd.to_numeric(h[cost_col].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+                
+                # Identificar columna de destino (ESTADO o CIUDAD)
+                dest_col = [c for c in h.columns if 'ESTADO' in c or 'DESTINO' in c or 'CIUDAD' in c][0]
+                carrier_col = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
+
+                # 2. Calcular Mejores Opciones por Destino
+                inteligencia = h.groupby([dest_col, carrier_col])[cost_col].mean().reset_index()
+                return inteligencia, dest_col, carrier_col, cost_col
+            except Exception as e:
+                st.error(f"Error cargando matriz_historial.csv: {e}")
+                return None, None, None, None
+
+        stats, col_dest, col_flet, col_cost = procesar_recomendaciones()
+
+        if stats is not None:
+            st.markdown("### 📥 Pedidos Pendientes por Asignar")
+            
+            try:
+                p = pd.read_csv("matriz_pedidos.csv", encoding='latin-1')
+                p.columns = [c.strip().upper() for c in p.columns]
+                
+                # Intentamos cruzar pedidos nuevos con la mejor fletera histórica
+                mejor_por_destino = stats.loc[stats.groupby(col_dest)[col_cost].idxmin()]
+                
+                # Merge: Asignar recomendación automática
+                p_recomendado = pd.merge(p, mejor_por_destino[[col_dest, col_flet, col_cost]], on=col_dest, how='left')
+                
+                # Renombrar para mayor claridad
+                p_recomendado = p_recomendado.rename(columns={
+                    col_flet: 'FLETERA_RECOMENDADA',
+                    col_cost: 'COSTO_ESTIMADO'
+                })
+
+                # --- VISTA DE TARJETAS DE ACCIÓN ---
+                col_acc1, col_acc2 = st.columns(2)
+                with col_acc1:
+                    st.metric("Pedidos por Enviar", len(p))
+                with col_acc2:
+                    ahorro_potencial = (p_recomendado['COSTO_ESTIMADO'].sum() * 0.10) # Estimación de ahorro
+                    st.metric("Ahorro Proyectado", f"${ahorro_potencial:,.2f}", "+10% Eficiencia")
+
+                st.write("#### Plan de Carga Sugerido")
+                st.dataframe(p_recomendado, use_container_width=True)
+                
+                # Botón de exportación
+                csv = p_recomendado.to_csv(index=False).encode('utf-8')
+                st.download_button("DESCARGAR PLAN DE ENVÍO", csv, "plan_logistico_sugerido.csv", "text/csv")
+
+            except Exception as e:
+                st.info("Carga 'matriz_pedidos.csv' para ver las recomendaciones por pedido.")
+
+        # --- PIE DE PÁGINA (ESTILO ORIGINAL) ---
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:40px; padding-bottom: 20px;'>LOGISTICS INTELLIGENCE UNIT - HUB ENGINE V1.0</div>", unsafe_allow_html=True)
 
 
 
