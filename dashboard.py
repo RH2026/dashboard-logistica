@@ -2192,37 +2192,57 @@ else:
             ">
         """, unsafe_allow_html=True)  
 
-        # --- MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA) ---
-        c1, c2 = st.columns([0.85, 0.15])
-        with c2:
-            with st.popover("☰", use_container_width=True):
-                st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                if st.button("PANEL PRINCIPAL", use_container_width=True, key="hub_btn_1"):
-                    st.session_state.pagina = "principal"
-                    st.rerun()
-                if st.button("REPORTE MENSUAL", use_container_width=True, key="hub_btn_2"):
-                    st.session_state.pagina = "Reporte"
-                    st.rerun()
+        ¡A la orden, capitán! Aquí tienes el Bloque 11 completo, blindado con el sistema de limpieza de columnas para que reconozca la columna RECOMENDACIÓN aunque tenga espacios o problemas de acentos.
 
-        st.divider()
+Copia desde aquí hasta el final del bloque:
 
-        # --- MOTOR DE INTELIGENCIA LOGÍSTICA ---
+Python
+
+    # ------------------------------------------------------------------
+    # BLOQUE 11: LOGISTICS INTELLIGENCE HUB (EL MOTOR DEL CAPITÁN)
+    # ------------------------------------------------------------------
+    elif st.session_state.pagina == "HubLogistico":
+        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+        
+        # --- ENCABEZADO ESTILO "TRACKING INDICATOR" ---
+        st.markdown("""
+            <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>                
+                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>
+                    LOGISTIC <span style='color:#FFFFFF;'>HUB</span>
+                </h1>                
+                <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>
+                    Análisis de Rutas y Asignación de Mensajería
+                </p>
+                <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
+            </div>
+
+            <hr style="
+                border: 0; height: 2px;
+                background: #5d737e;
+                box-shadow: 0px 0px 18px 4px rgba(93, 115, 126, 0.8);
+                margin-top: 20px; margin-bottom: 30px;
+                border-radius: 10px;
+            ">
+        """, unsafe_allow_html=True)
+
+        # --- MOTOR DE INTELIGENCIA (EXTRACCIÓN DEL HISTORIAL) ---
         @st.cache_data
-        def procesar_logistica_hub():
+        def motor_logistico_avanzado():
             try:
-                # 1. Cargar Historial (Aprendizaje)
+                # 1. Cargar Historial
                 h = pd.read_csv("matriz_historial.csv", encoding='latin-1')
-                h.columns = [c.strip().upper() for c in h.columns]
+                # Normalizar cabeceras del historial
+                h.columns = [str(c).strip().upper() for c in h.columns]
                 
-                # Detectar columnas clave en el historial
+                # Detectar columnas clave
                 col_h_costo = [c for c in h.columns if 'COSTO' in c or 'GUIA' in c][0]
                 col_h_dest = [c for c in h.columns if 'ESTADO' in c or 'DESTINO' in c][0]
                 col_h_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
                 
-                # Limpiar costos
+                # Limpiar y convertir costos a números
                 h[col_h_costo] = pd.to_numeric(h[col_h_costo].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
                 
-                # Obtener la fletera más económica por destino
+                # Encontrar la opción más barata por destino
                 mejores = h.loc[h.groupby(col_h_dest)[col_h_costo].idxmin()]
                 
                 # Crear diccionario de mapeo {Destino: "Fletera ($)"}
@@ -2232,55 +2252,57 @@ else:
                 
                 return mapeo, col_h_dest
             except Exception as e:
-                st.error(f"Error procesando historial: {e}")
+                st.error(f"Error en el motor del historial: {e}")
                 return None, None
 
-        dict_rec, col_destino_ref = procesar_logistica_hub()
+        # Ejecutar el motor
+        dict_rec, col_destino_ref = motor_logistico_avanzado()
 
         if dict_rec:
             try:
-            # 2. Cargar Matriz de Pedidos
-            p = pd.read_csv("matriz_pedidos.csv", encoding='latin-1')
-            
-            # --- LIMPIEZA CRÍTICA DE COLUMNAS ---
-            # Esto quita espacios, acentos y pone todo en mayúsculas para que coincida sí o sí
-            p.columns = [str(c).strip().upper() for c in p.columns]
-            # Normalizamos la palabra para evitar problemas con la Ó
-            p.columns = [c.replace('RECOMENDACION', 'RECOMENDACIÓN') for c in p.columns]
+                # 2. Cargar Matriz de Pedidos
+                p = pd.read_csv("matriz_pedidos.csv", encoding='latin-1')
+                
+                # --- LIMPIEZA DE COLUMNAS DE PEDIDOS ---
+                # Eliminamos espacios, pasamos a mayúsculas y quitamos acentos comunes para la búsqueda
+                p.columns = [str(c).strip().upper() for c in p.columns]
+                
+                # Buscamos la columna RECOMENDACIÓN (con o sin acento)
+                col_target = None
+                for c in p.columns:
+                    if "RECOMENDACI" in c: # Esto atrapa RECOMENDACIÓN y RECOMENDACION
+                        col_target = c
+                        break
 
-            # 3. Asignar recomendación
-            # Buscamos si existe alguna columna que se parezca a RECOMENDACIÓN
-            col_destino_final = [c for c in p.columns if 'RECOMENDACIÓN' in c or 'RECOMENDACION' in c]
-
-            if col_destino_final:
-                target_col = col_destino_final[0] # Usamos la que encontró
-                
-                # Inyectar datos del historial
-                p[target_col] = p[col_destino_ref].map(dict_rec).fillna("Sin datos previos")
-                
-                st.success(f"🎯 Análisis completado: Columna '{target_col}' actualizada.")
-                
-                # --- INTERFAZ DE TABLA ---
-                st.write("### 📋 Planificación de Envíos")
-                st.dataframe(p, use_container_width=True)
-                
-                # Botón de Descarga
-                csv_export = p.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="📥 DESCARGAR MATRIZ PROCESADA",
-                    data=csv_export,
-                    file_name="matriz_pedidos_analizada.csv",
-                    mime="text/csv"
-                )
-            else:
-                # Si falla, mostramos qué columnas sí detectó Python para diagnosticar
-                st.error(f"❌ No encontré 'RECOMENDACIÓN'. Columnas detectadas: {list(p.columns)}")
+                if col_target:
+                    # 3. INYECTAR RECOMENDACIÓN
+                    # Mapeamos el destino del pedido con el diccionario del historial
+                    p[col_target] = p[col_destino_ref].map(dict_rec).fillna("Sin datos previos")
+                    
+                    st.success(f"🎯 Análisis completado: Columna '{col_target}' actualizada correctamente.")
+                    
+                    # --- VISTA DE TABLA ---
+                    st.write("### 📋 Planificación de Envíos Actualizada")
+                    st.dataframe(p, use_container_width=True)
+                    
+                    # Botón de Descarga
+                    csv_export = p.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        label="📥 DESCARGAR MATRIZ PROCESADA",
+                        data=csv_export,
+                        file_name="matriz_pedidos_analizada.csv",
+                        mime="text/csv"
+                    )
+                else:
+                    st.error(f"❌ No se detectó la columna 'RECOMENDACIÓN'. Columnas encontradas: {list(p.columns)}")
+                    st.info("💡 Consejo: Asegúrate de que tu CSV tenga una columna llamada RECOMENDACIÓN (puede estar vacía).")
+                    
+            except Exception as e:
+                st.warning(f"Esperando archivo 'matriz_pedidos.csv' en la raíz... (Detalle: {e})")
 
         # --- PIE DE PÁGINA ---
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGEN
 
-        # --- PIE DE PÁGINA (ESTILO ORIGINAL) ---
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:40px; padding-bottom: 20px;'>LOGISTICS INTELLIGENCE UNIT - HUB ENGINE V1.0</div>", unsafe_allow_html=True)
 
 
 
