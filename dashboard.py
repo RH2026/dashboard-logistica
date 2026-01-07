@@ -2195,7 +2195,7 @@ else:
         
 
         # --- MOTOR DE INTELIGENCIA (EXTRACCIÓN DEL HISTORIAL) ---
-       st.cache_data
+        st.cache_data
         def motor_logistico_direcciones():
             try:
                 # 1. ANALIZAR HISTORIAL
@@ -2270,6 +2270,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
+
 
 
 
