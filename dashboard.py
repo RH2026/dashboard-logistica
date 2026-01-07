@@ -2198,50 +2198,6 @@ else:
                 opacity: 0.8;
             ">
         """, unsafe_allow_html=True)                   
-    
-        
-
-        # --- MOTOR DE INTELIGENCIA (BASE MAESTRA) ---
-        ¡Rayos, Capitán! Parece que esas filas vacías son persistentes como polizones en el barco. Si los None o NaN han regresado al Log Maestro, es porque el archivo CSV que se está subiendo tiene "celdas fantasma" (celdas que Excel cree que tienen algo, pero están vacías) y nuestro filtro actual no las está detectando todas.
-
-He reforzado el Protocolo de Limpieza con una triple validación:
-
-Elimina filas completamente vacías.
-
-Elimina filas donde la DIRECCIÓN sea nula.
-
-Elimina filas donde la DIRECCIÓN solo contenga espacios o caracteres invisibles.
-
-Aquí tiene el bloque con el Filtro de Acero:
-
-Python
-
-    # ------------------------------------------------------------------
-    # BLOQUE 11: LOGISTICS HUB (PROTOCOLO DE LIMPIEZA TOTAL)
-    # ------------------------------------------------------------------
-    elif st.session_state.pagina == "HubLogistico":
-        import datetime
-        import os
-        
-        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
-        
-        # --- RUTA GLOBAL ---
-        ruta_script = os.path.dirname(os.path.abspath(__file__))
-        archivo_log = os.path.join(ruta_script, "log_maestro_envios.csv")
-        
-        # --- ENCABEZADO ---
-        st.markdown("""
-            <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>                
-                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>
-                    LOGISTIC <span style='color:#FFFFFF;'>HUB</span>
-                </h1>                
-                <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>
-                    Control de Manifiestos con Limpieza Profunda
-                </p>
-                <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
-            </div>
-            <hr style="border: 0; height: 2px; background: #5d737e; box-shadow: 0px 0px 18px 4px rgba(93, 115, 126, 0.8); margin-top: 20px; margin-bottom: 30px;">
-        """, unsafe_allow_html=True)
 
         # --- MOTOR DE INTELIGENCIA ---
         @st.cache_data
@@ -2329,6 +2285,7 @@ Python
                     st.info("El log está vacío o siendo procesado.")
             else:
                 st.info("Aún no hay datos guardados.")
+
 
 
 
