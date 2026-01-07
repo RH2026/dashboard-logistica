@@ -2194,71 +2194,64 @@ else:
 
     
         # --- MOTOR DE INTELIGENCIA (BÚSQUEDA DE MEJOR PRECIO) ---
-        @st.cache_data
-        def motor_logistico_match_directo():
+        # --- ZONA DE CARGA DE ARCHIVOS (DRAG & DROP) ---
+        st.markdown("### 🛰️ Carga de Manifiestos")
+        col_u1, col_u2 = st.columns(2)
+        
+        with col_u1:
+            file_h = st.file_uploader("Subir HISTORIAL (CSV)", type="csv", help="Cargue 'matriz_historial.csv'")
+        with col_u2:
+            file_p = st.file_uploader("Subir PEDIDOS (CSV)", type="csv", help="Cargue 'matriz_pedidos.csv'")
+
+        # --- MOTOR DE INTELIGENCIA ---
+        def motor_logistico_drag_drop(archivo_h):
             try:
-                # 1. CARGAR HISTORIAL
-                h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
+                h = pd.read_csv(archivo_h, encoding='utf-8-sig')
                 h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
                 h.columns = [str(c).strip().upper() for c in h.columns]
                 
-                # DETECCIÓN DE COLUMNAS NORMALIZADAS
-                # Buscamos la columna que tú creaste
-                col_h_precio_caja = [c for c in h.columns if 'PRECIO POR CAJA' in c or 'PRECIO_X_CAJA' in c][0]
+                col_h_precio = [c for c in h.columns if 'PRECIO POR CAJA' in c or 'PRECIO_X_CAJA' in c][0]
                 col_h_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
                 col_h_dir = [c for c in h.columns if 'DIRECCION' in c][0]
                 
-                # Asegurar que el precio sea numérico
-                h[col_h_precio_caja] = pd.to_numeric(h[col_h_precio_caja], errors='coerce').fillna(0)
+                h[col_h_precio] = pd.to_numeric(h[col_h_precio], errors='coerce').fillna(0)
+                h = h[h[col_h_precio] > 0.1].copy()
                 
-                # Filtrar basura (solo precios mayores a 0)
-                h = h[h[col_h_precio_caja] > 0.1].copy()
-                
-                # ENCONTRAR LA MEJOR OPCIÓN (La de menor PRECIO POR CAJA)
-                mejores = h.loc[h.groupby(col_h_dir)[col_h_precio_caja].idxmin()]
-                
-                # Crear diccionario de mapeo
-                mapeo = mejores.set_index(col_h_dir).apply(
-                    lambda x: f"{x[col_h_flet]} (${x[col_h_precio_caja]:,.2f} p/caja)", axis=1
+                mejores = h.loc[h.groupby(col_h_dir)[col_h_precio].idxmin()]
+                return mejores.set_index(col_h_dir).apply(
+                    lambda x: f"{x[col_h_flet]} (${x[col_h_precio]:,.2f} p/caja)", axis=1
                 ).to_dict()
-                
-                return mapeo, None
             except Exception as e:
-                return None, str(e)
+                st.error(f"Falla en análisis de historial: {e}")
+                return None
 
-        # EJECUTAR MOTOR
-        dict_rec, err = motor_logistico_match_directo()
-
-        if dict_rec:
-            try:
-                # 2. PROCESAR PEDIDOS
-                p = pd.read_csv("matriz_pedidos.csv", encoding='utf-8-sig')
-                p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
-                p.columns = [str(c).strip().upper() for c in p.columns]
-
-                # Verificar columnas críticas
-                if 'DIRECCION' in p.columns and 'RECOMENDACION' in p.columns:
-                    # ASIGNACIÓN DE RECOMENDACIÓN
-                    p['RECOMENDACION'] = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
-                    
-                    st.success("✅ Inteligencia aplicada: Mejores precios por caja asignados.")
-                    st.dataframe(p, use_container_width=True)
-                    
-                    # Botón de Descarga
-                    csv_data = p.to_csv(index=False).encode('utf-8-sig')
-                    st.download_button("📥 DESCARGAR MATRIZ ANALIZADA", csv_data, "matriz_pedidos_analizada.csv", "text/csv")
-                else:
-                    st.error(f"Columnas no detectadas en pedidos. Detecté: {list(p.columns)}")
+        # --- PROCESAMIENTO ---
+        if file_h and file_p:
+            dict_rec = motor_logistico_drag_drop(file_h)
             
-            except Exception as e:
-                st.warning(f"Esperando matriz_pedidos.csv... ({e})")
-        else:
-            st.warning(f"⚠️ {err}")
-            if st.button("🔄 RECARGAR DATOS DEL HISTORIAL"):
-                st.cache_data.clear()
-                st.rerun()
+            if dict_rec:
+                try:
+                    p = pd.read_csv(file_p, encoding='utf-8-sig')
+                    p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
+                    p.columns = [str(c).strip().upper() for c in p.columns]
 
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px; padding-bottom:30px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
+                    if 'DIRECCION' in p.columns and 'RECOMENDACION' in p.columns:
+                        p['RECOMENDACION'] = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
+                        
+                        st.success("🎯 ¡Protocolo de Análisis Finalizado!")
+                        st.dataframe(p, use_container_width=True)
+                        
+                        csv_final = p.to_csv(index=False).encode('utf-8-sig')
+                        st.download_button("📥 DESCARGAR RESULTADOS", csv_final, "analisis_logistico.csv", "text/csv")
+                    else:
+                        st.error("❌ El archivo de PEDIDOS debe contener las columnas DIRECCION y RECOMENDACION.")
+                except Exception as e:
+                    st.error(f"Error en procesamiento de pedidos: {e}")
+        else:
+            st.info("💡 Capitán, arrastre los dos archivos CSV para iniciar el reconocimiento táctico.")
+
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT - GLOBAL COMMAND</div>", unsafe_allow_html=True)
+
 
 
 
