@@ -2202,6 +2202,47 @@ else:
         
 
         # --- MOTOR DE INTELIGENCIA (BASE MAESTRA) ---
+        ¡Rayos, Capitán! Parece que esas filas vacías son persistentes como polizones en el barco. Si los None o NaN han regresado al Log Maestro, es porque el archivo CSV que se está subiendo tiene "celdas fantasma" (celdas que Excel cree que tienen algo, pero están vacías) y nuestro filtro actual no las está detectando todas.
+
+He reforzado el Protocolo de Limpieza con una triple validación:
+
+Elimina filas completamente vacías.
+
+Elimina filas donde la DIRECCIÓN sea nula.
+
+Elimina filas donde la DIRECCIÓN solo contenga espacios o caracteres invisibles.
+
+Aquí tiene el bloque con el Filtro de Acero:
+
+Python
+
+    # ------------------------------------------------------------------
+    # BLOQUE 11: LOGISTICS HUB (PROTOCOLO DE LIMPIEZA TOTAL)
+    # ------------------------------------------------------------------
+    elif st.session_state.pagina == "HubLogistico":
+        import datetime
+        import os
+        
+        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+        
+        # --- RUTA GLOBAL ---
+        ruta_script = os.path.dirname(os.path.abspath(__file__))
+        archivo_log = os.path.join(ruta_script, "log_maestro_envios.csv")
+        
+        # --- ENCABEZADO ---
+        st.markdown("""
+            <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>                
+                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>
+                    LOGISTIC <span style='color:#FFFFFF;'>HUB</span>
+                </h1>                
+                <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>
+                    Control de Manifiestos con Limpieza Profunda
+                </p>
+                <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
+            </div>
+            <hr style="border: 0; height: 2px; background: #5d737e; box-shadow: 0px 0px 18px 4px rgba(93, 115, 126, 0.8); margin-top: 20px; margin-bottom: 30px;">
+        """, unsafe_allow_html=True)
+
         # --- MOTOR DE INTELIGENCIA ---
         @st.cache_data
         def motor_logistico_central():
@@ -2225,33 +2266,46 @@ else:
         if file_p and dict_rec:
             try:
                 p = pd.read_csv(file_p, encoding='utf-8-sig')
+                
+                # 1. LIMPIEZA INICIAL: Quitar columnas vacías por completo
+                p = p.dropna(how='all', axis=1)
+                
+                # 2. Normalizar nombres de columnas
                 p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
                 
-                # Filtro Anti-vacíos
-                p = p.dropna(subset=['DIRECCION']).copy()
-                p = p[p['DIRECCION'].astype(str).str.strip() != ""]
-
+                # 3. FILTRO DE ACERO: Eliminar filas donde DIRECCION sea nula o solo espacios
                 if 'DIRECCION' in p.columns:
+                    # Eliminamos filas donde todo es NaN
+                    p = p.dropna(how='all')
+                    # Eliminamos donde DIRECCION sea nula
+                    p = p.dropna(subset=['DIRECCION'])
+                    # Eliminamos donde DIRECCION sea un string vacío o solo espacios
+                    p = p[p['DIRECCION'].astype(str).str.strip() != ""]
+                    
+                    # PROCESO DE ANÁLISIS
                     recomendaciones = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
                     idx_dir = p.columns.get_loc('DIRECCION')
                     
-                    if 'RECOMENDACION' in p.columns: p['RECOMENDACION'] = recomendaciones
-                    else: p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
+                    if 'RECOMENDACION' in p.columns: 
+                        p['RECOMENDACION'] = recomendaciones
+                    else: 
+                        p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
                     
-                    st.success(f"🎯 Análisis completado: {len(p)} registros listos.")
+                    st.success(f"🎯 Análisis completado: {len(p)} filas reales detectadas.")
                     st.dataframe(p, use_container_width=True)
 
                     col_btn1, col_btn2 = st.columns(2)
                     
                     with col_btn1:
                         if st.button("💾 GUARDAR EN LOG MAESTRO", use_container_width=True):
+                            # Sellar con fecha
                             p_log = p.copy()
                             p_log['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             
-                            # Uso de la ruta definida arriba
                             existe = os.path.exists(archivo_log)
+                            # Guardado final
                             p_log.to_csv(archivo_log, mode='a', index=False, header=not existe, encoding='utf-8-sig')
-                            st.toast("Guardado exitoso", icon="✅")
+                            st.toast(f"✅ Se guardaron {len(p_log)} registros limpios", icon="🚀")
 
                     with col_btn2:
                         csv_final = p.to_csv(index=False).encode('utf-8-sig')
@@ -2264,18 +2318,18 @@ else:
         # --- VISUALIZADOR SEGURO ---
         st.markdown("---")
         with st.expander("📂 CONSULTAR LOG MAESTRO"):
-            # Ahora archivo_log siempre existe como variable
             if os.path.exists(archivo_log):
                 try:
                     log_df = pd.read_csv(archivo_log, encoding='utf-8-sig')
-                    st.write(f"📈 Registros acumulados: **{len(log_df)}**")
+                    # Doble limpieza al leer por si acaso quedaron residuos viejos
+                    log_df = log_df.dropna(subset=['DIRECCION'])
+                    st.write(f"📈 Registros acumulados reales: **{len(log_df)}**")
                     st.dataframe(log_df.tail(50), use_container_width=True)
-                except Exception as e:
-                    st.error(f"Error al leer el log: {e}")
+                except:
+                    st.info("El log está vacío o siendo procesado.")
             else:
-                st.info("Aún no hay datos guardados. El archivo se creará en la ruta del script al presionar 'Guardar'.")
+                st.info("Aún no hay datos guardados.")
 
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
 
 
 
