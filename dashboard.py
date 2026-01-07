@@ -2195,101 +2195,76 @@ else:
         
 
         # --- MOTOR DE INTELIGENCIA (BASE MAESTRA) ---
+        # --- MOTOR DE INTELIGENCIA ---
         @st.cache_data
         def motor_logistico_central():
             try:
-                # Cargar historial fijo del servidor
                 h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
                 h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
-                
-                # Ubicar columnas por palabras clave (Normalizado por usted)
                 col_h_precio = [c for c in h.columns if 'PRECIO POR CAJA' in c or 'PRECIO_X_CAJA' in c][0]
                 col_h_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
                 col_h_dir = [c for c in h.columns if 'DIRECCION' in c][0]
-                
-                # Limpieza de datos en historial
                 h[col_h_precio] = pd.to_numeric(h[col_h_precio], errors='coerce').fillna(0)
                 h = h[h[col_h_precio] > 0.1].copy()
-                
-                # Seleccionar el costo más bajo por dirección
                 mejores = h.loc[h.groupby(col_h_dir)[col_h_precio].idxmin()]
                 return mejores.set_index(col_h_dir).apply(lambda x: f"{x[col_h_flet]} (${x[col_h_precio]:,.2f} p/caja)", axis=1).to_dict()
-            except Exception as e:
-                st.error(f"Error en motor: {e}")
-                return None
+            except: return None
 
         dict_rec = motor_logistico_central()
 
-        # --- CARGA DE ARCHIVO DINÁMICA ---
+        # --- CARGA DE ARCHIVO ---
         file_p = st.file_uploader("Arrastre su archivo de pedidos (CSV)", type="csv")
 
         if file_p and dict_rec:
             try:
-                # Leer y limpiar nombres de columnas del archivo subido
                 p = pd.read_csv(file_p, encoding='utf-8-sig')
                 p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
-
-                # FILTRO TÁCTICO: Eliminar filas vacías que no tienen DIRECCION
+                
+                # FILTRO ANTI-VACÍOS: Aseguramos que solo procese filas con contenido
                 p = p.dropna(subset=['DIRECCION']).copy()
                 p = p[p['DIRECCION'].astype(str).str.strip() != ""]
 
                 if 'DIRECCION' in p.columns:
-                    # PROCESO DE ANÁLISIS
                     recomendaciones = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
-                    
-                    # Inserción automática de la columna
                     idx_dir = p.columns.get_loc('DIRECCION')
-                    if 'RECOMENDACION' in p.columns: 
-                        p['RECOMENDACION'] = recomendaciones
-                    else: 
-                        p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
                     
-                    st.success(f"🎯 Análisis completado: {len(p)} registros detectados.")
+                    if 'RECOMENDACION' in p.columns: p['RECOMENDACION'] = recomendaciones
+                    else: p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
+                    
+                    st.success(f"🎯 Análisis completado: {len(p)} registros listos.")
                     st.dataframe(p, use_container_width=True)
 
-                    # --- ZONA DE ACCIÓN: GUARDAR Y DESCARGAR ---
                     col_btn1, col_btn2 = st.columns(2)
                     
                     with col_btn1:
                         if st.button("💾 GUARDAR EN LOG MAESTRO", use_container_width=True):
-                            if not p.empty:
-                                p_log = p.copy()
-                                p_log['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                                archivo_log = "log_maestro_envios.csv"
-                                
-                                # Guardar sin duplicar encabezados si el archivo ya existe
-                                existe = os.path.exists(archivo_log)
-                                p_log.to_csv(archivo_log, mode='a', index=False, header=not existe, encoding='utf-8-sig')
-                                st.toast(f"✅ {len(p_log)} registros guardados en Log Maestro", icon="🚀")
-                            else:
-                                st.warning("No hay datos válidos para guardar.")
+                            p_log = p.copy()
+                            p_log['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            
+                            # Guardado acumulativo con ruta verificada
+                            existe = os.path.exists(archivo_log)
+                            p_log.to_csv(archivo_log, mode='a', index=False, header=not existe, encoding='utf-8-sig')
+                            st.toast("Guardado exitoso en el Log Maestro", icon="✅")
 
                     with col_btn2:
                         csv_final = p.to_csv(index=False).encode('utf-8-sig')
-                        st.download_button(
-                            label="📥 DESCARGAR RESULTADOS",
-                            data=csv_final,
-                            file_name=f"Analisis_{datetime.date.today()}.csv",
-                            mime="text/csv",
-                            use_container_width=True
-                        )
-                else:
-                    st.error("No se encontró la columna 'DIRECCION' en el archivo.")
+                        st.download_button("📥 DESCARGAR RESULTADOS", csv_final, f"Analisis_{datetime.date.today()}.csv", "text/csv", use_container_width=True)
+
             except Exception as e:
-                st.error(f"Falla en procesamiento: {e}")
+                st.error(f"Error procesando el archivo: {e}")
 
-        # --- VISUALIZADOR DEL LOG ---
-        with st.expander("📂 Consultar Histórico Acumulado (Últimos Registros Limpios)"):
-            if os.path.exists("log_maestro_envios.csv"):
-                log_df = pd.read_csv("log_maestro_envios.csv", encoding='utf-8-sig')
-                st.write(f"Registros totales en memoria: {len(log_df)}")
-                # Mostrar solo registros que tengan dirección (doble validación)
-                log_df_clean = log_df.dropna(subset=['DIRECCION'])
-                st.dataframe(log_df_clean.tail(100), use_container_width=True)
+        # --- VISUALIZADOR (SIN BOTÓN DE ELIMINAR) ---
+        st.markdown("---")
+        with st.expander("📂 CONSULTAR LOG MAESTRO"):
+            if os.path.exists(archivo_log):
+                log_df = pd.read_csv(archivo_log, encoding='utf-8-sig')
+                st.write(f"📈 Registros acumulados en total: **{len(log_df)}**")
+                st.write(f"📂 Archivo ubicado en: `{archivo_log}`")
+                st.dataframe(log_df.tail(50), use_container_width=True)
             else:
-                st.info("Aún no hay datos guardados en el Log Maestro.")
+                st.info("Aún no existe el archivo log_maestro_envios.csv. Presione 'Guardar' para crearlo.")
 
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT | PROTOCOLO EXITOSO</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
 
 
 
