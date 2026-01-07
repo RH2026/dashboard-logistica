@@ -2241,14 +2241,24 @@ else:
             try:
                 # 2. Cargar Matriz de Pedidos
                 p = pd.read_csv("matriz_pedidos.csv", encoding='latin-1')
-                p.columns = [c.strip().upper() for c in p.columns]
+                
+                # --- LIMPIEZA CRÍTICA DE COLUMNAS ---
+                # Esto quita espacios, acentos y pone todo en mayúsculas para que coincida sí o sí
+                p.columns = [str(c).strip().upper() for c in p.columns]
+                # Normalizamos la palabra para evitar problemas con la Ó
+                p.columns = [c.replace('RECOMENDACION', 'RECOMENDACIÓN') for c in p.columns]
 
-                # 3. Asignar recomendación si la columna existe
-                if 'RECOMENDACIÓN' in p.columns:
-                    # Inyectar datos del historial en la columna RECOMENDACIÓN
-                    p['RECOMENDACIÓN'] = p[col_destino_ref].map(dict_rec).fillna("Sin datos previos")
+                # 3. Asignar recomendación
+                # Buscamos si existe alguna columna que se parezca a RECOMENDACIÓN
+                col_destino_final = [c for c in p.columns if 'RECOMENDACIÓN' in c or 'RECOMENDACION' in c]
+
+                if col_destino_final:
+                    target_col = col_destino_final[0] # Usamos la que encontró
                     
-                    st.success("🎯 Análisis completado: Recomendaciones inyectadas en matriz_pedidos.")
+                    # Inyectar datos del historial
+                    p[target_col] = p[col_destino_ref].map(dict_rec).fillna("Sin datos previos")
+                    
+                    st.success(f"🎯 Análisis completado: Columna '{target_col}' actualizada.")
                     
                     # --- INTERFAZ DE TABLA ---
                     st.write("### 📋 Planificación de Envíos")
@@ -2263,16 +2273,15 @@ else:
                         mime="text/csv"
                     )
                 else:
-                    st.error("❌ No se encontró la columna 'RECOMENDACIÓN' en matriz_pedidos.csv")
-                    
-            except Exception as e:
-                st.info(f"Esperando archivo 'matriz_pedidos.csv'... ({e})")
+                    # Si falla, mostramos qué columnas sí detectó Python para diagnosticar
+                    st.error(f"❌ No encontré 'RECOMENDACIÓN'. Columnas detectadas: {list(p.columns)}")
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
 
         # --- PIE DE PÁGINA (ESTILO ORIGINAL) ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:40px; padding-bottom: 20px;'>LOGISTICS INTELLIGENCE UNIT - HUB ENGINE V1.0</div>", unsafe_allow_html=True)
+
 
 
 
