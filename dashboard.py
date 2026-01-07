@@ -2195,81 +2195,85 @@ else:
         
 
         # --- MOTOR DE INTELIGENCIA (EXTRACCIÓN DEL HISTORIAL) ---
-        st.cache_data
-        def motor_logistico_direcciones():
+        @st.cache_data
+        def motor_logistico_direcciones_vFinal():
             try:
                 # 1. ANALIZAR HISTORIAL
                 h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
                 
-                # Normalización de cabeceras
+                # Normalización de cabeceras (Quita acentos y caracteres raros)
                 h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
                 h.columns = [str(c).strip().upper() for c in h.columns]
                 
-                # --- DETECCIÓN DE COLUMNAS ---
-                col_costo = [c for c in h.columns if 'COSTO' in c or 'GUIA' in c or 'FLETE' in c][0]
-                col_flete = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
+                # Detección de columnas
+                col_costo = [c for c in h.columns if any(k in c for k in ['COSTO', 'GUIA', 'FLETE'])][0]
+                col_flete = [c for c in h.columns if any(k in c for k in ['FLETERA', 'TRANSPORTE', 'LINEA'])][0]
                 col_h_dir = [c for c in h.columns if 'DIRECCION' in c][0]
                 
-                # --- LIMPIEZA QUIRÚRGICA DE COSTOS ---
-                # 1. Convertir a string para limpiar
-                h[col_costo] = h[col_costo].astype(str)
-                # 2. Quitar $, comas, espacios y guiones
-                h[col_costo] = h[col_costo].str.replace('$', '', regex=False).str.replace(',', '', regex=False).str.strip()
-                # 3. Convertir a número (si falla algo lo pone como NaN)
-                h[col_costo] = pd.to_numeric(h[col_costo], errors='coerce')
-                # 4. Eliminar filas donde el costo sea 0 o vacío para que no afecten la recomendación
-                h = h[h[col_costo] > 0]
+                # Conversión de costo a número (Blindado)
+                h[col_costo] = pd.to_numeric(h[col_costo], errors='coerce').fillna(0)
+                
+                # Filtro: Solo costos reales
+                h = h[h[col_costo] > 0.1].copy()
                 
                 if h.empty:
-                    st.warning("⚠️ El historial no tiene costos válidos mayores a $0.")
-                    return None
+                    return None, "Historial sin costos válidos"
 
-                # Encontrar la mejor fletera (la de menor costo real)
+                # Encontrar la mejor opción (mínimo costo histórico por dirección)
                 mejores = h.loc[h.groupby(col_h_dir)[col_costo].idxmin()]
                 
-                # Crear diccionario {Dirección: "Fletera ($)"}
+                # Crear diccionario de mapeo
                 mapeo = mejores.set_index(col_h_dir).apply(
                     lambda x: f"{x[col_flete]} (${x[col_costo]:,.2f})", axis=1
                 ).to_dict()
                 
-                return mapeo
+                return mapeo, None
             except Exception as e:
-                st.error(f"Falla en lectura de historial: {e}")
-                return None
+                return None, str(e)
 
-        # 2. PROCESAR PEDIDOS
-        dict_rec = motor_logistico_direcciones()
+        # EJECUTAR MOTOR
+        dict_rec, err = motor_logistico_direcciones_vFinal()
 
         if dict_rec:
             try:
-                # Cargamos con utf-8-sig para limpiar el 'Ï»¿'
+                # 2. PROCESAR PEDIDOS
                 p = pd.read_csv("matriz_pedidos.csv", encoding='utf-8-sig')
-                
-                # NORMALIZACIÓN QUIRÚRGICA: Quita acentos, espacios y caracteres raros
                 p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
                 p.columns = [str(c).strip().upper() for c in p.columns]
 
-                # Ahora las columnas se llaman simplemente DIRECCION y RECOMENDACION (sin acento)
+                # Verificar columnas DIRECCION y RECOMENDACION
                 if 'DIRECCION' in p.columns and 'RECOMENDACION' in p.columns:
-                    # ASIGNACIÓN DIRECTA
+                    # ASIGNACIÓN DE INTELIGENCIA
                     p['RECOMENDACION'] = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
                     
-                    st.success("✅ Análisis por DIRECCIÓN completado. Caracteres especiales normalizados.")
+                    st.success("✅ Análisis completado. Direcciones vinculadas con éxito.")
                     
-                    # Mostrar resultados
+                    # --- INTERFAZ DE TABLA ---
+                    st.write("### 📋 Planificación de Embarques")
                     st.dataframe(p, use_container_width=True)
                     
                     # Botón de Descarga
                     csv_data = p.to_csv(index=False).encode('utf-8-sig')
-                    st.download_button("📥 DESCARGAR MATRIZ ANALIZADA", csv_data, "matriz_pedidos_analizada.csv", "text/csv")
+                    st.download_button(
+                        label="📥 DESCARGAR MATRIZ PROCESADA",
+                        data=csv_data,
+                        file_name="matriz_pedidos_analizada.csv",
+                        mime="text/csv"
+                    )
                 else:
-                    st.error(f"Columnas no detectadas después de limpiar: {list(p.columns)}")
-                    
+                    st.error(f"Columnas no detectadas. Encontré: {list(p.columns)}")
+                    st.info("Asegúrate de que el CSV tenga 'DIRECCION' y 'RECOMENDACION'.")
+            
             except Exception as e:
-                st.warning(f"Error en matriz_pedidos: {e}")
+                st.warning(f"Esperando matriz_pedidos.csv... ({e})")
+        else:
+            st.warning(f"⚠️ {err}")
+            if st.button("🔄 RECARGAR HISTORIAL"):
+                st.cache_data.clear()
+                st.rerun()
 
         # --- PIE DE PÁGINA ---
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px; padding-bottom:30px;'>LOGISTICS INTELLIGENCE UNIT - OPS COMMAND</div>", unsafe_allow_html=True)
 
 
 
