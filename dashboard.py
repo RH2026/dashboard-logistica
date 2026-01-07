@@ -2193,97 +2193,78 @@ else:
         """, unsafe_allow_html=True)                   
     
         # --- MOTOR DE INTELIGENCIA (BASE MAESTRA) ---
-        @st.cache_data
-        def motor_logistico_excel_vFinal():
+        def motor_logistico_central():
             try:
-                # 1. ANALIZAR HISTORIAL LOCAL
                 h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
-                h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
-                h.columns = [str(c).strip().upper() for c in h.columns]
-                
-                # Ubicar columnas por palabras clave
+                h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
                 col_h_precio = [c for c in h.columns if 'PRECIO POR CAJA' in c or 'PRECIO_X_CAJA' in c][0]
                 col_h_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
                 col_h_dir = [c for c in h.columns if 'DIRECCION' in c][0]
-                
                 h[col_h_precio] = pd.to_numeric(h[col_h_precio], errors='coerce').fillna(0)
                 h = h[h[col_h_precio] > 0.1].copy()
-                
-                # Seleccionar la mejor tarifa por dirección
                 mejores = h.loc[h.groupby(col_h_dir)[col_h_precio].idxmin()]
-                
-                # Diccionario: {DIRECCION: "FLETERA ($X.XX p/caja)"}
-                mapeo = mejores.set_index(col_h_dir).apply(
-                    lambda x: f"{x[col_h_flet]} (${x[col_h_precio]:,.2f} p/caja)", axis=1
-                ).to_dict()
-                
-                return mapeo
-            except Exception as e:
-                st.error(f"Error en base maestra: {e}")
-                return None
+                return mejores.set_index(col_h_dir).apply(lambda x: f"{x[col_h_flet]} (${x[col_h_precio]:,.2f} p/caja)", axis=1).to_dict()
+            except: return None
 
-        # Cargar conocimiento
-        dict_rec = motor_logistico_excel_vFinal()
+        dict_rec = motor_logistico_central()
 
-        # --- ZONA DE CARGA DINÁMICA ---
-        st.markdown("### 📥 Carga de Manifiesto para Análisis")
+        # --- CARGA DE ARCHIVO ---
         file_p = st.file_uploader("Arrastre su archivo de pedidos (CSV)", type="csv")
 
         if file_p and dict_rec:
             try:
-                # Leer el archivo subido
                 p = pd.read_csv(file_p, encoding='utf-8-sig')
-                
-                # Guardar nombres originales para el Excel final, pero normalizar para el proceso
-                p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
-                p.columns = [str(c).strip().upper() for c in p.columns]
+                p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
 
                 if 'DIRECCION' in p.columns:
-                    # 1. Aplicar Inteligencia
+                    # PROCESO
                     recomendaciones = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
-                    
-                    # 2. Insertar columna automáticamente después de DIRECCION
                     idx_dir = p.columns.get_loc('DIRECCION')
-                    if 'RECOMENDACION' in p.columns:
-                        p['RECOMENDACION'] = recomendaciones
-                    else:
-                        p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
+                    
+                    if 'RECOMENDACION' in p.columns: p['RECOMENDACION'] = recomendaciones
+                    else: p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
                     
                     st.success("🎯 Análisis completado con éxito.")
                     st.dataframe(p, use_container_width=True)
 
-                    # --- MOTOR DE EXPORTACIÓN A EXCEL (.XLSX) ---
-                    output = io.BytesIO()
-                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                        p.to_excel(writer, index=False, sheet_name='Analisis_Logistico')
-                        
-                        # Formateo de celdas
-                        workbook  = writer.book
-                        worksheet = writer.sheets['Analisis_Logistico']
-                        
-                        # Ajuste automático de columnas
-                        for i, col in enumerate(p.columns):
-                            column_len = max(p[col].astype(str).str.len().max(), len(col)) + 2
-                            worksheet.set_column(i, i, column_len)
+                    # --- ZONA DE ACCIÓN: GUARDAR Y DESCARGAR ---
+                    col_btn1, col_btn2 = st.columns(2)
                     
-                    # Botón de Descarga Excel
-                    st.download_button(
-                        label="📥 DESCARGAR RESULTADOS EN EXCEL",
-                        data=output.getvalue(),
-                        file_name=f"Plan_Logistico_{datetime.date.today()}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-                else:
-                    st.error("❌ El archivo no contiene la columna 'DIRECCION'.")
-            
-            except Exception as e:
-                st.error(f"Error procesando archivo: {e}")
-        
-        elif not file_p:
-            st.info("💡 Capitán, suba el archivo de pedidos. El sistema creará la columna RECOMENDACION automáticamente.")
+                    with col_btn1:
+                        if st.button("💾 GUARDAR EN LOG MAESTRO", use_container_width=True):
+                            p['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            archivo_log = "log_maestro_envios.csv"
+                            # Guardado acumulativo (Append)
+                            modo = 'a' if os.path.exists(archivo_log) else 'w'
+                            encabezado = not os.path.exists(archivo_log)
+                            p.to_csv(archivo_log, mode=modo, index=False, header=encabezado, encoding='utf-8-sig')
+                            st.toast("Archivo guardado en el servidor", icon="✅")
 
-        # --- PIE DE PÁGINA ---
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT - EXCEL COMMAND</div>", unsafe_allow_html=True)
+                    with col_btn2:
+                        csv_final = p.to_csv(index=False).encode('utf-8-sig')
+                        st.download_button(
+                            label="📥 DESCARGAR RESULTADOS",
+                            data=csv_data,
+                            file_name=f"Analisis_{datetime.date.today()}.csv",
+                            mime="text/csv",
+                            use_container_width=True
+                        )
+                else:
+                    st.error("No se encontró la columna DIRECCION")
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+        # --- VISUALIZADOR DEL LOG ---
+        with st.expander("📂 Consultar Histórico Acumulado"):
+            if os.path.exists("log_maestro_envios.csv"):
+                log_df = pd.read_csv("log_maestro_envios.csv", encoding='utf-8-sig')
+                st.write(f"Registros en memoria: {len(log_df)}")
+                st.dataframe(log_df.tail(50), use_container_width=True) # Muestra los últimos 50
+            else:
+                st.info("Aún no hay datos guardados en el Log Maestro.")
+
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
+
 
 
 
