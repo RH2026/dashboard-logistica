@@ -2258,7 +2258,8 @@ else:
                 st.cache_data.clear()
                 st.rerun()
 
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px; padding-bottom:30px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)True)
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px; padding-bottom:30px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
+
 
 
 
