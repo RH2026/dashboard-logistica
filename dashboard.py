@@ -2171,12 +2171,26 @@ else:
         
         st.markdown("""
             <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>                
-                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>LOGISTIC <span style='color:#FFFFFF;'>HUB</span></h1>                
-                <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>Optimización Automática de Fleteras y Costos</p>
+                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>
+                    LOGISTIC <span style='color:#FFFFFF;'>HUB</span>
+                </h1>                
+                <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>
+                    Optimización Automática de Fleteras y Costos
+                </p>
                 <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
-                
             </div>
-        """, unsafe_allow_html=True)    
+        
+            <hr style="
+                border: 0;
+                height: 2px;
+                background: #00D4FF; /* Color base de la línea */
+                box-shadow: 0px 0px 15px 3px rgba(0, 212, 255, 0.7); /* El resplandor */
+                margin-top: 25px;
+                margin-bottom: 30px;
+                border-radius: 10px;
+                opacity: 0.8;
+            ">
+        """, unsafe_allow_html=True)  
 
         # --- MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA) ---
         c1, c2 = st.columns([0.85, 0.15])
@@ -2256,6 +2270,7 @@ else:
 
         # --- PIE DE PÁGINA (ESTILO ORIGINAL) ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:40px; padding-bottom: 20px;'>LOGISTICS INTELLIGENCE UNIT - HUB ENGINE V1.0</div>", unsafe_allow_html=True)
+
 
 
 
