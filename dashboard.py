@@ -2168,29 +2168,15 @@ else:
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
         # --- ENCABEZADO MINIMALISTA (ESTILO PRO) ---
+        st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
         st.markdown("""
-            <div style='text-align: center; padding: 20px 0px 10px 0px;'>
-                <h1 style='color: #FFFFFF; font-family: "Inter", sans-serif; font-weight: 900; font-size: 48px; margin-bottom: 0px; letter-spacing: 2px; text-transform: uppercase;'>
-                    LOGISTICS <span style='color: #FFFFFF;'>HUB</span>
-                </h1>
-                <p style='color: #4FB3A2; font-size: 18px; font-weight: 500; letter-spacing: 0.5px; margin-top: 10px;'>
-                    Logística & Rendimiento de Paqueterías
-                </p>
-                <center>
-                    <div style='background-color: #00FFAA; height: 3px; width: 60px; margin-top: 15px; border-radius: 2px;'></div>
-                </center>
+            <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>
+                <svg style='animation:float 3s infinite; margin-bottom:2px;' width='45' height='45' viewBox='0 0 24 24' fill='none' stroke='#00FFAA' stroke-width='1.5' xmlns='http://www.w3.org/2000/svg'><path d='M3 7L12 2L21 7L12 12L3 7ZM3 7V17L12 22L21 17V7M12 12V22M7.5 4.8L16.5 9.3' opacity='0.7'/></svg>
+                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>TRACKING <span style='color:#FFFFFF;'>INDICATOR</span></h1>
+                <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>Logística & Rendimiento de Paqueterías</p>
+                <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
             </div>
-            
-            <hr style="
-                border: 0;
-                height: 2px;
-                background: #00D4FF;
-                box-shadow: 0px 0px 15px 2px rgba(0, 212, 255, 0.7);
-                margin-top: 20px;
-                margin-bottom: 30px;
-                border-radius: 10px;
-            ">
-        """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)    
 
         # --- MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA) ---
         c1, c2 = st.columns([0.85, 0.15])
@@ -2270,6 +2256,7 @@ else:
 
         # --- PIE DE PÁGINA (ESTILO ORIGINAL) ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:40px; padding-bottom: 20px;'>LOGISTICS INTELLIGENCE UNIT - HUB ENGINE V1.0</div>", unsafe_allow_html=True)
+
 
 
 
