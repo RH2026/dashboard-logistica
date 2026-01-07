@@ -2165,8 +2165,15 @@ else:
     # MAIN 4: LOGISTICS INTELLIGENCE HUB (MOTOR DE RECOMENDACIÓN
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "HubLogistico":
+        import datetime
+        import os
+        
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
+        # --- DEFINICIÓN DE RUTA GLOBAL (PARA EVITAR NAMEERROR) ---
+        # Se define aquí arriba para que esté disponible en todo el bloque
+        ruta_script = os.path.dirname(os.path.abspath(__file__))
+        archivo_log = os.path.join(ruta_script, "log_maestro_envios.csv")
         # --- ENCABEZADO MINIMALISTA (ESTILO PRO) ---
         
         st.markdown("""
@@ -2220,7 +2227,7 @@ else:
                 p = pd.read_csv(file_p, encoding='utf-8-sig')
                 p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
                 
-                # FILTRO ANTI-VACÍOS: Aseguramos que solo procese filas con contenido
+                # Filtro Anti-vacíos
                 p = p.dropna(subset=['DIRECCION']).copy()
                 p = p[p['DIRECCION'].astype(str).str.strip() != ""]
 
@@ -2241,30 +2248,35 @@ else:
                             p_log = p.copy()
                             p_log['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             
-                            # Guardado acumulativo con ruta verificada
+                            # Uso de la ruta definida arriba
                             existe = os.path.exists(archivo_log)
                             p_log.to_csv(archivo_log, mode='a', index=False, header=not existe, encoding='utf-8-sig')
-                            st.toast("Guardado exitoso en el Log Maestro", icon="✅")
+                            st.toast("Guardado exitoso", icon="✅")
 
                     with col_btn2:
                         csv_final = p.to_csv(index=False).encode('utf-8-sig')
                         st.download_button("📥 DESCARGAR RESULTADOS", csv_final, f"Analisis_{datetime.date.today()}.csv", "text/csv", use_container_width=True)
-
+                else:
+                    st.error("No se encontró la columna DIRECCION")
             except Exception as e:
-                st.error(f"Error procesando el archivo: {e}")
+                st.error(f"Error: {e}")
 
-        # --- VISUALIZADOR (SIN BOTÓN DE ELIMINAR) ---
+        # --- VISUALIZADOR SEGURO ---
         st.markdown("---")
         with st.expander("📂 CONSULTAR LOG MAESTRO"):
+            # Ahora archivo_log siempre existe como variable
             if os.path.exists(archivo_log):
-                log_df = pd.read_csv(archivo_log, encoding='utf-8-sig')
-                st.write(f"📈 Registros acumulados en total: **{len(log_df)}**")
-                st.write(f"📂 Archivo ubicado en: `{archivo_log}`")
-                st.dataframe(log_df.tail(50), use_container_width=True)
+                try:
+                    log_df = pd.read_csv(archivo_log, encoding='utf-8-sig')
+                    st.write(f"📈 Registros acumulados: **{len(log_df)}**")
+                    st.dataframe(log_df.tail(50), use_container_width=True)
+                except Exception as e:
+                    st.error(f"Error al leer el log: {e}")
             else:
-                st.info("Aún no existe el archivo log_maestro_envios.csv. Presione 'Guardar' para crearlo.")
+                st.info("Aún no hay datos guardados. El archivo se creará en la ruta del script al presionar 'Guardar'.")
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
+
 
 
 
