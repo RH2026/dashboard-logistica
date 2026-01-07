@@ -2195,25 +2195,36 @@ else:
         
 
         # --- MOTOR DE INTELIGENCIA (EXTRACCIÓN DEL HISTORIAL) ---
-        @st.cache_data
+       st.cache_data
         def motor_logistico_direcciones():
             try:
-                # 1. ANALIZAR HISTORIAL (Usamos utf-8-sig para ignorar el BOM)
+                # 1. ANALIZAR HISTORIAL
                 h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
                 
-                # Normalización total de columnas
+                # Normalización de cabeceras
                 h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
                 h.columns = [str(c).strip().upper() for c in h.columns]
                 
-                # Detectar columnas críticas
-                col_costo = [c for c in h.columns if 'COSTO' in c or 'GUIA' in c][0]
+                # --- DETECCIÓN DE COLUMNAS ---
+                col_costo = [c for c in h.columns if 'COSTO' in c or 'GUIA' in c or 'FLETE' in c][0]
                 col_flete = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
                 col_h_dir = [c for c in h.columns if 'DIRECCION' in c][0]
                 
-                # Limpiar costos
-                h[col_costo] = pd.to_numeric(h[col_costo].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+                # --- LIMPIEZA QUIRÚRGICA DE COSTOS ---
+                # 1. Convertir a string para limpiar
+                h[col_costo] = h[col_costo].astype(str)
+                # 2. Quitar $, comas, espacios y guiones
+                h[col_costo] = h[col_costo].str.replace('$', '', regex=False).str.replace(',', '', regex=False).str.strip()
+                # 3. Convertir a número (si falla algo lo pone como NaN)
+                h[col_costo] = pd.to_numeric(h[col_costo], errors='coerce')
+                # 4. Eliminar filas donde el costo sea 0 o vacío para que no afecten la recomendación
+                h = h[h[col_costo] > 0]
                 
-                # Encontrar la mejor fletera por cada DIRECCION única
+                if h.empty:
+                    st.warning("⚠️ El historial no tiene costos válidos mayores a $0.")
+                    return None
+
+                # Encontrar la mejor fletera (la de menor costo real)
                 mejores = h.loc[h.groupby(col_h_dir)[col_costo].idxmin()]
                 
                 # Crear diccionario {Dirección: "Fletera ($)"}
@@ -2259,6 +2270,7 @@ else:
 
         # --- PIE DE PÁGINA ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
+
 
 
 
