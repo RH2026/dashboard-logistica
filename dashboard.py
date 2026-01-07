@@ -2232,23 +2232,29 @@ else:
                     st.dataframe(p, use_container_width=True)
 
                     # --- ZONA DE ACCIÓN: GUARDAR Y DESCARGAR ---
+                    # --- ZONA DE ACCIÓN: GUARDAR Y DESCARGAR ---
                     col_btn1, col_btn2 = st.columns(2)
                     
                     with col_btn1:
                         if st.button("💾 GUARDAR EN LOG MAESTRO", use_container_width=True):
-                            # Sellar con fecha y hora
-                            p_log = p.copy()
-                            p_log['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            archivo_log = "log_maestro_envios.csv"
+                            # 1. Limpieza de emergencia: Eliminar filas donde DIRECCION sea nula o vacía
+                            p_log = p.dropna(subset=['DIRECCION']).copy()
+                            p_log = p_log[p_log['DIRECCION'].astype(str).str.strip() != ""]
                             
-                            # Lógica de guardado (Append)
-                            existe = os.path.exists(archivo_log)
-                            p_log.to_csv(archivo_log, mode='a', index=False, header=not existe, encoding='utf-8-sig')
-                            st.toast("Archivo guardado exitosamente", icon="✅")
+                            if not p_log.empty:
+                                # 2. Sellar con fecha
+                                p_log['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                archivo_log = "log_maestro_envios.csv"
+                                
+                                # 3. Guardado acumulativo
+                                existe = os.path.exists(archivo_log)
+                                p_log.to_csv(archivo_log, mode='a', index=False, header=not existe, encoding='utf-8-sig')
+                                st.toast(f"✅ {len(p_log)} registros reales guardados", icon="🚀")
+                            else:
+                                st.warning("⚠️ No hay datos válidos para guardar (Filas vacías detectadas).")
 
                     with col_btn2:
-                        # VARIABLE CORREGIDA: csv_final
-                        csv_final = p.to_csv(index=False).encode('utf-8-sig')
+                        csv_final = p.dropna(subset=['DIRECCION']).to_csv(index=False).encode('utf-8-sig')
                         st.download_button(
                             label="📥 DESCARGAR RESULTADOS",
                             data=csv_final,
@@ -2256,10 +2262,6 @@ else:
                             mime="text/csv",
                             use_container_width=True
                         )
-                else:
-                    st.error("No se encontró la columna DIRECCION")
-            except Exception as e:
-                st.error(f"Error procesando archivo: {e}")
 
         # --- VISUALIZADOR DEL LOG ---
         with st.expander("📂 Consultar Histórico Acumulado (Log Maestro)"):
@@ -2271,6 +2273,7 @@ else:
                 st.info("Aún no hay datos guardados en el Log Maestro.")
 
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
+
 
 
 
