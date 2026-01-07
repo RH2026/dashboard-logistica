@@ -2168,7 +2168,7 @@ else:
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
         # --- ENCABEZADO MINIMALISTA (ESTILO PRO) ---
-        st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
+        
         st.markdown("""
             <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>
                 <svg style='animation:float 3s infinite; margin-bottom:2px;' width='45' height='45' viewBox='0 0 24 24' fill='none' stroke='#00FFAA' stroke-width='1.5' xmlns='http://www.w3.org/2000/svg'><path d='M3 7L12 2L21 7L12 12L3 7ZM3 7V17L12 22L21 17V7M12 12V22M7.5 4.8L16.5 9.3' opacity='0.7'/></svg>
@@ -2256,6 +2256,7 @@ else:
 
         # --- PIE DE PÁGINA (ESTILO ORIGINAL) ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:40px; padding-bottom: 20px;'>LOGISTICS INTELLIGENCE UNIT - HUB ENGINE V1.0</div>", unsafe_allow_html=True)
+
 
 
 
