@@ -361,8 +361,8 @@ else:
                     st.rerun()
 
                 if st.button("INTELIGENCIA LOGÍSTICA", use_container_width=True, key="h_hub"):
-                st.session_state.pagina = "HubLogistico"
-                st.rerun()
+                    st.session_state.pagina = "HubLogistico"
+                    st.rerun()
                                                   
                                        
         st.markdown("""
@@ -2257,6 +2257,7 @@ else:
 
         # --- PIE DE PÁGINA (ESTILO ORIGINAL) ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:40px; padding-bottom: 20px;'>LOGISTICS INTELLIGENCE UNIT - HUB ENGINE V1.0</div>", unsafe_allow_html=True)
+
 
 
 
