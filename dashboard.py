@@ -2208,68 +2208,72 @@ else:
 
         # --- MOTOR DE INTELIGENCIA LOGÍSTICA ---
         @st.cache_data
-        def procesar_recomendaciones():
+        def procesar_logistica_hub():
             try:
-                # 1. Cargar Historial para "Aprender"
+                # 1. Cargar Historial (Aprendizaje)
                 h = pd.read_csv("matriz_historial.csv", encoding='latin-1')
                 h.columns = [c.strip().upper() for c in h.columns]
                 
-                # Limpiar columna de costo (Busca 'COSTO' o 'FLETE')
-                cost_col = [c for c in h.columns if 'COSTO' in c or 'FLETE' in c][0]
-                h[cost_col] = pd.to_numeric(h[cost_col].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+                # Detectar columnas clave en el historial
+                col_h_costo = [c for c in h.columns if 'COSTO' in c or 'GUIA' in c][0]
+                col_h_dest = [c for c in h.columns if 'ESTADO' in c or 'DESTINO' in c][0]
+                col_h_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
                 
-                # Identificar columna de destino (ESTADO o CIUDAD)
-                dest_col = [c for c in h.columns if 'ESTADO' in c or 'DESTINO' in c or 'CIUDAD' in c][0]
-                carrier_col = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
-
-                # 2. Calcular Mejores Opciones por Destino
-                inteligencia = h.groupby([dest_col, carrier_col])[cost_col].mean().reset_index()
-                return inteligencia, dest_col, carrier_col, cost_col
+                # Limpiar costos
+                h[col_h_costo] = pd.to_numeric(h[col_h_costo].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+                
+                # Obtener la fletera más económica por destino
+                mejores = h.loc[h.groupby(col_h_dest)[col_h_costo].idxmin()]
+                
+                # Crear diccionario de mapeo {Destino: "Fletera ($)"}
+                mapeo = mejores.set_index(col_h_dest).apply(
+                    lambda x: f"{x[col_h_flet]} (${x[col_h_costo]:,.2f})", axis=1
+                ).to_dict()
+                
+                return mapeo, col_h_dest
             except Exception as e:
-                st.error(f"Error cargando matriz_historial.csv: {e}")
-                return None, None, None, None
+                st.error(f"Error procesando historial: {e}")
+                return None, None
 
-        stats, col_dest, col_flet, col_cost = procesar_recomendaciones()
+        dict_rec, col_destino_ref = procesar_logistica_hub()
 
-        if stats is not None:
-            st.markdown("### 📥 Pedidos Pendientes por Asignar")
-            
+        if dict_rec:
             try:
+                # 2. Cargar Matriz de Pedidos
                 p = pd.read_csv("matriz_pedidos.csv", encoding='latin-1')
                 p.columns = [c.strip().upper() for c in p.columns]
-                
-                # Intentamos cruzar pedidos nuevos con la mejor fletera histórica
-                mejor_por_destino = stats.loc[stats.groupby(col_dest)[col_cost].idxmin()]
-                
-                # Merge: Asignar recomendación automática
-                p_recomendado = pd.merge(p, mejor_por_destino[[col_dest, col_flet, col_cost]], on=col_dest, how='left')
-                
-                # Renombrar para mayor claridad
-                p_recomendado = p_recomendado.rename(columns={
-                    col_flet: 'FLETERA_RECOMENDADA',
-                    col_cost: 'COSTO_ESTIMADO'
-                })
 
-                # --- VISTA DE TARJETAS DE ACCIÓN ---
-                col_acc1, col_acc2 = st.columns(2)
-                with col_acc1:
-                    st.metric("Pedidos por Enviar", len(p))
-                with col_acc2:
-                    ahorro_potencial = (p_recomendado['COSTO_ESTIMADO'].sum() * 0.10) # Estimación de ahorro
-                    st.metric("Ahorro Proyectado", f"${ahorro_potencial:,.2f}", "+10% Eficiencia")
-
-                st.write("#### Plan de Carga Sugerido")
-                st.dataframe(p_recomendado, use_container_width=True)
-                
-                # Botón de exportación
-                csv = p_recomendado.to_csv(index=False).encode('utf-8')
-                st.download_button("DESCARGAR PLAN DE ENVÍO", csv, "plan_logistico_sugerido.csv", "text/csv")
-
+                # 3. Asignar recomendación si la columna existe
+                if 'RECOMENDACIÓN' in p.columns:
+                    # Inyectar datos del historial en la columna RECOMENDACIÓN
+                    p['RECOMENDACIÓN'] = p[col_destino_ref].map(dict_rec).fillna("Sin datos previos")
+                    
+                    st.success("🎯 Análisis completado: Recomendaciones inyectadas en matriz_pedidos.")
+                    
+                    # --- INTERFAZ DE TABLA ---
+                    st.write("### 📋 Planificación de Envíos")
+                    st.dataframe(p, use_container_width=True)
+                    
+                    # Botón de Descarga
+                    csv_export = p.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        label="📥 DESCARGAR MATRIZ PROCESADA",
+                        data=csv_export,
+                        file_name="matriz_pedidos_analizada.csv",
+                        mime="text/csv"
+                    )
+                else:
+                    st.error("❌ No se encontró la columna 'RECOMENDACIÓN' en matriz_pedidos.csv")
+                    
             except Exception as e:
-                st.info("Carga 'matriz_pedidos.csv' para ver las recomendaciones por pedido.")
+                st.info(f"Esperando archivo 'matriz_pedidos.csv'... ({e})")
+
+        # --- PIE DE PÁGINA ---
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT</div>", unsafe_allow_html=True)
 
         # --- PIE DE PÁGINA (ESTILO ORIGINAL) ---
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:40px; padding-bottom: 20px;'>LOGISTICS INTELLIGENCE UNIT - HUB ENGINE V1.0</div>", unsafe_allow_html=True)
+
 
 
 
