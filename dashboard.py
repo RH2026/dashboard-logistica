@@ -2270,7 +2270,8 @@ else:
                 st.warning(f"Esperando archivo 'matriz_pedidos.csv' en la raíz... (Detalle: {e})")
 
         # --- PIE DE PÁGINA ---
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGEN
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT - CAPTAIN VERSION</div>", unsafe_allow_html=True)
+
 
 
 
