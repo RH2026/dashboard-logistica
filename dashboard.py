@@ -2193,64 +2193,66 @@ else:
         """, unsafe_allow_html=True)          
 
     
-        # --- MOTOR DE INTELIGENCIA (BÚSQUEDA DE MEJOR PRECIO) ---
-        # --- ZONA DE CARGA DE ARCHIVOS (DRAG & DROP) ---
-        st.markdown("### 🛰️ Carga de Manifiestos")
-        col_u1, col_u2 = st.columns(2)
-        
-        with col_u1:
-            file_h = st.file_uploader("Subir HISTORIAL (CSV)", type="csv", help="Cargue 'matriz_historial.csv'")
-        with col_u2:
-            file_p = st.file_uploader("Subir PEDIDOS (CSV)", type="csv", help="Cargue 'matriz_pedidos.csv'")
-
-        # --- MOTOR DE INTELIGENCIA ---
-        def motor_logistico_drag_drop(archivo_h):
+        # --- MOTOR DE INTELIGENCIA (LEE EL HISTORIAL FIJO DEL SERVIDOR) ---
+        @st.cache_data
+        def cargar_inteligencia_maestra():
             try:
-                h = pd.read_csv(archivo_h, encoding='utf-8-sig')
+                # Carga el historial que ya tenemos en la carpeta
+                h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
                 h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
                 h.columns = [str(c).strip().upper() for c in h.columns]
                 
-                col_h_precio = [c for c in h.columns if 'PRECIO POR CAJA' in c or 'PRECIO_X_CAJA' in c][0]
+                # Columnas del historial
+                col_h_precio = [c for c in h.columns if 'PRECIO POR CAJA' in c][0]
                 col_h_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
                 col_h_dir = [c for c in h.columns if 'DIRECCION' in c][0]
                 
                 h[col_h_precio] = pd.to_numeric(h[col_h_precio], errors='coerce').fillna(0)
                 h = h[h[col_h_precio] > 0.1].copy()
                 
+                # Mejor opción por dirección
                 mejores = h.loc[h.groupby(col_h_dir)[col_h_precio].idxmin()]
                 return mejores.set_index(col_h_dir).apply(
                     lambda x: f"{x[col_h_flet]} (${x[col_h_precio]:,.2f} p/caja)", axis=1
                 ).to_dict()
             except Exception as e:
-                st.error(f"Falla en análisis de historial: {e}")
+                st.error(f"Error cargando base maestra: {e}")
                 return None
 
-        # --- PROCESAMIENTO ---
-        if file_h and file_p:
-            dict_rec = motor_logistico_drag_drop(file_h)
-            
-            if dict_rec:
-                try:
-                    p = pd.read_csv(file_p, encoding='utf-8-sig')
-                    p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
-                    p.columns = [str(c).strip().upper() for c in p.columns]
+        # 1. Cargar el conocimiento (Historial Fijo)
+        dict_rec = cargar_inteligencia_maestra()
 
-                    if 'DIRECCION' in p.columns and 'RECOMENDACION' in p.columns:
-                        p['RECOMENDACION'] = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
-                        
-                        st.success("🎯 ¡Protocolo de Análisis Finalizado!")
-                        st.dataframe(p, use_container_width=True)
-                        
-                        csv_final = p.to_csv(index=False).encode('utf-8-sig')
-                        st.download_button("📥 DESCARGAR RESULTADOS", csv_final, "analisis_logistico.csv", "text/csv")
-                    else:
-                        st.error("❌ El archivo de PEDIDOS debe contener las columnas DIRECCION y RECOMENDACION.")
-                except Exception as e:
-                    st.error(f"Error en procesamiento de pedidos: {e}")
-        else:
-            st.info("💡 Capitán, arrastre los dos archivos CSV para iniciar el reconocimiento táctico.")
+        # --- 2. ZONA DE DRAG & DROP (SOLO PARA PEDIDOS) ---
+        st.markdown("### 📥 Carga de Pedidos para Análisis")
+        file_p = st.file_uploader("Arrastre aquí su archivo de pedidos (CSV)", type="csv")
 
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT - GLOBAL COMMAND</div>", unsafe_allow_html=True)
+        if file_p and dict_rec:
+            try:
+                # Procesar el archivo que el usuario acaba de subir
+                p = pd.read_csv(file_p, encoding='utf-8-sig')
+                p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
+                p.columns = [str(c).strip().upper() for c in p.columns]
+
+                if 'DIRECCION' in p.columns and 'RECOMENDACION' in p.columns:
+                    # Inyectar inteligencia
+                    p['RECOMENDACION'] = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
+                    
+                    st.success("🎯 Análisis finalizado con éxito.")
+                    st.dataframe(p, use_container_width=True)
+                    
+                    # Botón de descarga
+                    csv_final = p.to_csv(index=False).encode('utf-8-sig')
+                    st.download_button("📥 DESCARGAR ANÁLISIS", csv_final, "pedidos_analizados.csv", "text/csv")
+                else:
+                    st.error("❌ El archivo subido debe tener las columnas 'DIRECCION' y 'RECOMENDACION'.")
+            except Exception as e:
+                st.error(f"Error procesando el archivo: {e}")
+        elif not file_p:
+            st.info("💡 Capitán, el sistema está listo. Suba un archivo de pedidos para aplicar la inteligencia del historial.")
+
+        # --- PIE DE PÁGINA ---
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:50px;'>LOGISTICS INTELLIGENCE UNIT - V. DRAG & DROP</div>", unsafe_allow_html=True)
+
 
 
 
