@@ -2206,64 +2206,79 @@ else:
 
         # --- MOTOR DE INTELIGENCIA ---
         @st.cache_data
-        def cargar_inteligencia():
+        def motor_inteligencia():
             try:
+                # Cargamos su matriz histórica
                 h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
                 h.columns = h.columns.str.upper().str.strip()
+                
+                # Identificar columnas clave
                 c_pre = [c for c in h.columns if 'PRECIO' in c][0]
                 c_fle = [c for c in h.columns if 'FLETERA' in c][0]
                 c_dir = [c for c in h.columns if 'DIRECCION' in c][0]
+                
+                # Obtener el mejor precio por dirección
                 h[c_pre] = pd.to_numeric(h[c_pre], errors='coerce').fillna(0)
-                return h.loc[h.groupby(c_dir)[c_pre].idxmin()].set_index(c_dir).apply(
+                mejores = h.loc[h.groupby(c_dir)[c_pre].idxmin()]
+                
+                # Retornar diccionario: {DIRECCION: "FLETERA ($0.00)"}
+                return mejores.set_index(c_dir).apply(
                     lambda x: f"{x[c_fle]} (${x[c_pre]:,.2f})", axis=1).to_dict()
-            except: return {}
-
-        dict_rec = cargar_inteligencia()
-
-        # --- CARGA DEL ERP ---
-        file_p = st.file_uploader("Suba el archivo del ERP (CSV)", type=["csv"])
-
+            except:
+                return {}
+        
+        # --- INTERFAZ ---
+        st.title("🚀 Hub Logístico: Acumulador de Manifiestos")
+        
+        dict_rec = motor_inteligencia()
+        
+        # Cargador de archivos
+        file_p = st.file_uploader("Suba su archivo del ERP (CSV)", type=["csv"])
+        
         if file_p:
+            # Leemos sin "planchar" nada, tal cual viene del ERP
             p = pd.read_csv(file_p, encoding='utf-8-sig')
-            
-            # 🧹 LIMPIEZA QUIRÚRGICA (Elimina los saltos de línea del ERP y los "Nones")
-            p = p.replace({r'\r': ' ', r'\n': ' '}, regex=True)
             p.columns = p.columns.str.upper().str.strip()
             
             if 'DIRECCION' in p.columns:
-                p = p.dropna(subset=['DIRECCION'])
-                p['DIRECCION'] = p['DIRECCION'].str.replace(r'\s+', ' ', regex=True).str.strip()
+                # 1. Generar recomendación basada en la dirección (tal cual está)
                 p['RECOMENDACION'] = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
-                p['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+                p['FECHA_CARGA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+                # 2. Corregir el índice para que no empiece en 0
+                p.index = range(1, len(p) + 1)
+        
+                st.subheader("📋 Vista Previa de la Carga Actual")
                 st.dataframe(p, use_container_width=True)
-
-                if st.button("🚀 ENVIAR Y ACUMULAR EN LA NUBE"):
-                    try:
-                        # 1. Leer lo que ya hay en Google Sheets
-                        base_actual = pd.read_csv(URL_HOJA)
-                        # 2. Unir con lo nuevo
-                        base_nueva = pd.concat([base_actual, p], ignore_index=True)
-                        
-                        # 3. Mostrar éxito (Para escritura automática sin API necesitamos gspread o Secrets)
-                        # Por ahora, para asegurar que no falle por permisos de su empresa:
-                        st.success("✅ Datos listos para la sincronización final.")
-                        
-                        csv_total = base_nueva.to_csv(index=False).encode('utf-8-sig')
-                        st.download_button("📥 DESCARGAR BASE MAESTRA ACTUALIZADA", csv_total, "log_maestro_actualizado.csv", "text/csv")
-                        st.info("ℹ️ Al estar en una cuenta corporativa restringida, descargue el acumulado para mantener su respaldo físico.")
-                    except:
-                        st.warning("⚠️ La hoja de Google aún está vacía. Se creará el primer registro.")
-                        st.download_button("📥 DESCARGAR PRIMER LOG", p.to_csv(index=False).encode('utf-8-sig'), "log_inicial.csv")
-
-        # --- VISUALIZADOR ---
-        with st.expander("👁️ VER ESTADO ACTUAL DE LA HOJA"):
-            try:
-                df_nube = pd.read_csv(URL_HOJA)
-                st.write(f"Registros en la nube: {len(df_nube)}")
-                st.dataframe(df_nube.tail(10))
-            except:
-                st.info("La hoja de Google está esperando el primer envío.")
+        
+                # --- BOTÓN DE ACUMULACIÓN ---
+                if st.button("➕ ACUMULAR EN EL SERVIDOR"):
+                    # Concatenamos a la base que vive en la memoria del servidor
+                    st.session_state.db_acumulada = pd.concat([st.session_state.db_acumulada, p], ignore_index=True)
+                    # Re-indexar la base acumulada para que también empiece en 1
+                    st.session_state.db_acumulada.index = range(1, len(st.session_state.db_acumulada) + 1)
+                    st.success(f"¡Carga acumulada! Total en memoria: {len(st.session_state.db_acumulada)} registros.")
+        
+        # --- SECCIÓN DE DESCARGA Y VISUALIZACIÓN ---
+        if not st.session_state.db_acumulada.empty:
+            st.divider()
+            st.subheader("📂 Base Maestra Acumulada (Temporal)")
+            
+            st.dataframe(st.session_state.db_acumulada, use_container_width=True)
+            
+            # Botón para descargar lo que se ha acumulado
+            csv_final = st.session_state.db_acumulada.to_csv(index=True, index_label="ID").encode('utf-8-sig')
+            
+            st.download_button(
+                label="📥 DESCARGAR BASE ACUMULADA (CSV)",
+                data=csv_final,
+                file_name=f"log_logistico_{datetime.date.today()}.csv",
+                mime="text/csv"
+            )
+            
+            if st.button("🗑️ BORRAR MEMORIA DEL SERVIDOR"):
+                st.session_state.db_acumulada = pd.DataFrame()
+                st.rerun()
 
 
 
