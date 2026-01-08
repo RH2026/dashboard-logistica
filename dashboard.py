@@ -2206,79 +2206,92 @@ else:
 
         # --- MOTOR DE INTELIGENCIA ---
         @st.cache_data
-        def motor_inteligencia():
+        def motor_logistico_central():
             try:
-                # Cargamos su matriz histórica
                 h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
-                h.columns = h.columns.str.upper().str.strip()
+                h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
+                col_h_precio = [c for c in h.columns if 'PRECIO POR CAJA' in c or 'PRECIO_X_CAJA' in c][0]
+                col_h_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
+                col_h_dir = [c for c in h.columns if 'DIRECCION' in c][0]
+                h[col_h_precio] = pd.to_numeric(h[col_h_precio], errors='coerce').fillna(0)
+                h = h[h[col_h_precio] > 0.1].copy()
+                mejores = h.loc[h.groupby(col_h_dir)[col_h_precio].idxmin()]
+                return mejores.set_index(col_h_dir).apply(lambda x: f"{x[col_h_flet]} (${x[col_h_precio]:,.2f} p/caja)", axis=1).to_dict()
+            except: return None
+
+        dict_rec = motor_logistico_central()
+
+        # --- CARGA DE ARCHIVO ---
+        file_p = st.file_uploader("Arrastre su archivo de pedidos (CSV)", type="csv")
+
+        if file_p and dict_rec:
+            try:
+                p = pd.read_csv(file_p, encoding='utf-8-sig')
+                p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
                 
-                # Identificar columnas clave
-                c_pre = [c for c in h.columns if 'PRECIO' in c][0]
-                c_fle = [c for c in h.columns if 'FLETERA' in c][0]
-                c_dir = [c for c in h.columns if 'DIRECCION' in c][0]
-                
-                # Obtener el mejor precio por dirección
-                h[c_pre] = pd.to_numeric(h[c_pre], errors='coerce').fillna(0)
-                mejores = h.loc[h.groupby(c_dir)[c_pre].idxmin()]
-                
-                # Retornar diccionario: {DIRECCION: "FLETERA ($0.00)"}
-                return mejores.set_index(c_dir).apply(
-                    lambda x: f"{x[c_fle]} (${x[c_pre]:,.2f})", axis=1).to_dict()
-            except:
-                return {}
-        
-        # --- INTERFAZ ---
-        st.title("🚀 Hub Logístico: Acumulador de Manifiestos")
-        
-        dict_rec = motor_inteligencia()
-        
-        # Cargador de archivos
-        file_p = st.file_uploader("Suba su archivo del ERP (CSV)", type=["csv"])
-        
-        if file_p:
-            # Leemos sin "planchar" nada, tal cual viene del ERP
-            p = pd.read_csv(file_p, encoding='utf-8-sig')
-            p.columns = p.columns.str.upper().str.strip()
-            
-            if 'DIRECCION' in p.columns:
-                # 1. Generar recomendación basada en la dirección (tal cual está)
-                p['RECOMENDACION'] = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
-                p['FECHA_CARGA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-                # 2. Corregir el índice para que no empiece en 0
-                p.index = range(1, len(p) + 1)
-        
-                st.subheader("📋 Vista Previa de la Carga Actual")
-                st.dataframe(p, use_container_width=True)
-        
-                # --- BOTÓN DE ACUMULACIÓN ---
-                if st.button("➕ ACUMULAR EN EL SERVIDOR"):
-                    # Concatenamos a la base que vive en la memoria del servidor
-                    st.session_state.db_acumulada = pd.concat([st.session_state.db_acumulada, p], ignore_index=True)
-                    # Re-indexar la base acumulada para que también empiece en 1
-                    st.session_state.db_acumulada.index = range(1, len(st.session_state.db_acumulada) + 1)
-                    st.success(f"¡Carga acumulada! Total en memoria: {len(st.session_state.db_acumulada)} registros.")
-        
-        # --- SECCIÓN DE DESCARGA Y VISUALIZACIÓN ---
-        if not st.session_state.db_acumulada.empty:
-            st.divider()
-            st.subheader("📂 Base Maestra Acumulada (Temporal)")
-            
-            st.dataframe(st.session_state.db_acumulada, use_container_width=True)
-            
-            # Botón para descargar lo que se ha acumulado
-            csv_final = st.session_state.db_acumulada.to_csv(index=True, index_label="ID").encode('utf-8-sig')
-            
-            st.download_button(
-                label="📥 DESCARGAR BASE ACUMULADA (CSV)",
-                data=csv_final,
-                file_name=f"log_logistico_{datetime.date.today()}.csv",
-                mime="text/csv"
-            )
-            
-            if st.button("🗑️ BORRAR MEMORIA DEL SERVIDOR"):
-                st.session_state.db_acumulada = pd.DataFrame()
-                st.rerun()
+                # LIMPIEZA PROFUNDA
+                p = p.dropna(how='all') # Elimina filas totalmente vacías
+                if 'DIRECCION' in p.columns:
+                    p = p.dropna(subset=['DIRECCION'])
+                    p = p[p['DIRECCION'].astype(str).str.strip() != ""]
+                    
+                    # PROCESO
+                    recomendaciones = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
+                    if 'RECOMENDACION' not in p.columns:
+                        idx_dir = p.columns.get_loc('DIRECCION')
+                        p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
+                    else:
+                        p['RECOMENDACION'] = recomendaciones
+                    
+                    st.success(f"🎯 {len(p)} registros analizados.")
+                    st.dataframe(p, use_container_width=True)
+
+                    col_btn1, col_btn2 = st.columns(2)
+                    
+                    with col_btn1:
+                        if st.button("💾 GUARDAR Y ACUMULAR REGISTROS", use_container_width=True):
+                            p_log = p.copy()
+                            p_log['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            
+                            # LÓGICA DE FUSIÓN (CONCATENACIÓN REAL)
+                            if os.path.exists(archivo_log):
+                                # 1. Leer lo que ya existe
+                                anterior = pd.read_csv(archivo_log, encoding='utf-8-sig')
+                                # 2. Unir lo nuevo abajo de lo anterior
+                                acumulado = pd.concat([anterior, p_log], ignore_index=True)
+                            else:
+                                acumulado = p_log
+                            
+                            # 3. Guardar el archivo completo (sobreescribiendo el archivo con la unión de ambos)
+                            acumulado.to_csv(archivo_log, index=False, encoding='utf-8-sig')
+                            st.toast(f"✅ Total acumulado: {len(acumulado)} filas", icon="🚀")
+
+                    with col_btn2:
+                        csv_final = p.to_csv(index=False).encode('utf-8-sig')
+                        st.download_button("📥 DESCARGAR ESTE MANIFIESTO", csv_final, f"Analisis_{datetime.date.today()}.csv", "text/csv", use_container_width=True)
+
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+        # --- VISUALIZADOR DE TODA LA BASE MAESTRA ---
+        st.markdown("---")
+        with st.expander("📂 CONSULTAR BASE DE DATOS MAESTRA (LOG ACUMULADO)"):
+            if os.path.exists(archivo_log):
+                try:
+                    # Forzamos la lectura limpia
+                    log_df = pd.read_csv(archivo_log, encoding='utf-8-sig')
+                    st.write(f"📊 **REGISTROS TOTALES EN LA BASE:** {len(log_df)}")
+                    # Mostramos TODO, pero con un scroll
+                    st.dataframe(log_df, use_container_width=True)
+                    
+                    # Opción para descargar toda la base acumulada
+                    csv_total = log_df.to_csv(index=False).encode('utf-8-sig')
+                    st.download_button("📥 DESCARGAR TODA LA BASE MAESTRA", csv_total, "base_maestra_logistica.csv", "text/csv")
+                except:
+                    st.info("El archivo se está inicializando.")
+            else:
+                st.info("No hay base de datos acumulada todavía. Guarde su primer archivo.")
+
 
 
 
