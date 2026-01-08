@@ -2168,17 +2168,31 @@ else:
         import datetime
         import os
         
-        # --- DATOS DE SU NAVE ---
-        URL_HOJA = "https://docs.google.com/spreadsheets/d/1myYZ6k3mRV_qK_wMXMEyAUGp0vFmLrGfphSRhnLKjq8/export?format=csv"
-        # Este es el ID de su hoja para operaciones de escritura
-        ID_SHEET = "1myYZ6k3mRV_qK_wMXMEyAUGp0vFmLrGfphSRhnLKjq8"
+        # --- RUTAS DE ARCHIVOS ---
+        # El archivo log se guardará en el servidor (temporal en Streamlit Cloud)
+        archivo_log = "log_maestro_acumulado.csv"
         
-        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
-        
-        # --- DEFINICIÓN DE RUTA GLOBAL (PARA EVITAR NAMEERROR) ---
-        # Se define aquí arriba para que esté disponible en todo el bloque
-        ruta_script = os.path.dirname(os.path.abspath(__file__))
-        archivo_log = os.path.join(ruta_script, "log_maestro_envios.csv")
+        # --- ESTILOS PERSONALIZADOS ---
+        st.markdown("""
+            <style>
+            .main { background-color: #0e1117; }
+            .stButton>button { border-radius: 5px; height: 3em; transition: 0.3s; }
+            .stDataFrame { border: 1px solid #30363d; border-radius: 10px; }
+            footer {visibility: hidden;}
+            .footer-minimal {
+                position: fixed;
+                left: 0;
+                bottom: 0;
+                width: 100%;
+                background-color: transparent;
+                color: #555;
+                text-align: center;
+                font-size: 12px;
+                padding: 10px;
+                letter-spacing: 1px;
+            }
+            </style>
+            """, unsafe_allow_html=True)
         # --- ENCABEZADO MINIMALISTA (ESTILO PRO) ---
         
         st.markdown("""
@@ -2208,89 +2222,112 @@ else:
         @st.cache_data
         def motor_logistico_central():
             try:
-                h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
-                h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
-                col_h_precio = [c for c in h.columns if 'PRECIO POR CAJA' in c or 'PRECIO_X_CAJA' in c][0]
-                col_h_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
-                col_h_dir = [c for c in h.columns if 'DIRECCION' in c][0]
-                h[col_h_precio] = pd.to_numeric(h[col_h_precio], errors='coerce').fillna(0)
-                h = h[h[col_h_precio] > 0.1].copy()
-                mejores = h.loc[h.groupby(col_h_dir)[col_h_precio].idxmin()]
-                return mejores.set_index(col_h_dir).apply(lambda x: f"{x[col_h_flet]} (${x[col_h_precio]:,.2f} p/caja)", axis=1).to_dict()
-            except: return None
-
+                if os.path.exists("matriz_historial.csv"):
+                    h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
+                    # Solo normalizamos nombres de columnas para que el código las encuentre
+                    h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
+                    
+                    col_h_precio = [c for c in h.columns if 'PRECIO POR CAJA' in c or 'PRECIO_X_CAJA' in c or 'PRECIO' in c][0]
+                    col_h_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
+                    col_h_dir = [c for c in h.columns if 'DIRECCION' in c][0]
+                    
+                    h[col_h_precio] = pd.to_numeric(h[col_h_precio], errors='coerce').fillna(0)
+                    h = h[h[col_h_precio] > 0.1].copy()
+                    
+                    # Buscamos la fletera más barata por dirección
+                    mejores = h.loc[h.groupby(col_h_dir)[col_h_precio].idxmin()]
+                    return mejores.set_index(col_h_dir).apply(lambda x: f"{x[col_h_flet]} (${x[col_h_precio]:,.2f} p/caja)", axis=1).to_dict()
+                return {}
+            except:
+                return {}
+        
+        # --- LÓGICA DE NAVEGACIÓN ---
+        st.title("🛰️ HUB LOGÍSTICO")
+        
         dict_rec = motor_logistico_central()
-
+        
         # --- CARGA DE ARCHIVO ---
-        file_p = st.file_uploader("Arrastre su archivo de pedidos (CSV)", type="csv")
-
-        if file_p and dict_rec:
+        file_p = st.file_uploader("Arrastre su archivo de pedidos del ERP (CSV)", type="csv")
+        
+        if file_p:
+            # REINICIAR CANDADO SI SUBE ARCHIVO NUEVO
+            if "ultimo_archivo" not in st.session_state or st.session_state.ultimo_archivo != file_p.name:
+                st.session_state.guardado_exitoso = False
+                st.session_state.ultimo_archivo = file_p.name
+        
             try:
+                # LECTURA PURA: Respetando saltos de línea y formato original
                 p = pd.read_csv(file_p, encoding='utf-8-sig')
                 p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
                 
-                # LIMPIEZA PROFUNDA
-                p = p.dropna(how='all') # Elimina filas totalmente vacías
                 if 'DIRECCION' in p.columns:
-                    p = p.dropna(subset=['DIRECCION'])
-                    p = p[p['DIRECCION'].astype(str).str.strip() != ""]
-                    
-                    # PROCESO
+                    # Mapeo de recomendación
                     recomendaciones = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
+                    
                     if 'RECOMENDACION' not in p.columns:
                         idx_dir = p.columns.get_loc('DIRECCION')
                         p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
                     else:
                         p['RECOMENDACION'] = recomendaciones
                     
-                    st.success(f"🎯 {len(p)} registros analizados.")
+                    # ÍNDICE HUMANO (Inicia en 1)
+                    p.index = range(1, len(p) + 1)
+                    
+                    st.success(f"🎯 {len(p)} registros analizados (Datos originales preservados).")
                     st.dataframe(p, use_container_width=True)
-
+        
                     col_btn1, col_btn2 = st.columns(2)
                     
                     with col_btn1:
-                        if st.button("💾 GUARDAR Y ACUMULAR REGISTROS", use_container_width=True):
+                        # CANDADO ANTI-DUPLICADOS
+                        btn_texto = "✅ REGISTROS YA GUARDADOS" if st.session_state.get('guardado_exitoso', False) else "💾 GUARDAR Y ACUMULAR REGISTROS"
+                        
+                        if st.button(btn_texto, use_container_width=True, disabled=st.session_state.get('guardado_exitoso', False)):
                             p_log = p.copy()
                             p_log['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             
-                            # LÓGICA DE FUSIÓN (CONCATENACIÓN REAL)
                             if os.path.exists(archivo_log):
-                                # 1. Leer lo que ya existe
                                 anterior = pd.read_csv(archivo_log, encoding='utf-8-sig')
-                                # 2. Unir lo nuevo abajo de lo anterior
                                 acumulado = pd.concat([anterior, p_log], ignore_index=True)
                             else:
                                 acumulado = p_log
                             
-                            # 3. Guardar el archivo completo (sobreescribiendo el archivo con la unión de ambos)
-                            acumulado.to_csv(archivo_log, index=False, encoding='utf-8-sig')
-                            st.toast(f"✅ Total acumulado: {len(acumulado)} filas", icon="🚀")
-
+                            # Mantener el ID humano en el acumulado
+                            acumulado.index = range(1, len(acumulado) + 1)
+                            acumulado.to_csv(archivo_log, index=True, index_label="ID", encoding='utf-8-sig')
+                            
+                            st.session_state.guardado_exitoso = True
+                            st.toast("Información acumulada exitosamente", icon="🚀")
+                            st.rerun()
+        
                     with col_btn2:
-                        csv_final = p.to_csv(index=False).encode('utf-8-sig')
-                        st.download_button("📥 DESCARGAR ESTE MANIFIESTO", csv_final, f"Analisis_{datetime.date.today()}.csv", "text/csv", use_container_width=True)
-
+                        csv_data = p.to_csv(index=True, index_label="ID").encode('utf-8-sig')
+                        st.download_button("📥 DESCARGAR ANÁLISIS ACTUAL", csv_data, f"Analisis_{datetime.date.today()}.csv", "text/csv", use_container_width=True)
+        
             except Exception as e:
-                st.error(f"Error: {e}")
-
-        # --- VISUALIZADOR DE TODA LA BASE MAESTRA ---
+                st.error(f"Error en el procesamiento: {e}")
+        
+        # --- CONSULTA DE HISTORIAL ACUMULADO ---
         st.markdown("---")
-        with st.expander("📂 CONSULTAR BASE DE DATOS MAESTRA (LOG ACUMULADO)"):
+        with st.expander("📂 CONSULTAR BASE MAESTRA (LOG ACUMULADO EN SERVIDOR)"):
             if os.path.exists(archivo_log):
-                try:
-                    # Forzamos la lectura limpia
-                    log_df = pd.read_csv(archivo_log, encoding='utf-8-sig')
-                    st.write(f"📊 **REGISTROS TOTALES EN LA BASE:** {len(log_df)}")
-                    # Mostramos TODO, pero con un scroll
-                    st.dataframe(log_df, use_container_width=True)
-                    
-                    # Opción para descargar toda la base acumulada
-                    csv_total = log_df.to_csv(index=False).encode('utf-8-sig')
-                    st.download_button("📥 DESCARGAR TODA LA BASE MAESTRA", csv_total, "base_maestra_logistica.csv", "text/csv")
-                except:
-                    st.info("El archivo se está inicializando.")
+                df_maestro = pd.read_csv(archivo_log, encoding='utf-8-sig')
+                st.write(f"Registros totales en memoria: **{len(df_maestro)}**")
+                st.dataframe(df_maestro, use_container_width=True)
+                
+                # Botón para descargar el trabajo de todo el día
+                csv_full = df_maestro.to_csv(index=False).encode('utf-8-sig')
+                st.download_button("📥 DESCARGAR TODA LA BASE MAESTRA", csv_full, "base_maestra_logistica.csv", "text/csv")
             else:
-                st.info("No hay base de datos acumulada todavía. Guarde su primer archivo.")
+                st.info("Aún no hay registros acumulados en esta sesión.")
+        
+        # --- PIE DE PÁGINA MINIMALISTA ---
+        st.markdown("""
+            <div class="footer-minimal">
+                LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
+            </div>
+            """, unsafe_allow_html=True)
+
 
 
 
