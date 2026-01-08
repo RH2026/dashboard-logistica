@@ -2340,7 +2340,7 @@ else:
             
             # COORDENADAS: Superior Derecha
             # X=420 (derecha), Y=750 (arriba)
-            can.drawString(500, 780, f"{nombre_fletera.upper()}")
+            can.drawString(500, 775, f"{nombre_fletera.upper()}")
             can.save()
         
             packet.seek(0)
@@ -2422,6 +2422,7 @@ else:
                 LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
             </div>
             """, unsafe_allow_html=True)
+
 
 
 
