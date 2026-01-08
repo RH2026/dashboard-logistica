@@ -2335,12 +2335,12 @@ else:
         
             packet = io.BytesIO()
             can = canvas.Canvas(packet, pagesize=letter)
-            can.setFont("Helvetica-Bold", 20) # Letra grande para que se vea claro
+            can.setFont("Helvetica-Bold", 12) # Letra grande para que se vea claro
             can.setFillColorRGB(0, 0, 0)     # Color negro sólido
             
             # COORDENADAS: Superior Derecha
             # X=420 (derecha), Y=750 (arriba)
-            can.drawString(420, 750, f"{nombre_fletera.upper()}")
+            can.drawString(500, 800, f"{nombre_fletera.upper()}")
             can.save()
         
             packet.seek(0)
@@ -2422,6 +2422,7 @@ else:
                 LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
             </div>
             """, unsafe_allow_html=True)
+
 
 
 
