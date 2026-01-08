@@ -2321,12 +2321,108 @@ else:
             else:
                 st.info("Aún no hay registros acumulados en esta sesión.")
         
+        # --- SECCIÓN DE SELLADO DE PDFS (Debajo del Historial) ---
+        st.markdown("---")
+        st.markdown("### 🖋️ SELLADOR DIGITAL DE FACTURAS")
+        st.info("Suba el CSV con las fleteras elegidas y los PDFs para marcarlos automáticamente.")
+        
+        # Función técnica para estampar el nombre
+        def marcar_pdf(pdf_file, nombre_fletera):
+            import io
+            from pypdf import PdfReader, PdfWriter
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import letter
+        
+            packet = io.BytesIO()
+            can = canvas.Canvas(packet, pagesize=letter)
+            can.setFont("Helvetica-Bold", 20) # Letra grande para que se vea claro
+            can.setFillColorRGB(0, 0, 0)     # Color negro sólido
+            
+            # COORDENADAS: Superior Derecha
+            # X=420 (derecha), Y=750 (arriba)
+            can.drawString(420, 750, f"{nombre_fletera.upper()}")
+            can.save()
+        
+            packet.seek(0)
+            new_pdf = PdfReader(packet)
+            existing_pdf = PdfReader(pdf_file)
+            output = PdfWriter()
+        
+            page = existing_pdf.pages[0]
+            page.merge_page(new_pdf.pages[0])
+            output.add_page(page)
+            
+            # Añadir el resto de páginas si existen
+            for i in range(1, len(existing_pdf.pages)):
+                output.add_page(existing_pdf.pages[i])
+        
+            out_io = io.BytesIO()
+            output.write(out_io)
+            return out_io.getvalue()
+        
+        # Interfaz de carga
+        col_sellador_1, col_sellador_2 = st.columns(2)
+        
+        with col_sellador_1:
+            csv_referencia = st.file_uploader("1. Suba CSV con FACTURA y FLETERA", type="csv", key="csv_sellar")
+        
+        with col_sellador_2:
+            pdfs_subidos = st.file_uploader("2. Suba los PDFs de las Facturas", type="pdf", accept_multiple_files=True, key="pdfs_sellar")
+        
+        if csv_referencia and pdfs_subidos:
+            import zipfile
+            import io
+            
+            df_ref = pd.read_csv(csv_referencia)
+            df_ref.columns = df_ref.columns.str.upper().str.strip()
+            
+            # Creamos mapa de búsqueda { 'FOLIO': 'FLETERA' }
+            if 'FACTURA' in df_ref.columns and 'FLETERA' in df_ref.columns:
+                mapa_fleteras = pd.Series(df_ref.FLETERA.values, index=df_ref.FACTURA.astype(str)).to_dict()
+        
+                if st.button("🚀 GENERAR FACTURAS SELLADAS (ZIP)", use_container_width=True):
+                    zip_buffer = io.BytesIO()
+                    conteo_exito = 0
+                    
+                    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+                        for pdf in pdfs_subidos:
+                            nombre_archivo = pdf.name.upper()
+                            factura_id = None
+                            
+                            # Buscamos si el folio del CSV está en el nombre del PDF
+                            for folio in mapa_fleteras.keys():
+                                if str(folio) in nombre_archivo:
+                                    factura_id = folio
+                                    break
+                            
+                            if factura_id:
+                                fletera = mapa_fleteras[factura_id]
+                                pdf_marcado = marcar_pdf(pdf, fletera)
+                                zip_file.writestr(f"LISTA_{pdf.name}", pdf_marcado)
+                                conteo_exito += 1
+                            else:
+                                st.warning(f"⚠️ No se encontró fletera para el archivo: {pdf.name}")
+        
+                    if conteo_exito > 0:
+                        st.success(f"✅ Se sellaron {conteo_exito} facturas correctamente.")
+                        st.download_button(
+                            label="📥 DESCARGAR ZIP DE FACTURAS LISTAS",
+                            data=zip_buffer.getvalue(),
+                            file_name=f"Facturas_Selladas_{datetime.date.today()}.zip",
+                            mime="application/zip",
+                            use_container_width=True
+                        )
+            else:
+                st.error("El CSV debe tener las columnas 'FACTURA' y 'FLETERA'")
+        
+        
         # --- PIE DE PÁGINA MINIMALISTA ---
         st.markdown("""
             <div class="footer-minimal">
                 LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
             </div>
             """, unsafe_allow_html=True)
+
 
 
 
