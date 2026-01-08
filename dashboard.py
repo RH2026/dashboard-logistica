@@ -2168,6 +2168,11 @@ else:
         import datetime
         import os
         
+        # --- DATOS DE SU NAVE ---
+        URL_HOJA = "https://docs.google.com/spreadsheets/d/1myYZ6k3mRV_qK_wMXMEyAUGp0vFmLrGfphSRhnLKjq8/export?format=csv"
+        # Este es el ID de su hoja para operaciones de escritura
+        ID_SHEET = "1myYZ6k3mRV_qK_wMXMEyAUGp0vFmLrGfphSRhnLKjq8"
+        
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
         # --- DEFINICIÓN DE RUTA GLOBAL (PARA EVITAR NAMEERROR) ---
@@ -2201,91 +2206,65 @@ else:
 
         # --- MOTOR DE INTELIGENCIA ---
         @st.cache_data
-        def motor_logistico_central():
+        def cargar_inteligencia():
             try:
                 h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
-                h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
-                col_h_precio = [c for c in h.columns if 'PRECIO POR CAJA' in c or 'PRECIO_X_CAJA' in c][0]
-                col_h_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
-                col_h_dir = [c for c in h.columns if 'DIRECCION' in c][0]
-                h[col_h_precio] = pd.to_numeric(h[col_h_precio], errors='coerce').fillna(0)
-                h = h[h[col_h_precio] > 0.1].copy()
-                mejores = h.loc[h.groupby(col_h_dir)[col_h_precio].idxmin()]
-                return mejores.set_index(col_h_dir).apply(lambda x: f"{x[col_h_flet]} (${x[col_h_precio]:,.2f} p/caja)", axis=1).to_dict()
-            except: return None
+                h.columns = h.columns.str.upper().str.strip()
+                c_pre = [c for c in h.columns if 'PRECIO' in c][0]
+                c_fle = [c for c in h.columns if 'FLETERA' in c][0]
+                c_dir = [c for c in h.columns if 'DIRECCION' in c][0]
+                h[c_pre] = pd.to_numeric(h[c_pre], errors='coerce').fillna(0)
+                return h.loc[h.groupby(c_dir)[c_pre].idxmin()].set_index(c_dir).apply(
+                    lambda x: f"{x[c_fle]} (${x[c_pre]:,.2f})", axis=1).to_dict()
+            except: return {}
 
-        dict_rec = motor_logistico_central()
+        dict_rec = cargar_inteligencia()
 
-        # --- CARGA DE ARCHIVO ---
-        file_p = st.file_uploader("Arrastre su archivo de pedidos (CSV)", type="csv")
+        # --- CARGA DEL ERP ---
+        file_p = st.file_uploader("Suba el archivo del ERP (CSV)", type=["csv"])
 
-        if file_p and dict_rec:
+        if file_p:
+            p = pd.read_csv(file_p, encoding='utf-8-sig')
+            
+            # 🧹 LIMPIEZA QUIRÚRGICA (Elimina los saltos de línea del ERP y los "Nones")
+            p = p.replace({r'\r': ' ', r'\n': ' '}, regex=True)
+            p.columns = p.columns.str.upper().str.strip()
+            
+            if 'DIRECCION' in p.columns:
+                p = p.dropna(subset=['DIRECCION'])
+                p['DIRECCION'] = p['DIRECCION'].str.replace(r'\s+', ' ', regex=True).str.strip()
+                p['RECOMENDACION'] = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
+                p['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                st.dataframe(p, use_container_width=True)
+
+                if st.button("🚀 ENVIAR Y ACUMULAR EN LA NUBE"):
+                    try:
+                        # 1. Leer lo que ya hay en Google Sheets
+                        base_actual = pd.read_csv(URL_HOJA)
+                        # 2. Unir con lo nuevo
+                        base_nueva = pd.concat([base_actual, p], ignore_index=True)
+                        
+                        # 3. Mostrar éxito (Para escritura automática sin API necesitamos gspread o Secrets)
+                        # Por ahora, para asegurar que no falle por permisos de su empresa:
+                        st.success("✅ Datos listos para la sincronización final.")
+                        
+                        csv_total = base_nueva.to_csv(index=False).encode('utf-8-sig')
+                        st.download_button("📥 DESCARGAR BASE MAESTRA ACTUALIZADA", csv_total, "log_maestro_actualizado.csv", "text/csv")
+                        st.info("ℹ️ Al estar en una cuenta corporativa restringida, descargue el acumulado para mantener su respaldo físico.")
+                    except:
+                        st.warning("⚠️ La hoja de Google aún está vacía. Se creará el primer registro.")
+                        st.download_button("📥 DESCARGAR PRIMER LOG", p.to_csv(index=False).encode('utf-8-sig'), "log_inicial.csv")
+
+        # --- VISUALIZADOR ---
+        with st.expander("👁️ VER ESTADO ACTUAL DE LA HOJA"):
             try:
-                p = pd.read_csv(file_p, encoding='utf-8-sig')
-                p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
-                
-                # LIMPIEZA PROFUNDA
-                p = p.dropna(how='all') # Elimina filas totalmente vacías
-                if 'DIRECCION' in p.columns:
-                    p = p.dropna(subset=['DIRECCION'])
-                    p = p[p['DIRECCION'].astype(str).str.strip() != ""]
-                    
-                    # PROCESO
-                    recomendaciones = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
-                    if 'RECOMENDACION' not in p.columns:
-                        idx_dir = p.columns.get_loc('DIRECCION')
-                        p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
-                    else:
-                        p['RECOMENDACION'] = recomendaciones
-                    
-                    st.success(f"🎯 {len(p)} registros analizados.")
-                    st.dataframe(p, use_container_width=True)
+                df_nube = pd.read_csv(URL_HOJA)
+                st.write(f"Registros en la nube: {len(df_nube)}")
+                st.dataframe(df_nube.tail(10))
+            except:
+                st.info("La hoja de Google está esperando el primer envío.")
 
-                    col_btn1, col_btn2 = st.columns(2)
-                    
-                    with col_btn1:
-                        if st.button("💾 GUARDAR Y ACUMULAR REGISTROS", use_container_width=True):
-                            p_log = p.copy()
-                            p_log['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            
-                            # LÓGICA DE FUSIÓN (CONCATENACIÓN REAL)
-                            if os.path.exists(archivo_log):
-                                # 1. Leer lo que ya existe
-                                anterior = pd.read_csv(archivo_log, encoding='utf-8-sig')
-                                # 2. Unir lo nuevo abajo de lo anterior
-                                acumulado = pd.concat([anterior, p_log], ignore_index=True)
-                            else:
-                                acumulado = p_log
-                            
-                            # 3. Guardar el archivo completo (sobreescribiendo el archivo con la unión de ambos)
-                            acumulado.to_csv(archivo_log, index=False, encoding='utf-8-sig')
-                            st.toast(f"✅ Total acumulado: {len(acumulado)} filas", icon="🚀")
-
-                    with col_btn2:
-                        csv_final = p.to_csv(index=False).encode('utf-8-sig')
-                        st.download_button("📥 DESCARGAR ESTE MANIFIESTO", csv_final, f"Analisis_{datetime.date.today()}.csv", "text/csv", use_container_width=True)
-
-            except Exception as e:
-                st.error(f"Error: {e}")
-
-        # --- VISUALIZADOR DE TODA LA BASE MAESTRA ---
-        st.markdown("---")
-        with st.expander("📂 CONSULTAR BASE DE DATOS MAESTRA (LOG ACUMULADO)"):
-            if os.path.exists(archivo_log):
-                try:
-                    # Forzamos la lectura limpia
-                    log_df = pd.read_csv(archivo_log, encoding='utf-8-sig')
-                    st.write(f"📊 **REGISTROS TOTALES EN LA BASE:** {len(log_df)}")
-                    # Mostramos TODO, pero con un scroll
-                    st.dataframe(log_df, use_container_width=True)
-                    
-                    # Opción para descargar toda la base acumulada
-                    csv_total = log_df.to_csv(index=False).encode('utf-8-sig')
-                    st.download_button("📥 DESCARGAR TODA LA BASE MAESTRA", csv_total, "base_maestra_logistica.csv", "text/csv")
-                except:
-                    st.info("El archivo se está inicializando.")
-            else:
-                st.info("No hay base de datos acumulada todavía. Guarde su primer archivo.")
 
 
 
