@@ -2222,69 +2222,71 @@ else:
         if file_p and dict_rec:
             try:
                 p = pd.read_csv(file_p, encoding='utf-8-sig')
-                
-                # 1. LIMPIEZA INICIAL: Quitar columnas vacías por completo
-                p = p.dropna(how='all', axis=1)
-                
-                # 2. Normalizar nombres de columnas
                 p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
                 
-                # 3. FILTRO DE ACERO: Eliminar filas donde DIRECCION sea nula o solo espacios
+                # LIMPIEZA PROFUNDA
+                p = p.dropna(how='all') # Elimina filas totalmente vacías
                 if 'DIRECCION' in p.columns:
-                    # Eliminamos filas donde todo es NaN
-                    p = p.dropna(how='all')
-                    # Eliminamos donde DIRECCION sea nula
                     p = p.dropna(subset=['DIRECCION'])
-                    # Eliminamos donde DIRECCION sea un string vacío o solo espacios
                     p = p[p['DIRECCION'].astype(str).str.strip() != ""]
                     
-                    # PROCESO DE ANÁLISIS
+                    # PROCESO
                     recomendaciones = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
-                    idx_dir = p.columns.get_loc('DIRECCION')
-                    
-                    if 'RECOMENDACION' in p.columns: 
-                        p['RECOMENDACION'] = recomendaciones
-                    else: 
+                    if 'RECOMENDACION' not in p.columns:
+                        idx_dir = p.columns.get_loc('DIRECCION')
                         p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
+                    else:
+                        p['RECOMENDACION'] = recomendaciones
                     
-                    st.success(f"🎯 Análisis completado: {len(p)} filas reales detectadas.")
+                    st.success(f"🎯 {len(p)} registros analizados.")
                     st.dataframe(p, use_container_width=True)
 
                     col_btn1, col_btn2 = st.columns(2)
                     
                     with col_btn1:
-                        if st.button("💾 GUARDAR EN LOG MAESTRO", use_container_width=True):
-                            # Sellar con fecha
+                        if st.button("💾 GUARDAR Y ACUMULAR REGISTROS", use_container_width=True):
                             p_log = p.copy()
                             p_log['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             
-                            existe = os.path.exists(archivo_log)
-                            # Guardado final
-                            p_log.to_csv(archivo_log, mode='a', index=False, header=not existe, encoding='utf-8-sig')
-                            st.toast(f"✅ Se guardaron {len(p_log)} registros limpios", icon="🚀")
+                            # LÓGICA DE FUSIÓN (CONCATENACIÓN REAL)
+                            if os.path.exists(archivo_log):
+                                # 1. Leer lo que ya existe
+                                anterior = pd.read_csv(archivo_log, encoding='utf-8-sig')
+                                # 2. Unir lo nuevo abajo de lo anterior
+                                acumulado = pd.concat([anterior, p_log], ignore_index=True)
+                            else:
+                                acumulado = p_log
+                            
+                            # 3. Guardar el archivo completo (sobreescribiendo el archivo con la unión de ambos)
+                            acumulado.to_csv(archivo_log, index=False, encoding='utf-8-sig')
+                            st.toast(f"✅ Total acumulado: {len(acumulado)} filas", icon="🚀")
 
                     with col_btn2:
                         csv_final = p.to_csv(index=False).encode('utf-8-sig')
-                        st.download_button("📥 DESCARGAR RESULTADOS", csv_final, f"Analisis_{datetime.date.today()}.csv", "text/csv", use_container_width=True)
-                else:
-                    st.error("No se encontró la columna DIRECCION")
+                        st.download_button("📥 DESCARGAR ESTE MANIFIESTO", csv_final, f"Analisis_{datetime.date.today()}.csv", "text/csv", use_container_width=True)
+
             except Exception as e:
                 st.error(f"Error: {e}")
 
-        # --- VISUALIZADOR SEGURO ---
+        # --- VISUALIZADOR DE TODA LA BASE MAESTRA ---
         st.markdown("---")
-        with st.expander("📂 CONSULTAR LOG MAESTRO"):
+        with st.expander("📂 CONSULTAR BASE DE DATOS MAESTRA (LOG ACUMULADO)"):
             if os.path.exists(archivo_log):
                 try:
+                    # Forzamos la lectura limpia
                     log_df = pd.read_csv(archivo_log, encoding='utf-8-sig')
-                    # Doble limpieza al leer por si acaso quedaron residuos viejos
-                    log_df = log_df.dropna(subset=['DIRECCION'])
-                    st.write(f"📈 Registros acumulados reales: **{len(log_df)}**")
-                    st.dataframe(log_df.tail(50), use_container_width=True)
+                    st.write(f"📊 **REGISTROS TOTALES EN LA BASE:** {len(log_df)}")
+                    # Mostramos TODO, pero con un scroll
+                    st.dataframe(log_df, use_container_width=True)
+                    
+                    # Opción para descargar toda la base acumulada
+                    csv_total = log_df.to_csv(index=False).encode('utf-8-sig')
+                    st.download_button("📥 DESCARGAR TODA LA BASE MAESTRA", csv_total, "base_maestra_logistica.csv", "text/csv")
                 except:
-                    st.info("El log está vacío o siendo procesado.")
+                    st.info("El archivo se está inicializando.")
             else:
-                st.info("Aún no hay datos guardados.")
+                st.info("No hay base de datos acumulada todavía. Guarde su primer archivo.")
+
 
 
 
