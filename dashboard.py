@@ -2468,6 +2468,10 @@ else:
                     with c2:
                         csv_exp = p_editado.to_csv(index=False).encode('utf-8-sig')
                         st.download_button("📥 DESCARGAR ANÁLISIS ACTUAL", csv_exp, "Analisis_Actual.csv", use_container_width=True)
+
+            # --- AQUÍ CERRAMOS EL BLOQUE QUE CAUSA EL ERROR ---
+            except Exception as e: 
+                st.error(f"Error en el puente de mando: {e}")
         
         # --- SECCIÓN DE SELLADO ---
         st.markdown("---")
@@ -2510,6 +2514,7 @@ else:
                     st.rerun()
         
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.1 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
