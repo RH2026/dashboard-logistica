@@ -2312,17 +2312,18 @@ else:
         
         st.divider()
                
+                
+        # --- INICIALIZACIÓN CRÍTICA ---
         if 'db_acumulada' not in st.session_state:
-            st.session_state.db_acumulada = pd.DataFrame()     
-                  
+            if os.path.exists("log_maestro_acumulado.csv"):
+                st.session_state.db_acumulada = pd.read_csv("log_maestro_acumulado.csv")
+            else:
+                st.session_state.db_acumulada = pd.DataFrame()
         
-        archivo_log = "log_maestro_acumulado.csv"
-        
-        # --- INICIALIZACIÓN DE MEMORIA ---
-        if 'db_acumulada' not in st.session_state:
-            st.session_state.db_acumulada = pd.DataFrame()
         if 'guardado_exitoso' not in st.session_state:
             st.session_state.guardado_exitoso = False
+        
+        archivo_log = "log_maestro_acumulado.csv"
         
         # --- MOTOR DE INTELIGENCIA ---
         @st.cache_data
@@ -2331,22 +2332,30 @@ else:
                 if os.path.exists("matriz_historial.csv"):
                     h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
                     h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
-                    
                     c_pre = [c for c in h.columns if 'PRECIO' in c][0]
                     c_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
                     c_dir = [c for c in h.columns if 'DIRECCION' in c][0]
-                    
                     h[c_pre] = pd.to_numeric(h[c_pre], errors='coerce').fillna(0)
                     mejores = h.loc[h.groupby(c_dir)[c_pre].idxmin()]
-                    
-                    # Retornamos dos diccionarios: uno para fletera y otro para precio
-                    dict_flet = mejores.set_index(c_dir)[c_flet].to_dict()
-                    dict_price = mejores.set_index(c_dir)[c_pre].to_dict()
-                    return dict_flet, dict_price
-                return {}, {}
-            except: return {}, {}
+                    return mejores.set_index(c_dir)[c_flet].to_dict(), mejores.set_index(c_dir)[c_pre].to_dict()
+            except: pass
+            return {}, {}
         
         # --- FUNCIONES DE SELLADO ---
+        def generar_sellos_fisicos(lista_textos):
+            output = PdfWriter()
+            for texto in lista_textos:
+                packet = io.BytesIO()
+                can = canvas.Canvas(packet, pagesize=letter)
+                can.setFont("Helvetica-Bold", 11)
+                can.drawString(520, 775, f"{str(texto).upper()}")
+                can.save()
+                packet.seek(0)
+                output.add_page(PdfReader(packet).pages[0])
+            out_io = io.BytesIO()
+            output.write(out_io)
+            return out_io.getvalue()
+        
         def marcar_pdf_digital(pdf_file, texto_sello):
             packet = io.BytesIO()
             can = canvas.Canvas(packet, pagesize=letter)
@@ -2366,22 +2375,8 @@ else:
             output.write(out_io)
             return out_io.getvalue()
         
-        def generar_sellos_fisicos(lista_textos):
-            output = PdfWriter()
-            for texto in lista_textos:
-                packet = io.BytesIO()
-                can = canvas.Canvas(packet, pagesize=letter)
-                can.setFont("Helvetica-Bold", 11)
-                can.drawString(520, 775, f"{str(texto).upper()}")
-                can.save()
-                packet.seek(0)
-                output.add_page(PdfReader(packet).pages[0])
-            out_io = io.BytesIO()
-            output.write(out_io)
-            return out_io.getvalue()
-        
-        # --- LÓGICA PRINCIPAL ---
-        st.title("🛰️ HUB LOGÍSTICO: ARTILLERÍA COMPLETA")
+        # --- INTERFAZ ---
+        st.title("🛰️ HUB LOGÍSTICO: MANDO TOTAL")
         d_flet, d_price = motor_logistico_central()
         
         file_p = st.file_uploader("1. CARGAR ARCHIVO DEL ERP (CSV)", type="csv")
@@ -2396,84 +2391,95 @@ else:
                 p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
                 
                 if 'DIRECCION' in p.columns:
-                    # Separación de Columnas: Fletera y Precio
+                    # ORDEN DE COLUMNAS SOLICITADO
                     p['RECOMENDACION_FLET'] = p['DIRECCION'].map(d_flet).fillna("ESCRIBA FLETERA")
                     p['PRECIO_ESTIMADO'] = p['DIRECCION'].map(d_price).fillna(0)
                     p['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    
+                    # Reorganizar columnas para que RECOMENDACION vaya tras FACTURA
+                    columnas_finales = ['FACTURA', 'RECOMENDACION_FLET', 'PRECIO_ESTIMADO', 'DIRECCION', 'FECHA_SISTEMA']
+                    # Solo incluimos columnas que existan realmente para evitar errores
+                    p = p[[col for col in columnas_finales if col in p.columns] + [col for col in p.columns if col not in columnas_finales]]
                     p.index = range(1, len(p) + 1)
                     
-                    st.markdown("### 📝 EDITOR DE MANIFIESTO")
+                    st.markdown("### 📝 EDITOR DE MANIFIESTO (Haga doble clic para editar)")
+                    
+                    # EL EDITOR: Aquí permitimos que RECOMENDACION_FLET sea editable
                     p_editado = st.data_editor(
                         p, use_container_width=True,
                         column_config={
-                            "RECOMENDACION_FLET": st.column_config.TextColumn("FLETERA ✍️"),
-                            "PRECIO_ESTIMADO": st.column_config.NumberColumn("PRECIO ($)", format="$%.2f")
+                            "FACTURA": st.column_config.TextColumn("FACTURA", disabled=True),
+                            "RECOMENDACION_FLET": st.column_config.TextColumn("RECOMENDACION (EDITABLE) ✍️", disabled=False),
+                            "PRECIO_ESTIMADO": st.column_config.NumberColumn("COSTO ($)", format="$%.2f", disabled=False),
+                            "DIRECCION": st.column_config.TextColumn("DIRECCION", disabled=True),
+                            "FECHA_SISTEMA": st.column_config.TextColumn("FECHA", disabled=True)
                         },
-                        disabled=["FACTURA", "DIRECCION", "FECHA_SISTEMA"],
                         key="editor_central"
                     )
         
                     c1, c2 = st.columns(2)
                     with c1:
-                        txt_btn = "✅ GUARDADO" if st.session_state.guardado_exitoso else "💾 GUARDAR Y ACUMULAR"
-                        if st.button(txt_btn, use_container_width=True, disabled=st.session_state.guardado_exitoso):
-                            p_log = p_editado.copy()
+                        btn_txt = "✅ GUARDADO" if st.session_state.guardado_exitoso else "💾 GUARDAR Y ACUMULAR"
+                        if st.button(btn_txt, use_container_width=True, disabled=st.session_state.guardado_exitoso):
                             if os.path.exists(archivo_log):
-                                ant = pd.read_csv(archivo_log, encoding='utf-8-sig')
-                                acum = pd.concat([ant, p_log], ignore_index=True)
-                            else: acum = p_log
+                                ant = pd.read_csv(archivo_log)
+                                acum = pd.concat([ant, p_editado], ignore_index=True)
+                            else:
+                                acum = p_editado
+                            
                             acum.index = range(1, len(acum) + 1)
-                            acum.to_csv(archivo_log, index=True, index_label="ID", encoding='utf-8-sig')
-                            st.session_state.db_acumulada = acum
+                            acum.to_csv(archivo_log, index=False, encoding='utf-8-sig')
+                            st.session_state.db_acumulada = acum # Sincronización inmediata
                             st.session_state.guardado_exitoso = True
                             st.rerun()
                     with c2:
-                        csv_down = p_editado.to_csv(index=True, index_label="ID").encode('utf-8-sig')
-                        st.download_button("📥 DESCARGAR ESTA TABLA", csv_down, "Analisis.csv", use_container_width=True)
+                        csv_exp = p_editado.to_csv(index=True, index_label="ID").encode('utf-8-sig')
+                        st.download_button("📥 DESCARGAR ANÁLISIS ACTUAL", csv_exp, "Analisis.csv", use_container_width=True)
         
             except Exception as e: st.error(f"Error: {e}")
         
-        # --- SECCIÓN DE SELLADO UNIFICADA ---
+        # --- SECCIÓN DE SELLADO (Toma de db_acumulada) ---
         st.markdown("---")
-        st.subheader("🖋️ SISTEMA DE SELLADO (Basado en la tabla guardada)")
+        st.subheader("🖋️ SISTEMA DE SELLADO")
         
-        col_a, col_b = st.columns(2)
+        if not st.session_state.db_acumulada.empty:
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.markdown("#### 🖨️ SOBREIMPRESIÓN (FÍSICA)")
+                if st.button("📄 GENERAR SELLOS FÍSICOS", use_container_width=True):
+                    # Usamos los datos guardados en el archivo para el sello
+                    datos_sello = st.session_state.db_acumulada['RECOMENDACION_FLET'].tolist()
+                    pdf_out = generar_sellos_fisicos(datos_sello)
+                    st.download_button("📥 DESCARGAR PDF", pdf_out, "Sellos.pdf", "application/pdf", use_container_width=True)
+            
+            with col_b:
+                st.markdown("#### 🖋️ SELLADO DIGITAL (PDF)")
+                pdfs = st.file_uploader("Suba PDFs de Facturas", type="pdf", accept_multiple_files=True)
+                if pdfs:
+                    if st.button("🚀 SELLAR PDFS DIGITALMENTE", use_container_width=True):
+                        df_m = st.session_state.db_acumulada
+                        mapa = pd.Series(df_m.RECOMENDACION_FLET.values, index=df_m.FACTURA.astype(str)).to_dict()
+                        z_buf = io.BytesIO()
+                        with zipfile.ZipFile(z_buf, "a", zipfile.ZIP_DEFLATED, False) as zf:
+                            for pdf in pdfs:
+                                # Busca el folio en el nombre del archivo
+                                f_id = next((f for f in mapa.keys() if f in pdf.name.upper()), None)
+                                if f_id:
+                                    zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id]))
+                        st.download_button("📥 DESCARGAR ZIP", z_buf.getvalue(), "Facturas.zip", use_container_width=True)
+        else:
+            st.info("💡 La sección de sellado se activará en cuanto guarde sus primeros registros.")
         
-        with col_a:
-            st.markdown("#### 🖨️ SOBREIMPRESIÓN (FÍSICA)")
+        with st.expander("📂 VER HISTORIAL Y BORRAR"):
             if not st.session_state.db_acumulada.empty:
-                if st.button("📄 GENERAR PDF DE SELLOS", use_container_width=True):
-                    sellos = st.session_state.db_acumulada['RECOMENDACION_FLET'].tolist()
-                    pdf_sellos = generar_sellos_fisicos(sellos)
-                    st.download_button("📥 DESCARGAR SELLOS", pdf_sellos, "Sellos_Fisicos.pdf", "application/pdf", use_container_width=True)
-            else: st.warning("Guarde datos arriba para activar.")
-        
-        with col_b:
-            st.markdown("#### 🖋️ SELLADO DIGITAL (PDF)")
-            pdfs = st.file_uploader("Suba PDFs de Facturas", type="pdf", accept_multiple_files=True)
-            if pdfs and not st.session_state.db_acumulada.empty:
-                if st.button("🚀 SELLAR PDFS", use_container_width=True):
-                    df_m = st.session_state.db_acumulada
-                    mapa = pd.Series(df_m.RECOMENDACION_FLET.values, index=df_m.FACTURA.astype(str)).to_dict()
-                    z_buf = io.BytesIO()
-                    with zipfile.ZipFile(z_buf, "a", zipfile.ZIP_DEFLATED, False) as zf:
-                        for pdf in pdfs:
-                            f_id = next((f for f in mapa.keys() if f in pdf.name.upper()), None)
-                            if f_id:
-                                zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id]))
-                    st.download_button("📥 DESCARGAR ZIP", z_buf.getvalue(), "Facturas_Digitales.zip", use_container_width=True)
-        
-        # --- BASE MAESTRA ---
-        with st.expander("📂 VER BASE MAESTRA ACUMULADA"):
-            if os.path.exists(archivo_log):
-                df_full = pd.read_csv(archivo_log)
-                st.dataframe(df_full, use_container_width=True)
+                st.dataframe(st.session_state.db_acumulada, use_container_width=True)
                 if st.button("🗑️ BORRAR TODO EL HISTORIAL"):
-                    os.remove(archivo_log)
+                    if os.path.exists(archivo_log): os.remove(archivo_log)
                     st.session_state.db_acumulada = pd.DataFrame()
                     st.rerun()
         
-        st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.0 | MANDO CENTRALIZADO</div>', unsafe_allow_html=True)
+        st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.1 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
