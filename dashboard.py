@@ -2449,7 +2449,7 @@ else:
                     st.error(f"Error en procesamiento: {e}")
 
             st.markdown("---")
-            st.subheader("🖋️ SISTEMA DE SELLADO")
+            st.subheader("Sistema de impresion de fleteras en factura")
             
             if not st.session_state.db_acumulada.empty:
                 col_s1, col_s2 = st.columns(2)
@@ -2462,7 +2462,7 @@ else:
                         st.download_button("📥 Descargar PDF", pdf_out, "Sellos.pdf", "application/pdf", use_container_width=True)
                 
                 with col_s2:
-                    st.markdown("#### Sellado Digital (PDF)")
+                    st.markdown("#### 🖨️ Sellado Digital (PDF)")
                     pdfs = st.file_uploader("Suba Facturas en PDF", type="pdf", accept_multiple_files=True)
                     if pdfs:
                         if st.button("Sellar PDFs", use_container_width=True):
@@ -2488,6 +2488,7 @@ else:
                         st.rerun()
 
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.3 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
