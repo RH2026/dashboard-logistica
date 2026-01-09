@@ -2196,8 +2196,9 @@ else:
     elif st.session_state.pagina == "HubLogistico":
         import datetime
         import os
-   if 'db_acumulada' not in st.session_state:
-    st.session_state.db_acumulada = pd.DataFrame()     
+        
+        if 'db_acumulada' not in st.session_state:
+        st.session_state.db_acumulada = pd.DataFrame()     
               
         
         # --- RUTAS DE ARCHIVOS ---
@@ -2579,6 +2580,7 @@ else:
                 LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
             </div>
             """, unsafe_allow_html=True)
+
 
 
 
