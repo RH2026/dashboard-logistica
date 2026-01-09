@@ -348,19 +348,19 @@ else:
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
-                if st.button("PANEL PRINCIPAL", use_container_width=True, key="h_aac"):
+                if st.button("TRACKING", use_container_width=True, key="h_aac"):
                     st.session_state.pagina = "principal"
                     st.rerun()
                     
-                if st.button("SEGUIMIENTO KPIs", use_container_width=True, key="h_kpi"):
+                if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
                     st.session_state.pagina = "KPIs"
                     st.rerun()
                     
-                if st.button("REPORTE MENSUAL", use_container_width=True, key="h_rep"):
+                if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
                     st.session_state.pagina = "Reporte"
                     st.rerun()
 
-                if st.button("INTELIGENCIA LOGÍSTICA", use_container_width=True, key="h_hub"):
+                if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
                     st.session_state.pagina = "HubLogistico"
                     st.rerun()
                                                   
@@ -1184,19 +1184,19 @@ else:
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
-                if st.button("PANEL PRINCIPAL", use_container_width=True, key="h_aac"):
+                if st.button("TRACKING", use_container_width=True, key="h_aac"):
                     st.session_state.pagina = "principal"
                     st.rerun()
                     
-                if st.button("SEGUIMIENTO KPIs", use_container_width=True, key="h_kpi"):
+                if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
                     st.session_state.pagina = "KPIs"
                     st.rerun()
                     
-                if st.button("REPORTE MENSUAL", use_container_width=True, key="h_rep"):
+                if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
                     st.session_state.pagina = "Reporte"
                     st.rerun()
 
-                if st.button("INTELIGENCIA LOGÍSTICA", use_container_width=True, key="h_hub"):
+                if st.button("HUB LOGISITC", use_container_width=True, key="h_hub"):
                     st.session_state.pagina = "HubLogistico"
                     st.rerun()
         
@@ -1590,19 +1590,19 @@ else:
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
-                if st.button("PANEL PRINCIPAL", use_container_width=True, key="h_aac"):
+                if st.button("TRACKING", use_container_width=True, key="h_aac"):
                     st.session_state.pagina = "principal"
                     st.rerun()
                     
-                if st.button("SEGUIMIENTO KPIs", use_container_width=True, key="h_kpi"):
+                if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
                     st.session_state.pagina = "KPIs"
                     st.rerun()
                     
-                if st.button("REPORTE MENSUAL", use_container_width=True, key="h_rep"):
+                if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
                     st.session_state.pagina = "Reporte"
                     st.rerun()
 
-                if st.button("INTELIGENCIA LOGÍSTICA", use_container_width=True, key="h_hub"):
+                if st.button("HUB LOGISITC", use_container_width=True, key="h_hub"):
                     st.session_state.pagina = "HubLogistico"
                     st.rerun()
         
@@ -2287,19 +2287,19 @@ else:
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
-                if st.button("PANEL PRINCIPAL", use_container_width=True, key="h_aac"):
+                if st.button("TRACKING", use_container_width=True, key="h_aac"):
                     st.session_state.pagina = "principal"
                     st.rerun()
                     
-                if st.button("SEGUIMIENTO KPIs", use_container_width=True, key="h_kpi"):
+                if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
                     st.session_state.pagina = "KPIs"
                     st.rerun()
                     
-                if st.button("REPORTE MENSUAL", use_container_width=True, key="h_rep"):
+                if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
                     st.session_state.pagina = "Reporte"
                     st.rerun()
 
-                if st.button("INTELIGENCIA LOGÍSTICA", use_container_width=True, key="h_hub"):
+                if st.button("HUB LOGISTICS", use_container_width=True, key="h_hub"):
                     st.session_state.pagina = "HubLogistico"
                     st.rerun()
         
@@ -2511,6 +2511,7 @@ else:
                 LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
             </div>
             """, unsafe_allow_html=True)
+
 
 
 
