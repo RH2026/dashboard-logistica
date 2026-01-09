@@ -2340,103 +2340,75 @@ else:
                     return mejores.set_index(c_dir)[c_flet].to_dict(), mejores.set_index(c_dir)[c_pre].to_dict()
             except: pass
             return {}, {}
-        
-        # --- FUNCIONES DE SELLADO ---
-        def generar_sellos_fisicos(lista_textos):
-            output = PdfWriter()
-            for texto in lista_textos:
-                packet = io.BytesIO()
-                can = canvas.Canvas(packet, pagesize=letter)
-                can.setFont("Helvetica-Bold", 11)
-                can.drawString(520, 775, f"{str(texto).upper()}")
-                can.save()
-                packet.seek(0)
-                output.add_page(PdfReader(packet).pages[0])
-            out_io = io.BytesIO()
-            output.write(out_io)
-            return out_io.getvalue()
-        
-        def marcar_pdf_digital(pdf_file, texto_sello):
-            packet = io.BytesIO()
-            can = canvas.Canvas(packet, pagesize=letter)
-            can.setFont("Helvetica-Bold", 11)
-            can.drawString(520, 775, f"{str(texto_sello).upper()}")
-            can.save()
-            packet.seek(0)
-            new_pdf = PdfReader(packet)
-            existing_pdf = PdfReader(pdf_file)
-            output = PdfWriter()
-            page = existing_pdf.pages[0]
-            page.merge_page(new_pdf.pages[0])
-            output.add_page(page)
-            for i in range(1, len(existing_pdf.pages)):
-                output.add_page(existing_pdf.pages[i])
-            out_io = io.BytesIO()
-            output.write(out_io)
-            return out_io.getvalue()
-        
-        # --- INTERFAZ ---
-        st.title("🛰️ HUB LOGÍSTICO: MANDO TOTAL")
-        d_flet, d_price = motor_logistico_central()
-        
-        file_p = st.file_uploader("1. CARGAR ARCHIVO DEL ERP (CSV)", type="csv")
-        
+      
+
+        # --- CARGA Y PROCESAMIENTO (ORDEN TÁCTICO) ---
         if file_p:
             if "ultimo_archivo" not in st.session_state or st.session_state.ultimo_archivo != file_p.name:
                 st.session_state.guardado_exitoso = False
                 st.session_state.ultimo_archivo = file_p.name
-        
+
             try:
                 p = pd.read_csv(file_p, encoding='utf-8-sig')
                 p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
                 
                 if 'DIRECCION' in p.columns:
-                    # ORDEN DE COLUMNAS SOLICITADO
+                    # 1. Identificar columna de factura (prioridad FACTURA o DOCNUM)
+                    col_id = 'FACTURA' if 'FACTURA' in p.columns else ('DOCNUM' if 'DOCNUM' in p.columns else p.columns[0])
+                    
+                    # 2. Crear columnas del sistema
                     p['RECOMENDACION_FLET'] = p['DIRECCION'].map(d_flet).fillna("ESCRIBA FLETERA")
                     p['PRECIO_ESTIMADO'] = p['DIRECCION'].map(d_price).fillna(0)
                     p['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     
-                    # Reorganizar columnas para que RECOMENDACION vaya tras FACTURA
-                    columnas_finales = ['FACTURA', 'RECOMENDACION_FLET', 'PRECIO_ESTIMADO', 'DIRECCION', 'FECHA_SISTEMA']
-                    # Solo incluimos columnas que existan realmente para evitar errores
-                    p = p[[col for col in columnas_finales if col in p.columns] + [col for col in p.columns if col not in columnas_finales]]
+                    # 3. REORGANIZAR: Factura primero, luego las 3 del sistema, luego el resto
+                    cols_sistema = [col_id, 'RECOMENDACION_FLET', 'PRECIO_ESTIMADO', 'FECHA_SISTEMA']
+                    otras_cols = [c for c in p.columns if c not in cols_sistema]
+                    p = p[cols_sistema + otras_cols]
+                    
                     p.index = range(1, len(p) + 1)
                     
-                    st.markdown("### 📝 EDITOR DE MANIFIESTO (Haga doble clic para editar)")
+                    st.markdown("### 📝 EDITOR DE MANIFIESTO")
+                    st.info("💡 **MANDO MANUAL:** Haga doble clic en la celda para editar Fletera o Costo.")
                     
-                    # EL EDITOR: Aquí permitimos que RECOMENDACION_FLET sea editable
+                    # --- EL EDITOR DESBLOQUEADO ---
                     p_editado = st.data_editor(
-                        p, use_container_width=True,
+                        p, 
+                        use_container_width=True,
                         column_config={
-                            "FACTURA": st.column_config.TextColumn("FACTURA", disabled=True),
-                            "RECOMENDACION_FLET": st.column_config.TextColumn("RECOMENDACION (EDITABLE) ✍️", disabled=False),
-                            "PRECIO_ESTIMADO": st.column_config.NumberColumn("COSTO ($)", format="$%.2f", disabled=False),
-                            "DIRECCION": st.column_config.TextColumn("DIRECCION", disabled=True),
-                            "FECHA_SISTEMA": st.column_config.TextColumn("FECHA", disabled=True)
+                            col_id: st.column_config.TextColumn("📄 FACTURA", disabled=True),
+                            "RECOMENDACION_FLET": st.column_config.TextColumn("🚚 RECOMENDACION (EDITABLE) ✍️", disabled=False),
+                            "PRECIO_ESTIMADO": st.column_config.NumberColumn("💰 COSTO ($)", format="$%.2f", disabled=False),
+                            "FECHA_SISTEMA": st.column_config.TextColumn("📅 FECHA", disabled=True),
+                            "DIRECCION": st.column_config.TextColumn("📍 DIRECCION", disabled=True)
                         },
-                        key="editor_central"
+                        key="editor_central_v3"
                     )
         
                     c1, c2 = st.columns(2)
                     with c1:
                         btn_txt = "✅ GUARDADO" if st.session_state.guardado_exitoso else "💾 GUARDAR Y ACUMULAR"
                         if st.button(btn_txt, use_container_width=True, disabled=st.session_state.guardado_exitoso):
+                            # IMPORTANTE: Guardamos el editado, no el original
+                            p_log = p_editado.copy()
+                            
                             if os.path.exists(archivo_log):
                                 ant = pd.read_csv(archivo_log)
-                                acum = pd.concat([ant, p_editado], ignore_index=True)
+                                acum = pd.concat([ant, p_log], ignore_index=True)
                             else:
-                                acum = p_editado
+                                acum = p_log
                             
                             acum.index = range(1, len(acum) + 1)
                             acum.to_csv(archivo_log, index=False, encoding='utf-8-sig')
-                            st.session_state.db_acumulada = acum # Sincronización inmediata
+                            st.session_state.db_acumulada = acum
                             st.session_state.guardado_exitoso = True
                             st.rerun()
                     with c2:
-                        csv_exp = p_editado.to_csv(index=True, index_label="ID").encode('utf-8-sig')
-                        st.download_button("📥 DESCARGAR ANÁLISIS ACTUAL", csv_exp, "Analisis.csv", use_container_width=True)
-        
-            except Exception as e: st.error(f"Error: {e}")
+                        csv_exp = p_editado.to_csv(index=False).encode('utf-8-sig')
+                        st.download_button("📥 DESCARGAR ANÁLISIS ACTUAL", csv_exp, "Analisis_Actual.csv", use_container_width=True)
+
+            except Exception as e: 
+                st.error(f"Error en el puente de mando: {e}")
         
         # --- SECCIÓN DE SELLADO (Toma de db_acumulada) ---
         st.markdown("---")
@@ -2479,6 +2451,7 @@ else:
                     st.rerun()
         
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.1 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
