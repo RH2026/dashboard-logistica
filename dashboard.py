@@ -2438,26 +2438,44 @@ else:
                         key="editor_pro_v9"
                     )
 
-                    # --- BOTONERA DE COMANDO ---
+                    # --- BOTONERA DE COMANDO CON SEGURO ---
                     c1, c2, c3 = st.columns(3)
+                    
                     with c1:
                         csv_actual = p_editado.to_csv(index=False).encode('utf-8-sig')
                         st.download_button("📥 DESCARGAR ANÁLISIS CSV", csv_actual, "Analisis.csv", use_container_width=True)
+                    
                     with c2:
                         if st.button("💾 FIJAR CAMBIOS EN TABLA", use_container_width=True):
                             st.session_state.df_analisis = p_editado
-                            st.toast("Cambios fijados", icon="📌")
+                            st.toast("Cambios fijados en memoria temporal", icon="📌")
+                    
                     with c3:
-                        if st.button("🗄️ GUARDAR EN LOG MAESTRO", use_container_width=True):
-                            ant = pd.read_csv(archivo_log) if os.path.exists(archivo_log) else pd.DataFrame()
-                            acum = pd.concat([ant, p_editado], ignore_index=True)
-                            acum.to_csv(archivo_log, index=False, encoding='utf-8-sig')
-                            st.session_state.db_acumulada = acum
-                            st.success("¡Guardado en Log Maestro!")
-                            st.balloons()
-
-                except Exception as e:
-                    st.error(f"Error en procesamiento: {e}")
+                        # --- LÓGICA DEL SEGURO DE GUARDADO ---
+                        # Creamos un ID único para el archivo actual para saber si ya se guardó
+                        id_guardado = f"guardado_{st.session_state.get('archivo_actual', 'none')}"
+                        ya_guardado = st.session_state.get(id_guardado, False)
+            
+                        if ya_guardado:
+                            st.button("✅ REGISTROS ASEGURADOS", use_container_width=True, disabled=True)
+                        else:
+                            if st.button("🗄️ GUARDAR EN LOG MAESTRO", use_container_width=True):
+                                # Ejecución del guardado
+                                ant = pd.read_csv(archivo_log) if os.path.exists(archivo_log) else pd.DataFrame()
+                                acum = pd.concat([ant, p_editado], ignore_index=True)
+                                acum.to_csv(archivo_log, index=False, encoding='utf-8-sig')
+                                
+                                # Actualizamos memoria
+                                st.session_state.db_acumulada = acum
+                                st.session_state[id_guardado] = True  # Activamos el cerrojo
+                                
+                                # Animación Tech
+                                st.snow() 
+                                st.success("¡Protocolo de guardado completado!")
+                                st.rerun() # Refrescamos para que el botón se bloquee visualmente
+            
+                            except Exception as e:
+                                st.error(f"Error en procesamiento: {e}")
 
             # --- SECCIÓN DE SELLADO ---
             st.markdown("---")
@@ -2499,6 +2517,7 @@ else:
                         st.rerun()
 
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.2 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
