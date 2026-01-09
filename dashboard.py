@@ -2197,9 +2197,7 @@ else:
         import datetime
         import os
         
-        if 'db_acumulada' not in st.session_state:
-        st.session_state.db_acumulada = pd.DataFrame()     
-              
+        
         
         # --- RUTAS DE ARCHIVOS ---
         # El archivo log se guardará en el servidor (temporal en Streamlit Cloud)
@@ -2307,7 +2305,9 @@ else:
         
         st.divider()
                
-        
+        if 'db_acumulada' not in st.session_state:
+        st.session_state.db_acumulada = pd.DataFrame()     
+              
         
         # --- MOTOR DE INTELIGENCIA ---
         @st.cache_data
@@ -2570,6 +2570,7 @@ else:
                 LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
             </div>
             """, unsafe_allow_html=True)
+
 
 
 
