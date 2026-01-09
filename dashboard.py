@@ -2214,11 +2214,11 @@ else:
         # --- RUTAS Y ESTILOS ---
         archivo_log = "log_maestro_acumulado.csv"
         
-        if 'db_acumulada' not in st.session_state:
-        if os.path.exists(archivo_log):
-            st.session_state.db_acumulada = pd.read_csv(archivo_log)
-        else:
-            st.session_state.db_acumulada = pd.DataFrame()
+            if 'db_acumulada' not in st.session_state:
+            if os.path.exists(archivo_log):
+                st.session_state.db_acumulada = pd.read_csv(archivo_log)
+            else:
+                st.session_state.db_acumulada = pd.DataFrame()
         
               
         # --- ESTILOS PERSONALIZADOS ---
@@ -2499,6 +2499,7 @@ else:
                         st.rerun()
 
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.2 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
