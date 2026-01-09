@@ -2448,37 +2448,47 @@ else:
                 except Exception as e:
                     st.error(f"Error en procesamiento: {e}")
 
+            # --- SECCIÓN DE SELLADO (ORDEN VERTICAL POR BLOQUES) ---
             st.markdown("---")
             st.subheader("Sistema de impresion de fleteras en factura")
             
             if not st.session_state.db_acumulada.empty:
-                col_s1, col_s2 = st.columns(2)
-                with col_s1:
-                    st.markdown("#### 🖨️ Sobreimpresión (FÍSICA)")
-                    if st.button("Generar PDF con fletera", use_container_width=True):
-                        # Se genera sello solo de los registros actuales para evitar duplicidad de días anteriores
-                        sellos = p_editado['RECOMENDACION'].tolist() if 'p_editado' in locals() else st.session_state.db_acumulada['RECOMENDACION'].tolist()
-                        pdf_out = generar_sellos_fisicos(sellos)
-                        st.download_button("📥 Descargar PDF", pdf_out, "Sellos.pdf", "application/pdf", use_container_width=True)
+                # --- BLOQUE 1: SOBREIMPRESIÓN FÍSICA (ARRIBA) ---
+                st.markdown("#### 🖨️ Sobreimpresión (FÍSICA)")
+                st.info("Utilice esta sección para generar los sellos que se imprimen directamente sobre el papel.")
+                if st.button("Generar PDF con fletera", use_container_width=True):
+                    # Se genera sello solo de los registros actuales para evitar duplicidad
+                    sellos = p_editado['RECOMENDACION'].tolist() if 'p_editado' in locals() else st.session_state.db_acumulada['RECOMENDACION'].tolist()
+                    pdf_out = generar_sellos_fisicos(sellos)
+                    st.download_button("📥 Descargar PDF para Impresora", pdf_out, "Sellos_Fisicos.pdf", "application/pdf", use_container_width=True)
                 
-                with col_s2:
-                    st.markdown("#### 🖨️ Sellado Digital (PDF)")
-                    pdfs = st.file_uploader("Suba Facturas en PDF", type="pdf", accept_multiple_files=True)
-                    if pdfs:
-                        if st.button("Sellar PDFs", use_container_width=True):
-                            # Priorizamos el mapeo de la tabla actual editada
-                            df_referencia = p_editado if 'p_editado' in locals() else st.session_state.db_acumulada
-                            col_fac = df_referencia.columns[0]
-                            mapa = pd.Series(df_referencia.RECOMENDACION.values, index=df_referencia[col_fac].astype(str)).to_dict()
-                            
-                            z_buf = io.BytesIO()
-                            with zipfile.ZipFile(z_buf, "a", zipfile.ZIP_DEFLATED) as zf:
-                                for pdf in pdfs:
-                                    f_id = next((f for f in mapa.keys() if f in pdf.name.upper()), None)
-                                    if f_id:
-                                        zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id]))
-                            st.download_button("📥 Descargar ZIP", z_buf.getvalue(), "Facturas.zip", use_container_width=True)
+                st.markdown("<br>", unsafe_allow_html=True) # Espacio de separación
+
+                # --- BLOQUE 2: SELLADO DIGITAL (ABAJO) ---
+                st.markdown("#### 📧 Sellado Digital (PDF)")
+                st.info("Utilice esta sección para estampar la fletera digitalmente en sus archivos PDF.")
+                pdfs = st.file_uploader("Suba Facturas en PDF para sellado digital", type="pdf", accept_multiple_files=True)
+                
+                if pdfs:
+                    if st.button("🚀 Ejecutar Sellado Digital en PDFs", use_container_width=True):
+                        # Priorizamos el mapeo de la tabla actual editada
+                        df_referencia = p_editado if 'p_editado' in locals() else st.session_state.db_acumulada
+                        col_fac = df_referencia.columns[0]
+                        mapa = pd.Series(df_referencia.RECOMENDACION.values, index=df_referencia[col_fac].astype(str)).to_dict()
+                        
+                        z_buf = io.BytesIO()
+                        with zipfile.ZipFile(z_buf, "a", zipfile.ZIP_DEFLATED) as zf:
+                            for pdf in pdfs:
+                                f_id = next((f for f in mapa.keys() if f in pdf.name.upper()), None)
+                                if f_id:
+                                    zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id]))
+                        st.download_button("📥 Descargar Facturas Digitales (ZIP)", z_buf.getvalue(), "Facturas_Digitalizadas.zip", use_container_width=True)
             
+            else:
+                st.info("💡 Guarde registros en el Log Maestro para habilitar las herramientas de sellado.")
+            
+            # --- HISTORIAL ---
+            st.markdown("<br>", unsafe_allow_html=True)
             with st.expander("📂 Ver historial acumulado"):
                 if not st.session_state.db_acumulada.empty:
                     st.dataframe(st.session_state.db_acumulada, use_container_width=True)
@@ -2488,6 +2498,7 @@ else:
                         st.rerun()
 
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.3 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
