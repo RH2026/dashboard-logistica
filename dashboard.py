@@ -2358,22 +2358,57 @@ else:
         if 'guardado_exitoso' not in st.session_state:
             st.session_state.guardado_exitoso = False
 
-        # --- MOTOR DE RECOMENDACIÓN ---
-        # --- LISTA DE CÓDIGOS POSTALES LOCALES (Gdl & Área Metropolitana) ---
+        # --- MOTOR DE RECOMENDACIÓN --- 
+        # --- LISTA DE CÓDIGOS POSTALES LOCALES (Gdl & AM) ---
         CP_LOCALES = [
             '44100','44110','44130','44140','44150','44158','44160','44170','44180','44190','44200','44210','44214','44215','44216','44217','44218','44219','44220','44227','44230','44240','44246','44247','44249','44399','44400','44410','44420','44430','44440','44450','44460','44470','44490','44500','44510','44520','44530','44540','44550','44600','44610','44620','44700','44710','44719','44720','44730','44810','44820','44870','44910','44929','44950','44960','44970','44980','44990',
             '45010','45012','45013','45014','45016','45017','45018','45019','45020','45027','45030','45034','45035','45036','45037','45038','45039','45040','45047','45049','45050','45053','45054','45058','45110','45118','45120','45128','45129','45130','45134','45135','45136','45138','45140','45145','45146','45147','45148','45149','45150','45157','45158','45159','45160','45167','45168','45169','45170','45176','45177','45178','45179','45180','45184','45185','45186','45187','45188','45189','45190','45198','45199','45200','45205','45220','45221','45222','45226','45230','45234','45235','45236','45237','45238','45239','45242','45245',
             '45500','45509','45510','45519','45520','45525','45527','45528','45530','45535','45540','45550','45559','45560','45567','45570','45579','45580','45588','45589','45590','45593','45594','45595',
             '45400','45402','45403','45404','45405','45406','45407','45408','45410','45412','45413','45414','45416','45417','45418','45419','45420','45422','45424','45425','45426','45427','45428','45429'
         ]
-
-        # --- FUNCIÓN DE DETECCIÓN LOCAL ---
+        
+        archivo_log = "log_maestro_acumulado.csv"
+        
+        # --- FUNCIONES TÉCNICAS (SELLADO) ---
+        def generar_sellos_fisicos(lista_textos):
+            output = PdfWriter()
+            for texto in lista_textos:
+                packet = io.BytesIO()
+                can = canvas.Canvas(packet, pagesize=letter)
+                can.setFont("Helvetica-Bold", 11)
+                can.drawString(520, 775, f"{str(texto).upper()}")
+                can.save()
+                packet.seek(0)
+                output.add_page(PdfReader(packet).pages[0])
+            out_io = io.BytesIO()
+            output.write(out_io)
+            return out_io.getvalue()
+        
+        def marcar_pdf_digital(pdf_file, texto_sello):
+            packet = io.BytesIO()
+            can = canvas.Canvas(packet, pagesize=letter)
+            can.setFont("Helvetica-Bold", 11)
+            can.drawString(520, 775, f"{str(texto_sello).upper()}")
+            can.save()
+            packet.seek(0)
+            new_pdf = PdfReader(packet)
+            existing_pdf = PdfReader(pdf_file)
+            output = PdfWriter()
+            page = existing_pdf.pages[0]
+            page.merge_page(new_pdf.pages[0])
+            output.add_page(page)
+            for i in range(1, len(existing_pdf.pages)):
+                output.add_page(existing_pdf.pages[i])
+            out_io = io.BytesIO()
+            output.write(out_io)
+            return out_io.getvalue()
+        
         def detectar_local(direccion):
-            dir_str = str(direccion)
+            dir_str = str(direccion).upper()
             if any(cp in dir_str for cp in CP_LOCALES):
                 return "LOCAL"
             return None
-
+        
         # --- MOTOR DE RECOMENDACIÓN ---
         @st.cache_data
         def motor_logistico_central():
@@ -2390,130 +2425,145 @@ else:
             except Exception as e:
                 st.error(f"Error en matriz: {e}")
             return {}, {}
-
+        
         d_flet, d_price = motor_logistico_central()
-
-        # --- PÁGINA PRINCIPAL Y CARGA ---
-        if st.session_state.pagina == "HubLogistico":
-            file_p = st.file_uploader("1. SUBIR ARCHIVO ERP (CSV)", type="csv")
-
-            if file_p:
-                if "archivo_actual" not in st.session_state or st.session_state.archivo_actual != file_p.name:
-                    if "df_analisis" in st.session_state:
-                        del st.session_state["df_analisis"]
-                    st.session_state.archivo_actual = file_p.name
-                    st.rerun()
-
-                try:
-                    if "df_analisis" not in st.session_state:
-                        p = pd.read_csv(file_p, encoding='utf-8-sig')
-                        p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
-                        col_id = 'FACTURA' if 'FACTURA' in p.columns else ('DOCNUM' if 'DOCNUM' in p.columns else p.columns[0])
-                        
-                        if 'DIRECCION' in p.columns:
-                            # --- LÓGICA DE PRIORIDAD: LOCAL VS HISTORIAL ---
-                            def motor_prioridad(row):
-                                es_local = detectar_local(row['DIRECCION'])
-                                if es_local: return "LOCAL"
-                                return d_flet.get(row['DIRECCION'], "SIN HISTORIAL")
-
-                            p['RECOMENDACION'] = p.apply(motor_prioridad, axis=1)
-                            p['COSTO'] = p.apply(lambda r: 0.0 if r['RECOMENDACION'] == "LOCAL" else d_price.get(r['DIRECCION'], 0.0), axis=1)
-                            p['FECHA_HORA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                            
-                            cols_sistema = [col_id, 'RECOMENDACION', 'COSTO', 'FECHA_HORA']
-                            otras = [c for c in p.columns if c not in cols_sistema]
-                            st.session_state.df_analisis = p[cols_sistema + otras]
+        
+        # --- ESTILOS Y LAYOUT ---
+        st.markdown("""
+            <style>
+            .main { background-color: #0e1117; }
+            div[data-testid="stPopover"] > button {
+                background-color: #0d1117 !important; border: 1px solid #00ffa2 !important;
+                padding: 5px 15px !important; border-radius: 8px !important;
+            }
+            .footer-minimal {
+                position: fixed; left: 0; bottom: 0; width: 100%;
+                color: #555; text-align: center; font-size: 8px; padding: 10px;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+        
+        # TÍTULO AJUSTADO
+        st.markdown("<h1 style='text-align: center; color: white; font-size: 28px;'>🚀 LOGISTIC HUB: MANDO CENTRAL</h1>", unsafe_allow_html=True)
+        
+        # LÍNEA DE PODER AZUL
+        st.markdown("<hr style='border: 0; height: 2px; background: #00D4FF; box-shadow: 0px 0px 15px 3px rgba(0, 212, 255, 0.7); margin-top: 15px; margin-bottom: 25px;'>", unsafe_allow_html=True)
+        
+        # --- INICIALIZACIÓN DE LOG ---
+        if 'db_acumulada' not in st.session_state:
+            st.session_state.db_acumulada = pd.read_csv(archivo_log) if os.path.exists(archivo_log) else pd.DataFrame()
+        
+        # --- CARGA Y PROCESAMIENTO ---
+        file_p = st.file_uploader("1. SUBIR ARCHIVO ERP (CSV)", type="csv")
+        
+        if file_p:
+            # RESET MAESTRO POR ARCHIVO NUEVO
+            if "archivo_actual" not in st.session_state or st.session_state.archivo_actual != file_p.name:
+                if "df_analisis" in st.session_state: del st.session_state["df_analisis"]
+                st.session_state.archivo_actual = file_p.name
+                st.rerun()
+        
+            try:
+                if "df_analisis" not in st.session_state:
+                    p = pd.read_csv(file_p, encoding='utf-8-sig')
+                    p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
+                    col_id = 'FACTURA' if 'FACTURA' in p.columns else ('DOCNUM' if 'DOCNUM' in p.columns else p.columns[0])
                     
-                    st.markdown("### Revisar tabla con recomendaciones")
-                    modo_edicion = st.toggle("🔓 Activar modo edición")
-                    
-                    p_editado = st.data_editor(
-                        st.session_state.df_analisis,
-                        use_container_width=True,
-                        num_rows="fixed",
-                        column_config={
-                            "RECOMENDACION": st.column_config.TextColumn("🚚 RECOMENDACION", disabled=not modo_edicion),
-                            "COSTO": st.column_config.NumberColumn("💰 COSTO", format="$%.2f", disabled=not modo_edicion),
-                        },
-                        key="editor_pro_v10"
-                    )
-
-                    c1, c2, c3 = st.columns(3)
-                    with c1:
-                        csv_actual = p_editado.to_csv(index=False).encode('utf-8-sig')
-                        st.download_button("📥 Descargar Analisis", csv_actual, "Analisis.csv", use_container_width=True)
-                    with c2:
-                        if st.button("💾 Fijar cambios en la tabla", use_container_width=True):
-                            st.session_state.df_analisis = p_editado
-                            st.toast("Cambios fijados", icon="📌")
-                    with c3:
-                        id_guardado = f"guardado_{st.session_state.get('archivo_actual', 'none')}"
-                        if st.session_state.get(id_guardado, False):
-                            st.button("✅ Registros Asegurados", use_container_width=True, disabled=True)
-                        else:
-                            if st.button("🗄️ Guardar registros", use_container_width=True):
-                                ant = pd.read_csv(archivo_log) if os.path.exists(archivo_log) else pd.DataFrame()
-                                acum = pd.concat([ant, p_editado], ignore_index=True)
-                                acum.to_csv(archivo_log, index=False, encoding='utf-8-sig')
-                                st.session_state.db_acumulada = acum
-                                st.session_state[id_guardado] = True
-                                st.snow() 
-                                st.rerun()
-
-                except Exception as e:
-                    st.error(f"Error en procesamiento: {e}")
-
-            # --- SECCIÓN DE SELLADO (ORDEN VERTICAL POR BLOQUES) ---
-            st.markdown("---")
-            st.subheader("Sistema de impresion de fleteras en factura")
-            
-            if not st.session_state.db_acumulada.empty:
-                # --- BLOQUE 1: SOBREIMPRESIÓN FÍSICA ---
-                st.markdown("#### 🖨️ Sobreimpresión (FÍSICA)")
-                st.info("Genera sellos para imprimir directamente sobre papel.")
-                if st.button("Generar PDF con fletera", use_container_width=True):
-                    sellos = p_editado['RECOMENDACION'].tolist() if 'p_editado' in locals() else st.session_state.db_acumulada['RECOMENDACION'].tolist()
-                    pdf_out = generar_sellos_fisicos(sellos)
-                    st.download_button("📥 Descargar PDF para Impresora", pdf_out, "Sellos_Fisicos.pdf", "application/pdf", use_container_width=True)
-                
-                st.markdown("<br>", unsafe_allow_html=True) 
-
-                # --- BLOQUE 2: SELLADO DIGITAL ---
-                st.markdown("#### 📧 Sellado Digital (PDF)")
-                st.info("Estampa la fletera digitalmente en archivos PDF.")
-                pdfs = st.file_uploader("Suba Facturas en PDF para sellado digital", type="pdf", accept_multiple_files=True)
-                
-                if pdfs:
-                    if st.button("🚀 Ejecutar Sellado Digital en PDFs", use_container_width=True):
-                        df_referencia = p_editado if 'p_editado' in locals() else st.session_state.db_acumulada
-                        col_fac = df_referencia.columns[0]
-                        mapa = pd.Series(df_referencia.RECOMENDACION.values, index=df_referencia[col_fac].astype(str)).to_dict()
+                    if 'DIRECCION' in p.columns:
+                        def motor_prioridad(row):
+                            es_local = detectar_local(row['DIRECCION'])
+                            if es_local: return "LOCAL"
+                            return d_flet.get(row['DIRECCION'], "SIN HISTORIAL")
+        
+                        p['RECOMENDACION'] = p.apply(motor_prioridad, axis=1)
+                        p['COSTO'] = p.apply(lambda r: 0.0 if r['RECOMENDACION'] == "LOCAL" else d_price.get(r['DIRECCION'], 0.0), axis=1)
+                        p['FECHA_HORA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
                         
-                        z_buf = io.BytesIO()
-                        with zipfile.ZipFile(z_buf, "a", zipfile.ZIP_DEFLATED) as zf:
-                            for pdf in pdfs:
-                                f_id = next((f for f in mapa.keys() if f in pdf.name.upper()), None)
-                                if f_id:
-                                    zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id]))
-                        st.download_button("📥 Descargar Facturas Digitales (ZIP)", z_buf.getvalue(), "Facturas_Digitalizadas.zip", use_container_width=True)
-            
-            else:
-                st.info("💡 Guarde registros en el Log Maestro para habilitar las herramientas de sellado.")
+                        cols_sistema = [col_id, 'RECOMENDACION', 'COSTO', 'FECHA_HORA']
+                        otras = [c for c in p.columns if c not in cols_sistema]
+                        st.session_state.df_analisis = p[cols_sistema + otras]
+                
+                st.markdown("### 📝 Revisar tabla con recomendaciones")
+                modo_edicion = st.toggle("🔓 Activar modo edición")
+                
+                p_editado = st.data_editor(
+                    st.session_state.df_analisis,
+                    use_container_width=True,
+                    num_rows="fixed",
+                    column_config={
+                        "RECOMENDACION": st.column_config.TextColumn("🚚 RECOMENDACION", disabled=not modo_edicion),
+                        "COSTO": st.column_config.NumberColumn("💰 COSTO", format="$%.2f", disabled=not modo_edicion),
+                    },
+                    key="editor_pro_v11"
+                )
+        
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    csv_out = p_editado.to_csv(index=False).encode('utf-8-sig')
+                    st.download_button("📥 Descargar Analisis", csv_out, "Analisis.csv", use_container_width=True)
+                with c2:
+                    if st.button("💾 Fijar cambios en la tabla", use_container_width=True):
+                        st.session_state.df_analisis = p_editado
+                        st.toast("Cambios fijados", icon="📌")
+                with c3:
+                    id_guardado = f"guardado_{st.session_state.archivo_actual}"
+                    if st.session_state.get(id_guardado, False):
+                        st.button("✅ Registros Asegurados", use_container_width=True, disabled=True)
+                    else:
+                        if st.button("🗄️ Guardar registros", use_container_width=True):
+                            ant = pd.read_csv(archivo_log) if os.path.exists(archivo_log) else pd.DataFrame()
+                            acum = pd.concat([ant, p_editado], ignore_index=True)
+                            acum.to_csv(archivo_log, index=False, encoding='utf-8-sig')
+                            st.session_state.db_acumulada = acum
+                            st.session_state[id_guardado] = True
+                            st.snow()
+                            st.rerun()
+        
+            except Exception as e:
+                st.error(f"Error en procesamiento: {e}")
+        
+        # --- SECCIÓN DE SELLADO VERTICAL ---
+        st.markdown("---")
+        st.subheader("🖋️ Sistema de impresion de fleteras en factura")
+        
+        if not st.session_state.db_acumulada.empty:
+            st.markdown("#### 🖨️ Sobreimpresión (FÍSICA)")
+            if st.button("Generar PDF con fletera", use_container_width=True):
+                sellos = p_editado['RECOMENDACION'].tolist() if 'p_editado' in locals() else st.session_state.db_acumulada['RECOMENDACION'].tolist()
+                pdf_out = generar_sellos_fisicos(sellos)
+                st.download_button("📥 Descargar PDF Físico", pdf_out, "Sellos_Fisicos.pdf", "application/pdf", use_container_width=True)
             
             st.markdown("<br>", unsafe_allow_html=True)
-            with st.expander("📂 Ver historial acumulado"):
-                if not st.session_state.db_acumulada.empty:
-                    st.dataframe(st.session_state.db_acumulada, use_container_width=True)
-                    if st.button("🗑️ Borrar registros"):
-                        if os.path.exists(archivo_log): os.remove(archivo_log)
-                        st.session_state.db_acumulada = pd.DataFrame()
-                        st.rerun()
-
-        st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.3 | MANDO TOTAL</div>', unsafe_allow_html=True)
-
-
-
+        
+            st.markdown("#### 📧 Sellado Digital (PDF)")
+            pdfs = st.file_uploader("Suba Facturas en PDF para sellado digital", type="pdf", accept_multiple_files=True)
+            if pdfs:
+                if st.button("🚀 Ejecutar Sellado Digital en PDFs", use_container_width=True):
+                    df_ref = p_editado if 'p_editado' in locals() else st.session_state.db_acumulada
+                    col_f = df_ref.columns[0]
+                    mapa = pd.Series(df_ref.RECOMENDACION.values, index=df_ref[col_f].astype(str)).to_dict()
+                    z_buf = io.BytesIO()
+                    with zipfile.ZipFile(z_buf, "a", zipfile.ZIP_DEFLATED) as zf:
+                        for pdf in pdfs:
+                            f_id = next((f for f in mapa.keys() if f in pdf.name.upper()), None)
+                            if f_id:
+                                zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id]))
+                    st.download_button("📥 Descargar ZIP Digital", z_buf.getvalue(), "Facturas_Digitales.zip", use_container_width=True)
+        else:
+            st.info("💡 Guarde registros para habilitar el sellado.")
+        
+        with st.expander("📂 Ver historial acumulado"):
+            if not st.session_state.db_acumulada.empty:
+                st.dataframe(st.session_state.db_acumulada, use_container_width=True)
+                if st.button("🗑️ Borrar registros"):
+                    if os.path.exists(archivo_log): os.remove(archivo_log)
+                    st.session_state.db_acumulada = pd.DataFrame()
+                    st.rerun()
+        
+        st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.5 | MANDO TOTAL</div>', unsafe_allow_html=True)
+        
+        
+        
 
 
 
