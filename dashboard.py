@@ -751,20 +751,19 @@ else:
         
         st.divider()
         # --------------------------------------------------
-        # GRÁFICOS DE BARRAS POR PAQUETERÍA (CON ETIQUETAS)
+        # GRÁFICOS DE BARRAS POR PAQUETERÍA (RESPONSIVE)
         # --------------------------------------------------
-        # --- 📦 PANEL DE CONTROL DE OPERACIONES (CON ETIQUETAS DE DATOS) ---
         st.markdown(f"""
             <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 30px; margin-bottom: 25px;'>
                 <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>🚀 ESTADO DE CARGA EN TIEMPO REAL</span>
             </div>
         """, unsafe_allow_html=True)
-
+        
         color_transito = "#fbbf24" 
         color_retraso = "#fb7185"  
         
         col1, col2 = st.columns(2)
-
+        
         # --- COLUMNA 1: EN TRÁNSITO ---
         with col1:
             df_t = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
@@ -776,24 +775,32 @@ else:
                     <h2 style='margin:0; color:white; font-size:32px;'>{total_t} <span style='font-size:14px; color:#94a3b8;'>pedidos</span></h2>
                 </div>
             """, unsafe_allow_html=True)
-
+        
             if not df_t.empty:
-                # Base del gráfico
+                # ALTURA DINÁMICA: 40px por fletera + 50px de base para que no se encimen
+                dinamic_height_t = len(df_t) * 40 + 50
+                
                 base_t = alt.Chart(df_t).encode(
                     x=alt.X("CANTIDAD:Q", title=None, axis=None),
-                    y=alt.Y("FLETERA:N", title=None, sort='-x', axis=alt.Axis(labelColor='white', labelFontSize=12))
+                    y=alt.Y("FLETERA:N", title=None, sort='-x', 
+                            axis=alt.Axis(labelColor='white', labelFontSize=12, labelLimit=200))
                 )
                 
-                # Capa de barras
-                bars_t = base_t.mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5, size=18, color=color_transito)
-                
-                # Capa de números (ETIQUETAS)
+                bars_t = base_t.mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5, size=20, color=color_transito)
                 text_t = base_t.mark_text(align='left', baseline='middle', dx=8, color='white', fontWeight=700, fontSize=13).encode(text="CANTIDAD:Q")
                 
-                st.altair_chart((bars_t + text_t).properties(height=200).configure_view(strokeOpacity=0), use_container_width=True)
+                chart_t = (bars_t + text_t).properties(
+                    height=dinamic_height_t
+                ).configure_view(
+                    strokeOpacity=0
+                ).configure_axis(
+                    grid=False
+                )
+                
+                st.altair_chart(chart_t, use_container_width=True)
             else:
                 st.markdown(f"<div style='padding:40px; text-align:center; color:#475569;'>Sin carga activa</div>", unsafe_allow_html=True)
-
+        
         # --- COLUMNA 2: RETRASADOS ---
         with col2:
             df_r = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
@@ -805,21 +812,29 @@ else:
                     <h2 style='margin:0; color:white; font-size:32px;'>{total_r} <span style='font-size:14px; color:#94a3b8;'>pedidos</span></h2>
                 </div>
             """, unsafe_allow_html=True)
-
+        
             if not df_r.empty:
-                # Base del gráfico
+                # ALTURA DINÁMICA: Evita que las barras se encimen si hay muchas fleteras
+                dinamic_height_r = len(df_r) * 40 + 50
+                
                 base_r = alt.Chart(df_r).encode(
                     x=alt.X("CANTIDAD:Q", title=None, axis=None),
-                    y=alt.Y("FLETERA:N", title=None, sort='-x', axis=alt.Axis(labelColor='white', labelFontSize=12))
+                    y=alt.Y("FLETERA:N", title=None, sort='-x', 
+                            axis=alt.Axis(labelColor='white', labelFontSize=12, labelLimit=200))
                 )
                 
-                # Capa de barras
-                bars_r = base_r.mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5, size=18, color=color_retraso)
-                
-                # Capa de números (ETIQUETAS)
+                bars_r = base_r.mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5, size=20, color=color_retraso)
                 text_r = base_r.mark_text(align='left', baseline='middle', dx=8, color='white', fontWeight=700, fontSize=13).encode(text="CANTIDAD:Q")
                 
-                st.altair_chart((bars_r + text_r).properties(height=200).configure_view(strokeOpacity=0), use_container_width=True)
+                chart_r = (bars_r + text_r).properties(
+                    height=dinamic_height_r
+                ).configure_view(
+                    strokeOpacity=0
+                ).configure_axis(
+                    grid=False
+                )
+                
+                st.altair_chart(chart_r, use_container_width=True)
             else:
                 st.markdown(f"<div style='padding:40px; text-align:center; color:#059669; font-weight:bold;'>✓ Operación al día</div>", unsafe_allow_html=True)
                
@@ -2496,6 +2511,7 @@ else:
                 LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
             </div>
             """, unsafe_allow_html=True)
+
 
 
 
