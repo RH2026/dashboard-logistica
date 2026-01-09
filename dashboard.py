@@ -2315,7 +2315,7 @@ else:
         """, unsafe_allow_html=True)           
         
         # --- FUNCIONES TÉCNICAS (SELLADO) ---
-        # --- RANGOS DE CÓDIGOS POSTALES DE LA ZMG ---
+        # --- RANGOS DE CÓDIGOS POSTALES DE LA ZMG (PERÍMETROS DE SEGURIDAD) ---
         RANGOS_CP_AMG = [
             (44100, 44990),  # Guadalajara
             (45010, 45245),  # Zapopan
@@ -2325,14 +2325,15 @@ else:
         
         archivo_log = "log_maestro_acumulado.csv"
         
-        # --- FUNCIONES TÉCNICAS (SELLADO) ---
-        def generar_sellos_fisicos(lista_textos):
+        # --- FUNCIONES TÉCNICAS (SELLADO CON CALIBRACIÓN) ---
+        def generar_sellos_fisicos(lista_textos, x, y):
             output = PdfWriter()
             for texto in lista_textos:
                 packet = io.BytesIO()
                 can = canvas.Canvas(packet, pagesize=letter)
                 can.setFont("Helvetica-Bold", 11)
-                can.drawString(520, 775, f"{str(texto).upper()}")
+                # Posicionamiento dinámico basado en sliders
+                can.drawString(x, y, f"{str(texto).upper()}")
                 can.save()
                 packet.seek(0)
                 output.add_page(PdfReader(packet).pages[0])
@@ -2340,11 +2341,11 @@ else:
             output.write(out_io)
             return out_io.getvalue()
         
-        def marcar_pdf_digital(pdf_file, texto_sello):
+        def marcar_pdf_digital(pdf_file, texto_sello, x, y):
             packet = io.BytesIO()
             can = canvas.Canvas(packet, pagesize=letter)
             can.setFont("Helvetica-Bold", 11)
-            can.drawString(520, 775, f"{str(texto_sello).upper()}")
+            can.drawString(x, y, f"{str(texto_sello).upper()}")
             can.save()
             packet.seek(0)
             new_pdf = PdfReader(packet)
@@ -2359,12 +2360,10 @@ else:
             output.write(out_io)
             return out_io.getvalue()
         
-        # --- RADAR DE PERÍMETROS (DETECCIÓN LOCAL) ---
+        # --- RADAR DE DETECCIÓN LOCAL ---
         def detectar_local(direccion):
             dir_str = str(direccion)
-            # Buscamos números de 5 dígitos en la cadena de dirección
             cps_encontrados = re.findall(r'\b\d{5}\b', dir_str)
-            
             for cp_str in cps_encontrados:
                 try:
                     cp_num = int(cp_str)
@@ -2394,7 +2393,7 @@ else:
         
         d_flet, d_price = motor_logistico_central()
         
-        # --- ESTILOS Y DISEÑO TECH ---
+        # --- ESTILOS PERSONALIZADOS ---
         st.markdown("""
             <style>
             .main { background-color: #0e1117; }
@@ -2409,8 +2408,8 @@ else:
             </style>
             """, unsafe_allow_html=True)
         
-        st.markdown("<h1 style='text-align: center; color: white; font-size: 28px;'>🚀 LOGISTIC HUB: MANDO CENTRAL</h1>", unsafe_allow_html=True)
-        st.markdown("<hr style='border: 0; height: 2px; background: #00D4FF; box-shadow: 0px 0px 15px 3px rgba(0, 212, 255, 0.7); margin-top: 15px; margin-bottom: 25px;'>", unsafe_allow_html=True)
+        # TÍTULO Y LÍNEA DE PODER
+        
         
         if 'db_acumulada' not in st.session_state:
             st.session_state.db_acumulada = pd.read_csv(archivo_log) if os.path.exists(archivo_log) else pd.DataFrame()
@@ -2444,7 +2443,7 @@ else:
                         otras = [c for c in p.columns if c not in cols_sistema]
                         st.session_state.df_analisis = p[cols_sistema + otras]
                 
-                st.markdown("### 📝 Revisar tabla con recomendaciones")
+                st.markdown("### Revisar tabla con recomendaciones")
                 modo_edicion = st.toggle("🔓 Activar modo edición")
                 
                 p_editado = st.data_editor(
@@ -2461,9 +2460,9 @@ else:
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     csv_out = p_editado.to_csv(index=False).encode('utf-8-sig')
-                    st.download_button("📥 Descargar Analisis", csv_out, "Analisis.csv", use_container_width=True)
+                    st.download_button("Descargar Analisis", csv_out, "Analisis.csv", use_container_width=True)
                 with c2:
-                    if st.button("💾 Fijar cambios en la tabla", use_container_width=True):
+                    if st.button("Fijar cambios en la tabla", use_container_width=True):
                         st.session_state.df_analisis = p_editado
                         st.toast("Cambios fijados", icon="📌")
                 with c3:
@@ -2471,7 +2470,7 @@ else:
                     if st.session_state.get(id_guardado, False):
                         st.button("✅ Registros Asegurados", use_container_width=True, disabled=True)
                     else:
-                        if st.button("🗄️ Guardar registros", use_container_width=True):
+                        if st.button("Guardar registros", use_container_width=True):
                             ant = pd.read_csv(archivo_log) if os.path.exists(archivo_log) else pd.DataFrame()
                             acum = pd.concat([ant, p_editado], ignore_index=True)
                             acum.to_csv(archivo_log, index=False, encoding='utf-8-sig')
@@ -2483,49 +2482,60 @@ else:
             except Exception as e:
                 st.error(f"Error en procesamiento: {e}")
         
-        # --- SECCIÓN DE SELLADO VERTICAL ---
+        # --- SECCIÓN DE SELLADO (ORDEN VERTICAL POR BLOQUES) ---
         st.markdown("---")
-        st.subheader("🖋️ Sistema de impresion de fleteras en factura")
+        st.subheader("🖋️ Sistema de impresión de fleteras en factura")
+        
+        # PANEL DE CALIBRACIÓN DE POSICIÓN
+        with st.expander("⚙️ PANEL DE CALIBRACIÓN DEL SELLO"):
+            col_x, col_y = st.columns(2)
+            with col_x:
+                ajuste_x = st.slider("Eje X (Izquierda - Derecha)", 0, 612, 510, help="Eje horizontal: 0 es izquierda total.")
+            with col_y:
+                ajuste_y = st.slider("Eje Y (Abajo - Arriba)", 0, 792, 760, help="Eje vertical: 792 es el tope superior.")
         
         if not st.session_state.db_acumulada.empty:
-            st.markdown("#### 🖨️ Sobreimpresión (FÍSICA)")
-            st.info("Genera sellos para imprimir directamente sobre papel.")
+            # --- SOBREIMPRESIÓN ---
+            st.markdown("#### Sobreimpresión (FÍSICA)")
+            st.info("Genera sellos para imprimir sobre papel físico.")
             if st.button("Generar PDF con fletera", use_container_width=True):
                 sellos = p_editado['RECOMENDACION'].tolist() if 'p_editado' in locals() else st.session_state.db_acumulada['RECOMENDACION'].tolist()
-                pdf_out = generar_sellos_fisicos(sellos)
-                st.download_button("📥 Descargar PDF Físico", pdf_out, "Sellos_Fisicos.pdf", "application/pdf", use_container_width=True)
+                pdf_out = generar_sellos_fisicos(sellos, ajuste_x, ajuste_y)
+                st.download_button("Descargar PDF para Impresora", pdf_out, "Sellos_Fisicos.pdf", "application/pdf", use_container_width=True)
             
-            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True) 
         
-            st.markdown("#### 📧 Sellado Digital (PDF)")
-            st.info("Estampa la fletera digitalmente en archivos PDF.")
+            # --- SELLADO DIGITAL ---
+            st.markdown("#### Sellado Digital (PDF)")
+            st.info("Estampa la fletera en sus archivos PDF digitales.")
             pdfs = st.file_uploader("Suba Facturas en PDF para sellado digital", type="pdf", accept_multiple_files=True)
+            
             if pdfs:
-                if st.button("🚀 Ejecutar Sellado Digital en PDFs", use_container_width=True):
-                    df_ref = p_editado if 'p_editado' in locals() else st.session_state.db_acumulada
-                    col_f = df_ref.columns[0]
-                    mapa = pd.Series(df_ref.RECOMENDACION.values, index=df_ref[col_f].astype(str)).to_dict()
+                if st.button("Ejecutar Sellado Digital en PDFs", use_container_width=True):
+                    df_referencia = p_editado if 'p_editado' in locals() else st.session_state.db_acumulada
+                    col_fac = df_referencia.columns[0]
+                    mapa = pd.Series(df_referencia.RECOMENDACION.values, index=df_referencia[col_fac].astype(str)).to_dict()
+                    
                     z_buf = io.BytesIO()
                     with zipfile.ZipFile(z_buf, "a", zipfile.ZIP_DEFLATED) as zf:
                         for pdf in pdfs:
                             f_id = next((f for f in mapa.keys() if f in pdf.name.upper()), None)
                             if f_id:
-                                zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id]))
-                    st.download_button("📥 Descargar ZIP Digital", z_buf.getvalue(), "Facturas_Digitales.zip", use_container_width=True)
-        else:
-            st.info("💡 Guarde registros para habilitar el sellado.")
+                                zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id], ajuste_x, ajuste_y))
+                    st.download_button("Descargar Facturas Selladas (ZIP)", z_buf.getvalue(), "Facturas_Digitalizadas.zip", use_container_width=True)
         
-        with st.expander("📂 Ver historial acumulado"):
+        with st.expander("Ver historial acumulado"):
             if not st.session_state.db_acumulada.empty:
                 st.dataframe(st.session_state.db_acumulada, use_container_width=True)
-                if st.button("🗑️ Borrar registros"):
+                if st.button("Borrar registros"):
                     if os.path.exists(archivo_log): os.remove(archivo_log)
                     st.session_state.db_acumulada = pd.DataFrame()
                     st.rerun()
         
-        st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.6 | MANDO TOTAL</div>', unsafe_allow_html=True)
+        st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.7 | MANDO TOTAL</div>', unsafe_allow_html=True)
                 
         
+
 
 
 
