@@ -2306,7 +2306,7 @@ else:
                 height: 2px;
                 background: #00D4FF;
                 box-shadow: 0px 0px 15px 3px rgba(0, 212, 255, 0.7);
-                margin-top: 5px;
+                margin-top: 25px;
                 margin-bottom: 25px;
                 border-radius: 10px;
                 opacity: 0.8;
@@ -2488,6 +2488,7 @@ else:
                         st.rerun()
 
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.3 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
