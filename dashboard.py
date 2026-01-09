@@ -2370,15 +2370,13 @@ else:
         # --- FUNCIÓN DE DETECCIÓN LOCAL ---
         def detectar_local(direccion):
             dir_str = str(direccion)
-            # Buscamos si alguno de los CPs locales aparece en el texto de la dirección
             if any(cp in dir_str for cp in CP_LOCALES):
                 return "LOCAL"
             return None
 
-        # --- MOTOR DE RECOMENDACIÓN MODIFICADO ---
+        # --- MOTOR DE RECOMENDACIÓN ---
         @st.cache_data
         def motor_logistico_central():
-            # (Mantiene la misma lógica de lectura de matriz_historial.csv)
             try:
                 if os.path.exists("matriz_historial.csv"):
                     h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
@@ -2389,43 +2387,17 @@ else:
                     h[c_pre] = pd.to_numeric(h[c_pre], errors='coerce').fillna(0)
                     mejores = h.loc[h.groupby(c_dir)[c_pre].idxmin()]
                     return mejores.set_index(c_dir)[c_flet].to_dict(), mejores.set_index(c_dir)[c_pre].to_dict()
-            except: pass
+            except Exception as e:
+                st.error(f"Error en matriz: {e}")
             return {}, {}
 
         d_flet, d_price = motor_logistico_central()
 
-        # ... (Bloque de carga de archivo) ...
-
-        if file_p:
-            # ... (Lógica de reset) ...
-            try:
-                if "df_analisis" not in st.session_state:
-                    p = pd.read_csv(file_p, encoding='utf-8-sig')
-                    # ... (Normalización de columnas) ...
-                    
-                    if 'DIRECCION' in p.columns:
-                        # --- NUEVA LÓGICA DE RECOMENDACIÓN POR PRIORIDAD ---
-                        def procesar_recomendacion(row):
-                            # Prioridad 1: ¿Es CP Local?
-                            es_local = detectar_local(row['DIRECCION'])
-                            if es_local:
-                                return "LOCAL"
-                            # Prioridad 2: Buscar en matriz de historial
-                            return d_flet.get(row['DIRECCION'], "SIN HISTORIAL")
-
-                        p['RECOMENDACION'] = p.apply(procesar_recomendacion, axis=1)
-                        # Si es local, el costo lo ponemos en 0 o lo dejamos para edición manual
-                        p['COSTO'] = p.apply(lambda r: 0.0 if "LOCAL" in r['RECOMENDACION'] else d_price.get(r['DIRECCION'], 0.0), axis=1)
-
         # --- PÁGINA PRINCIPAL Y CARGA ---
         if st.session_state.pagina == "HubLogistico":
-            
-            
-
             file_p = st.file_uploader("1. SUBIR ARCHIVO ERP (CSV)", type="csv")
 
             if file_p:
-                # RESET MAESTRO: Si cambiamos de archivo, limpiamos la memoria de la tabla anterior
                 if "archivo_actual" not in st.session_state or st.session_state.archivo_actual != file_p.name:
                     if "df_analisis" in st.session_state:
                         del st.session_state["df_analisis"]
@@ -2433,15 +2405,20 @@ else:
                     st.rerun()
 
                 try:
-                    # Procesamiento automático al detectar archivo nuevo
                     if "df_analisis" not in st.session_state:
                         p = pd.read_csv(file_p, encoding='utf-8-sig')
                         p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
                         col_id = 'FACTURA' if 'FACTURA' in p.columns else ('DOCNUM' if 'DOCNUM' in p.columns else p.columns[0])
                         
                         if 'DIRECCION' in p.columns:
-                            p['RECOMENDACION'] = p['DIRECCION'].map(d_flet).fillna("SIN HISTORIAL")
-                            p['COSTO'] = p['DIRECCION'].map(d_price).fillna(0.0)
+                            # --- LÓGICA DE PRIORIDAD: LOCAL VS HISTORIAL ---
+                            def motor_prioridad(row):
+                                es_local = detectar_local(row['DIRECCION'])
+                                if es_local: return "LOCAL"
+                                return d_flet.get(row['DIRECCION'], "SIN HISTORIAL")
+
+                            p['RECOMENDACION'] = p.apply(motor_prioridad, axis=1)
+                            p['COSTO'] = p.apply(lambda r: 0.0 if r['RECOMENDACION'] == "LOCAL" else d_price.get(r['DIRECCION'], 0.0), axis=1)
                             p['FECHA_HORA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
                             
                             cols_sistema = [col_id, 'RECOMENDACION', 'COSTO', 'FECHA_HORA']
@@ -2471,7 +2448,6 @@ else:
                             st.session_state.df_analisis = p_editado
                             st.toast("Cambios fijados", icon="📌")
                     with c3:
-                        # --- CERROJO ELECTRÓNICO ---
                         id_guardado = f"guardado_{st.session_state.get('archivo_actual', 'none')}"
                         if st.session_state.get(id_guardado, False):
                             st.button("✅ Registros Asegurados", use_container_width=True, disabled=True)
@@ -2482,7 +2458,7 @@ else:
                                 acum.to_csv(archivo_log, index=False, encoding='utf-8-sig')
                                 st.session_state.db_acumulada = acum
                                 st.session_state[id_guardado] = True
-                                st.snow() # Animación Tech
+                                st.snow() 
                                 st.rerun()
 
                 except Exception as e:
@@ -2493,25 +2469,23 @@ else:
             st.subheader("Sistema de impresion de fleteras en factura")
             
             if not st.session_state.db_acumulada.empty:
-                # --- BLOQUE 1: SOBREIMPRESIÓN FÍSICA (ARRIBA) ---
+                # --- BLOQUE 1: SOBREIMPRESIÓN FÍSICA ---
                 st.markdown("#### 🖨️ Sobreimpresión (FÍSICA)")
-                st.info("Utilice esta sección para generar los sellos que se imprimen directamente sobre el papel.")
+                st.info("Genera sellos para imprimir directamente sobre papel.")
                 if st.button("Generar PDF con fletera", use_container_width=True):
-                    # Se genera sello solo de los registros actuales para evitar duplicidad
                     sellos = p_editado['RECOMENDACION'].tolist() if 'p_editado' in locals() else st.session_state.db_acumulada['RECOMENDACION'].tolist()
                     pdf_out = generar_sellos_fisicos(sellos)
                     st.download_button("📥 Descargar PDF para Impresora", pdf_out, "Sellos_Fisicos.pdf", "application/pdf", use_container_width=True)
                 
-                st.markdown("<br>", unsafe_allow_html=True) # Espacio de separación
+                st.markdown("<br>", unsafe_allow_html=True) 
 
-                # --- BLOQUE 2: SELLADO DIGITAL (ABAJO) ---
+                # --- BLOQUE 2: SELLADO DIGITAL ---
                 st.markdown("#### 📧 Sellado Digital (PDF)")
-                st.info("Utilice esta sección para estampar la fletera digitalmente en sus archivos PDF.")
+                st.info("Estampa la fletera digitalmente en archivos PDF.")
                 pdfs = st.file_uploader("Suba Facturas en PDF para sellado digital", type="pdf", accept_multiple_files=True)
                 
                 if pdfs:
                     if st.button("🚀 Ejecutar Sellado Digital en PDFs", use_container_width=True):
-                        # Priorizamos el mapeo de la tabla actual editada
                         df_referencia = p_editado if 'p_editado' in locals() else st.session_state.db_acumulada
                         col_fac = df_referencia.columns[0]
                         mapa = pd.Series(df_referencia.RECOMENDACION.values, index=df_referencia[col_fac].astype(str)).to_dict()
@@ -2527,7 +2501,6 @@ else:
             else:
                 st.info("💡 Guarde registros en el Log Maestro para habilitar las herramientas de sellado.")
             
-            # --- HISTORIAL ---
             st.markdown("<br>", unsafe_allow_html=True)
             with st.expander("📂 Ver historial acumulado"):
                 if not st.session_state.db_acumulada.empty:
@@ -2538,7 +2511,6 @@ else:
                         st.rerun()
 
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.3 | MANDO TOTAL</div>', unsafe_allow_html=True)
-
 
 
 
