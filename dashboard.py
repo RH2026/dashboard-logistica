@@ -2272,7 +2272,7 @@ else:
                 <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>
                     LOGISTIC <span style='color:#00FFAA;'>HUB</span>
                 </h1>                
-                <p style='color:#94a3b8; font-size:16px; margin:10px 0 5px 0; font-weight:400;'>
+                <p style='color:#94a3b8; font-size:12px; margin:10px 0 5px 0; font-weight:400;'>
                     Optimización Automática de Fleteras y Costos
                 </p>
             </div>
@@ -2484,7 +2484,7 @@ else:
         
         # --- SECCIÓN DE SELLADO (ORDEN VERTICAL POR BLOQUES) ---
         st.markdown("---")
-        st.subheader("🖋️ Sistema de impresión de fleteras en factura")
+        st.markdown("<h3 style='font-size: 12px; color: white; margin-bottom: 10px;'> Sistema de impresión de fleteras en factura</h3>", unsafe_allow_html=True)
         
         # PANEL DE CALIBRACIÓN DE POSICIÓN
         with st.expander("⚙️ PANEL DE CALIBRACIÓN DEL SELLO"):
@@ -2496,7 +2496,7 @@ else:
         
         if not st.session_state.db_acumulada.empty:
             # --- SOBREIMPRESIÓN ---
-            st.markdown("#### Sobreimpresión (FÍSICA)")
+            st.markdown("<p style='font-size: 12px; font-weight: bold; color: #00FFAA; margin-bottom: 0px;'>🖨️ Sobreimpresión (FÍSICA)</p>", unsafe_allow_html=True)
             st.info("Genera sellos para imprimir sobre papel físico.")
             if st.button("Generar PDF con fletera", use_container_width=True):
                 sellos = p_editado['RECOMENDACION'].tolist() if 'p_editado' in locals() else st.session_state.db_acumulada['RECOMENDACION'].tolist()
@@ -2506,7 +2506,7 @@ else:
             st.markdown("<br>", unsafe_allow_html=True) 
         
             # --- SELLADO DIGITAL ---
-            st.markdown("#### Sellado Digital (PDF)")
+            st.markdown("<p style='font-size: 12px; font-weight: bold; color: #00D4FF; margin-bottom: 0px;'>Sellado Digital (PDF)</p>", unsafe_allow_html=True)
             st.info("Estampa la fletera en sus archivos PDF digitales.")
             pdfs = st.file_uploader("Suba Facturas en PDF para sellado digital", type="pdf", accept_multiple_files=True)
             
@@ -2535,6 +2535,7 @@ else:
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.7 | MANDO TOTAL</div>', unsafe_allow_html=True)
                 
         
+
 
 
 
