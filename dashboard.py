@@ -2168,6 +2168,8 @@ else:
         import datetime
         import os
         
+              
+        
         # --- RUTAS DE ARCHIVOS ---
         # El archivo log se guardará en el servidor (temporal en Streamlit Cloud)
         archivo_log = "log_maestro_acumulado.csv"
@@ -2218,6 +2220,64 @@ else:
             ">
         """, unsafe_allow_html=True)                   
 
+        # =========================================================
+        # MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
+        # =========================================================
+        
+        # 1. ESTILO PARA QUE EL BOTÓN PAREZCA UN MENÚ DE APP
+        st.markdown("""
+            <style>
+                /* Estilizar el botón del menú para que sea cuadrado y discreto */
+                div[data-testid="stPopover"] > button {
+                    background-color: #0d1117 !important;
+                    border: 1px solid #00ffa2 !important;
+                    padding: 5px 15px !important;
+                    border-radius: 8px !important;
+                    width: auto !important;
+                }
+                /* Ajustar el texto dentro del menú desplegado */
+                div[data-testid="stPopoverContent"] button {
+                    text-align: left !important;
+                    justify-content: flex-start !important;
+                    border: none !important;
+                    background: transparent !important;
+                    font-size: 14px !important;
+                }
+                div[data-testid="stPopoverContent"] button:hover {
+                    color: #00ffa2 !important;
+                    background: rgba(0, 255, 162, 0.1) !important;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+        
+        # 2. POSICIONAMIENTO DEL MENÚ (Alineado a la derecha del título)
+        c1, c2 = st.columns([0.85, 0.15]) # El 0.15 es el espacio para el cuadro del menú
+        
+        with c2:
+            # El label "☰" es el icono estándar de hamburguesa
+            with st.popover("☰", use_container_width=True):
+                st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                
+                if st.button("PANEL PRINCIPAL", use_container_width=True, key="h_aac"):
+                    st.session_state.pagina = "principal"
+                    st.rerun()
+                    
+                if st.button("SEGUIMIENTO KPIs", use_container_width=True, key="h_kpi"):
+                    st.session_state.pagina = "KPIs"
+                    st.rerun()
+                    
+                if st.button("REPORTE MENSUAL", use_container_width=True, key="h_rep"):
+                    st.session_state.pagina = "Reporte"
+                    st.rerun()
+
+                if st.button("INTELIGENCIA LOGÍSTICA", use_container_width=True, key="h_hub"):
+                    st.session_state.pagina = "HubLogistico"
+                    st.rerun()
+        
+        st.divider()
+               
+        
+        
         # --- MOTOR DE INTELIGENCIA ---
         @st.cache_data
         def motor_logistico_central():
@@ -2422,6 +2482,7 @@ else:
                 LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
             </div>
             """, unsafe_allow_html=True)
+
 
 
 
