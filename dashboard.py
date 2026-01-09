@@ -2395,8 +2395,16 @@ else:
             file_p = st.file_uploader("1. SUBIR ARCHIVO ERP (CSV)", type="csv")
 
             if file_p:
+                # RESET MAESTRO: Si cambiamos de archivo, limpiamos la memoria de la tabla anterior
+                if "archivo_actual" not in st.session_state or st.session_state.archivo_actual != file_p.name:
+                    if "df_analisis" in st.session_state:
+                        del st.session_state["df_analisis"]
+                    st.session_state.archivo_actual = file_p.name
+                    st.rerun()
+
                 try:
-                    if "df_analisis" not in st.session_state or st.session_state.get('archivo_actual') != file_p.name:
+                    # Procesamiento automático al detectar archivo nuevo
+                    if "df_analisis" not in st.session_state:
                         p = pd.read_csv(file_p, encoding='utf-8-sig')
                         p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
                         col_id = 'FACTURA' if 'FACTURA' in p.columns else ('DOCNUM' if 'DOCNUM' in p.columns else p.columns[0])
@@ -2405,10 +2413,10 @@ else:
                             p['RECOMENDACION'] = p['DIRECCION'].map(d_flet).fillna("SIN HISTORIAL")
                             p['COSTO'] = p['DIRECCION'].map(d_price).fillna(0.0)
                             p['FECHA_HORA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                            
                             cols_sistema = [col_id, 'RECOMENDACION', 'COSTO', 'FECHA_HORA']
                             otras = [c for c in p.columns if c not in cols_sistema]
                             st.session_state.df_analisis = p[cols_sistema + otras]
-                            st.session_state.archivo_actual = file_p.name
                     
                     st.markdown("### Revisar tabla con recomendaciones")
                     modo_edicion = st.toggle("🔓 Activar modo edición")
@@ -2458,18 +2466,21 @@ else:
                 with col_s1:
                     st.markdown("#### 🖨️ Sobreimpresión (FÍSICA)")
                     if st.button("Generar PDF con fletera", use_container_width=True):
-                        sellos = st.session_state.db_acumulada['RECOMENDACION'].tolist()
+                        # Se genera sello solo de los registros actuales para evitar duplicidad de días anteriores
+                        sellos = p_editado['RECOMENDACION'].tolist() if 'p_editado' in locals() else st.session_state.db_acumulada['RECOMENDACION'].tolist()
                         pdf_out = generar_sellos_fisicos(sellos)
                         st.download_button("📥 Descargar PDF", pdf_out, "Sellos.pdf", "application/pdf", use_container_width=True)
                 
                 with col_s2:
-                    st.markdown("#### Sellado DigitalL (PDF)")
+                    st.markdown("#### Sellado Digital (PDF)")
                     pdfs = st.file_uploader("Suba Facturas en PDF", type="pdf", accept_multiple_files=True)
                     if pdfs:
                         if st.button("Sellar PDFs", use_container_width=True):
-                            df_m = st.session_state.db_acumulada
-                            col_fac = df_m.columns[0]
-                            mapa = pd.Series(df_m.RECOMENDACION.values, index=df_m[col_fac].astype(str)).to_dict()
+                            # Priorizamos el mapeo de la tabla actual editada
+                            df_referencia = p_editado if 'p_editado' in locals() else st.session_state.db_acumulada
+                            col_fac = df_referencia.columns[0]
+                            mapa = pd.Series(df_referencia.RECOMENDACION.values, index=df_referencia[col_fac].astype(str)).to_dict()
+                            
                             z_buf = io.BytesIO()
                             with zipfile.ZipFile(z_buf, "a", zipfile.ZIP_DEFLATED) as zf:
                                 for pdf in pdfs:
@@ -2487,6 +2498,7 @@ else:
                         st.rerun()
 
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.3 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
