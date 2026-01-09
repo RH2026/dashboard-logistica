@@ -1535,15 +1535,21 @@ else:
         # Pie de página
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
     
+    ¡Entendido, Capitán! Orden de ingeniería recibida: vamos a reubicar la línea azul con resplandor para que actúe como el separador definitivo, eliminando la línea gris estándar (st.divider) y colocándola justo debajo del botón de menú para unificar el cabezal.
+
+Aquí tiene el código con el casco reparado y el layout optimizado:
+
+Python
+
     # ------------------------------------------------------------------
     # MAIN 03: REPORTE OPS
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "Reporte":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
-        # Título con estilo minimalista (SIN LÍNEA)
+        # Título con estilo minimalista
         st.markdown("""
-            <div style='text-align: center; padding: 10px 0px 30px 0px;'>
+            <div style='text-align: center; padding: 10px 0px 10px 0px;'>
                 <h1 style='color: white; font-family: "Inter", sans-serif; font-weight: 800; font-size: 42px; margin-bottom: 5px; letter-spacing: -1px;'>
                     REPORTE MENSUAL<span style='color: #00FFAA;'>OPS</span>
                 </h1>
@@ -1552,14 +1558,14 @@ else:
                 </p>
             </div>
         """, unsafe_allow_html=True)
+
         # =========================================================
         # MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
         # =========================================================
         
-        # 1. ESTILO PARA QUE EL BOTÓN PAREZCA UN MENÚ DE APP
+        # 1. ESTILO DEL BOTÓN
         st.markdown("""
             <style>
-                /* Estilizar el botón del menú para que sea cuadrado y discreto */
                 div[data-testid="stPopover"] > button {
                     background-color: #0d1117 !important;
                     border: 1px solid #00ffa2 !important;
@@ -1567,7 +1573,6 @@ else:
                     border-radius: 8px !important;
                     width: auto !important;
                 }
-                /* Ajustar el texto dentro del menú desplegado */
                 div[data-testid="stPopoverContent"] button {
                     text-align: left !important;
                     justify-content: flex-start !important;
@@ -1582,11 +1587,10 @@ else:
             </style>
         """, unsafe_allow_html=True)
         
-        # 2. POSICIONAMIENTO DEL MENÚ (Alineado a la derecha del título)
-        c1, c2 = st.columns([0.85, 0.15]) # El 0.15 es el espacio para el cuadro del menú
+        # 2. POSICIONAMIENTO DEL MENÚ
+        c1, c2 = st.columns([0.85, 0.15])
         
         with c2:
-            # El label "☰" es el icono estándar de hamburguesa
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
@@ -1602,11 +1606,23 @@ else:
                     st.session_state.pagina = "Reporte"
                     st.rerun()
 
-                if st.button("HUB LOGISITC", use_container_width=True, key="h_hub"):
+                if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
                     st.session_state.pagina = "HubLogistico"
                     st.rerun()
         
-        st.divider()
+        # 3. LÍNEA AZUL CON RESPLANDOR (REEMPLAZA AL DIVIDER GRIS)
+        st.markdown("""
+            <hr style="
+                border: 0;
+                height: 2px;
+                background: #00D4FF;
+                box-shadow: 0px 0px 15px 3px rgba(0, 212, 255, 0.7);
+                margin-top: 10px;
+                margin-bottom: 30px;
+                border-radius: 10px;
+                opacity: 0.8;
+            ">
+        """, unsafe_allow_html=True)
                
         # --- 1. MOTOR DE DATOS NIVEL ELITE ---
         @st.cache_data
@@ -2219,8 +2235,7 @@ else:
                 st.session_state.db_acumulada = pd.read_csv(archivo_log)
             else:
                 st.session_state.db_acumulada = pd.DataFrame()
-        
-              
+
         # --- ESTILOS PERSONALIZADOS ---
         st.markdown("""
             <style>
@@ -2229,99 +2244,79 @@ else:
             .stDataFrame { border: 1px solid #30363d; border-radius: 10px; }
             footer {visibility: hidden;}
             .footer-minimal {
-                position: fixed;
-                left: 0;
-                bottom: 0;
-                width: 100%;
-                background-color: transparent;
-                color: #555;
-                text-align: center;
-                font-size: 08px;
-                padding: 10px;
-                letter-spacing: 1px;
+                position: fixed; left: 0; bottom: 0; width: 100%;
+                background-color: transparent; color: #555;
+                text-align: center; font-size: 08px; padding: 10px; letter-spacing: 1px;
+            }
+            /* Estilo del botón Popover (Menú) */
+            div[data-testid="stPopover"] > button {
+                background-color: #0d1117 !important;
+                border: 1px solid #00ffa2 !important;
+                padding: 5px 15px !important;
+                border-radius: 8px !important;
+                width: auto !important;
+            }
+            div[data-testid="stPopoverContent"] button {
+                text-align: left !important;
+                justify-content: flex-start !important;
+                border: none !important;
+                background: transparent !important;
+                font-size: 14px !important;
+            }
+            div[data-testid="stPopoverContent"] button:hover {
+                color: #00ffa2 !important;
+                background: rgba(0, 255, 162, 0.1) !important;
             }
             </style>
             """, unsafe_allow_html=True)
+
         # --- ENCABEZADO MINIMALISTA (ESTILO PRO) ---
-        
         st.markdown("""
             <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>                
                 <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>
                     LOGISTIC <span style='color:#00FFAA;'>HUB</span>
                 </h1>                
-                <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>
+                <p style='color:#94a3b8; font-size:16px; margin:10px 0 5px 0; font-weight:400;'>
                     Optimización Automática de Fleteras y Costos
                 </p>
-                <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
             </div>
-        
-            <hr style="
-                border: 0;
-                height: 2px;
-                background: #00D4FF; /* Color base de la línea */
-                box-shadow: 0px 0px 15px 3px rgba(0, 212, 255, 0.7); /* El resplandor */
-                margin-top: 25px;
-                margin-bottom: 30px;
-                border-radius: 10px;
-                opacity: 0.8;
-            ">
-        """, unsafe_allow_html=True)                   
+        """, unsafe_allow_html=True)                    
 
         # =========================================================
-        # MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
+        # MENÚ DE NAVEGACIÓN Y LÍNEA DE PODER
         # =========================================================
-        
-        # 1. ESTILO PARA QUE EL BOTÓN PAREZCA UN MENÚ DE APP
-        st.markdown("""
-            <style>
-                /* Estilizar el botón del menú para que sea cuadrado y discreto */
-                div[data-testid="stPopover"] > button {
-                    background-color: #0d1117 !important;
-                    border: 1px solid #00ffa2 !important;
-                    padding: 5px 15px !important;
-                    border-radius: 8px !important;
-                    width: auto !important;
-                }
-                /* Ajustar el texto dentro del menú desplegado */
-                div[data-testid="stPopoverContent"] button {
-                    text-align: left !important;
-                    justify-content: flex-start !important;
-                    border: none !important;
-                    background: transparent !important;
-                    font-size: 14px !important;
-                }
-                div[data-testid="stPopoverContent"] button:hover {
-                    color: #00ffa2 !important;
-                    background: rgba(0, 255, 162, 0.1) !important;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-        
-        # 2. POSICIONAMIENTO DEL MENÚ (Alineado a la derecha del título)
-        c1, c2 = st.columns([0.85, 0.15]) # El 0.15 es el espacio para el cuadro del menú
+        c1, c2 = st.columns([0.85, 0.15]) 
         
         with c2:
-            # El label "☰" es el icono estándar de hamburguesa
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
                 if st.button("TRACKING", use_container_width=True, key="h_aac"):
                     st.session_state.pagina = "principal"
                     st.rerun()
-                    
                 if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
                     st.session_state.pagina = "KPIs"
                     st.rerun()
-                    
                 if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
                     st.session_state.pagina = "Reporte"
                     st.rerun()
-
                 if st.button("HUB LOGISTICS", use_container_width=True, key="h_hub"):
                     st.session_state.pagina = "HubLogistico"
                     st.rerun()
         
-        st.divider()                
+        # LÍNEA AZUL CON RESPLANDOR (REEMPLAZA AL DIVIDER GRIS)
+        st.markdown("""
+            <hr style="
+                border: 0;
+                height: 2px;
+                background: #00D4FF;
+                box-shadow: 0px 0px 15px 3px rgba(0, 212, 255, 0.7);
+                margin-top: 5px;
+                margin-bottom: 25px;
+                border-radius: 10px;
+                opacity: 0.8;
+            ">
+        """, unsafe_allow_html=True)           
         
         # --- FUNCIONES TÉCNICAS (SELLADO) ---
         # Se declaran una sola vez al inicio para evitar conflictos de memoria
@@ -2498,6 +2493,7 @@ else:
                         st.rerun()
 
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.3 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
