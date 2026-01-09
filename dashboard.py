@@ -1535,11 +1535,6 @@ else:
         # Pie de página
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
     
-    ¡Entendido, Capitán! Orden de ingeniería recibida: vamos a reubicar la línea azul con resplandor para que actúe como el separador definitivo, eliminando la línea gris estándar (st.divider) y colocándola justo debajo del botón de menú para unificar el cabezal.
-
-Aquí tiene el código con el casco reparado y el layout optimizado:
-
-Python
 
     # ------------------------------------------------------------------
     # MAIN 03: REPORTE OPS
@@ -2493,6 +2488,7 @@ Python
                         st.rerun()
 
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.3 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
