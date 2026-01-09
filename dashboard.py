@@ -2306,8 +2306,8 @@ else:
         st.divider()
                
         if 'db_acumulada' not in st.session_state:
-        st.session_state.db_acumulada = pd.DataFrame()     
-              
+            st.session_state.db_acumulada = pd.DataFrame()     
+                  
         
         # --- MOTOR DE INTELIGENCIA ---
         @st.cache_data
@@ -2570,6 +2570,7 @@ else:
                 LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
             </div>
             """, unsafe_allow_html=True)
+
 
 
 
