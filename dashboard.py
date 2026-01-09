@@ -2460,14 +2460,17 @@ else:
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     csv_out = p_editado.to_csv(index=False).encode('utf-8-sig')
+                    # AGREGUE: use_container_width=True
                     st.download_button("Descargar Analisis", csv_out, "Analisis.csv", use_container_width=True)
                 with c2:
+                    # ESTE YA DEBE TENER: use_container_width=True
                     if st.button("Fijar cambios en la tabla", use_container_width=True):
                         st.session_state.df_analisis = p_editado
                         st.toast("Cambios fijados", icon="📌")
                 with c3:
                     id_guardado = f"guardado_{st.session_state.archivo_actual}"
                     if st.session_state.get(id_guardado, False):
+                        # PARA EL BOTÓN DESHABILITADO TAMBIÉN: use_container_width=True
                         st.button("✅ Registros Asegurados", use_container_width=True, disabled=True)
                     else:
                         if st.button("Guardar registros", use_container_width=True):
@@ -2484,7 +2487,7 @@ else:
         
         # --- SECCIÓN DE SELLADO (ORDEN VERTICAL POR BLOQUES) ---
         st.markdown("---")
-        st.markdown("<h3 style='font-size: 14px; color: white; margin-bottom: 10px;'> Sistema de impresión de fleteras en factura</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 16px; color: white; margin-bottom: 10px;'> Sistema de impresión de fleteras en factura</h3>", unsafe_allow_html=True)
         
         # PANEL DE CALIBRACIÓN DE POSICIÓN
         with st.expander("⚙️ PANEL DE CALIBRACIÓN DEL SELLO"):
@@ -2496,7 +2499,7 @@ else:
         
         if not st.session_state.db_acumulada.empty:
             # --- SOBREIMPRESIÓN ---
-            st.markdown("<p style='font-size: 14px; font-weight: bold; color: #FFFFFF; margin-bottom: 0px;'>Sobreimpresión (FÍSICA)</p>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 16px; font-weight: bold; color: #FFFFFF; margin-bottom: 0px;'>Sobreimpresión (FÍSICA)</p>", unsafe_allow_html=True)
             st.info("Genera sellos para imprimir sobre papel físico.")
             if st.button("Generar PDF con fletera", use_container_width=True):
                 sellos = p_editado['RECOMENDACION'].tolist() if 'p_editado' in locals() else st.session_state.db_acumulada['RECOMENDACION'].tolist()
@@ -2506,7 +2509,7 @@ else:
             st.markdown("<br>", unsafe_allow_html=True) 
         
             # --- SELLADO DIGITAL ---
-            st.markdown("<p style='font-size: 14px; font-weight: bold; color: #FFFFFF; margin-bottom: 0px;'>Sellado Digital (PDF)</p>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 16px; font-weight: bold; color: #FFFFFF; margin-bottom: 0px;'>Sellado Digital (PDF)</p>", unsafe_allow_html=True)
             st.info("Estampa la fletera en sus archivos PDF digitales.")
             pdfs = st.file_uploader("Suba Facturas en PDF para sellado digital", type="pdf", accept_multiple_files=True)
             
@@ -2535,6 +2538,7 @@ else:
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.7 | MANDO TOTAL</div>', unsafe_allow_html=True)
                 
         
+
 
 
 
