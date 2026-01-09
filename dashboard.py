@@ -9,6 +9,7 @@ import numpy as np
 import datetime
 import io
 import os
+import re
 
 # --- FUNCIÓN PARA CARGAR EL LOGO ---
 def get_base64_bin(path):
@@ -2525,6 +2526,7 @@ else:
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.6 | MANDO TOTAL</div>', unsafe_allow_html=True)
                 
         
+
 
 
 
