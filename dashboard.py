@@ -2416,40 +2416,58 @@ else:
                     p.index = range(1, len(p) + 1)
                     
                     st.markdown("### 📝 EDITOR DE MANIFIESTO")
+                    st.info("💡 **MANDO MANUAL:** Haga doble clic en 'RECOMENDACION' o 'COSTO' para editar.")
                     
+                    # --- EL EDITOR DESBLOQUEADO ---
                     p_editado = st.data_editor(
-                        p, use_container_width=True,
+                        p, 
+                        use_container_width=True,
+                        num_rows="fixed", # Bloqueamos filas, abrimos celdas
                         column_config={
                             col_id: st.column_config.TextColumn("📄 FACTURA", disabled=True),
-                            "RECOMENDACION_FLET": st.column_config.TextColumn("🚚 RECOMENDACION (EDITABLE) ✍️", disabled=False),
-                            "PRECIO_ESTIMADO": st.column_config.NumberColumn("💰 COSTO ($)", format="$%.2f", disabled=False),
+                            "RECOMENDACION_FLET": st.column_config.TextColumn(
+                                "🚚 RECOMENDACION ✍️", 
+                                help="Doble clic para editar la fletera",
+                                disabled=False, # <--- SEGURO DE APERTURA
+                                width="large"
+                            ),
+                            "PRECIO_ESTIMADO": st.column_config.NumberColumn(
+                                "💰 COSTO ($)", 
+                                format="$%.2f", 
+                                disabled=False, # <--- SEGURO DE APERTURA
+                                width="medium"
+                            ),
                             "FECHA_SISTEMA": st.column_config.TextColumn("📅 FECHA", disabled=True),
                             "DIRECCION": st.column_config.TextColumn("📍 DIRECCION", disabled=True)
                         },
-                        key="editor_central_v3"
+                        key="editor_final_v5" # ID único para resetear permisos
                     )
         
                     c1, c2 = st.columns(2)
                     with c1:
                         btn_txt = "✅ GUARDADO" if st.session_state.guardado_exitoso else "💾 GUARDAR Y ACUMULAR"
                         if st.button(btn_txt, use_container_width=True, disabled=st.session_state.guardado_exitoso):
+                            # IMPORTANTE: Capturamos los cambios hechos por el usuario
                             p_log = p_editado.copy()
+                            
                             if os.path.exists(archivo_log):
                                 ant = pd.read_csv(archivo_log)
+                                # Unimos lo nuevo editado a lo anterior
                                 acum = pd.concat([ant, p_log], ignore_index=True)
                             else:
                                 acum = p_log
+                            
+                            # Re-indexar para el conteo humano (1, 2, 3...)
                             acum.index = range(1, len(acum) + 1)
                             acum.to_csv(archivo_log, index=False, encoding='utf-8-sig')
+                            
+                            # Actualizamos el estado para los sellos y el candado
                             st.session_state.db_acumulada = acum
                             st.session_state.guardado_exitoso = True
                             st.rerun()
                     with c2:
                         csv_exp = p_editado.to_csv(index=False).encode('utf-8-sig')
                         st.download_button("📥 DESCARGAR ANÁLISIS ACTUAL", csv_exp, "Analisis_Actual.csv", use_container_width=True)
-
-            except Exception as e: 
-                st.error(f"Error en el puente de mando: {e}")
         
         # --- SECCIÓN DE SELLADO ---
         st.markdown("---")
@@ -2492,6 +2510,7 @@ else:
                     st.rerun()
         
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.1 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
