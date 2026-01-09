@@ -2380,7 +2380,7 @@ else:
         # --- PÁGINA PRINCIPAL Y CARGA ---
         if st.session_state.pagina == "HubLogistico":
             
-            st.divider()
+            
 
             file_p = st.file_uploader("1. SUBIR ARCHIVO ERP (CSV)", type="csv")
 
@@ -2488,6 +2488,7 @@ else:
                         st.rerun()
 
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.3 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
