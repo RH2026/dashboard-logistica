@@ -2389,7 +2389,7 @@ else:
 
         # --- PÁGINA PRINCIPAL Y CARGA ---
         if st.session_state.pagina == "HubLogistico":
-            st.markdown("<h1 style='text-align: center; color: white;'>🚀 LOGISTIC HUB: MANDO CENTRAL</h1>", unsafe_allow_html=True)
+            st.markdown("<h4 style='text-align: center; color: white;'>LOGISTIC HUB: MANDO CENTRAL</h4>", unsafe_allow_html=True)
             st.divider()
 
             file_p = st.file_uploader("1. SUBIR ARCHIVO ERP (CSV)", type="csv")
@@ -2410,8 +2410,8 @@ else:
                             st.session_state.df_analisis = p[cols_sistema + otras]
                             st.session_state.archivo_actual = file_p.name
                     
-                    st.markdown("### 📝 REVISIÓN DE MANIFIESTO")
-                    modo_edicion = st.toggle("🔓 ACTIVAR MODO EDICIÓN")
+                    st.markdown("### Revisar tabla con recomendaciones")
+                    modo_edicion = st.toggle("🔓 Activar modo edición")
                     
                     p_editado = st.data_editor(
                         st.session_state.df_analisis,
@@ -2427,18 +2427,18 @@ else:
                     c1, c2, c3 = st.columns(3)
                     with c1:
                         csv_actual = p_editado.to_csv(index=False).encode('utf-8-sig')
-                        st.download_button("📥 DESCARGAR ANÁLISIS CSV", csv_actual, "Analisis.csv", use_container_width=True)
+                        st.download_button("📥 Descargar Analisis", csv_actual, "Analisis.csv", use_container_width=True)
                     with c2:
-                        if st.button("💾 FIJAR CAMBIOS EN TABLA", use_container_width=True):
+                        if st.button("💾 Fijar cambios en la tabla", use_container_width=True):
                             st.session_state.df_analisis = p_editado
                             st.toast("Cambios fijados", icon="📌")
                     with c3:
                         # --- CERROJO ELECTRÓNICO ---
                         id_guardado = f"guardado_{st.session_state.get('archivo_actual', 'none')}"
                         if st.session_state.get(id_guardado, False):
-                            st.button("✅ REGISTROS ASEGURADOS", use_container_width=True, disabled=True)
+                            st.button("✅ Registros Asegurados", use_container_width=True, disabled=True)
                         else:
-                            if st.button("🗄️ GUARDAR EN LOG MAESTRO", use_container_width=True):
+                            if st.button("🗄️ Guardar registros", use_container_width=True):
                                 ant = pd.read_csv(archivo_log) if os.path.exists(archivo_log) else pd.DataFrame()
                                 acum = pd.concat([ant, p_editado], ignore_index=True)
                                 acum.to_csv(archivo_log, index=False, encoding='utf-8-sig')
@@ -2456,17 +2456,17 @@ else:
             if not st.session_state.db_acumulada.empty:
                 col_s1, col_s2 = st.columns(2)
                 with col_s1:
-                    st.markdown("#### 🖨️ SOBREIMPRESIÓN (FÍSICA)")
-                    if st.button("📄 GENERAR PDF DE SELLOS", use_container_width=True):
+                    st.markdown("#### 🖨️ Sobreimpresión (FÍSICA)")
+                    if st.button("Generar PDF con fletera", use_container_width=True):
                         sellos = st.session_state.db_acumulada['RECOMENDACION'].tolist()
                         pdf_out = generar_sellos_fisicos(sellos)
-                        st.download_button("📥 DESCARGAR PDF", pdf_out, "Sellos.pdf", "application/pdf", use_container_width=True)
+                        st.download_button("📥 Descargar PDF", pdf_out, "Sellos.pdf", "application/pdf", use_container_width=True)
                 
                 with col_s2:
-                    st.markdown("#### 🖋️ SELLADO DIGITAL (PDF)")
+                    st.markdown("#### Sellado DigitalL (PDF)")
                     pdfs = st.file_uploader("Suba Facturas en PDF", type="pdf", accept_multiple_files=True)
                     if pdfs:
-                        if st.button("🚀 SELLAR PDFS", use_container_width=True):
+                        if st.button("Sellar PDFs", use_container_width=True):
                             df_m = st.session_state.db_acumulada
                             col_fac = df_m.columns[0]
                             mapa = pd.Series(df_m.RECOMENDACION.values, index=df_m[col_fac].astype(str)).to_dict()
@@ -2476,17 +2476,18 @@ else:
                                     f_id = next((f for f in mapa.keys() if f in pdf.name.upper()), None)
                                     if f_id:
                                         zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id]))
-                            st.download_button("📥 DESCARGAR ZIP", z_buf.getvalue(), "Facturas.zip", use_container_width=True)
+                            st.download_button("📥 Descargar ZIP", z_buf.getvalue(), "Facturas.zip", use_container_width=True)
             
-            with st.expander("📂 VER HISTORIAL MAESTRO"):
+            with st.expander("📂 Ver historial acumulado"):
                 if not st.session_state.db_acumulada.empty:
                     st.dataframe(st.session_state.db_acumulada, use_container_width=True)
-                    if st.button("🗑️ BORRAR LOG MAESTRO"):
+                    if st.button("🗑️ Borrar registros"):
                         if os.path.exists(archivo_log): os.remove(archivo_log)
                         st.session_state.db_acumulada = pd.DataFrame()
                         st.rerun()
 
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.3 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
