@@ -2412,12 +2412,11 @@ else:
             else:
                 st.info("Aún no hay registros acumulados en esta sesión.")
         
-        # --- BLOQUE DE SOBREIMPRESIÓN (CORREGIDO PARA EVITAR ATTR ERROR) ---
+        # --- BLOQUE DE SOBREIMPRESIÓN (SINTAXIS CORREGIDA) ---
         st.markdown("---")
         st.markdown("### 🖨️ GENERADOR DE SELLOS FÍSICOS")
         st.info("Utilice esta función para imprimir sobre facturas físicas ya impresas.")
         
-        # Función técnica para generar el PDF de sellos (Sin fondo, solo texto)
         def generar_solo_sellos(lista_fleteras):
             import io
             from pypdf import PdfWriter, PdfReader
@@ -2425,19 +2424,14 @@ else:
             from reportlab.lib.pagesizes import letter
         
             output = PdfWriter()
-            
             for fletera in lista_fleteras:
                 packet = io.BytesIO()
                 can = canvas.Canvas(packet, pagesize=letter)
-                
-                # --- AJUSTE DE PRECISIÓN (Micro-Sello) ---
-                can.setFont("Helvetica-Bold", 11)   # Letra discreta
-                can.setFillColorRGB(0.1, 0.1, 0.1)  # Negro casi puro
-                
-                # Coordenadas: X=520 (Bien a la derecha), Y=775 (Bien arriba)
+                can.setFont("Helvetica-Bold", 11)
+                can.setFillColorRGB(0.1, 0.1, 0.1)
+                # Coordenadas: X=520, Y=775
                 can.drawString(520, 775, f"{str(fletera).upper()}")
                 can.save()
-                
                 packet.seek(0)
                 new_pdf = PdfReader(packet)
                 output.add_page(new_pdf.pages[0])
@@ -2446,37 +2440,33 @@ else:
             output.write(out_io)
             return out_io.getvalue()
         
-        # Verificamos que la base exista y tenga datos antes de mostrar el botón
         if 'db_acumulada' in st.session_state:
             if not st.session_state.db_acumulada.empty:
                 if st.button("📄 GENERAR HOJAS PARA SOBREIMPRESIÓN", use_container_width=True):
                     try:
-                        # Detectamos automáticamente qué columna tiene la fletera
                         df_temp = st.session_state.db_acumulada
-                        # Buscamos 'RECOMENDACION' o la primera columna que hable de fleteras
                         col_f = [c for c in df_temp.columns if 'RECOMENDACION' in c or 'FLETERA' in c]
                         
                         if col_f:
                             lista_sellos = df_temp[col_f[0]].tolist()
                             pdf_final = generar_solo_sellos(lista_sellos)
                             
-                            st.success(f"✅ Se generaron {len(lista_sellos)} sellos listos para su impresora.")
+                            st.success(f"✅ Se generaron {len(lista_sellos)} sellos.")
+                            
+                            # --- AQUÍ ESTABA EL ERROR DE SINTAXIS, REVISE ESTA PARTE ---
                             st.download_button(
-                                label="📥 DESCARGAR PDF DE SELLOS (SOBREIMPRESIÓN)",
+                                label="📥 DESCARGAR PDF DE SELLOS",
                                 data=pdf_final,
                                 file_name=f"Hojas_Sellos_{datetime.date.today()}.pdf",
                                 mime="application/pdf",
                                 use_container_width=True
                             )
                         else:
-                            st.error("No se encontró la columna de fleteras para generar los sellos.")
+                            st.error("No se encontró la columna de fleteras.")
                     except Exception as e:
-                        st.error(f"Error en la generación: {e}")
+                        st.error(f"Error: {e}")
             else:
-                st.warning("⚠️ Cargue y guarde algunos registros arriba para poder generar sellos físicos.")
-        else:
-            st.info("Esperando inicialización de datos...")
-                )
+                st.warning("⚠️ Guarde registros arriba para activar esta función.")
         
         
         # --- SECCIÓN DE SELLADO DE PDFS (Debajo del Historial) ---
@@ -2580,6 +2570,7 @@ else:
                 LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
             </div>
             """, unsafe_allow_html=True)
+
 
 
 
