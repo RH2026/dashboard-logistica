@@ -2194,8 +2194,15 @@ else:
     # MAIN 4: LOGISTICS INTELLIGENCE HUB (MOTOR DE RECOMENDACIÓN
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "HubLogistico":
+        import streamlit as st
+        import pandas as pd
         import datetime
         import os
+        import io
+        import zipfile
+        from pypdf import PdfReader, PdfWriter
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import letter
         
         
         
@@ -2309,288 +2316,164 @@ else:
             st.session_state.db_acumulada = pd.DataFrame()     
                   
         
+        archivo_log = "log_maestro_acumulado.csv"
+        
+        # --- INICIALIZACIÓN DE MEMORIA ---
+        if 'db_acumulada' not in st.session_state:
+            st.session_state.db_acumulada = pd.DataFrame()
+        if 'guardado_exitoso' not in st.session_state:
+            st.session_state.guardado_exitoso = False
+        
         # --- MOTOR DE INTELIGENCIA ---
         @st.cache_data
         def motor_logistico_central():
             try:
                 if os.path.exists("matriz_historial.csv"):
                     h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
-                    # Solo normalizamos nombres de columnas para que el código las encuentre
                     h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
                     
-                    col_h_precio = [c for c in h.columns if 'PRECIO POR CAJA' in c or 'PRECIO_X_CAJA' in c or 'PRECIO' in c][0]
-                    col_h_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
-                    col_h_dir = [c for c in h.columns if 'DIRECCION' in c][0]
+                    c_pre = [c for c in h.columns if 'PRECIO' in c][0]
+                    c_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
+                    c_dir = [c for c in h.columns if 'DIRECCION' in c][0]
                     
-                    h[col_h_precio] = pd.to_numeric(h[col_h_precio], errors='coerce').fillna(0)
-                    h = h[h[col_h_precio] > 0.1].copy()
+                    h[c_pre] = pd.to_numeric(h[c_pre], errors='coerce').fillna(0)
+                    mejores = h.loc[h.groupby(c_dir)[c_pre].idxmin()]
                     
-                    # Buscamos la fletera más barata por dirección
-                    mejores = h.loc[h.groupby(col_h_dir)[col_h_precio].idxmin()]
-                    return mejores.set_index(col_h_dir).apply(lambda x: f"{x[col_h_flet]} (${x[col_h_precio]:,.2f} p/caja)", axis=1).to_dict()
-                return {}
-            except:
-                return {}
+                    # Retornamos dos diccionarios: uno para fletera y otro para precio
+                    dict_flet = mejores.set_index(c_dir)[c_flet].to_dict()
+                    dict_price = mejores.set_index(c_dir)[c_pre].to_dict()
+                    return dict_flet, dict_price
+                return {}, {}
+            except: return {}, {}
         
-        # --- LÓGICA DE NAVEGACIÓN ---
-        st.title("HUB LOGÍSTICO")
+        # --- FUNCIONES DE SELLADO ---
+        def marcar_pdf_digital(pdf_file, texto_sello):
+            packet = io.BytesIO()
+            can = canvas.Canvas(packet, pagesize=letter)
+            can.setFont("Helvetica-Bold", 11)
+            can.drawString(520, 775, f"{str(texto_sello).upper()}")
+            can.save()
+            packet.seek(0)
+            new_pdf = PdfReader(packet)
+            existing_pdf = PdfReader(pdf_file)
+            output = PdfWriter()
+            page = existing_pdf.pages[0]
+            page.merge_page(new_pdf.pages[0])
+            output.add_page(page)
+            for i in range(1, len(existing_pdf.pages)):
+                output.add_page(existing_pdf.pages[i])
+            out_io = io.BytesIO()
+            output.write(out_io)
+            return out_io.getvalue()
         
-        dict_rec = motor_logistico_central()
+        def generar_sellos_fisicos(lista_textos):
+            output = PdfWriter()
+            for texto in lista_textos:
+                packet = io.BytesIO()
+                can = canvas.Canvas(packet, pagesize=letter)
+                can.setFont("Helvetica-Bold", 11)
+                can.drawString(520, 775, f"{str(texto).upper()}")
+                can.save()
+                packet.seek(0)
+                output.add_page(PdfReader(packet).pages[0])
+            out_io = io.BytesIO()
+            output.write(out_io)
+            return out_io.getvalue()
         
-        # --- CARGA DE ARCHIVO ---
-        file_p = st.file_uploader("Arrastre su archivo de pedidos del ERP (CSV)", type="csv")
+        # --- LÓGICA PRINCIPAL ---
+        st.title("🛰️ HUB LOGÍSTICO: ARTILLERÍA COMPLETA")
+        d_flet, d_price = motor_logistico_central()
+        
+        file_p = st.file_uploader("1. CARGAR ARCHIVO DEL ERP (CSV)", type="csv")
         
         if file_p:
-            # REINICIAR CANDADO SI SUBE ARCHIVO NUEVO
             if "ultimo_archivo" not in st.session_state or st.session_state.ultimo_archivo != file_p.name:
                 st.session_state.guardado_exitoso = False
                 st.session_state.ultimo_archivo = file_p.name
         
             try:
-                # LECTURA PURA: Respetando saltos de línea y formato original
                 p = pd.read_csv(file_p, encoding='utf-8-sig')
                 p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
                 
                 if 'DIRECCION' in p.columns:
-                    # Mapeo de recomendación
-                    recomendaciones = p['DIRECCION'].map(dict_rec).fillna("Sin historial previo")
-                    
-                    if 'RECOMENDACION' not in p.columns:
-                        idx_dir = p.columns.get_loc('DIRECCION')
-                        p.insert(idx_dir + 1, 'RECOMENDACION', recomendaciones)
-                    else:
-                        p['RECOMENDACION'] = recomendaciones
-                    
-                    # ÍNDICE HUMANO (Inicia en 1)
+                    # Separación de Columnas: Fletera y Precio
+                    p['RECOMENDACION_FLET'] = p['DIRECCION'].map(d_flet).fillna("ESCRIBA FLETERA")
+                    p['PRECIO_ESTIMADO'] = p['DIRECCION'].map(d_price).fillna(0)
+                    p['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     p.index = range(1, len(p) + 1)
                     
-                    st.success(f"🎯 {len(p)} registros analizados (Datos originales preservados).")
-                    st.dataframe(p, use_container_width=True)
+                    st.markdown("### 📝 EDITOR DE MANIFIESTO")
+                    p_editado = st.data_editor(
+                        p, use_container_width=True,
+                        column_config={
+                            "RECOMENDACION_FLET": st.column_config.TextColumn("FLETERA ✍️"),
+                            "PRECIO_ESTIMADO": st.column_config.NumberColumn("PRECIO ($)", format="$%.2f")
+                        },
+                        disabled=["FACTURA", "DIRECCION", "FECHA_SISTEMA"],
+                        key="editor_central"
+                    )
         
-                    col_btn1, col_btn2 = st.columns(2)
-                    
-                    with col_btn1:
-                        # CANDADO ANTI-DUPLICADOS
-                        btn_texto = "✅ REGISTROS YA GUARDADOS" if st.session_state.get('guardado_exitoso', False) else "💾 GUARDAR Y ACUMULAR REGISTROS"
-                        
-                        if st.button(btn_texto, use_container_width=True, disabled=st.session_state.get('guardado_exitoso', False)):
-                            p_log = p.copy()
-                            p_log['FECHA_SISTEMA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        txt_btn = "✅ GUARDADO" if st.session_state.guardado_exitoso else "💾 GUARDAR Y ACUMULAR"
+                        if st.button(txt_btn, use_container_width=True, disabled=st.session_state.guardado_exitoso):
+                            p_log = p_editado.copy()
                             if os.path.exists(archivo_log):
-                                anterior = pd.read_csv(archivo_log, encoding='utf-8-sig')
-                                acumulado = pd.concat([anterior, p_log], ignore_index=True)
-                            else:
-                                acumulado = p_log
-                            
-                            # Mantener el ID humano en el acumulado
-                            acumulado.index = range(1, len(acumulado) + 1)
-                            acumulado.to_csv(archivo_log, index=True, index_label="ID", encoding='utf-8-sig')
-                            
+                                ant = pd.read_csv(archivo_log, encoding='utf-8-sig')
+                                acum = pd.concat([ant, p_log], ignore_index=True)
+                            else: acum = p_log
+                            acum.index = range(1, len(acum) + 1)
+                            acum.to_csv(archivo_log, index=True, index_label="ID", encoding='utf-8-sig')
+                            st.session_state.db_acumulada = acum
                             st.session_state.guardado_exitoso = True
-                            st.toast("Información acumulada exitosamente", icon="🚀")
                             st.rerun()
+                    with c2:
+                        csv_down = p_editado.to_csv(index=True, index_label="ID").encode('utf-8-sig')
+                        st.download_button("📥 DESCARGAR ESTA TABLA", csv_down, "Analisis.csv", use_container_width=True)
         
-                    with col_btn2:
-                        csv_data = p.to_csv(index=True, index_label="ID").encode('utf-8-sig')
-                        st.download_button("📥 DESCARGAR ANÁLISIS ACTUAL", csv_data, f"Analisis_{datetime.date.today()}.csv", "text/csv", use_container_width=True)
+            except Exception as e: st.error(f"Error: {e}")
         
-            except Exception as e:
-                st.error(f"Error en el procesamiento: {e}")
-        
-        # --- CONSULTA DE HISTORIAL ACUMULADO ---
+        # --- SECCIÓN DE SELLADO UNIFICADA ---
         st.markdown("---")
-        with st.expander("📂 CONSULTAR BASE MAESTRA (LOG ACUMULADO EN SERVIDOR)"):
-            if os.path.exists(archivo_log):
-                df_maestro = pd.read_csv(archivo_log, encoding='utf-8-sig')
-                st.write(f"Registros totales en memoria: **{len(df_maestro)}**")
-                st.dataframe(df_maestro, use_container_width=True)
-                
-                # Botón para descargar el trabajo de todo el día
-                csv_full = df_maestro.to_csv(index=False).encode('utf-8-sig')
-                st.download_button("📥 DESCARGAR TODA LA BASE MAESTRA", csv_full, "base_maestra_logistica.csv", "text/csv")
-            else:
-                st.info("Aún no hay registros acumulados en esta sesión.")
+        st.subheader("🖋️ SISTEMA DE SELLADO (Basado en la tabla guardada)")
         
-        # --- BLOQUE DE SOBREIMPRESIÓN (SINTAXIS CORREGIDA) ---
-        st.markdown("---")
-        st.markdown("### 🖨️ GENERADOR DE SELLOS FÍSICOS")
-        st.info("Utilice esta función para imprimir sobre facturas físicas ya impresas.")
+        col_a, col_b = st.columns(2)
         
-        def generar_solo_sellos(lista_fleteras):
-            import io
-            from pypdf import PdfWriter, PdfReader
-            from reportlab.pdfgen import canvas
-            from reportlab.lib.pagesizes import letter
-        
-            output = PdfWriter()
-            for fletera in lista_fleteras:
-                packet = io.BytesIO()
-                can = canvas.Canvas(packet, pagesize=letter)
-                can.setFont("Helvetica-Bold", 11)
-                can.setFillColorRGB(0.1, 0.1, 0.1)
-                # Coordenadas: X=520, Y=775
-                can.drawString(520, 775, f"{str(fletera).upper()}")
-                can.save()
-                packet.seek(0)
-                new_pdf = PdfReader(packet)
-                output.add_page(new_pdf.pages[0])
-        
-            out_io = io.BytesIO()
-            output.write(out_io)
-            return out_io.getvalue()
-        
-        if 'db_acumulada' in st.session_state:
+        with col_a:
+            st.markdown("#### 🖨️ SOBREIMPRESIÓN (FÍSICA)")
             if not st.session_state.db_acumulada.empty:
-                if st.button("📄 GENERAR HOJAS PARA SOBREIMPRESIÓN", use_container_width=True):
-                    try:
-                        df_temp = st.session_state.db_acumulada
-                        col_f = [c for c in df_temp.columns if 'RECOMENDACION' in c or 'FLETERA' in c]
-                        
-                        if col_f:
-                            lista_sellos = df_temp[col_f[0]].tolist()
-                            pdf_final = generar_solo_sellos(lista_sellos)
-                            
-                            st.success(f"✅ Se generaron {len(lista_sellos)} sellos.")
-                            
-                            # --- AQUÍ ESTABA EL ERROR DE SINTAXIS, REVISE ESTA PARTE ---
-                            st.download_button(
-                                label="📥 DESCARGAR PDF DE SELLOS",
-                                data=pdf_final,
-                                file_name=f"Hojas_Sellos_{datetime.date.today()}.pdf",
-                                mime="application/pdf",
-                                use_container_width=True
-                            )
-                        else:
-                            st.error("No se encontró la columna de fleteras.")
-                    except Exception as e:
-                        st.error(f"Error: {e}")
-            else:
-                st.warning("⚠️ Guarde registros arriba para activar esta función.")
+                if st.button("📄 GENERAR PDF DE SELLOS", use_container_width=True):
+                    sellos = st.session_state.db_acumulada['RECOMENDACION_FLET'].tolist()
+                    pdf_sellos = generar_sellos_fisicos(sellos)
+                    st.download_button("📥 DESCARGAR SELLOS", pdf_sellos, "Sellos_Fisicos.pdf", "application/pdf", use_container_width=True)
+            else: st.warning("Guarde datos arriba para activar.")
         
+        with col_b:
+            st.markdown("#### 🖋️ SELLADO DIGITAL (PDF)")
+            pdfs = st.file_uploader("Suba PDFs de Facturas", type="pdf", accept_multiple_files=True)
+            if pdfs and not st.session_state.db_acumulada.empty:
+                if st.button("🚀 SELLAR PDFS", use_container_width=True):
+                    df_m = st.session_state.db_acumulada
+                    mapa = pd.Series(df_m.RECOMENDACION_FLET.values, index=df_m.FACTURA.astype(str)).to_dict()
+                    z_buf = io.BytesIO()
+                    with zipfile.ZipFile(z_buf, "a", zipfile.ZIP_DEFLATED, False) as zf:
+                        for pdf in pdfs:
+                            f_id = next((f for f in mapa.keys() if f in pdf.name.upper()), None)
+                            if f_id:
+                                zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id]))
+                    st.download_button("📥 DESCARGAR ZIP", z_buf.getvalue(), "Facturas_Digitales.zip", use_container_width=True)
         
-        # --- SECCIÓN DE SELLADO DE PDFS (Debajo del Historial) ---
-        st.markdown("---")
-        st.markdown("###  Imprimir nombre de fletera a las facturas")
-        st.info("Suba el CSV con las fleteras elegidas y los PDFs para marcarlos automáticamente.")
+        # --- BASE MAESTRA ---
+        with st.expander("📂 VER BASE MAESTRA ACUMULADA"):
+            if os.path.exists(archivo_log):
+                df_full = pd.read_csv(archivo_log)
+                st.dataframe(df_full, use_container_width=True)
+                if st.button("🗑️ BORRAR TODO EL HISTORIAL"):
+                    os.remove(archivo_log)
+                    st.session_state.db_acumulada = pd.DataFrame()
+                    st.rerun()
         
-        # Función técnica para estampar el nombre
-        def marcar_pdf(pdf_file, nombre_fletera):
-            import io
-            from pypdf import PdfReader, PdfWriter
-            from reportlab.pdfgen import canvas
-            from reportlab.lib.pagesizes import letter
-        
-            packet = io.BytesIO()
-            can = canvas.Canvas(packet, pagesize=letter)
-            can.setFont("Helvetica-Bold", 12) # Letra grande para que se vea claro
-            can.setFillColorRGB(0, 0, 0)     # Color negro sólido
-            
-            # COORDENADAS: Superior Derecha
-            # X=420 (derecha), Y=750 (arriba)
-            can.drawString(500, 760, f"{nombre_fletera.upper()}")
-            can.save()
-        
-            packet.seek(0)
-            new_pdf = PdfReader(packet)
-            existing_pdf = PdfReader(pdf_file)
-            output = PdfWriter()
-        
-            page = existing_pdf.pages[0]
-            page.merge_page(new_pdf.pages[0])
-            output.add_page(page)
-            
-            # Añadir el resto de páginas si existen
-            for i in range(1, len(existing_pdf.pages)):
-                output.add_page(existing_pdf.pages[i])
-        
-            out_io = io.BytesIO()
-            output.write(out_io)
-            return out_io.getvalue()
-        
-        # Interfaz de carga
-        col_sellador_1, col_sellador_2 = st.columns(2)
-        
-        with col_sellador_1:
-            csv_referencia = st.file_uploader("1. Suba CSV con FACTURA y FLETERA", type="csv", key="csv_sellar")
-        
-        with col_sellador_2:
-            pdfs_subidos = st.file_uploader("2. Suba los PDFs de las Facturas", type="pdf", accept_multiple_files=True, key="pdfs_sellar")
-        
-        if csv_referencia and pdfs_subidos:
-            import zipfile
-            import io
-            
-            df_ref = pd.read_csv(csv_referencia)
-            df_ref.columns = df_ref.columns.str.upper().str.strip()
-            
-            # Creamos mapa de búsqueda { 'FOLIO': 'FLETERA' }
-            if 'FACTURA' in df_ref.columns and 'FLETERA' in df_ref.columns:
-                mapa_fleteras = pd.Series(df_ref.FLETERA.values, index=df_ref.FACTURA.astype(str)).to_dict()
-        
-                if st.button("GENERAR FACTURAS SELLADAS (ZIP)", use_container_width=True):
-                    zip_buffer = io.BytesIO()
-                    conteo_exito = 0
-                    
-                    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-                        for pdf in pdfs_subidos:
-                            nombre_archivo = pdf.name.upper()
-                            factura_id = None
-                            
-                            # Buscamos si el folio del CSV está en el nombre del PDF
-                            for folio in mapa_fleteras.keys():
-                                if str(folio) in nombre_archivo:
-                                    factura_id = folio
-                                    break
-                            
-                            if factura_id:
-                                fletera = mapa_fleteras[factura_id]
-                                pdf_marcado = marcar_pdf(pdf, fletera)
-                                zip_file.writestr(f"LISTA_{pdf.name}", pdf_marcado)
-                                conteo_exito += 1
-                            else:
-                                st.warning(f"⚠️ No se encontró fletera para el archivo: {pdf.name}")
-        
-                    if conteo_exito > 0:
-                        st.success(f"✅ Se sellaron {conteo_exito} facturas correctamente.")
-                        st.download_button(
-                            label="📥 DESCARGAR ZIP DE FACTURAS LISTAS",
-                            data=zip_buffer.getvalue(),
-                            file_name=f"Facturas_Selladas_{datetime.date.today()}.zip",
-                            mime="application/zip",
-                            use_container_width=True
-                        )
-            else:
-                st.error("El CSV debe tener las columnas 'FACTURA' y 'FLETERA'")
-        
-        
-        # --- PIE DE PÁGINA MINIMALISTA ---
-        st.markdown("""
-            <div class="footer-minimal">
-                LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
-            </div>
-            """, unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.0 | MANDO CENTRALIZADO</div>', unsafe_allow_html=True)
 
 
 
