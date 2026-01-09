@@ -2314,57 +2314,12 @@ else:
         """, unsafe_allow_html=True)           
         
         # --- FUNCIONES TÉCNICAS (SELLADO) ---
-        # Se declaran una sola vez al inicio para evitar conflictos de memoria
-        def generar_sellos_fisicos(lista_textos):
-            output = PdfWriter()
-            for texto in lista_textos:
-                packet = io.BytesIO()
-                can = canvas.Canvas(packet, pagesize=letter)
-                can.setFont("Helvetica-Bold", 11)
-                can.drawString(520, 775, f"{str(texto).upper()}")
-                can.save()
-                packet.seek(0)
-                output.add_page(PdfReader(packet).pages[0])
-            out_io = io.BytesIO()
-            output.write(out_io)
-            return out_io.getvalue()
-
-        def marcar_pdf_digital(pdf_file, texto_sello):
-            packet = io.BytesIO()
-            can = canvas.Canvas(packet, pagesize=letter)
-            can.setFont("Helvetica-Bold", 11)
-            can.drawString(520, 775, f"{str(texto_sello).upper()}")
-            can.save()
-            packet.seek(0)
-            new_pdf = PdfReader(packet)
-            existing_pdf = PdfReader(pdf_file)
-            output = PdfWriter()
-            page = existing_pdf.pages[0]
-            page.merge_page(new_pdf.pages[0])
-            output.add_page(page)
-            for i in range(1, len(existing_pdf.pages)):
-                output.add_page(existing_pdf.pages[i])
-            out_io = io.BytesIO()
-            output.write(out_io)
-            return out_io.getvalue()
-
-        # --- INICIALIZACIÓN DE DATOS ---
-        if 'db_acumulada' not in st.session_state:
-            if os.path.exists(archivo_log):
-                st.session_state.db_acumulada = pd.read_csv(archivo_log)
-            else:
-                st.session_state.db_acumulada = pd.DataFrame()
-        
-        if 'guardado_exitoso' not in st.session_state:
-            st.session_state.guardado_exitoso = False
-
-        # --- MOTOR DE RECOMENDACIÓN --- 
-        # --- LISTA DE CÓDIGOS POSTALES LOCALES (Gdl & AM) ---
-        CP_LOCALES = [
-            '44100','44110','44130','44140','44150','44158','44160','44170','44180','44190','44200','44210','44214','44215','44216','44217','44218','44219','44220','44227','44230','44240','44246','44247','44249','44399','44400','44410','44420','44430','44440','44450','44460','44470','44490','44500','44510','44520','44530','44540','44550','44600','44610','44620','44700','44710','44719','44720','44730','44810','44820','44870','44910','44929','44950','44960','44970','44980','44990',
-            '45010','45012','45013','45014','45016','45017','45018','45019','45020','45027','45030','45034','45035','45036','45037','45038','45039','45040','45047','45049','45050','45053','45054','45058','45110','45118','45120','45128','45129','45130','45134','45135','45136','45138','45140','45145','45146','45147','45148','45149','45150','45157','45158','45159','45160','45167','45168','45169','45170','45176','45177','45178','45179','45180','45184','45185','45186','45187','45188','45189','45190','45198','45199','45200','45205','45220','45221','45222','45226','45230','45234','45235','45236','45237','45238','45239','45242','45245',
-            '45500','45509','45510','45519','45520','45525','45527','45528','45530','45535','45540','45550','45559','45560','45567','45570','45579','45580','45588','45589','45590','45593','45594','45595',
-            '45400','45402','45403','45404','45405','45406','45407','45408','45410','45412','45413','45414','45416','45417','45418','45419','45420','45422','45424','45425','45426','45427','45428','45429'
+        # --- RANGOS DE CÓDIGOS POSTALES DE LA ZMG ---
+        RANGOS_CP_AMG = [
+            (44100, 44990),  # Guadalajara
+            (45010, 45245),  # Zapopan
+            (45400, 45429),  # Tonalá
+            (45500, 45595)   # Tlaquepaque
         ]
         
         archivo_log = "log_maestro_acumulado.csv"
@@ -2403,10 +2358,20 @@ else:
             output.write(out_io)
             return out_io.getvalue()
         
+        # --- RADAR DE PERÍMETROS (DETECCIÓN LOCAL) ---
         def detectar_local(direccion):
-            dir_str = str(direccion).upper()
-            if any(cp in dir_str for cp in CP_LOCALES):
-                return "LOCAL"
+            dir_str = str(direccion)
+            # Buscamos números de 5 dígitos en la cadena de dirección
+            cps_encontrados = re.findall(r'\b\d{5}\b', dir_str)
+            
+            for cp_str in cps_encontrados:
+                try:
+                    cp_num = int(cp_str)
+                    for inicio, fin in RANGOS_CP_AMG:
+                        if inicio <= cp_num <= fin:
+                            return "LOCAL"
+                except:
+                    continue
             return None
         
         # --- MOTOR DE RECOMENDACIÓN ---
@@ -2428,7 +2393,7 @@ else:
         
         d_flet, d_price = motor_logistico_central()
         
-        # --- ESTILOS Y LAYOUT ---
+        # --- ESTILOS Y DISEÑO TECH ---
         st.markdown("""
             <style>
             .main { background-color: #0e1117; }
@@ -2443,13 +2408,9 @@ else:
             </style>
             """, unsafe_allow_html=True)
         
-        # TÍTULO AJUSTADO
         st.markdown("<h1 style='text-align: center; color: white; font-size: 28px;'>🚀 LOGISTIC HUB: MANDO CENTRAL</h1>", unsafe_allow_html=True)
-        
-        # LÍNEA DE PODER AZUL
         st.markdown("<hr style='border: 0; height: 2px; background: #00D4FF; box-shadow: 0px 0px 15px 3px rgba(0, 212, 255, 0.7); margin-top: 15px; margin-bottom: 25px;'>", unsafe_allow_html=True)
         
-        # --- INICIALIZACIÓN DE LOG ---
         if 'db_acumulada' not in st.session_state:
             st.session_state.db_acumulada = pd.read_csv(archivo_log) if os.path.exists(archivo_log) else pd.DataFrame()
         
@@ -2457,7 +2418,6 @@ else:
         file_p = st.file_uploader("1. SUBIR ARCHIVO ERP (CSV)", type="csv")
         
         if file_p:
-            # RESET MAESTRO POR ARCHIVO NUEVO
             if "archivo_actual" not in st.session_state or st.session_state.archivo_actual != file_p.name:
                 if "df_analisis" in st.session_state: del st.session_state["df_analisis"]
                 st.session_state.archivo_actual = file_p.name
@@ -2528,6 +2488,7 @@ else:
         
         if not st.session_state.db_acumulada.empty:
             st.markdown("#### 🖨️ Sobreimpresión (FÍSICA)")
+            st.info("Genera sellos para imprimir directamente sobre papel.")
             if st.button("Generar PDF con fletera", use_container_width=True):
                 sellos = p_editado['RECOMENDACION'].tolist() if 'p_editado' in locals() else st.session_state.db_acumulada['RECOMENDACION'].tolist()
                 pdf_out = generar_sellos_fisicos(sellos)
@@ -2536,6 +2497,7 @@ else:
             st.markdown("<br>", unsafe_allow_html=True)
         
             st.markdown("#### 📧 Sellado Digital (PDF)")
+            st.info("Estampa la fletera digitalmente en archivos PDF.")
             pdfs = st.file_uploader("Suba Facturas en PDF para sellado digital", type="pdf", accept_multiple_files=True)
             if pdfs:
                 if st.button("🚀 Ejecutar Sellado Digital en PDFs", use_container_width=True):
@@ -2560,10 +2522,10 @@ else:
                     st.session_state.db_acumulada = pd.DataFrame()
                     st.rerun()
         
-        st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.5 | MANDO TOTAL</div>', unsafe_allow_html=True)
+        st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.6 | MANDO TOTAL</div>', unsafe_allow_html=True)
+                
         
-        
-        
+
 
 
 
