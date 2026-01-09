@@ -2257,7 +2257,7 @@ else:
                 justify-content: flex-start !important;
                 border: none !important;
                 background: transparent !important;
-                font-size: 14px !important;
+                font-size: 12px !important;
             }
             div[data-testid="stPopoverContent"] button:hover {
                 color: #00ffa2 !important;
@@ -2535,6 +2535,7 @@ else:
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.7 | MANDO TOTAL</div>', unsafe_allow_html=True)
                 
         
+
 
 
 
