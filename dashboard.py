@@ -2410,6 +2410,55 @@ else:
             else:
                 st.info("Aún no hay registros acumulados en esta sesión.")
         
+        # --- BLOQUE DE SOBREIMPRESIÓN (SÓLO TEXTO) ---
+        st.markdown("---")
+        st.markdown("### 🖨️ GENERADOR DE SELLOS FÍSICOS")
+        st.info("Use esto para imprimir sobre facturas que ya tiene físicamente. Mantenga el mismo orden.")
+        
+        def generar_solo_sellos(lista_fleteras):
+            import io
+            from pypdf import PdfWriter, PdfReader
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import letter
+        
+            output = PdfWriter()
+            
+            for fletera in lista_fleteras:
+                packet = io.BytesIO()
+                can = canvas.Canvas(packet, pagesize=letter)
+                
+                # --- AJUSTE DE PRECISIÓN (Mismas coordenadas que el sellador digital) ---
+                can.setFont("Helvetica-Bold", 12)
+                can.drawString(500, 770, f"{str(fletera).upper()}")
+                can.save()
+                
+                packet.seek(0)
+                new_pdf = PdfReader(packet)
+                output.add_page(new_pdf.pages[0])
+        
+            out_io = io.BytesIO()
+            output.write(out_io)
+            return out_io.getvalue()
+        
+        # Interfaz para la sobreimpresión
+        if not st.session_state.db_acumulada.empty:
+            if st.button("📄 GENERAR HOJAS PARA SOBREIMPRESIÓN", use_container_width=True):
+                # Tomamos la columna RECOMENDACION o FLETERA de la base acumulada
+                col_destino = 'RECOMENDACION' if 'RECOMENDACION' in st.session_state.db_acumulada.columns else st.session_state.db_acumulada.columns[0]
+                lista = st.session_state.db_acumulada[col_destino].tolist()
+                
+                pdf_sellos = generar_solo_sellos(lista)
+                
+                st.success(f"✅ Se generaron {len(lista)} sellos en orden.")
+                st.download_button(
+                    label="📥 DESCARGAR PDF DE SELLOS",
+                    data=pdf_sellos,
+                    file_name=f"Sellos_Fisicos_{datetime.date.today()}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+        
+        
         # --- SECCIÓN DE SELLADO DE PDFS (Debajo del Historial) ---
         st.markdown("---")
         st.markdown("###  Imprimir nombre de fletera a las facturas")
@@ -2511,6 +2560,7 @@ else:
                 LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
             </div>
             """, unsafe_allow_html=True)
+
 
 
 
