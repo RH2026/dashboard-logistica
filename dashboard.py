@@ -2204,15 +2204,23 @@ else:
         from reportlab.pdfgen import canvas
         from reportlab.lib.pagesizes import letter
 
+        # --- FUNCIÓN DE LIMPIEZA TÁCTICA (Evita fallos de recomendación) ---
+        def limpiar_texto(texto):
+            if not isinstance(texto, str): return str(texto)
+            # Quita acentos, convierte a mayúsculas y limpia espacios
+            texto = unicodedata.normalize('NFKD', texto).encode('ascii', 'ignore').decode('utf-8')
+            return texto.upper().strip()
+        
         # --- RUTAS Y ESTILOS ---
         archivo_log = "log_maestro_acumulado.csv"
         
+        if 'db_acumulada' not in st.session_state:
+        if os.path.exists(archivo_log):
+            st.session_state.db_acumulada = pd.read_csv(archivo_log)
+        else:
+            st.session_state.db_acumulada = pd.DataFrame()
         
-        
-        # --- RUTAS DE ARCHIVOS ---
-        # El archivo log se guardará en el servidor (temporal en Streamlit Cloud)
-        archivo_log = "log_maestro_acumulado.csv"
-        
+              
         # --- ESTILOS PERSONALIZADOS ---
         st.markdown("""
             <style>
@@ -2313,28 +2321,17 @@ else:
                     st.session_state.pagina = "HubLogistico"
                     st.rerun()
         
-        st.divider()
-               
-                
-        # --- INICIALIZACIÓN CRÍTICA ---
-        if 'db_acumulada' not in st.session_state:
-            if os.path.exists("log_maestro_acumulado.csv"):
-                st.session_state.db_acumulada = pd.read_csv("log_maestro_acumulado.csv")
-            else:
-                st.session_state.db_acumulada = pd.DataFrame()
-        
-        if 'guardado_exitoso' not in st.session_state:
-            st.session_state.guardado_exitoso = False
-        
-   
+        st.divider()                
         
         # --- FUNCIONES TÉCNICAS (SELLADO) ---
+        # Se declaran una sola vez para evitar conflictos de memoria
         def generar_sellos_fisicos(lista_textos):
             output = PdfWriter()
             for texto in lista_textos:
                 packet = io.BytesIO()
                 can = canvas.Canvas(packet, pagesize=letter)
                 can.setFont("Helvetica-Bold", 11)
+                # Posicionamiento en esquina superior derecha
                 can.drawString(520, 775, f"{str(texto).upper()}")
                 can.save()
                 packet.seek(0)
@@ -2356,6 +2353,7 @@ else:
             page = existing_pdf.pages[0]
             page.merge_page(new_pdf.pages[0])
             output.add_page(page)
+            # Preservar el resto de las páginas del documento original
             for i in range(1, len(existing_pdf.pages)):
                 output.add_page(existing_pdf.pages[i])
             out_io = io.BytesIO()
@@ -2372,92 +2370,61 @@ else:
         if 'guardado_exitoso' not in st.session_state:
             st.session_state.guardado_exitoso = False
 
-        # --- MOTOR DE INTELIGENCIA ---
-        # --- FUNCIONES DE SELLADO ---
-        def generar_sellos_fisicos(lista_textos):
-            output = PdfWriter()
-            for texto in lista_textos:
-                packet = io.BytesIO()
-                can = canvas.Canvas(packet, pagesize=letter)
-                can.setFont("Helvetica-Bold", 11)
-                can.drawString(520, 775, f"{str(texto).upper()}")
-                can.save()
-                packet.seek(0)
-                output.add_page(PdfReader(packet).pages[0])
-            out_io = io.BytesIO()
-            output.write(out_io)
-            return out_io.getvalue()
-        
-        def marcar_pdf_digital(pdf_file, texto_sello):
-            packet = io.BytesIO()
-            can = canvas.Canvas(packet, pagesize=letter)
-            can.setFont("Helvetica-Bold", 11)
-            can.drawString(520, 775, f"{str(texto_sello).upper()}")
-            can.save()
-            packet.seek(0)
-            new_pdf = PdfReader(packet)
-            existing_pdf = PdfReader(pdf_file)
-            output = PdfWriter()
-            page = existing_pdf.pages[0]
-            page.merge_page(new_pdf.pages[0])
-            output.add_page(page)
-            for i in range(1, len(existing_pdf.pages)):
-                output.add_page(existing_pdf.pages[i])
-            out_io = io.BytesIO()
-            output.write(out_io)
-            return out_io.getvalue()
-        
-        # --- MOTOR DE RECOMENDACIÓN ---
+        # --- MOTOR DE RECOMENDACIÓN (INTELIGENCIA CENTRAL) ---
         @st.cache_data
         def motor_logistico_central():
             try:
                 if os.path.exists("matriz_historial.csv"):
                     h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
+                    # Normalización de cabeceras
                     h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
+                    
                     c_pre = [c for c in h.columns if 'PRECIO' in c][0]
                     c_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
                     c_dir = [c for c in h.columns if 'DIRECCION' in c][0]
+                    
                     h[c_pre] = pd.to_numeric(h[c_pre], errors='coerce').fillna(0)
+                    # Lógica de "El más barato"
                     mejores = h.loc[h.groupby(c_dir)[c_pre].idxmin()]
                     return mejores.set_index(c_dir)[c_flet].to_dict(), mejores.set_index(c_dir)[c_pre].to_dict()
-            except: pass
+            except Exception as e:
+                st.error(f"Error en matriz: {e}")
             return {}, {}
-        
+
         d_flet, d_price = motor_logistico_central()
-        
-        # --- PÁGINA PRINCIPAL ---
+
+        # --- PÁGINA PRINCIPAL Y CARGA ---
         if st.session_state.pagina == "HubLogistico":
             st.markdown("<h1 style='text-align: center; color: white;'>🚀 LOGISTIC HUB: MANDO CENTRAL</h1>", unsafe_allow_html=True)
             st.divider()
-        
-            # --- CARGA AUTOMÁTICA ---
+
             file_p = st.file_uploader("1. SUBIR ARCHIVO ERP (CSV)", type="csv")
-        
+
             if file_p:
                 try:
-                    # Procesamiento automático al detectar archivo nuevo
+                    # Detección de archivo nuevo para resetear estados
                     if "df_analisis" not in st.session_state or st.session_state.get('archivo_actual') != file_p.name:
                         p = pd.read_csv(file_p, encoding='utf-8-sig')
                         p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
                         
-                        # Identificar Factura y Dirección
                         col_id = 'FACTURA' if 'FACTURA' in p.columns else ('DOCNUM' if 'DOCNUM' in p.columns else p.columns[0])
                         
                         if 'DIRECCION' in p.columns:
+                            # Mapeo automático de recomendaciones
                             p['RECOMENDACION'] = p['DIRECCION'].map(d_flet).fillna("SIN HISTORIAL")
                             p['COSTO'] = p['DIRECCION'].map(d_price).fillna(0.0)
                             p['FECHA_HORA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
                             
-                            # ORDEN SOLICITADO: Factura primero, luego columnas del sistema
+                            # Reordenar para prioridad visual
                             cols_sistema = [col_id, 'RECOMENDACION', 'COSTO', 'FECHA_HORA']
                             otras = [c for c in p.columns if c not in cols_sistema]
                             st.session_state.df_analisis = p[cols_sistema + otras]
                             st.session_state.archivo_actual = file_p.name
-        
-                    # --- INTERFAZ DE TABLA ---
+                    
+                    # --- INTERFAZ DEL EDITOR ---
                     st.markdown("### 📝 REVISIÓN DE MANIFIESTO")
                     modo_edicion = st.toggle("🔓 ACTIVAR MODO EDICIÓN", help="Habilita la edición de Fletera y Costo")
-        
+                    
                     p_editado = st.data_editor(
                         st.session_state.df_analisis,
                         use_container_width=True,
@@ -2468,9 +2435,9 @@ else:
                             "FECHA_HORA": st.column_config.TextColumn("📅 FECHA", disabled=True),
                             "DIRECCION": st.column_config.TextColumn("📍 DIRECCION", disabled=True)
                         },
-                        key="editor_pro_v8"
+                        key="editor_pro_v9"
                     )
-        
+
                     # --- BOTONERA DE COMANDO ---
                     c1, c2, c3 = st.columns(3)
                     with c1:
@@ -2482,19 +2449,16 @@ else:
                             st.toast("Cambios fijados", icon="📌")
                     with c3:
                         if st.button("🗄️ GUARDAR EN LOG MAESTRO", use_container_width=True):
-                            if os.path.exists(archivo_log):
-                                ant = pd.read_csv(archivo_log)
-                                acum = pd.concat([ant, p_editado], ignore_index=True)
-                            else:
-                                acum = p_editado
+                            ant = pd.read_csv(archivo_log) if os.path.exists(archivo_log) else pd.DataFrame()
+                            acum = pd.concat([ant, p_editado], ignore_index=True)
                             acum.to_csv(archivo_log, index=False, encoding='utf-8-sig')
                             st.session_state.db_acumulada = acum
                             st.success("¡Guardado en Log Maestro!")
                             st.balloons()
-        
+
                 except Exception as e:
                     st.error(f"Error en procesamiento: {e}")
-        
+
             # --- SECCIÓN DE SELLADO ---
             st.markdown("---")
             st.subheader("🖋️ SISTEMA DE SELLADO")
@@ -2504,10 +2468,9 @@ else:
                 with col_s1:
                     st.markdown("#### 🖨️ SOBREIMPRESIÓN (FÍSICA)")
                     if st.button("📄 GENERAR PDF DE SELLOS", use_container_width=True):
-                        # Usamos RECOMENDACION de la base acumulada
                         sellos = st.session_state.db_acumulada['RECOMENDACION'].tolist()
                         pdf_out = generar_sellos_fisicos(sellos)
-                        st.download_button("📥 DESCARGAR SELLOS PDF", pdf_out, "Sellos.pdf", "application/pdf", use_container_width=True)
+                        st.download_button("📥 DESCARGAR SELLOS PDF", pdf_out, "Sellos.pdf", "application/pdf")
                 
                 with col_s2:
                     st.markdown("#### 🖋️ SELLADO DIGITAL (PDF)")
@@ -2515,7 +2478,7 @@ else:
                     if pdfs:
                         if st.button("🚀 SELLAR PDFS DIGITALMENTE", use_container_width=True):
                             df_m = st.session_state.db_acumulada
-                            col_fac = df_m.columns[0] # Usamos la primera columna (Factura)
+                            col_fac = df_m.columns[0]
                             mapa = pd.Series(df_m.RECOMENDACION.values, index=df_m[col_fac].astype(str)).to_dict()
                             z_buf = io.BytesIO()
                             with zipfile.ZipFile(z_buf, "a", zipfile.ZIP_DEFLATED) as zf:
@@ -2523,11 +2486,10 @@ else:
                                     f_id = next((f for f in mapa.keys() if f in pdf.name.upper()), None)
                                     if f_id:
                                         zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id]))
-                            st.download_button("📥 DESCARGAR FACTURAS SELLADAS", z_buf.getvalue(), "Facturas_Digitales.zip", use_container_width=True)
+                            st.download_button("📥 DESCARGAR ZIP", z_buf.getvalue(), "Facturas_Digitales.zip")
             else:
                 st.info("💡 Guarde registros en el Log Maestro para habilitar los sellos.")
-        
-            # --- HISTORIAL ---
+            
             with st.expander("📂 VER HISTORIAL MAESTRO"):
                 if not st.session_state.db_acumulada.empty:
                     st.dataframe(st.session_state.db_acumulada, use_container_width=True)
@@ -2535,8 +2497,9 @@ else:
                         if os.path.exists(archivo_log): os.remove(archivo_log)
                         st.session_state.db_acumulada = pd.DataFrame()
                         st.rerun()
-        
+
         st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.2 | MANDO TOTAL</div>', unsafe_allow_html=True)
+
 
 
 
