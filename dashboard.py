@@ -2323,7 +2323,7 @@ else:
         
         # --- SECCIÓN DE SELLADO DE PDFS (Debajo del Historial) ---
         st.markdown("---")
-        st.markdown("### 🖋️ SELLADOR DIGITAL DE FACTURAS")
+        st.markdown("###  Imprimir nombre de fletera a las facturas")
         st.info("Suba el CSV con las fleteras elegidas y los PDFs para marcarlos automáticamente.")
         
         # Función técnica para estampar el nombre
@@ -2340,7 +2340,7 @@ else:
             
             # COORDENADAS: Superior Derecha
             # X=420 (derecha), Y=750 (arriba)
-            can.drawString(500, 775, f"{nombre_fletera.upper()}")
+            can.drawString(500, 760, f"{nombre_fletera.upper()}")
             can.save()
         
             packet.seek(0)
@@ -2380,7 +2380,7 @@ else:
             if 'FACTURA' in df_ref.columns and 'FLETERA' in df_ref.columns:
                 mapa_fleteras = pd.Series(df_ref.FLETERA.values, index=df_ref.FACTURA.astype(str)).to_dict()
         
-                if st.button("🚀 GENERAR FACTURAS SELLADAS (ZIP)", use_container_width=True):
+                if st.button("GENERAR FACTURAS SELLADAS (ZIP)", use_container_width=True):
                     zip_buffer = io.BytesIO()
                     conteo_exito = 0
                     
@@ -2422,6 +2422,7 @@ else:
                 LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
             </div>
             """, unsafe_allow_html=True)
+
 
 
 
