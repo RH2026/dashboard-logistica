@@ -1434,25 +1434,39 @@ else:
         azul_volt = "#00D4FF"        # Para Costos
         verde_esmeralda = "#00FF9F"  # Esmeralda Eléctrico (Versión vibrante)
         
+        # --- PALETA DE COLORES ELÉCTRICA ---
+        azul_volt = "#00D4FF"        # Para Costos
+        verde_esmeralda = "#00FF9F"  # Esmeralda Eléctrico
+        
         # =========================================================
         # --- BLOQUE 1: COSTO PROMEDIO POR CAJA (AZUL VOLT) ---
         # =========================================================
         with st.container():
             titulo_grafico_elite("Costo Promedio por Caja", "💰")
             
-            # Procesamiento de datos
-            df_kpi['COSTO_X_CAJA'] = df_kpi['COSTO DE LA GUÍA'] / df_kpi['CANTIDAD DE CAJAS'].replace(0, 1)
-            costo_data = df_kpi.groupby('FLETERA')['COSTO_X_CAJA'].mean().reset_index()
+            # --- PROCESAMIENTO CON FILTRO DE SEGURIDAD ---
+            # Solo tomamos filas donde ya exista un costo registrado (> 0)
+            df_filtrado_costo = df_kpi[df_kpi['COSTO DE LA GUÍA'] > 0].copy()
             
+            # Calculamos el costo por caja sobre el set filtrado
+            df_filtrado_costo['COSTO_X_CAJA'] = (
+                df_filtrado_costo['COSTO DE LA GUÍA'] / 
+                df_filtrado_costo['CANTIDAD DE CAJAS'].replace(0, 1)
+            )
+            
+            # Agrupamos por Fletera y sacamos el promedio real
+            costo_data = df_filtrado_costo.groupby('FLETERA')['COSTO_X_CAJA'].mean().reset_index()
+            # ----------------------------------------------
+        
             # Capa de Barras
             bars_costo = alt.Chart(costo_data).mark_bar(
                 cornerRadiusTopRight=10,
                 cornerRadiusBottomRight=10,
                 size=25
             ).encode(
-                x=alt.X('COSTO_X_CAJA:Q', title="Inversión ($)"),
+                x=alt.X('COSTO_X_CAJA:Q', title="Inversión Promedio ($)"),
                 y=alt.Y('FLETERA:N', sort='-x', title=None),
-                color=alt.value(azul_volt) # <--- AZUL ELÉCTRICO
+                color=alt.value(azul_volt)
             )
         
             # Capa de Etiquetas (Texto)
@@ -1465,7 +1479,7 @@ else:
         
             st.altair_chart((bars_costo + text_costo).properties(height=400), use_container_width=True)
         
-        st.write("##") # Espacio entre bloques
+        st.write("##")
         
         # =========================================================
         # --- BLOQUE 2: LEAD TIME (VERDE ESMERALDA ELÉCTRICO) ---
@@ -2482,6 +2496,7 @@ else:
                 LOGISTIC HUB v2.0 | SISTEMA DE INTELIGENCIA DE FLETERAS
             </div>
             """, unsafe_allow_html=True)
+
 
 
 
