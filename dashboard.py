@@ -10,6 +10,7 @@ import datetime
 import io
 import os
 import re
+import unicodedata
 
 # --- FUNCIÓN PARA CARGAR EL LOGO ---
 def get_base64_bin(path):
@@ -2704,6 +2705,7 @@ else:
 
         # Footer minimalista del módulo
         st.markdown('<div style="text-align:center; color:#555; font-size:10px; padding:20px;">LOGISTIC HUB v4.8 | ELITE OPS COMMAND</div>', unsafe_allow_html=True)
+
 
 
 
