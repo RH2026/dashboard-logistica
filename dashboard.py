@@ -12,6 +12,7 @@ import os
 import re
 import unicodedata
 
+
 # --- FUNCIÓN PARA CARGAR EL LOGO ---
 def get_base64_bin(path):
     try:
@@ -2625,8 +2626,13 @@ else:
         
         # Cálculos de Tiempo Real
         import pandas as pd
-        hoy = pd.Timestamp.now().normalize()
+        
+        # 1. Asegurar que estamos trabajando sobre una copia para evitar SettingWithCopyWarning
+        df_filt = df_filt.copy()
+
+        # 2. Conversión de fechas (Línea 2629 reparada)
         df_filt['PROMESA DE ENTREGA'] = pd.to_datetime(df_filt['PROMESA DE ENTREGA'], errors='coerce')
+        df_filt['FECHA DE ENTREGA REAL'] = pd.to_datetime(df_filt['FECHA DE ENTREGA REAL'], errors='coerce')
         
         # Segmentación por Gravedad
         vencidos = df_filt[(df_filt['PROMESA DE ENTREGA'] < hoy) & (df_filt['FECHA DE ENTREGA REAL'].isna())]
@@ -2680,6 +2686,7 @@ else:
         if not df_filt.empty:
             df_timeline = df_filt.groupby(df_filt['PROMESA DE ENTREGA'].dt.date).size().reset_index(name='PEDIDOS')
             st.line_chart(df_timeline, x='PROMESA DE ENTREGA', y='PEDIDOS', color="#00D4FF")
+
 
 
 
