@@ -367,9 +367,7 @@ else:
                     st.session_state.pagina = "HubLogistico"
                     st.rerun()
 
-                if st.button("📡 RADAR RASTREO", use_container_width=True, key="h_radar"):
-                    st.session_state.pagina = "RadarRastreo"
-                    st.rerun()
+                
                                                   
                                        
         st.markdown("""
@@ -2622,111 +2620,7 @@ else:
         # =========================================================
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
-        st.markdown("#### 📡 RADAR DE VENCIMIENTOS")
         
-        # Cálculos de Tiempo Real
-        import pandas as pd
-        
-        # 1. Asegurar que estamos trabajando sobre una copia para evitar SettingWithCopyWarning
-        df_filt = df_filt.copy()
-
-        # 2. Conversión de fechas (Línea 2629 reparada)
-        df_filt['PROMESA DE ENTREGA'] = pd.to_datetime(df_filt['PROMESA DE ENTREGA'], errors='coerce')
-        df_filt['FECHA DE ENTREGA REAL'] = pd.to_datetime(df_filt['FECHA DE ENTREGA REAL'], errors='coerce')
-        
-        # Segmentación por Gravedad
-        vencidos = df_filt[(df_filt['PROMESA DE ENTREGA'] < hoy) & (df_filt['FECHA DE ENTREGA REAL'].isna())]
-        vencen_hoy = df_filt[(df_filt['PROMESA DE ENTREGA'] == hoy) & (df_filt['FECHA DE ENTREGA REAL'].isna())]
-        proximos = df_filt[(df_filt['PROMESA DE ENTREGA'] > hoy) & (df_filt['PROMESA DE ENTREGA'] <= hoy + pd.Timedelta(days=2)) & (df_filt['FECHA DE ENTREGA REAL'].isna())]
-
-        k1, k2, k3, k4 = st.columns(4)
-        with k1:
-            st.metric("🔴 CRÍTICOS (VENCIDOS)", len(vencidos), delta="Urgente", delta_color="inverse")
-        with k2:
-            st.metric("🟡 VENCEN HOY", len(vencen_hoy), delta="Atención")
-        with k3:
-            st.metric("🔵 PRÓX. 48H", len(proximos))
-        with k4:
-            eficiencia = (len(df_filt[df_filt['FECHA DE ENTREGA REAL'].notna()]) / len(df_filt)) * 100 if len(df_filt) > 0 else 0
-            st.metric("✅ EFICIENCIA", f"{int(eficiencia)}%")
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # =========================================================
-        # 2. PANEL DE CONTROL PANORÁMICO (LAYOUT DE DOS COLUMNAS)
-        # =========================================================
-        col_tabla, col_alertas = st.columns([0.65, 0.35])
-
-        with col_tabla:
-            st.markdown("**📋 MONITOR DE RASTREO TOTAL**")
-            # Aplicamos colores a la tabla para identificar rápido
-            def resaltar_retraso(row):
-                if pd.isna(row['FECHA DE ENTREGA REAL']) and row['PROMESA DE ENTREGA'] < hoy:
-                    return ['background-color: rgba(255, 0, 0, 0.2)'] * len(row)
-                return [''] * len(row)
-            
-            st.dataframe(df_filt.style.apply(resaltar_retraso, axis=1), use_container_width=True, height=450)
-
-        with col_alertas:
-            st.markdown("**🔥 ALERTAS DE PRIORIDAD**")
-            if not vencidos.empty:
-                for _, fila in vencidos.head(5).iterrows():
-                    st.error(f"**RETRASO:** Pedido {fila['NUMERO DE PEDIDO']} - {fila['NOMBRE DEL CLIENTE']}")
-            elif not vencen_hoy.empty:
-                for _, fila in vencen_hoy.head(5).iterrows():
-                    st.warning(f"**HOY:** {fila['NUMERO DE PEDIDO']} vence en las próximas horas.")
-            else:
-                st.success("🛰️ Sin alertas críticas detectadas.")
-
-        # =========================================================
-        # 3. GRÁFICO DE BARRAL DE TIEMPO (ANALÍTICA)
-        # =========================================================
-        st.markdown("---")
-        st.markdown("**📊 VOLUMEN DE CARGA POR DÍA DE ENTREGA**")
-        if not df_filt.empty:
-            df_timeline = df_filt.groupby(df_filt['PROMESA DE ENTREGA'].dt.date).size().reset_index(name='PEDIDOS')
-            st.line_chart(df_timeline, x='PROMESA DE ENTREGA', y='PEDIDOS', color="#00D4FF")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
