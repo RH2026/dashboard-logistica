@@ -364,6 +364,10 @@ else:
                 if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
                     st.session_state.pagina = "HubLogistico"
                     st.rerun()
+
+                if st.button("📡 RADAR RASTREO", use_container_width=True, key="h_radar"):
+                    st.session_state.pagina = "RadarRastreo"
+                    st.rerun()
                                                   
                                        
         st.markdown("""
@@ -2700,6 +2704,7 @@ else:
 
         # Footer minimalista del módulo
         st.markdown('<div style="text-align:center; color:#555; font-size:10px; padding:20px;">LOGISTIC HUB v4.8 | ELITE OPS COMMAND</div>', unsafe_allow_html=True)
+
 
 
 
