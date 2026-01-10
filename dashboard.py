@@ -530,7 +530,7 @@ else:
     
                 # Renderizado de Tarjetas y Timeline por cada registro encontrado
                 for index, row in df_busqueda.iterrows():
-                    st.markdown(f'<p style="font-size:14px; font-weight:bold; color:Withe; margin-bottom:-10px;">Resultados para: {row["NÚMERO DE PEDIDO"]}</p>', unsafe_allow_html=True)
+                    st.markdown(f'<p style="font-size:14px; font-weight:normal; color:Withe; margin-bottom:-10px;">Resultados para: {row["NÚMERO DE PEDIDO"]}</p>', unsafe_allow_html=True)
                     
                     # 1. Asegúrate de tener este bloque de Estilos CSS corregido antes de la búsqueda
                     st.markdown("""<style>@keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } } @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } } @keyframes p-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } } @keyframes p-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } } .dot-green { border-radius: 50% !important; animation: p-green 2s infinite; } .dot-blue { border-radius: 50% !important; animation: p-blue 2s infinite; } .dot-orange { border-radius: 50% !important; animation: p-orange 2s infinite; } .dot-red { border-radius: 50% !important; animation: p-red 2s infinite; }</style>""", unsafe_allow_html=True)
@@ -2635,6 +2635,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
