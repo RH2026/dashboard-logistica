@@ -2619,92 +2619,67 @@ else:
         st.markdown('<hr style="border:0; height:2px; background:#00D4FF; box-shadow:0px 0px 15px 3px rgba(0,212,255,0.7); margin-top:10px; margin-bottom:30px; border-radius:10px; opacity:0.8;">', unsafe_allow_html=True)
 
         # =========================================================
-        # CARGA DE ARTILLERÍA: MOTOR DE DATOS (Matriz_Excel_Dashboard.csv)
+        # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
-        if os.path.exists("Matriz_Excel_Dashboard.csv"):
-            df_ops = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding='utf-8-sig')
-            # Limpieza instantánea de headers
-            df_ops.columns = [unicodedata.normalize('NFKD', str(c)).encode('ascii', 'ignore').decode('utf-8').strip().upper() for c in df_ops.columns]
+        st.markdown("#### 📡 RADAR DE VENCIMIENTOS")
+        
+        # Cálculos de Tiempo Real
+        hoy = pd.Timestamp.now().normalize()
+        df_filt['PROMESA DE ENTREGA'] = pd.to_datetime(df_filt['PROMESA DE ENTREGA'], errors='coerce')
+        
+        # Segmentación por Gravedad
+        vencidos = df_filt[(df_filt['PROMESA DE ENTREGA'] < hoy) & (df_filt['FECHA DE ENTREGA REAL'].isna())]
+        vencen_hoy = df_filt[(df_filt['PROMESA DE ENTREGA'] == hoy) & (df_filt['FECHA DE ENTREGA REAL'].isna())]
+        proximos = df_filt[(df_filt['PROMESA DE ENTREGA'] > hoy) & (df_filt['PROMESA DE ENTREGA'] <= hoy + pd.Timedelta(days=2)) & (df_filt['FECHA DE ENTREGA REAL'].isna())]
+
+        k1, k2, k3, k4 = st.columns(4)
+        with k1:
+            st.metric("🔴 CRÍTICOS (VENCIDOS)", len(vencidos), delta="Urgente", delta_color="inverse")
+        with k2:
+            st.metric("🟡 VENCEN HOY", len(vencen_hoy), delta="Atención")
+        with k3:
+            st.metric("🔵 PRÓX. 48H", len(proximos))
+        with k4:
+            eficiencia = (len(df_filt[df_filt['FECHA DE ENTREGA REAL'].notna()]) / len(df_filt)) * 100 if len(df_filt) > 0 else 0
+            st.metric("✅ EFICIENCIA", f"{int(eficiencia)}%")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # =========================================================
+        # 2. PANEL DE CONTROL PANORÁMICO (LAYOUT DE DOS COLUMNAS)
+        # =========================================================
+        col_tabla, col_alertas = st.columns([0.65, 0.35])
+
+        with col_tabla:
+            st.markdown("**📋 MONITOR DE RASTREO TOTAL**")
+            # Aplicamos colores a la tabla para identificar rápido
+            def resaltar_retraso(row):
+                if pd.isna(row['FECHA DE ENTREGA REAL']) and row['PROMESA DE ENTREGA'] < hoy:
+                    return ['background-color: rgba(255, 0, 0, 0.2)'] * len(row)
+                return [''] * len(row)
             
-            # --- FILTROS TÁCTICOS SUPERIORES ---
-            with st.container():
-                f_c1, f_c2, f_c3 = st.columns([1,1,1])
-                with f_c1:
-                    sel_flet = st.multiselect("🚚 FILTRAR FLETERA", options=df_ops['FLETERA'].unique(), default=df_ops['FLETERA'].unique())
-                with f_c2:
-                    sel_dest = st.multiselect("📍 FILTRAR DESTINO", options=df_ops['DESTINO'].unique(), default=df_ops['DESTINO'].unique())
-                with f_c3:
-                    # Rango de fechas basado en "PROMESA DE ENTREGA"
-                    df_ops['PROMESA DE ENTREGA'] = pd.to_datetime(df_ops['PROMESA DE ENTREGA'], errors='coerce')
-                    min_date = df_ops['PROMESA DE ENTREGA'].min().date() if not df_ops['PROMESA DE ENTREGA'].isnull().all() else datetime.date.today()
-                    max_date = df_ops['PROMESA DE ENTREGA'].max().date() if not df_ops['PROMESA DE ENTREGA'].isnull().all() else datetime.date.today()
-                    rango_fecha = st.date_input("📅 RANGO DE ENTREGA", [min_date, max_date])
+            st.dataframe(df_filt.style.apply(resaltar_retraso, axis=1), use_container_width=True, height=450)
 
-            # Aplicación de filtros
-            mask = (df_ops['FLETERA'].isin(sel_flet)) & (df_ops['DESTINO'].isin(sel_dest))
-            df_filt = df_ops[mask]
+        with col_alertas:
+            st.markdown("**🔥 ALERTAS DE PRIORIDAD**")
+            if not vencidos.empty:
+                for _, fila in vencidos.head(5).iterrows():
+                    st.error(f"**RETRASO:** Pedido {fila['NUMERO DE PEDIDO']} - {fila['NOMBRE DEL CLIENTE']}")
+            elif not vencen_hoy.empty:
+                for _, fila in vencen_hoy.head(5).iterrows():
+                    st.warning(f"**HOY:** {fila['NUMERO DE PEDIDO']} vence en las próximas horas.")
+            else:
+                st.success("🛰️ Sin alertas críticas detectadas.")
 
-            # =========================================================
-            # BLOQUE: RADAR PANORÁMICO DE MÉTRICAS
-            # =========================================================
-            st.markdown("<br>", unsafe_allow_html=True)
-            k1, k2, k3, k4 = st.columns(4)
-            
-            with k1:
-                st.metric("📦 TOTAL ENVÍOS", f"{len(df_filt)}")
-            with k2:
-                inversion = df_filt['COSTO DE LA GUIA'].sum()
-                st.metric("💰 INVERSIÓN TOTAL", f"${inversion:,.0f}")
-            with k3:
-                volumen = df_filt['CANTIDAD DE CAJAS'].sum()
-                st.metric("📦 CAJAS TOTALES", f"{int(volumen)}")
-            with k4:
-                # Lógica de Retrasos Elite
-                hoy = pd.Timestamp.now()
-                retrasos = len(df_filt[(df_filt['PROMESA DE ENTREGA'] < hoy) & (df_filt['FECHA DE ENTREGA REAL'].isna())])
-                st.metric("⚠️ ALERTAS RETRASO", retrasos, delta="Crítico", delta_color="inverse")
+        # =========================================================
+        # 3. GRÁFICO DE BARRAL DE TIEMPO (ANALÍTICA)
+        # =========================================================
+        st.markdown("---")
+        st.markdown("**📊 VOLUMEN DE CARGA POR DÍA DE ENTREGA**")
+        if not df_filt.empty:
+            df_timeline = df_filt.groupby(df_filt['PROMESA DE ENTREGA'].dt.date).size().reset_index(name='PEDIDOS')
+            st.line_chart(df_timeline, x='PROMESA DE ENTREGA', y='PEDIDOS', color="#00D4FF")True)
 
-            # =========================================================
-            # BLOQUE: ANALÍTICA VISUAL ELITE
-            # =========================================================
-            st.markdown("<br>", unsafe_allow_html=True)
-            g1, g2 = st.columns([0.6, 0.4])
-            
-            with g1:
-                st.markdown("#### 📉 Gasto Acumulado por Transportista")
-                # Gráfico Pro con Plotly (Si está instalado) o Bar Chart nativo
-                try:
-                    import plotly.express as px
-                    fig = px.bar(df_filt.groupby('FLETERA')['COSTO DE LA GUIA'].sum().reset_index(), 
-                                 x='FLETERA', y='COSTO DE LA GUIA', 
-                                 template="plotly_dark", color_discrete_sequence=['#00FFAA'])
-                    fig.update_layout(height=350, margin=dict(l=0, r=0, t=20, b=0))
-                    st.plotly_chart(fig, use_container_width=True)
-                except:
-                    st.bar_chart(df_filt.groupby('FLETERA')['COSTO DE LA GUIA'].sum())
-
-            with g2:
-                st.markdown("#### 🏢 Participación por Destino")
-                try:
-                    fig_pie = px.pie(df_filt, names='DESTINO', values='CANTIDAD DE CAJAS', 
-                                     hole=0.4, template="plotly_dark")
-                    fig_pie.update_layout(height=350, margin=dict(l=0, r=0, t=20, b=0))
-                    st.plotly_chart(fig_pie, use_container_width=True)
-                except:
-                    st.write(df_filt['DESTINO'].value_counts())
-
-            # =========================================================
-            # BLOQUE: MONITOR DETALLADO (TABLA DE CONTROL)
-            # =========================================================
-            st.markdown("#### 📋 MONITOR DE RASTREO OPERATIVO")
-            # Resaltar filas con retraso (opcional con pandas styling)
-            st.dataframe(df_filt, use_container_width=True)
-
-        else:
-            st.error("❌ SISTEMA FUERA DE LÍNEA: No se detectó 'Matriz_Excel_Dashboard.csv' en la base de datos.")
-
-        # Footer minimalista del módulo
-        st.markdown('<div style="text-align:center; color:#555; font-size:10px; padding:20px;">LOGISTIC HUB v4.8 | ELITE OPS COMMAND</div>', unsafe_allow_html=True)
 
 
 
