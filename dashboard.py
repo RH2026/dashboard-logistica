@@ -2539,6 +2539,167 @@ else:
                 
         
 
+    # ------------------------------------------------------------------
+    # MAIN 05: SEGUIMIENTO 2
+    # ------------------------------------------------------------------
+    elif st.session_state.pagina == "Reporte":
+        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+        
+        # Título con estilo minimalista (Mantenido según su columna vertebral)
+        st.markdown("""
+            <div style='text-align: center; padding: 10px 0px 10px 0px;'>
+                <h1 style='color: white; font-family: "Inter", sans-serif; font-weight: 800; font-size: 42px; margin-bottom: 5px; letter-spacing: -1px;'>
+                    REPORTE MENSUAL<span style='color: #00FFAA;'>OPS</span>
+                </h1>
+                <p style='color: #94a3b8; font-size: 16px; font-weight: 400; letter-spacing: 1px;'>
+                    Análisis de Eficiencia Logística y Rentabilidad
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # =========================================================
+        # MENÚ DE NAVEGACIÓN FLOTANTE (Mantenido)
+        # =========================================================
+        st.markdown("""
+            <style>
+                div[data-testid="stPopover"] > button {
+                    background-color: #0d1117 !important;
+                    border: 1px solid #00ffa2 !important;
+                    padding: 5px 15px !important;
+                    border-radius: 8px !important;
+                    width: auto !important;
+                }
+                div[data-testid="stPopoverContent"] button {
+                    text-align: left !important;
+                    justify-content: flex-start !important;
+                    border: none !important;
+                    background: transparent !important;
+                    font-size: 14px !important;
+                }
+                div[data-testid="stPopoverContent"] button:hover {
+                    color: #00ffa2 !important;
+                    background: rgba(0, 255, 162, 0.1) !important;
+                }
+                /* Estilo extra para los KPIs */
+                [data-testid="stMetric"] {
+                    background-color: #0d1117;
+                    border: 1px solid #1f2937;
+                    padding: 15px;
+                    border-radius: 12px;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+        
+        c1, c2 = st.columns([0.85, 0.15])
+        with c2:
+            with st.popover("☰", use_container_width=True):
+                st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                if st.button("TRACKING", use_container_width=True, key="h_aac"):
+                    st.session_state.pagina = "principal"
+                    st.rerun()
+                if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
+                    st.session_state.pagina = "KPIs"
+                    st.rerun()
+                if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
+                    st.session_state.pagina = "Reporte"
+                    st.rerun()
+                if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
+                    st.session_state.pagina = "HubLogistico"
+                    st.rerun()
+                if st.button("RADAR RASTREO", use_container_width=True, key="h_radar"):
+                    st.session_state.pagina = "RadarRastreo"
+                    st.rerun()
+        
+        # LÍNEA AZUL CON RESPLANDOR (Mantenida)
+        st.markdown('<hr style="border:0; height:2px; background:#00D4FF; box-shadow:0px 0px 15px 3px rgba(0,212,255,0.7); margin-top:10px; margin-bottom:30px; border-radius:10px; opacity:0.8;">', unsafe_allow_html=True)
+
+        # =========================================================
+        # CARGA DE ARTILLERÍA: MOTOR DE DATOS (Matriz_Excel_Dashboard.csv)
+        # =========================================================
+        if os.path.exists("Matriz_Excel_Dashboard.csv"):
+            df_ops = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding='utf-8-sig')
+            # Limpieza instantánea de headers
+            df_ops.columns = [unicodedata.normalize('NFKD', str(c)).encode('ascii', 'ignore').decode('utf-8').strip().upper() for c in df_ops.columns]
+            
+            # --- FILTROS TÁCTICOS SUPERIORES ---
+            with st.container():
+                f_c1, f_c2, f_c3 = st.columns([1,1,1])
+                with f_c1:
+                    sel_flet = st.multiselect("🚚 FILTRAR FLETERA", options=df_ops['FLETERA'].unique(), default=df_ops['FLETERA'].unique())
+                with f_c2:
+                    sel_dest = st.multiselect("📍 FILTRAR DESTINO", options=df_ops['DESTINO'].unique(), default=df_ops['DESTINO'].unique())
+                with f_c3:
+                    # Rango de fechas basado en "PROMESA DE ENTREGA"
+                    df_ops['PROMESA DE ENTREGA'] = pd.to_datetime(df_ops['PROMESA DE ENTREGA'], errors='coerce')
+                    min_date = df_ops['PROMESA DE ENTREGA'].min().date() if not df_ops['PROMESA DE ENTREGA'].isnull().all() else datetime.date.today()
+                    max_date = df_ops['PROMESA DE ENTREGA'].max().date() if not df_ops['PROMESA DE ENTREGA'].isnull().all() else datetime.date.today()
+                    rango_fecha = st.date_input("📅 RANGO DE ENTREGA", [min_date, max_date])
+
+            # Aplicación de filtros
+            mask = (df_ops['FLETERA'].isin(sel_flet)) & (df_ops['DESTINO'].isin(sel_dest))
+            df_filt = df_ops[mask]
+
+            # =========================================================
+            # BLOQUE: RADAR PANORÁMICO DE MÉTRICAS
+            # =========================================================
+            st.markdown("<br>", unsafe_allow_html=True)
+            k1, k2, k3, k4 = st.columns(4)
+            
+            with k1:
+                st.metric("📦 TOTAL ENVÍOS", f"{len(df_filt)}")
+            with k2:
+                inversion = df_filt['COSTO DE LA GUIA'].sum()
+                st.metric("💰 INVERSIÓN TOTAL", f"${inversion:,.0f}")
+            with k3:
+                volumen = df_filt['CANTIDAD DE CAJAS'].sum()
+                st.metric("📦 CAJAS TOTALES", f"{int(volumen)}")
+            with k4:
+                # Lógica de Retrasos Elite
+                hoy = pd.Timestamp.now()
+                retrasos = len(df_filt[(df_filt['PROMESA DE ENTREGA'] < hoy) & (df_filt['FECHA DE ENTREGA REAL'].isna())])
+                st.metric("⚠️ ALERTAS RETRASO", retrasos, delta="Crítico", delta_color="inverse")
+
+            # =========================================================
+            # BLOQUE: ANALÍTICA VISUAL ELITE
+            # =========================================================
+            st.markdown("<br>", unsafe_allow_html=True)
+            g1, g2 = st.columns([0.6, 0.4])
+            
+            with g1:
+                st.markdown("#### 📉 Gasto Acumulado por Transportista")
+                # Gráfico Pro con Plotly (Si está instalado) o Bar Chart nativo
+                try:
+                    import plotly.express as px
+                    fig = px.bar(df_filt.groupby('FLETERA')['COSTO DE LA GUIA'].sum().reset_index(), 
+                                 x='FLETERA', y='COSTO DE LA GUIA', 
+                                 template="plotly_dark", color_discrete_sequence=['#00FFAA'])
+                    fig.update_layout(height=350, margin=dict(l=0, r=0, t=20, b=0))
+                    st.plotly_chart(fig, use_container_width=True)
+                except:
+                    st.bar_chart(df_filt.groupby('FLETERA')['COSTO DE LA GUIA'].sum())
+
+            with g2:
+                st.markdown("#### 🏢 Participación por Destino")
+                try:
+                    fig_pie = px.pie(df_filt, names='DESTINO', values='CANTIDAD DE CAJAS', 
+                                     hole=0.4, template="plotly_dark")
+                    fig_pie.update_layout(height=350, margin=dict(l=0, r=0, t=20, b=0))
+                    st.plotly_chart(fig_pie, use_container_width=True)
+                except:
+                    st.write(df_filt['DESTINO'].value_counts())
+
+            # =========================================================
+            # BLOQUE: MONITOR DETALLADO (TABLA DE CONTROL)
+            # =========================================================
+            st.markdown("#### 📋 MONITOR DE RASTREO OPERATIVO")
+            # Resaltar filas con retraso (opcional con pandas styling)
+            st.dataframe(df_filt, use_container_width=True)
+
+        else:
+            st.error("❌ SISTEMA FUERA DE LÍNEA: No se detectó 'Matriz_Excel_Dashboard.csv' en la base de datos.")
+
+        # Footer minimalista del módulo
+        st.markdown('<div style="text-align:center; color:#555; font-size:10px; padding:20px;">LOGISTIC HUB v4.8 | ELITE OPS COMMAND</div>', unsafe_allow_html=True)
 
 
 
