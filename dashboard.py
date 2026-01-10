@@ -2678,7 +2678,8 @@ else:
         st.markdown("**📊 VOLUMEN DE CARGA POR DÍA DE ENTREGA**")
         if not df_filt.empty:
             df_timeline = df_filt.groupby(df_filt['PROMESA DE ENTREGA'].dt.date).size().reset_index(name='PEDIDOS')
-            st.line_chart(df_timeline, x='PROMESA DE ENTREGA', y='PEDIDOS', color="#00D4FF")True)
+            st.line_chart(df_timeline, x='PROMESA DE ENTREGA', y='PEDIDOS', color="#00D4FF")
+
 
 
 
