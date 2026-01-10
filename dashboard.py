@@ -843,71 +843,85 @@ else:
             else:
                 st.markdown(f"<div style='padding:40px; text-align:center; color:#059669; font-weight:bold;'>✓ Operación al día</div>", unsafe_allow_html=True)
                
-        # --------------------------------------------------
+        # ----------------------------------------------------------
         # GRÁFICO EXCLUSIVO: RETRASO PROMEDIO (DÍAS) + NOTA
-        # --------------------------------------------------
-        # --- ANÁLISIS DE DESVIACIÓN (DISEÑO SUPER ELITE) ---
-        
-        # Colores de la marca OPS MONITOR
+        # ----------------------------------------------------------
         verde_esmeralda = "#059669"
         naranja_ambar = "#d97706"
         rojo_coral = "#fb7185"
 
         st.markdown(f"""
-            <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid {naranja_ambar}; margin-bottom: 20px;'>
-                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>⏱️ RETRASO PROMEDIO POR PAQUETERÍA</span>
+            <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid {rojo_coral}; margin-bottom: 20px;'>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>⏱️ RETRASO REAL ACUMULADO (ENTREGADOS Y EN RUTA)</span>
             </div>
         """, unsafe_allow_html=True)
 
-        df_entregados_p = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
+        # 1. Preparar el DataFrame de análisis
+        df_analisis_real = df_filtrado.copy()
         
-        if not df_entregados_p.empty:
-            # Cálculo de desviación en días
-            df_entregados_p["DIAS_DESVIACION"] = (df_entregados_p["FECHA DE ENTREGA REAL"] - df_entregados_p["PROMESA DE ENTREGA"]).dt.days
-            df_prom = df_entregados_p.groupby("FLETERA")["DIAS_DESVIACION"].mean().reset_index(name="PROMEDIO")
-            
-            # Asignación de colores segura para evitar TypeErrors
-            df_prom["COLOR_HEX"] = df_prom["PROMEDIO"].apply(lambda x: verde_esmeralda if x <= 0 else naranja_ambar)
+        # Asegurar que las columnas sean datetime (crucial para el cálculo)
+        df_analisis_real["PROMESA DE ENTREGA"] = pd.to_datetime(df_analisis_real["PROMESA DE ENTREGA"])
+        df_analisis_real["FECHA DE ENTREGA REAL"] = pd.to_datetime(df_analisis_real["FECHA DE ENTREGA REAL"])
+        
+        # Obtener fecha de hoy para el cálculo de pendientes
+        hoy_dt = pd.Timestamp.now().normalize()
 
-            # Gráfico Horizontal Premium
+        # 2. Lógica Maestra: Si es nulo, usamos hoy. Si no, usamos la fecha real.
+        def calcular_dias_reales(row):
+            meta = row["PROMESA DE ENTREGA"]
+            final = row["FECHA DE ENTREGA REAL"]
+            
+            if pd.isna(final):
+                # Pedido sigue en tránsito: comparamos contra hoy
+                desviacion = (hoy_dt - meta).days
+            else:
+                # Pedido entregado: comparamos contra su entrega
+                desviacion = (final - meta).days
+            return desviacion
+
+        df_analisis_real["DIAS_DESVIACION"] = df_analisis_real.apply(calcular_dias_reales, axis=1)
+
+        # 3. Agrupamos por Fletera
+        df_prom = df_analisis_real.groupby("FLETERA")["DIAS_DESVIACION"].mean().reset_index(name="PROMEDIO")
+        
+        if not df_prom.empty:
+            # Asignación de colores dinámica
+            # <= 0: Verde (A tiempo), 1-2: Naranja (Alerta), >2: Rojo (Crítico)
+            def asignar_color(x):
+                if x <= 0: return verde_esmeralda
+                elif x <= 2: return naranja_ambar
+                else: return rojo_coral
+            
+            df_prom["COLOR_HEX"] = df_prom["PROMEDIO"].apply(asignar_color)
+
+            # --- GRÁFICO ALTAIR ---
             bars = alt.Chart(df_prom).mark_bar(
                 cornerRadiusTopRight=10, 
                 cornerRadiusBottomRight=10,
                 size=22
             ).encode(
                 y=alt.Y("FLETERA:N", title=None, sort='-x', axis=alt.Axis(labelColor='white', labelFontSize=12)),
-                x=alt.X("PROMEDIO:Q", title="Días Promedio", axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8')),
+                x=alt.X("PROMEDIO:Q", title="Días de Desviación (Promedio)", axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8')),
                 color=alt.Color("COLOR_HEX:N", scale=None)
             )
             
-            # Etiquetas de datos con fuente bold
             text_labels = bars.mark_text(
                 align='left', baseline='middle', dx=10, fontSize=14, fontWeight=700, color='white'
             ).encode(text=alt.Text("PROMEDIO:Q", format='.1f'))
             
             st.altair_chart((bars + text_labels).properties(height=400).configure_view(strokeOpacity=0), use_container_width=True)
 
-            # --- DIAGNÓSTICO CON CORRECCIÓN DE DATETIME ---
+            # --- DIAGNÓSTICO ELITE ---
             peor_fletera = df_prom.sort_values(by="PROMEDIO", ascending=False).iloc[0]
-            # CORRECCIÓN AQUÍ: Usamos datetime.date.today()
             fecha_actual = datetime.date.today().strftime('%d/%m/%Y')
             
             if peor_fletera["PROMEDIO"] > 0:
                 st.markdown(f"""
                     <div style='background: rgba(251, 113, 133, 0.1); border: 1px solid {rojo_coral}; padding: 20px; border-radius: 12px; margin-top: 20px;'>
-                        <p style='margin:0; color:{rojo_coral}; font-weight:800; font-size:14px; text-transform:uppercase;'>🔍 Diagnóstico Crítico al {fecha_actual}</p>
+                        <p style='margin:0; color:{rojo_coral}; font-weight:800; font-size:14px; text-transform:uppercase;'>🔍 Diagnóstico de Emergencia al {fecha_actual}</p>
                         <p style='margin:10px 0 0 0; color:white; font-size:16px;'>
-                            El mayor impacto en la logística lo tiene <b>{peor_fletera['FLETERA']}</b> 
-                            con un retraso de <span style='color:{rojo_coral}; font-weight:bold;'>{peor_fletera['PROMEDIO']:.1f} días</span>.
-                        </p>
-                    </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown(f"""
-                    <div style='background: rgba(5, 150, 105, 0.1); border: 1px solid {verde_esmeralda}; padding: 20px; border-radius: 12px; margin-top: 20px;'>
-                        <p style='margin:0; color:{verde_esmeralda}; font-weight:800; font-size:14px; text-transform:uppercase;'>✨ Reporte de Excelencia al {fecha_actual}</p>
-                        <p style='margin:10px 0 0 0; color:white; font-size:16px;'>
-                            Operación impecable: Todas las entregas están <b>a tiempo o adelantadas</b>.
+                            Atención: <b>{peor_fletera['FLETERA']}</b> presenta la mayor desviación crítica. 
+                            Considerando pedidos en tránsito, el retraso promedio es de <span style='color:{rojo_coral}; font-weight:bold;'>{peor_fletera['PROMEDIO']:.1f} días</span>.
                         </p>
                     </div>
                 """, unsafe_allow_html=True)
@@ -2621,6 +2635,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
