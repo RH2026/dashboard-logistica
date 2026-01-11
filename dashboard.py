@@ -737,35 +737,60 @@ else:
         
         # --- FILTROS DE CUBIERTA (ENCIMA DE LA TABLA) ---
         st.markdown("""
-            <div style='background:rgba(255,255,255,0.02); padding:10px; border-radius:10px; border-left:4px solid #00FFAA; margin-bottom:15px;'>
-                <span style='color:white; font-size:14px; font-weight:700; letter-spacing:1px;'>🔍 FILTRADO DINÁMICO DE TABLA</span>
-            </div>
+        <style>
+        /* 1. Cambiar el color del texto y fondo de la opción seleccionada */
+        div[data-testid="stSelectbox"] div[role="button"] {
+            background-color: rgba(0, 255, 170, 0.05) !important;
+            border: 1px solid #38bdf8 !important;
+            color: #00FFAA !important;
+            font-weight: 600 !important;
+        }
+
+        /* 2. Cambiar el color del ícono de la flecha */
+        div[data-testid="stSelectbox"] svg {
+            fill: #38bdf8 !important;
+        }
+
+        /* 3. CAMBIAR EL COLOR NARANJA DE LAS LISTAS (Hover y Selección) */
+        /* Nota: Esto afecta a todos los widgets de selección para mantener armonía */
+        :root {
+            --primary-color: #00FFAA !important; /* Aquí matamos el naranja globalmente */
+        }
+
+        div[data-baseweb="select"] {
+            background-color: #0e1117 !important;
+            border-radius: 8px !important;
+        }
+
+        /* Cambiar el resplandor al hacer foco (clic) */
+        div[data-baseweb="select"]:focus-within {
+            border-color: #00FFAA !important;
+            box-shadow: 0 0 10px rgba(0, 255, 170, 0.3) !important;
+        }
+        </style>
         """, unsafe_allow_html=True)
         
         c_f1, c_f2, c_f3, c_f4 = st.columns(4)
 
         with c_f1:
-            # Filtro por No Cliente
-            f_cli = st.multiselect("No. Cliente", options=sorted(df_visual["NO CLIENTE"].unique()), key="f_cli_tab")
+            # Seleccionamos uno a la vez y se cierra solo
+            f_cli = st.selectbox("No. Cliente", options=["TODOS"] + sorted(df_visual["NO CLIENTE"].unique()), key="f_cli_tab")
         with c_f2:
-            # Filtro por Fletera
-            f_flet = st.multiselect("Fletera", options=sorted(df_visual["FLETERA"].unique()), key="f_flet_tab")
+            f_flet = st.selectbox("Fletera", options=["TODAS"] + sorted(df_visual["FLETERA"].unique()), key="f_flet_tab")
         with c_f3:
-            # Filtro por Destino
-            f_dest = st.multiselect("Destino", options=sorted(df_visual["DESTINO"].unique()), key="f_dest_tab")
+            f_dest = st.selectbox("Destino", options=["TODOS"] + sorted(df_visual["DESTINO"].unique()), key="f_dest_tab")
         with c_f4:
-            # Filtro por Estatus
-            f_est = st.multiselect("Estatus", options=sorted(df_visual["ESTATUS_CALCULADO"].unique()), key="f_est_tab")
+            f_est = st.selectbox("Estatus", options=["TODOS"] + sorted(df_visual["ESTATUS_CALCULADO"].unique()), key="f_est_tab")
 
         # --- APLICACIÓN DE FILTROS A LA VISTA ---
-        if f_cli:
-            df_visual = df_visual[df_visual["NO CLIENTE"].isin(f_cli)]
-        if f_flet:
-            df_visual = df_visual[df_visual["FLETERA"].isin(f_flet)]
-        if f_dest:
-            df_visual = df_visual[df_visual["DESTINO"].isin(f_dest)]
-        if f_est:
-            df_visual = df_visual[df_visual["ESTATUS_CALCULADO"].isin(f_est)]
+        if f_cli != "TODOS":
+            df_visual = df_visual[df_visual["NO CLIENTE"] == f_cli]
+        if f_flet != "TODAS":
+            df_visual = df_visual[df_visual["FLETERA"] == f_flet]
+        if f_dest != "TODOS":
+            df_visual = df_visual[df_visual["DESTINO"] == f_dest]
+        if f_est != "TODOS":
+            df_visual = df_visual[df_visual["ESTATUS_CALCULADO"] == f_est]
         
         # RENDERIZADO DE TABLA ULTRA MODERNA
         st.dataframe(
@@ -2686,6 +2711,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
