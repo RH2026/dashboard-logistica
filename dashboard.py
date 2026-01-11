@@ -366,7 +366,7 @@ else:
                     st.session_state.pagina = "HubLogistico"
                     st.rerun()                                                
                                        
-           
+        st.divider()   
         # 1. FUNCIÓN DE LIMPIEZA
         def limpiar_filtros():
             st.session_state.filtro_cliente_actual = ""
@@ -2620,6 +2620,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
