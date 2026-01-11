@@ -464,13 +464,13 @@ else:
             retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
     
         # --------------------------------------------------
+        # --------------------------------------------------
         # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
         # --------------------------------------------------
 
-              
         st.markdown("""
         <style>
-        /* Animaciones con radio de borde corregido para que siempre sean círculos */
+        /* Animaciones y estilos de puntos (Mantenidos) */
         @keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
         @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
         @keyframes p-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } }
@@ -480,14 +480,30 @@ else:
         .dot-blue { border-radius: 50% !important; animation: p-blue 2s infinite; }
         .dot-orange { border-radius: 50% !important; animation: p-orange 2s infinite; }
         .dot-red { border-radius: 50% !important; animation: p-red 2s infinite; }
+        
+        /* Centrado del label del text_input */
+        div[data-testid="stTextInput"] label {
+            display: flex;
+            justify-content: center;
+            font-weight: bold;
+            color: #94a3b8;
+        }
         </style>
         """, unsafe_allow_html=True)
+
+        # --- MANIOBRA DE CENTRADO ---
+        # Creamos 3 columnas iguales. La caja irá en la c_center.
+        c_left, c_center, c_right = st.columns([1, 1, 1])
         
-        pedido_buscar = st.text_input(
-            "Ver estatus por Factura",
-            value="",
-            help="Ingresa un número de pedido para mostrar solo esos registros"
-        )
+        with c_center:
+            # Encabezado centrado manualmente para la caja
+            st.markdown("<p style='text-align:center; color:white; font-size:16px; margin-bottom:-10px;'>🔍 BÚSQUEDA TÁCTICA</p>", unsafe_allow_html=True)
+            pedido_buscar = st.text_input(
+                "Ver estatus por Factura",
+                value="",
+                help="Ingresa un número de pedido para mostrar solo esos registros",
+                label_visibility="visible" # Mantiene el label arriba pero el CSS lo centra
+            )
         
         df_busqueda = pd.DataFrame() # Blindaje inicial
     
@@ -2620,6 +2636,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
