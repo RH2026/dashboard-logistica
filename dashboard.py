@@ -793,19 +793,38 @@ else:
         if f_est != "---TODOS---":
             df_visual = df_visual[df_visual["ESTATUS_CALCULADO"] == f_est]
         
-        # RENDERIZADO DE TABLA ULTRA MODERNA
+        # --- 1. REORDENAMIENTO FÍSICO (Siguiendo su orden exacto) ---
+        orden_capitan = [
+            "NO CLIENTE", 
+            "NÚMERO DE PEDIDO", 
+            "FECHA DE ENVÍO", 
+            "PROMESA DE ENTREGA", 
+            "FECHA DE ENTREGA REAL", 
+            "DIAS_TRANSCURRIDOS", 
+            "DIAS_RETRASO_VAL", 
+            "DESTINO", 
+            "FLETERA", 
+            "NÚMERO DE GUÍA", 
+            "COSTO DE LA GUÍA", 
+            "CANTIDAD DE CAJAS", 
+            "NOMBRE DEL CLIENTE", 
+            "COMENTARIOS",
+            "ESTATUS_CALCULADO" # La dejamos al final como cierre de fila
+        ]
+        
+        # Aplicamos el filtro de seguridad por si alguna columna no existe en el CSV
+        df_visual = df_visual[[c for c in orden_capitan if c in df_visual.columns]]
+        
+        # --- 2. RENDERIZADO CON CONFIGURACIÓN DE COLUMNAS ---
         st.dataframe(
             df_visual,
             column_config={
-                "ESTATUS_CALCULADO": st.column_config.SelectboxColumn(
-                    "ESTATUS",
-                    options=["ENTREGADO", "EN TRANSITO", "RETRASADO"],
-                    required=True,
-                ),
-                "DIAS_TRANSCURRIDOS": st.column_config.NumberColumn(
-                    "DÍAS TRANSCURRIDOS",
-                    format="%d d"
-                ),
+                "NO CLIENTE": st.column_config.TextColumn("NO. CLIENTE"),
+                "NÚMERO DE PEDIDO": st.column_config.TextColumn("PEDIDO"),
+                "FECHA DE ENVÍO": st.column_config.DateColumn("FECHA ENVÍO", format="DD/MM/YYYY"),
+                "PROMESA DE ENTREGA": st.column_config.DateColumn("PROMESA", format="DD/MM/YYYY"),
+                "FECHA DE ENTREGA REAL": st.column_config.DateColumn("ENTREGA REAL", format="DD/MM/YYYY"),
+                "DIAS_TRANSCURRIDOS": st.column_config.NumberColumn("DIAS TRANSCURRIDOS", format="%d d"),
                 "DIAS_RETRASO_VAL": st.column_config.ProgressColumn(
                     "RETRASO",
                     format="%d d",
@@ -813,18 +832,18 @@ else:
                     max_value=15,
                     color="red",
                 ),
-                "COSTO DE LA GUÍA": st.column_config.NumberColumn(
-                    "COSTO DE LA GUÍA",
-                    format="$ %.2f",
-                ),
-                "FECHA DE ENVÍO": st.column_config.DateColumn("FECHA DE ENVÍO", format="DD/MM/YYYY"),
-                "PROMESA DE ENTREGA": st.column_config.DateColumn("PROMESA DE ENTREGA", format="DD/MM/YYYY"),
-                "FECHA DE ENTREGA REAL": st.column_config.DateColumn("FECHA DE ENTREGA REAL", format="DD/MM/YYYY"),
-                "NÚMERO DE GUÍA": "NÚMERO DE GUÍA",
-                "NOMBRE DEL CLIENTE": "NOMBRE DEL CLIENTE",
-                "FLETERA": "FLETERA",
-                "DESTINO": "DESTINO",
-                "NO CLIENTE": "NO CLIENTE"
+                "DESTINO": st.column_config.TextColumn("DESTINO"),
+                "FLETERA": st.column_config.TextColumn("FLETERA"),
+                "NÚMERO DE GUÍA": st.column_config.TextColumn("GUÍA"),
+                "COSTO DE LA GUÍA": st.column_config.NumberColumn("COSTO", format="$ %.2f"),
+                "CANTIDAD DE CAJAS": st.column_config.NumberColumn("CAJAS", format=""),
+                "NOMBRE DEL CLIENTE": st.column_config.TextColumn("👤 CLIENTE"),
+                "COMENTARIOS": st.column_config.TextColumn("ULTIMO MOVIMIENTO"),
+                "ESTATUS_CALCULADO": st.column_config.SelectboxColumn(
+                    "ESTATUS",
+                    options=["ENTREGADO", "EN TRANSITO", "RETRASADO"],
+                    required=True,
+                )
             },
             hide_index=True,
             use_container_width=True,
@@ -2712,6 +2731,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
