@@ -613,7 +613,7 @@ else:
                         st.markdown(html_c3, unsafe_allow_html=True)
         
               
-
+        st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True)
         # --- 1. CÁLCULO DE MÉTRICAS ---
         st.markdown("<style>.elite-card{transition:all 0.4s ease;padding:20px;border-radius:20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);text-align:center;margin-bottom:10px;}.elite-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,0.7)!important;border:1px solid rgba(255,255,255,0.25)!important;}</style>", unsafe_allow_html=True)
         
@@ -690,7 +690,7 @@ else:
         # TABLA DE ENVÍOS – DISEÑO PREMIUM ELITE (SIN CAJA)
         # --------------------------------------------------
         # Espaciador para separar de las donas
-        st.markdown("<div style='margin-top: 50px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True)
         st.divider() 
         # Estructura de 3 columnas para centrado perfecto
         col_izq, col_centro, col_der = st.columns([2, 3, 2])
@@ -2683,6 +2683,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
