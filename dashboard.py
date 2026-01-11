@@ -465,50 +465,57 @@ else:
     
         # ------------------------------------------------------------------------------------------
         # ------------------------------------------------------------------------------------------------------------------
-        # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
+        # --- BLINDAJE PARA EVITAR QUE LA CAJA SE CORTE ---
         st.markdown("""
         <style>
-        /* Contenedor del buscador con empuje hacia abajo */
-        div[data-testid="stTextInput"] {
-            margin-top: 50px !important;
-            margin-bottom: 80px !important; /* <--- AIRE ABAJO PARA EMPUJAR LO DEMÁS */
-            padding-bottom: 40px !important;
+        /* 1. FORZAR AL CONTENEDOR RAIZ A MOSTRAR TODO EL CONTENIDO */
+        div[data-testid="stVerticalBlock"] > div {
+            overflow: visible !important;
         }
 
-        /* La caja de texto protagonista (Blindada) */
+        /* 2. LIBERAR EL ESPACIO DEL INPUT */
+        div[data-testid="stTextInput"] {
+            overflow: visible !important;
+            min-height: 150px !important; /* Asegura espacio suficiente para el label y el input */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* 3. AJUSTE DE LA CAJA (Proporcionada pero visible) */
         div[data-testid="stTextInput"] input {
-            height: 80px !important; 
-            font-size: 28px !important; 
+            height: 70px !important; 
+            font-size: 24px !important; 
             font-weight: 800 !important;
             color: #00FFAA !important; 
             background-color: rgba(17, 24, 39, 0.95) !important;
-            border: 3px solid #38bdf8 !important; 
-            border-radius: 20px !important;
+            border: 2px solid #38bdf8 !important; 
+            border-radius: 15px !important;
             text-align: center !important;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8) !important;
+            visibility: visible !important;
+            position: relative !important;
+            z-index: 1000 !important;
         }
 
-        /* Título del buscador más grande */
-        div[data-testid="stTextInput"] label p {
-            font-size: 22px !important;
-            margin-bottom: 15px !important;
+        /* 4. EVITAR QUE LA BARRA DE ABAJO SE ENCIME */
+        section.main > div:first-child {
+            padding-bottom: 50px !important;
         }
         </style>
         """, unsafe_allow_html=True)
 
-        # --- DISTRIBUCIÓN DE MANDO (ESPACIADO TÁCTICO) ---
-        c_side1, c_main, c_side2 = st.columns([0.3, 1.4, 0.3])
+        # --- DISTRIBUCIÓN DE MANDO ---
+        c_left, c_main, c_right = st.columns([0.3, 1.4, 0.3])
         
         with c_main:
+            # Usamos un contenedor vacío para empujar un poco antes
+            st.write("") 
             pedido_buscar = st.text_input(
                 "🛰️ INGRESE NÚMERO DE FACTURA",
                 value="",
                 placeholder="--- ESPERANDO COMANDO ---",
-                key="buscador_protagonista_v2"
+                key="buscador_blindado"
             )
-        
-        # ESPACIADOR FÍSICO ADICIONAL (Inyección de aire extra)
-        st.markdown("<div style='margin-bottom: 50px;'></div>", unsafe_allow_html=True)
         
         df_busqueda = pd.DataFrame() # Blindaje inicial
     
@@ -2641,6 +2648,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
