@@ -466,7 +466,72 @@ else:
         # --------------------------------------------------
         # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
         # --------------------------------------------------
-
+        # --------------------------------------------------
+        # CAJA DE BÚSQUEDA ESTILO ELITE - NEXION
+        # --------------------------------------------------
+        
+        # 1. CSS para el Título, la Caja y el Botón
+        st.markdown("""
+        <style>
+            /* Estilo para el texto principal */
+            .search-title {
+                font-family: 'Inter', sans-serif;
+                font-size: 42px;
+                font-weight: 800;
+                text-align: center;
+                color: #1e293b; /* Azul muy oscuro casi negro */
+                margin-bottom: 0px;
+                line-height: 1.2;
+            }
+            .search-title span {
+                color: #fb7185; /* Rosa/Rojo coral como en tu imagen */
+            }
+        
+            /* Estilo del contenedor de la caja */
+            .stTextInput input {
+                font-size: 24px !important;
+                padding: 15px !important;
+                border: 2px solid #3b82f6 !important; /* Borde azul brillante */
+                border-radius: 8px !important;
+                background-color: white !important;
+                color: #1e293b !important;
+                text-align: center;
+            }
+        
+            /* Estilo para el botón de Streamlit para que parezca el de la imagen */
+            div.stButton > button {
+                width: 100%;
+                background-color: #001f3f !important; /* Azul marino muy oscuro */
+                color: white !important;
+                font-size: 18px !important;
+                font-weight: bold !important;
+                border-radius: 4px !important;
+                padding: 12px !important;
+                border: none !important;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                transition: all 0.3s ease;
+            }
+            
+            div.stButton > button:hover {
+                background-color: #003366 !important;
+                box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
+            }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # 2. Renderizado del Título
+        st.markdown('<p class="search-title">Para realizar la <span>búsqueda</span><br>ingrese la <span>factura</span></p>', unsafe_allow_html=True)
+        
+        # 3. Caja de entrada (usamos label vacía porque el título ya está arriba)
+        pedido_buscar = st.text_input("", placeholder="Ej: F-12345", label_visibility="collapsed")
+        
+        # 4. Botón estilizado
+        if st.button("RASTREAR »"):
+            if pedido_buscar.strip() == "":
+                st.warning("Por favor, ingrese un número de factura.")
+            else:
+              
               
         st.markdown("""
         <style>
@@ -2620,6 +2685,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
