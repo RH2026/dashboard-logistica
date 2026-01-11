@@ -473,7 +473,7 @@ else:
         /* 2. Sello total contra el borde rojo/naranja nativo */
         div[data-testid="stTextInput"] input {
             height: 85px !important; 
-            font-size: 20px !important; 
+            font-size: 30px !important; 
             font-weight: 800 !important;
             color: #FFFFFF !important; 
             background-color: rgba(17, 24, 39, 1) !important; /* Fondo sólido para evitar transparencias raras */
@@ -2683,6 +2683,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
