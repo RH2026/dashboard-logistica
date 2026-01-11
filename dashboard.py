@@ -364,12 +364,8 @@ else:
 
                 if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
                     st.session_state.pagina = "HubLogistico"
-                    st.rerun()
-
-                
-                                                  
+                    st.rerun()                                                
                                        
-        
            
         # 1. FUNCIÓN DE LIMPIEZA
         def limpiar_filtros():
