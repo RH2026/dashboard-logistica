@@ -464,28 +464,17 @@ else:
             retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
     
         # ------------------------------------------------------------------------------------------
-        # ------------------------------------------------------------------------------------------------------------------
         # --- BLINDAJE PARA EVITAR QUE LA CAJA SE CORTE ---
-        # --- BLINDAJE MAESTRO: ELIMINACIÓN DE CAJA FANTASMA Y SINCRONIZACIÓN ---
+        # --- BLINDAJE SELECTIVO: SÓLO PARA EL BUSCADOR CENTRAL ---
         st.markdown("""
         <style>
-        /* 1. Atacamos todos los contenedores posibles del Input para que no limiten el tamaño */
-        div[data-testid="stTextInput"], 
-        div[data-testid="stTextInput"] > div, 
-        div[data-testid="stTextInput"] > div > div {
-            background-color: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            height: auto !important;
-        }
-
-        /* 2. Sello total contra el borde rojo/naranja nativo */
-        div[data-testid="stTextInput"] input {
+        /* 1. Atacamos ÚNICAMENTE los inputs que NO están en la Sidebar */
+        section:not([data-testid="stSidebar"]) div[data-testid="stTextInput"] input {
             height: 85px !important; 
             font-size: 30px !important; 
             font-weight: 800 !important;
             color: #00FFAA !important; 
-            background-color: rgba(17, 24, 39, 1) !important; /* Fondo sólido para evitar transparencias raras */
+            background-color: rgba(17, 24, 39, 1) !important;
             border: 3px solid #38bdf8 !important; 
             border-radius: 20px !important;
             text-align: center !important;
@@ -493,23 +482,28 @@ else:
             box-sizing: border-box !important;
         }
 
-        /* 3. Eliminación del borde fantasma al escribir (Focus) */
-        div[data-testid="stTextInput"] input:focus {
+        /* 2. Focus exclusivo para el buscador central */
+        section:not([data-testid="stSidebar"]) div[data-testid="stTextInput"] input:focus {
             outline: none !important;
-            border: 3px solid #00FFAA !important; /* Cambia a verde neón perfectamente alineado */
+            border: 3px solid #00FFAA !important;
             box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
-            -webkit-box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
         }
 
-        /* 4. Forzar que el label (título) no interfiera con el tamaño */
-        div[data-testid="stTextInput"] label {
-            min-height: 0px !important;
+        /* 3. El Label (Título) también queda protegido de la Sidebar */
+        section:not([data-testid="stSidebar"]) div[data-testid="stTextInput"] label {
+            justify-content: center !important;
+            display: flex !important;
             margin-bottom: 15px !important;
         }
 
-        /* 5. Asegurar aire abajo para que nada lo succione */
-        .main .block-container {
-            padding-bottom: 10rem !important;
+        /* 4. Aseguramos que la Sidebar mantenga su estilo estándar */
+        [data-testid="stSidebar"] div[data-testid="stTextInput"] input {
+            height: auto !important;
+            font-size: 14px !important;
+            font-weight: normal !important;
+            text-align: left !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            border-radius: 5px !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -2658,6 +2652,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
