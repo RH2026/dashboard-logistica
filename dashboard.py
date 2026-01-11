@@ -539,7 +539,7 @@ else:
                 if df_busqueda.empty:
                     st.warning("No se encontró ningún pedido con ese número.")
                 else:
-                hoy = pd.Timestamp.today().normalize()
+                    hoy = pd.Timestamp.today().normalize()
                                              
                 # Cálculos de tiempo para las tarjetas
                 df_busqueda["DIAS_TRANSCURRIDOS"] = (
@@ -2657,6 +2657,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
