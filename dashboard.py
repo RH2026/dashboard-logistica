@@ -456,24 +456,15 @@ else:
             retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
     
         # --------------------------------------------------------------------
-        # --- BLINDAJE MAESTRO: ELIMINACIÓN DE CAJA FANTASMA Y SINCRONIZACIÓN ---
-        # --- BLINDAJE MAESTRO: ELIMINACIÓN DE CAJA FANTASMA Y SINCRONIZACIÓN ---
+        # --- BLINDAJE MAESTRO: ELIMINACIÓN DE CAJA FANTASMA Y SINCRONIZACIÓN
+        #---------------------------------------------------------------------
         st.markdown("""
         <style>
-        /* 1. Contenedores (Sin cambios para mantener estabilidad) */
-        div[data-testid="stTextInput"], 
-        div[data-testid="stTextInput"] > div, 
-        div[data-testid="stTextInput"] > div > div {
-            background-color: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            height: auto !important;
-        }
-
-        /* 2. EL TEXTO INGRESADO (VALOR REAL) */
+        /* 1. EL TEXTO INGRESADO (VALOR REAL) - RESPONSIVE */
         div[data-testid="stTextInput"] input {
             height: 85px !important; 
-            font-size: 40px !important; /* <--- TAMAÑO GIGANTE AL ESCRIBIR */
+            /* 3.5vw significa que el texto ocupará el 3.5% del ancho de la pantalla */
+            font-size: clamp(20px, 3.5vw, 35px) !important; 
             font-weight: 800 !important;
             color: #FFFFFF !important; 
             background-color: rgba(17, 24, 39, 1) !important;
@@ -481,30 +472,21 @@ else:
             border-radius: 20px !important;
             text-align: center !important;
             outline: none !important;
-            box-sizing: border-box !important;
         }
 
-        /* 3. EL TEXTO ANTES DE INGRESAR (PLACEHOLDER) */
-        /* Aquí ajustamos el tamaño de "--- ESPERANDO COMANDO ---" */
+        /* 2. EL TEXTO ANTES DE INGRESAR (PLACEHOLDER) - RESPONSIVE */
         div[data-testid="stTextInput"] input::placeholder {
-            font-size: 25px !important;  /* <--- MÁS PEQUEÑO Y DISCRETO */
+            /* Se ajusta entre 14px y 20px según el tamaño del monitor */
+            font-size: clamp(14px, 1.5vw, 20px) !important; 
             font-weight: 400 !important;
-            color: rgba(255, 255, 255, 0.3) !important; /* Un blanco más transparente */
-            letter-spacing: 4px !important; /* Estilo cinemático */
+            color: rgba(255, 255, 255, 0.3) !important;
+            letter-spacing: 0.3vw !important; /* Espaciado también responsive */
+            text-align: center !important;
         }
 
-        /* 4. Focus (Efecto Neón al escribir) */
-        div[data-testid="stTextInput"] input:focus {
-            outline: none !important;
-            border: 1px solid #00FFAA !important;
-            box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
-        }
-
-        /* 5. Estilo del Label (El título de arriba) */
-        div[data-testid="stTextInput"] label {
-            min-height: 0px !important;
-            margin-bottom: 15px !important;
-        }
+        /* Refuerzos de centrado para navegadores */
+        div[data-testid="stTextInput"] input::-webkit-input-placeholder { text-align: center !important; }
+        div[data-testid="stTextInput"] input::-moz-placeholder { text-align: center !important; }
         </style>
         """, unsafe_allow_html=True)
 
@@ -2686,6 +2668,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
