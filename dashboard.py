@@ -517,8 +517,9 @@ else:
         c_left, c_main, c_right = st.columns([0.4, 1.2, 0.4])
         
         with c_main:
+            # Actualizamos el Label para que el usuario sepa que puede buscar ambos
             pedido_buscar = st.text_input(
-                "🛰️ INGRESE NÚMERO DE FACTURA",
+                "🛰️ INGRESE PEDIDO O NÚMERO DE GUÍA",
                 value="",
                 placeholder="--- ESPERANDO COMANDO ---",
                 key="buscador_compacto"
@@ -527,15 +528,17 @@ else:
         df_busqueda = pd.DataFrame() # Blindaje inicial
     
         if pedido_buscar.strip() != "":
-            # Filtrar solo por Número de Pedido
+            # --- MANIOBRA MULTI-FILTRO (PEDIDO | GUÍA) ---
+            query = pedido_buscar.strip().lower()
+            
+            # Buscamos en ambas columnas simultáneamente
             df_busqueda = df_filtrado[
-                df_filtrado["NÚMERO DE PEDIDO"]
-                .astype(str)
-                .str.contains(pedido_buscar.strip(), case=False, na=False)
+                (df_filtrado["NÚMERO DE PEDIDO"].astype(str).str.contains(query, case=False, na=False)) |
+                (df_filtrado["NÚMERO DE GUÍA"].astype(str).str.contains(query, case=False, na=False))
             ].copy()
     
             if df_busqueda.empty:
-                st.warning("No se encontró ningún pedido con ese número.")
+                st.warning(f"No se encontró registro para: {pedido_buscar}")
             else:
                 hoy = pd.Timestamp.today().normalize()
                                              
@@ -2655,6 +2658,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
