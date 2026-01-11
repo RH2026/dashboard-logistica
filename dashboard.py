@@ -373,7 +373,7 @@ else:
         st.markdown("""
             <hr style="
                 border: 0;
-                height: 2px;
+                height: 1px;
                 background: ##262730;                
                 margin-top: 20px;
                 margin-bottom: 20px;
@@ -2634,6 +2634,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
