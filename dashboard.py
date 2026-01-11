@@ -731,6 +731,39 @@ else:
         df_visual["DIAS_TRANSCURRIDOS"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["FECHA DE ENVÍO"]).dt.days)
         df_visual["DIAS_RETRASO_VAL"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["PROMESA DE ENTREGA"]).dt.days).clip(lower=0)
         
+        
+        # --- FILTROS DE CUBIERTA (ENCIMA DE LA TABLA) ---
+        st.markdown("""
+            <div style='background:rgba(255,255,255,0.02); padding:10px; border-radius:10px; border-left:4px solid #00FFAA; margin-bottom:15px;'>
+                <span style='color:white; font-size:14px; font-weight:700; letter-spacing:1px;'>🔍 FILTRADO DINÁMICO DE TABLA</span>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        c_f1, c_f2, c_f3, c_f4 = st.columns(4)
+
+        with c_f1:
+            # Filtro por No Cliente
+            f_cli = st.multiselect("🆔 No. Cliente", options=sorted(df_visual["NO CLIENTE"].unique()), key="f_cli_tab")
+        with c_f2:
+            # Filtro por Fletera
+            f_flet = st.multiselect("🚚 Fletera", options=sorted(df_visual["FLETERA"].unique()), key="f_flet_tab")
+        with c_f3:
+            # Filtro por Destino
+            f_dest = st.multiselect("📍 Destino", options=sorted(df_visual["DESTINO"].unique()), key="f_dest_tab")
+        with c_f4:
+            # Filtro por Estatus
+            f_est = st.multiselect("📊 Estatus", options=sorted(df_visual["ESTATUS_CALCULADO"].unique()), key="f_est_tab")
+
+        # --- APLICACIÓN DE FILTROS A LA VISTA ---
+        if f_cli:
+            df_visual = df_visual[df_visual["NO CLIENTE"].isin(f_cli)]
+        if f_flet:
+            df_visual = df_visual[df_visual["FLETERA"].isin(f_flet)]
+        if f_dest:
+            df_visual = df_visual[df_visual["DESTINO"].isin(f_dest)]
+        if f_est:
+            df_visual = df_visual[df_visual["ESTATUS_CALCULADO"].isin(f_est)]
+        
         # RENDERIZADO DE TABLA ULTRA MODERNA
         st.dataframe(
             df_visual,
@@ -2650,6 +2683,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
