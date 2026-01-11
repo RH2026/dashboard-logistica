@@ -463,60 +463,52 @@ else:
             en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
             retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
     
-        # --------------------------------------------------
-        # --------------------------------------------------
+        # ------------------------------------------------------------------------------------------
+        # ------------------------------------------------------------------------------------------------------------------
         # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
-        # --- ESTILOS DE PROTAGONISMO Y BLINDAJE ---
         st.markdown("""
         <style>
-        /* Contenedor principal del input para evitar que se colapse */
+        /* Contenedor del buscador con empuje hacia abajo */
         div[data-testid="stTextInput"] {
-            margin-top: 20px !important;
-            margin-bottom: 20px !important;
-            z-index: 999 !important;
+            margin-top: 50px !important;
+            margin-bottom: 80px !important; /* <--- AIRE ABAJO PARA EMPUJAR LO DEMÁS */
+            padding-bottom: 40px !important;
         }
 
-        /* La caja de texto protagonista */
+        /* La caja de texto protagonista (Blindada) */
         div[data-testid="stTextInput"] input {
-            height: 75px !important;  /* Un poco más alta para asegurar visibilidad */
-            font-size: 26px !important; 
+            height: 80px !important; 
+            font-size: 28px !important; 
             font-weight: 800 !important;
             color: #00FFAA !important; 
-            background-color: rgba(17, 24, 39, 0.8) !important; /* Fondo más oscuro para contraste */
-            border: 2px solid #38bdf8 !important; 
-            border-radius: 15px !important;
+            background-color: rgba(17, 24, 39, 0.95) !important;
+            border: 3px solid #38bdf8 !important; 
+            border-radius: 20px !important;
             text-align: center !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
-            visibility: visible !important; /* Fuerza visibilidad */
-        }
-        
-        /* Asegurar que el placeholder se vea bien */
-        div[data-testid="stTextInput"] input::placeholder {
-            color: rgba(148, 163, 184, 0.5) !important;
-            font-size: 18px !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8) !important;
         }
 
-        /* Estilo del Label centrado */
-        div[data-testid="stTextInput"] label {
-            width: 100% !important;
-            justify-content: center !important;
-            display: flex !important;
-            margin-bottom: 10px !important;
+        /* Título del buscador más grande */
+        div[data-testid="stTextInput"] label p {
+            font-size: 22px !important;
+            margin-bottom: 15px !important;
         }
         </style>
         """, unsafe_allow_html=True)
 
-        # --- DISTRIBUCIÓN DE MANDO ---
-        # Usamos columnas laterales un poco más grandes para "empujar" la barra al centro exacto
-        c_side1, c_main, c_side2 = st.columns([0.4, 1.2, 0.4])
+        # --- DISTRIBUCIÓN DE MANDO (ESPACIADO TÁCTICO) ---
+        c_side1, c_main, c_side2 = st.columns([0.3, 1.4, 0.3])
         
         with c_main:
             pedido_buscar = st.text_input(
                 "🛰️ INGRESE NÚMERO DE FACTURA",
                 value="",
                 placeholder="--- ESPERANDO COMANDO ---",
-                key="buscador_principal" # Key única para evitar conflictos
+                key="buscador_protagonista_v2"
             )
+        
+        # ESPACIADOR FÍSICO ADICIONAL (Inyección de aire extra)
+        st.markdown("<div style='margin-bottom: 50px;'></div>", unsafe_allow_html=True)
         
         df_busqueda = pd.DataFrame() # Blindaje inicial
     
@@ -2649,6 +2641,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
