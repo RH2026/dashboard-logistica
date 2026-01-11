@@ -369,16 +369,7 @@ else:
                 
                                                   
                                        
-        st.markdown("""
-            <hr style="
-                border: 0;
-                height: 1px;
-                background: ##262730;                
-                margin-top: 20px;
-                margin-bottom: 20px;
-                border-radius: 10px;
-            ">
-        """, unsafe_allow_html=True)
+        
            
         # 1. FUNCIÓN DE LIMPIEZA
         def limpiar_filtros():
@@ -2633,6 +2624,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
