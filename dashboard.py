@@ -473,24 +473,26 @@ else:
                 font-size: 38px;
                 font-weight: 800;
                 text-align: center;
-                color: #FFFFFF; /* Texto blanco para fondo oscuro */
-                margin-bottom: 5px;
+                color: #FFFFFF;
+                margin-bottom: 20px;
                 line-height: 1.2;
             }
-            .search-title span { color: #fb7185; } /* Coral */
+            .search-title span { color: #fb7185; }
         
+            /* Ajuste para que el input de Streamlit no se vea estirado */
             .stTextInput input {
                 font-size: 20px !important;
                 padding: 12px !important;
                 border: 2px solid #3b82f6 !important;
                 border-radius: 8px !important;
-                background-color: #111827 !important; /* Fondo oscuro para el input */
+                background-color: #111827 !important;
                 color: white !important;
                 text-align: center;
             }
         
+            /* Estilo del botón */
             div.stButton > button {
-                width: 100%;
+                width: 100% !important;
                 background-color: #001f3f !important;
                 color: white !important;
                 font-size: 16px !important;
@@ -503,12 +505,11 @@ else:
             }
             div.stButton > button:hover { background-color: #003366 !important; }
         
-            /* --- TUS ANIMACIONES EXISTENTES --- */
+            /* Animaciones existentes */
             @keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
             @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
             @keyframes p-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } }
             @keyframes p-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-            
             .dot-green { border-radius: 50% !important; animation: p-green 2s infinite; }
             .dot-blue { border-radius: 50% !important; animation: p-blue 2s infinite; }
             .dot-orange { border-radius: 50% !important; animation: p-orange 2s infinite; }
@@ -516,16 +517,21 @@ else:
         </style>
         """, unsafe_allow_html=True)
         
-        # 2. RENDERIZADO VISUAL
+        # 2. RENDERIZADO VISUAL DEL TÍTULO (Fuera de las columnas para que ocupe todo el ancho)
         st.markdown('<p class="search-title">Para realizar la <span>búsqueda</span><br>ingrese la <span>factura</span></p>', unsafe_allow_html=True)
         
-        # 3. INPUT Y BOTÓN (Mantenemos el nombre de la variable 'pedido_buscar')
-        pedido_buscar = st.text_input("", placeholder="Ej: F-12345", label_visibility="collapsed")
+        # 3. CREACIÓN DE 3 COLUMNAS PARA CENTRAR INPUT Y BOTÓN
+        col_izq, col_centro, col_der = st.columns([1, 2, 1]) # La columna central es el doble de ancha
+        
+        with col_centro:
+            # El input y el botón se colocan dentro de la columna central
+            pedido_buscar = st.text_input("", placeholder="Ej: F-12345", label_visibility="collapsed")
+            btn_rastrear = st.button("RASTREAR »")
+        
         df_busqueda = pd.DataFrame() 
         
-        # 4. LÓGICA DE ACTIVACIÓN
-        # Se activa al presionar el botón O al dar Enter en el input
-        if st.button("RASTREAR »") or pedido_buscar.strip() != "":
+        # 4. LÓGICA DE ACTIVACIÓN (Mantenemos tu lógica original)
+        if btn_rastrear or pedido_buscar.strip() != "":
             if pedido_buscar.strip() == "":
                 st.warning("Por favor, ingrese un número de factura.")
             else:
@@ -2657,6 +2663,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
