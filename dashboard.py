@@ -473,7 +473,7 @@ else:
         /* 2. Sello total contra el borde rojo/naranja nativo */
         div[data-testid="stTextInput"] input {
             height: 85px !important; 
-            font-size: 30px !important; 
+            font-size: 20px !important; 
             font-weight: 800 !important;
             color: #FFFFFF !important; 
             background-color: rgba(17, 24, 39, 1) !important; /* Fondo sólido para evitar transparencias raras */
@@ -511,7 +511,7 @@ else:
         with c_main:
             # Actualizamos el Label para que el usuario sepa que puede buscar ambos
             pedido_buscar = st.text_input(
-                "🛰️ INGRESE PEDIDO O NÚMERO DE GUÍA",
+                "Caja de busqueda",
                 value="",
                 placeholder="--- INGRESA NUMEROD DE FACTURA O GUIA ---",
                 key="buscador_compacto"
@@ -2683,6 +2683,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
