@@ -473,7 +473,7 @@ else:
         /* 2. EL TEXTO INGRESADO (VALOR REAL) */
         div[data-testid="stTextInput"] input {
             height: 85px !important; 
-            font-size: 30px !important; /* <--- TAMAÑO GIGANTE AL ESCRIBIR */
+            font-size: 40px !important; /* <--- TAMAÑO GIGANTE AL ESCRIBIR */
             font-weight: 800 !important;
             color: #FFFFFF !important; 
             background-color: rgba(17, 24, 39, 1) !important;
@@ -487,7 +487,7 @@ else:
         /* 3. EL TEXTO ANTES DE INGRESAR (PLACEHOLDER) */
         /* Aquí ajustamos el tamaño de "--- ESPERANDO COMANDO ---" */
         div[data-testid="stTextInput"] input::placeholder {
-            font-size: 16px !important;  /* <--- MÁS PEQUEÑO Y DISCRETO */
+            font-size: 25px !important;  /* <--- MÁS PEQUEÑO Y DISCRETO */
             font-weight: 400 !important;
             color: rgba(255, 255, 255, 0.3) !important; /* Un blanco más transparente */
             letter-spacing: 4px !important; /* Estilo cinemático */
@@ -516,7 +516,7 @@ else:
             pedido_buscar = st.text_input(
                 "",
                 value="",
-                placeholder="--- INGRESA NUMEROD DE FACTURA O GUIA ---",
+                placeholder="--- INGRESA NUMERO DE FACTURA O GUIA ---",
                 key="buscador_compacto"
             )
         
@@ -2686,6 +2686,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
