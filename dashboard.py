@@ -460,33 +460,42 @@ else:
         #---------------------------------------------------------------------
         st.markdown("""
         <style>
-        /* 1. EL TEXTO INGRESADO (VALOR REAL) - RESPONSIVE */
+        /* 1. FORZAR APERTURA DE LOS MUROS DEL CONTENEDOR */
+        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) {
+            overflow: visible !important;
+            min-height: 180px !important; /* Espacio vital garantizado */
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+        }
+
+        /* 2. LA CAJA PROTAGONISTA (RESPONSIVE + BLINDADA) */
         div[data-testid="stTextInput"] input {
-            height: 85px !important; 
-            /* 3.5vw significa que el texto ocupará el 3.5% del ancho de la pantalla */
-            font-size: clamp(20px, 3.5vw, 35px) !important; 
+            height: clamp(60px, 8vh, 90px) !important; /* Altura que se adapta a la pantalla */
+            font-size: clamp(18px, 3vw, 32px) !important; 
             font-weight: 800 !important;
             color: #FFFFFF !important; 
             background-color: rgba(17, 24, 39, 1) !important;
             border: 3px solid #38bdf8 !important; 
-            border-radius: 20px !important;
+            border-radius: clamp(10px, 2vw, 20px) !important;
             text-align: center !important;
             outline: none !important;
+            visibility: visible !important;
         }
 
-        /* 2. EL TEXTO ANTES DE INGRESAR (PLACEHOLDER) - RESPONSIVE */
+        /* 3. PLACEHOLDER CENTRADO Y RESPONSIVE */
         div[data-testid="stTextInput"] input::placeholder {
-            /* Se ajusta entre 14px y 20px según el tamaño del monitor */
-            font-size: clamp(14px, 1.5vw, 20px) !important; 
-            font-weight: 400 !important;
+            font-size: clamp(12px, 1.2vw, 18px) !important;
             color: rgba(255, 255, 255, 0.3) !important;
-            letter-spacing: 0.3vw !important; /* Espaciado también responsive */
             text-align: center !important;
+            letter-spacing: 0.2vw !important;
         }
 
-        /* Refuerzos de centrado para navegadores */
-        div[data-testid="stTextInput"] input::-webkit-input-placeholder { text-align: center !important; }
-        div[data-testid="stTextInput"] input::-moz-placeholder { text-align: center !important; }
+        /* 4. ELIMINAR CUALQUIER SOMBRA QUE CORTE LA CAJA */
+        div[data-testid="stTextInput"] > div {
+            background: transparent !important;
+            border: none !important;
+        }
         </style>
         """, unsafe_allow_html=True)
 
@@ -2668,6 +2677,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
