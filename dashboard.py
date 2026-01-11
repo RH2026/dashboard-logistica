@@ -781,14 +781,16 @@ else:
         with c_f4:
             f_est = st.selectbox("Estatus", options=["---TODOS---"] + sorted(df_visual["ESTATUS_CALCULADO"].unique()), key="f_est_tab")
 
-        # --- APLICACIÓN DE FILTROS A LA VISTA ---
-        if f_cli != "TODOS":
+        if f_cli != "---TODOS---":
             df_visual = df_visual[df_visual["NO CLIENTE"] == f_cli]
-        if f_flet != "TODAS":
+            
+        if f_flet != "---TODAS---":
             df_visual = df_visual[df_visual["FLETERA"] == f_flet]
-        if f_dest != "TODOS":
+            
+        if f_dest != "---TODOS---":
             df_visual = df_visual[df_visual["DESTINO"] == f_dest]
-        if f_est != "TODOS":
+            
+        if f_est != "---TODOS---":
             df_visual = df_visual[df_visual["ESTATUS_CALCULADO"] == f_est]
         
         # RENDERIZADO DE TABLA ULTRA MODERNA
@@ -2710,6 +2712,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
