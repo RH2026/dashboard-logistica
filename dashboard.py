@@ -465,45 +465,50 @@ else:
     
         # ------------------------------------------------------------------------------------------
         # --- BLINDAJE MAESTRO: ELIMINACIÓN DE CAJA FANTASMA Y SINCRONIZACIÓN ---
-        # --- BLINDAJE QUIRÚRGICO (SÓLO PARA EL BUSCADOR CENTRAL) ---
+        # --- BLINDAJE MAESTRO: ELIMINACIÓN DE CAJA FANTASMA Y SINCRONIZACIÓN ---
         st.markdown("""
         <style>
-        /* 1. SELECCIÓN POR ATRIBUTO: Atacamos solo al buscador que tiene nuestro emoji satelital */
-        div[data-testid="stTextInput"]:has(input[aria-label="🛰️ INGRESE NÚMERO DE FACTURA"]) {
-            margin-top: 50px !important;
-            margin-bottom: 50px !important;
+        /* 1. Atacamos todos los contenedores posibles del Input para que no limiten el tamaño */
+        div[data-testid="stTextInput"], 
+        div[data-testid="stTextInput"] > div, 
+        div[data-testid="stTextInput"] > div > div {
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            height: auto !important;
         }
 
-        /* 2. DISEÑO GIGANTE EXCLUSIVO */
-        div[data-testid="stTextInput"]:has(input[aria-label="🛰️ INGRESE NÚMERO DE FACTURA"]) input {
-            height: 90px !important; 
-            font-size: 32px !important; 
+        /* 2. Sello total contra el borde rojo/naranja nativo */
+        div[data-testid="stTextInput"] input {
+            height: 85px !important; 
+            font-size: 30px !important; 
             font-weight: 800 !important;
             color: #00FFAA !important; 
-            background-color: rgba(17, 24, 39, 1) !important;
+            background-color: rgba(17, 24, 39, 1) !important; /* Fondo sólido para evitar transparencias raras */
             border: 3px solid #38bdf8 !important; 
             border-radius: 20px !important;
             text-align: center !important;
             outline: none !important;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+            box-sizing: border-box !important;
         }
 
-        /* 3. FOCUS NEÓN (SIN AFECTAR SIDEBAR) */
-        div[data-testid="stTextInput"]:has(input[aria-label="🛰️ INGRESE NÚMERO DE FACTURA"]) input:focus {
-            border: 3px solid #00FFAA !important;
-            box-shadow: 0 0 25px rgba(0, 255, 170, 0.6) !important;
+        /* 3. Eliminación del borde fantasma al escribir (Focus) */
+        div[data-testid="stTextInput"] input:focus {
+            outline: none !important;
+            border: 3px solid #00FFAA !important; /* Cambia a verde neón perfectamente alineado */
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
+            -webkit-box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
         }
 
-        /* 4. PROTECCIÓN DE SIDEBAR (RESET) */
-        /* Forzamos a que cualquier input en la Sidebar ignore las reglas anteriores */
-        [data-testid="stSidebar"] div[data-testid="stTextInput"] input {
-            height: auto !important;
-            font-size: 14px !important;
-            font-weight: normal !important;
-            color: white !important;
-            border: 1px solid rgba(255,255,255,0.2) !important;
-            text-align: left !important;
-            background-color: transparent !important;
+        /* 4. Forzar que el label (título) no interfiera con el tamaño */
+        div[data-testid="stTextInput"] label {
+            min-height: 0px !important;
+            margin-bottom: 15px !important;
+        }
+
+        /* 5. Asegurar aire abajo para que nada lo succione */
+        .main .block-container {
+            padding-bottom: 10rem !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -2663,6 +2668,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
