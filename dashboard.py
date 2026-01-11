@@ -463,67 +463,67 @@ else:
             en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
             retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
     
-        # ------------------------------------------------------------------------------------------
-        # --- BLINDAJE MAESTRO: ELIMINACIÓN DE CAJA FANTASMA Y SINCRONIZACIÓN ---
+        # --------------------------------------------------------------------
         # --- BLINDAJE MAESTRO: ELIMINACIÓN DE CAJA FANTASMA Y SINCRONIZACIÓN ---
         st.markdown("""
         <style>
-        /* 1. Atacamos todos los contenedores posibles del Input para que no limiten el tamaño */
-        div[data-testid="stTextInput"], 
-        div[data-testid="stTextInput"] > div, 
-        div[data-testid="stTextInput"] > div > div {
-            background-color: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            height: auto !important;
+        /* 1. SELECCIÓN QUIRÚRGICA: Solo afecta al buscador con el label del satélite */
+        div[data-testid="stTextInput"]:has(input[aria-label="🛰️ INGRESE NÚMERO DE FACTURA"]) {
+            margin-top: 20px !important;
+            margin-bottom: 30px !important;
         }
 
-        /* 2. Sello total contra el borde rojo/naranja nativo */
-        div[data-testid="stTextInput"] input {
-            height: 85px !important; 
-            font-size: 30px !important; 
-            font-weight: 800 !important;
+        /* 2. DISEÑO COMPACTO (ALTURA REDUCIDA) */
+        div[data-testid="stTextInput"]:has(input[aria-label="🛰️ INGRESE NÚMERO DE FACTURA"]) input {
+            height: 50px !important;     /* Altura reducida de 85px a 50px */
+            font-size: 20px !important;   /* Fuente ajustada */
+            font-weight: 700 !important;
             color: #00FFAA !important; 
-            background-color: rgba(17, 24, 39, 1) !important; /* Fondo sólido para evitar transparencias raras */
-            border: 3px solid #38bdf8 !important; 
-            border-radius: 20px !important;
+            background-color: rgba(17, 24, 39, 1) !important;
+            border: 2px solid #38bdf8 !important; 
+            border-radius: 12px !important;
             text-align: center !important;
             outline: none !important;
             box-sizing: border-box !important;
         }
 
-        /* 3. Eliminación del borde fantasma al escribir (Focus) */
-        div[data-testid="stTextInput"] input:focus {
+        /* 3. FOCUS SIN BORDE ROJO (EFECTO NEÓN) */
+        div[data-testid="stTextInput"]:has(input[aria-label="🛰️ INGRESE NÚMERO DE FACTURA"]) input:focus {
             outline: none !important;
-            border: 3px solid #00FFAA !important; /* Cambia a verde neón perfectamente alineado */
-            box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
-            -webkit-box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
+            border: 2px solid #00FFAA !important;
+            box-shadow: 0 0 15px rgba(0, 255, 170, 0.4) !important;
         }
 
-        /* 4. Forzar que el label (título) no interfiera con el tamaño */
-        div[data-testid="stTextInput"] label {
-            min-height: 0px !important;
-            margin-bottom: 15px !important;
+        /* 4. PROTECCIÓN TOTAL DE LA SIDEBAR (CABOS A SALVO) */
+        [data-testid="stSidebar"] div[data-testid="stTextInput"] input {
+            height: auto !important;
+            font-size: 14px !important;
+            font-weight: normal !important;
+            color: white !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            text-align: left !important;
+            background-color: transparent !important;
         }
 
-        /* 5. Asegurar aire abajo para que nada lo succione */
-        .main .block-container {
-            padding-bottom: 10rem !important;
+        /* Ajuste del Label Central */
+        div[data-testid="stTextInput"]:has(input[aria-label="🛰️ INGRESE NÚMERO DE FACTURA"]) label p {
+            font-size: 14px !important;
+            color: #94a3b8 !important;
+            justify-content: center !important;
+            display: flex !important;
         }
         </style>
         """, unsafe_allow_html=True)
 
         # --- DISTRIBUCIÓN DE MANDO ---
-        c_left, c_main, c_right = st.columns([0.3, 1.4, 0.3])
+        c_left, c_main, c_right = st.columns([0.4, 1.2, 0.4])
         
         with c_main:
-            # Usamos un contenedor vacío para empujar un poco antes
-            st.write("") 
             pedido_buscar = st.text_input(
                 "🛰️ INGRESE NÚMERO DE FACTURA",
                 value="",
                 placeholder="--- ESPERANDO COMANDO ---",
-                key="buscador_blindado"
+                key="buscador_compacto"
             )
         
         df_busqueda = pd.DataFrame() # Blindaje inicial
@@ -2657,6 +2657,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
