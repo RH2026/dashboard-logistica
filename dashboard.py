@@ -794,17 +794,6 @@ else:
             df_visual = df_visual[df_visual["ESTATUS_CALCULADO"] == f_est]
         
         # RENDERIZADO DE TABLA ULTRA MODERNA
-        # Definimos el orden exacto de las columnas en la matriz
-        columnas_ordenadas = [
-            "NO CLIENTE", "NOMBRE DEL CLIENTE", "NÚMERO DE GUÍA", "FLETERA", "DESTINO",
-            "FECHA DE ENVÍO", "PROMESA DE ENTREGA", "FECHA DE ENTREGA REAL", 
-            "DIAS_TRANSCURRIDOS", "DIAS_RETRASO_VAL", "ESTATUS_CALCULADO", "COSTO DE LA GUÍA"
-        ]
-        
-        # Aplicamos el orden (solo las columnas que existan para evitar errores)
-        df_visual = df_visual[[c for c in columnas_ordenadas if c in df_visual.columns]]
-
-        # RENDERIZADO DE TABLA ULTRA MODERNA
         st.dataframe(
             df_visual,
             column_config={
@@ -2723,6 +2712,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
