@@ -631,7 +631,7 @@ else:
             return (donut + texto_n + texto_p).properties(width=180, height=180).configure_view(strokeOpacity=0)
 
         # --- 4. RENDERIZADO DE COLUMNAS ---
-        st.markdown("<div style='background:rgba(255,255,255,0.02);padding:15px;border-radius:15px;border-left:5px solid #38bdf8;margin-bottom:25px;'><span style='color:white;font-size:20px;font-weight:800;letter-spacing:1.5px;'>CONSOLA GLOBAL DE RENDIMIENTO</span></div>", unsafe_allow_html=True)
+        st.markdown("<div style='background:rgba(255,255,255,0.02);padding:15px;border-radius:15px;border-left:5px solid #38bdf8;margin-bottom:25px;'><span style='color:white;font-size:16px;font-weight:800;letter-spacing:1.5px;'>CONSOLA GLOBAL DE RENDIMIENTO</span></div>", unsafe_allow_html=True)
     
         c1, c2, c3, c4 = st.columns(4)
         l_style = "color:#94a3b8;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;"
@@ -647,12 +647,12 @@ else:
             st.markdown("</div>", unsafe_allow_html=True)
     
         with c3:
-            st.markdown(f"<div class='elite-card'><p style='{l_style}'>En Tránsito</p>", unsafe_allow_html=True)
+            st.markdown(f"<div class='elite-card'><p style='{l_style}'>En Tránsito en tiempo</p>", unsafe_allow_html=True)
             st.altair_chart(donut_con_numero(en_transito, total, COLOR_AVANCE_TRANSITO, COLOR_FALTANTE), use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
     
         with c4:
-            st.markdown(f"<div class='elite-card'><p style='{l_style}'>Retrasados</p>", unsafe_allow_html=True)
+            st.markdown(f"<div class='elite-card'><p style='{l_style}'>En Tránsito con retraso</p>", unsafe_allow_html=True)
             st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
         
@@ -2620,6 +2620,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
