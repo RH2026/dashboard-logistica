@@ -468,38 +468,32 @@ else:
         # --- BLINDAJE PARA EVITAR QUE LA CAJA SE CORTE ---
         st.markdown("""
         <style>
-        /* 1. FORZAR AL CONTENEDOR RAIZ A MOSTRAR TODO EL CONTENIDO */
-        div[data-testid="stVerticalBlock"] > div {
-            overflow: visible !important;
-        }
-
-        /* 2. LIBERAR EL ESPACIO DEL INPUT */
-        div[data-testid="stTextInput"] {
-            overflow: visible !important;
-            min-height: 150px !important; /* Asegura espacio suficiente para el label y el input */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        /* 3. AJUSTE DE LA CAJA (Proporcionada pero visible) */
+        /* 1. Blindaje base de la caja */
         div[data-testid="stTextInput"] input {
-            height: 70px !important; 
-            font-size: 24px !important; 
+            height: 80px !important; 
+            font-size: 28px !important; 
             font-weight: 800 !important;
             color: #00FFAA !important; 
             background-color: rgba(17, 24, 39, 0.95) !important;
-            border: 2px solid #38bdf8 !important; 
-            border-radius: 15px !important;
+            border: 3px solid #38bdf8 !important; /* Borde azul de mando */
+            border-radius: 20px !important;
             text-align: center !important;
-            visibility: visible !important;
-            position: relative !important;
-            z-index: 1000 !important;
+            transition: all 0.3s ease-in-out !important;
+            outline: none !important; /* <--- ANULA EL BORDE ROJO DEL NAVEGADOR */
         }
 
-        /* 4. EVITAR QUE LA BARRA DE ABAJO SE ENCIME */
-        section.main > div:first-child {
-            padding-bottom: 50px !important;
+        /* 2. Comportamiento cuando el Capitán está escribiendo (FOCUS) */
+        div[data-testid="stTextInput"] input:focus {
+            outline: none !important; /* Doble blindaje anti-borde rojo */
+            border: 3px solid #00FFAA !important; /* El borde cambia a verde neón al escribir */
+            box-shadow: 0 0 25px rgba(0, 255, 170, 0.4) !important; /* Resplandor de energía */
+            background-color: rgba(0, 0, 0, 0.8) !important;
+        }
+        
+        /* 3. Corrección del contenedor para que NO corte la caja */
+        div[data-testid="stTextInput"] {
+            overflow: visible !important;
+            padding: 10px 0 !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -2648,6 +2642,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
