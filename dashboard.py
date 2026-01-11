@@ -466,49 +466,56 @@ else:
         # --------------------------------------------------
         # --------------------------------------------------
         # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
-        # --- ESTILOS DE PROTAGONISMO PARA EL BUSCADOR ---
+        # --- ESTILOS DE PROTAGONISMO Y BLINDAJE ---
         st.markdown("""
         <style>
-        /* Aumentar altura, fuente y diseño de la caja de texto */
-        div[data-testid="stTextInput"] input {
-            height: 65px !important;  /* Altura PRO */
-            font-size: 24px !important; /* Fuente grande para lectura rápida */
-            font-weight: 800 !important;
-            color: #00FFAA !important; /* Color neón */
-            background-color: rgba(255, 255, 255, 0.05) !important;
-            border: 2px solid #38bdf8 !important; /* Borde azul brillante */
-            border-radius: 15px !important;
-            text-align: center !important; /* Texto que escribes al centro */
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4) !important; /* Resplandor azul */
-        }
-        
-        /* Efecto al hacer clic (Focus) */
-        div[data-testid="stTextInput"] input:focus {
-            border-color: #00FFAA !important;
-            box-shadow: 0 0 25px rgba(0, 255, 170, 0.6) !important;
-            outline: none !important;
+        /* Contenedor principal del input para evitar que se colapse */
+        div[data-testid="stTextInput"] {
+            margin-top: 20px !important;
+            margin-bottom: 20px !important;
+            z-index: 999 !important;
         }
 
-        /* Centrado y tamaño del Label (Título de arriba) */
-        div[data-testid="stTextInput"] label p {
+        /* La caja de texto protagonista */
+        div[data-testid="stTextInput"] input {
+            height: 75px !important;  /* Un poco más alta para asegurar visibilidad */
+            font-size: 26px !important; 
+            font-weight: 800 !important;
+            color: #00FFAA !important; 
+            background-color: rgba(17, 24, 39, 0.8) !important; /* Fondo más oscuro para contraste */
+            border: 2px solid #38bdf8 !important; 
+            border-radius: 15px !important;
+            text-align: center !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+            visibility: visible !important; /* Fuerza visibilidad */
+        }
+        
+        /* Asegurar que el placeholder se vea bien */
+        div[data-testid="stTextInput"] input::placeholder {
+            color: rgba(148, 163, 184, 0.5) !important;
             font-size: 18px !important;
-            color: #38bdf8 !important;
-            font-weight: 700 !important;
-            letter-spacing: 2px !important;
-            text-transform: uppercase !important;
+        }
+
+        /* Estilo del Label centrado */
+        div[data-testid="stTextInput"] label {
+            width: 100% !important;
+            justify-content: center !important;
+            display: flex !important;
+            margin-bottom: 10px !important;
         }
         </style>
         """, unsafe_allow_html=True)
 
-        # --- MANIOBRA DE CENTRADO (PROTAGONISTA) ---
-        c_left, c_center, c_right = st.columns([0.5, 1, 0.5]) # Ajustamos proporciones para que la central sea más ancha
+        # --- DISTRIBUCIÓN DE MANDO ---
+        # Usamos columnas laterales un poco más grandes para "empujar" la barra al centro exacto
+        c_side1, c_main, c_side2 = st.columns([0.4, 1.2, 0.4])
         
-        with c_center:
+        with c_main:
             pedido_buscar = st.text_input(
                 "🛰️ INGRESE NÚMERO DE FACTURA",
                 value="",
                 placeholder="--- ESPERANDO COMANDO ---",
-                help="Radar de rastreo profundo de pedidos"
+                key="buscador_principal" # Key única para evitar conflictos
             )
         
         df_busqueda = pd.DataFrame() # Blindaje inicial
@@ -2642,6 +2649,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
