@@ -466,9 +466,17 @@ else:
         # ------------------------------------------------------------------------------------------
         # --- BLINDAJE PARA EVITAR QUE LA CAJA SE CORTE ---
         # --- BLINDAJE SELECTIVO: SÓLO PARA EL BUSCADOR CENTRAL ---
+       # --- BLINDAJE FINAL: AISLAMIENTO TOTAL Y RESCATE DE CAJA ---
         st.markdown("""
         <style>
-        /* 1. Atacamos ÚNICAMENTE los inputs que NO están en la Sidebar */
+        /* 1. ELIMINAR CUALQUIER BORDE FANTASMA EN TODA LA NAVE */
+        div[data-testid="stTextInput"] > div {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        /* 2. ESTILO EXCLUSIVO PARA LA CAJA CENTRAL (PROTAGONISTA) */
+        /* Usamos el selector :not para proteger la Sidebar de forma radical */
         section:not([data-testid="stSidebar"]) div[data-testid="stTextInput"] input {
             height: 85px !important; 
             font-size: 30px !important; 
@@ -480,30 +488,43 @@ else:
             text-align: center !important;
             outline: none !important;
             box-sizing: border-box !important;
+            margin-top: 10px !important;
+            display: block !important;
+            visibility: visible !important;
         }
 
-        /* 2. Focus exclusivo para el buscador central */
+        /* 3. EVITAR QUE LA CAJA SE ESCONDA (EMPUJE TÁCTICO) */
+        section:not([data-testid="stSidebar"]) div[data-testid="stTextInput"] {
+            margin-bottom: 50px !important; /* Crea espacio abajo para que no se encime lo demás */
+            padding: 10px 0 !important;
+            overflow: visible !important;
+        }
+
+        /* 4. FOCO NEÓN (SIN BORDE ROJO) */
         section:not([data-testid="stSidebar"]) div[data-testid="stTextInput"] input:focus {
             outline: none !important;
             border: 3px solid #00FFAA !important;
-            box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
+            box-shadow: 0 0 25px rgba(0, 255, 170, 0.5) !important;
         }
 
-        /* 3. El Label (Título) también queda protegido de la Sidebar */
+        /* 5. RESTAURACIÓN ABSOLUTA DE LA SIDEBAR (CABO A SALVO) */
+        [data-testid="stSidebar"] div[data-testid="stTextInput"] input {
+            height: 45px !important; /* Altura estándar de sidebar */
+            font-size: 14px !important;
+            font-weight: normal !important;
+            color: white !important;
+            background-color: rgba(255,255,255,0.05) !important;
+            border: 1px solid rgba(56, 189, 248, 0.5) !important;
+            border-radius: 8px !important;
+            text-align: left !important;
+        }
+        
+        /* Centrado del label central */
         section:not([data-testid="stSidebar"]) div[data-testid="stTextInput"] label {
             justify-content: center !important;
             display: flex !important;
-            margin-bottom: 15px !important;
-        }
-
-        /* 4. Aseguramos que la Sidebar mantenga su estilo estándar */
-        [data-testid="stSidebar"] div[data-testid="stTextInput"] input {
-            height: auto !important;
-            font-size: 14px !important;
-            font-weight: normal !important;
-            text-align: left !important;
-            border: 1px solid rgba(255,255,255,0.2) !important;
-            border-radius: 5px !important;
+            font-size: 18px !important;
+            color: #38bdf8 !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -2652,6 +2673,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
