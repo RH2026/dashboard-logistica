@@ -475,7 +475,7 @@ else:
             background-color: transparent !important;
             border: none !important;
             box-shadow: none !important;
-            height: 50px !important;
+            height: auto !important;
         }
 
         /* 2. Sello total contra el borde rojo/naranja nativo */
@@ -2655,6 +2655,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
