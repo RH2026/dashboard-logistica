@@ -741,7 +741,7 @@ else:
         /* Tamaño y color del texto dentro del selector (Cerrado) */
         div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
             font-size: 12px !important; /* <--- AJUSTE EL TAMAÑO AQUÍ */
-            color: #00FFAA !important;  /* Color Verde Neón */
+            color: #D1D5DB !important;  /* Color Verde Neón */
             font-weight: 500 !important;
             text-transform: uppercase !important;
         }
@@ -761,8 +761,8 @@ else:
         
         /* Ajuste del título (Label) del selector */
         div[data-testid="stSelectbox"] label p {
-            font-size: 12px !important;
-            color: #38bdf8 !important; /* Azul para los títulos de los filtros */
+            font-size: 13px !important;
+            color: #FFFFFF !important; /* Azul para los títulos de los filtros */
             letter-spacing: 1px !important;
             font-weight: 700 !important;
         }
@@ -2710,6 +2710,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
