@@ -690,7 +690,7 @@ else:
         # TABLA DE ENVÍOS – DISEÑO PREMIUM ELITE (SIN CAJA)
         # --------------------------------------------------
         # Espaciador para separar de las donas
-        st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
         st.divider() 
         # Estructura de 3 columnas para centrado perfecto
         col_izq, col_centro, col_der = st.columns([2, 3, 2])
@@ -2683,6 +2683,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
