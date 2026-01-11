@@ -460,41 +460,47 @@ else:
         #---------------------------------------------------------------------
         st.markdown("""
         <style>
-        /* 1. FORZAR APERTURA DE LOS MUROS DEL CONTENEDOR */
-        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) {
-            overflow: visible !important;
-            min-height: 180px !important; /* Espacio vital garantizado */
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
+        /* 1. FORZAR ESPACIO EN EL CONTENEDOR RAIZ */
+        [data-testid="stVerticalBlock"] {
+            gap: 0px !important;
         }
 
-        /* 2. LA CAJA PROTAGONISTA (RESPONSIVE + BLINDADA) */
+        /* 2. CREAR UN BÚNKER PARA LA CAJA */
+        div[data-testid="stTextInput"] {
+            margin-top: 2rem !important;
+            margin-bottom: 4rem !important; /* Empuje masivo hacia abajo */
+            padding: 20px 0 !important;
+            overflow: visible !important;
+        }
+
+        /* 3. LA CAJA PROTAGONISTA (Garantizando visibilidad) */
         div[data-testid="stTextInput"] input {
-            height: clamp(60px, 8vh, 90px) !important; /* Altura que se adapta a la pantalla */
-            font-size: clamp(18px, 3vw, 32px) !important; 
+            height: clamp(60px, 8vh, 85px) !important; 
+            font-size: clamp(18px, 2.5vw, 30px) !important; 
             font-weight: 800 !important;
             color: #FFFFFF !important; 
-            background-color: rgba(17, 24, 39, 1) !important;
+            background-color: #0e1117 !important; /* Fondo sólido oscuro */
             border: 3px solid #38bdf8 !important; 
-            border-radius: clamp(10px, 2vw, 20px) !important;
+            border-radius: 15px !important;
             text-align: center !important;
-            outline: none !important;
-            visibility: visible !important;
+            
+            /* Asegurar que el texto no se corte */
+            line-height: normal !important;
+            display: flex !important;
+            align-items: center !important;
         }
 
-        /* 3. PLACEHOLDER CENTRADO Y RESPONSIVE */
+        /* 4. PLACEHOLDER RESPONSIVE Y CENTRADO */
         div[data-testid="stTextInput"] input::placeholder {
             font-size: clamp(12px, 1.2vw, 18px) !important;
-            color: rgba(255, 255, 255, 0.3) !important;
+            color: rgba(255, 255, 255, 0.4) !important;
             text-align: center !important;
-            letter-spacing: 0.2vw !important;
+            letter-spacing: 2px !important;
         }
 
-        /* 4. ELIMINAR CUALQUIER SOMBRA QUE CORTE LA CAJA */
-        div[data-testid="stTextInput"] > div {
-            background: transparent !important;
-            border: none !important;
+        /* 5. ELIMINAR EL RECORTE DE LOS CONTENEDORES PADRES */
+        div[data-testid="stVerticalBlock"] > div {
+            overflow: visible !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -2677,6 +2683,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
