@@ -460,7 +460,7 @@ else:
         # --- BLINDAJE MAESTRO: ELIMINACIÓN DE CAJA FANTASMA Y SINCRONIZACIÓN ---
         st.markdown("""
         <style>
-        /* 1. Atacamos todos los contenedores posibles del Input para que no limiten el tamaño */
+        /* 1. Contenedores (Sin cambios para mantener estabilidad) */
         div[data-testid="stTextInput"], 
         div[data-testid="stTextInput"] > div, 
         div[data-testid="stTextInput"] > div > div {
@@ -470,13 +470,13 @@ else:
             height: auto !important;
         }
 
-        /* 2. Sello total contra el borde rojo/naranja nativo */
+        /* 2. EL TEXTO INGRESADO (VALOR REAL) */
         div[data-testid="stTextInput"] input {
             height: 85px !important; 
-            font-size: 30px !important; 
+            font-size: 30px !important; /* <--- TAMAÑO GIGANTE AL ESCRIBIR */
             font-weight: 800 !important;
             color: #FFFFFF !important; 
-            background-color: rgba(17, 24, 39, 1) !important; /* Fondo sólido para evitar transparencias raras */
+            background-color: rgba(17, 24, 39, 1) !important;
             border: 3px solid #38bdf8 !important; 
             border-radius: 20px !important;
             text-align: center !important;
@@ -484,23 +484,26 @@ else:
             box-sizing: border-box !important;
         }
 
-        /* 3. Eliminación del borde fantasma al escribir (Focus) */
-        div[data-testid="stTextInput"] input:focus {
-            outline: none !important;
-            border: 1px solid #00FFAA !important; /* Cambia a verde neón perfectamente alineado */
-            box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
-            -webkit-box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
+        /* 3. EL TEXTO ANTES DE INGRESAR (PLACEHOLDER) */
+        /* Aquí ajustamos el tamaño de "--- ESPERANDO COMANDO ---" */
+        div[data-testid="stTextInput"] input::placeholder {
+            font-size: 16px !important;  /* <--- MÁS PEQUEÑO Y DISCRETO */
+            font-weight: 400 !important;
+            color: rgba(255, 255, 255, 0.3) !important; /* Un blanco más transparente */
+            letter-spacing: 4px !important; /* Estilo cinemático */
         }
 
-        /* 4. Forzar que el label (título) no interfiera con el tamaño */
+        /* 4. Focus (Efecto Neón al escribir) */
+        div[data-testid="stTextInput"] input:focus {
+            outline: none !important;
+            border: 1px solid #00FFAA !important;
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
+        }
+
+        /* 5. Estilo del Label (El título de arriba) */
         div[data-testid="stTextInput"] label {
             min-height: 0px !important;
             margin-bottom: 15px !important;
-        }
-
-        /* 5. Asegurar aire abajo para que nada lo succione */
-        .main .block-container {
-            padding-bottom: 10rem !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -2683,6 +2686,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
