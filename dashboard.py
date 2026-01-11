@@ -511,7 +511,7 @@ else:
         with c_main:
             # Actualizamos el Label para que el usuario sepa que puede buscar ambos
             pedido_buscar = st.text_input(
-                "Caja de busqueda",
+                "",
                 value="",
                 placeholder="--- INGRESA NUMEROD DE FACTURA O GUIA ---",
                 key="buscador_compacto"
@@ -2683,6 +2683,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
