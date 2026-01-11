@@ -463,110 +463,82 @@ else:
             en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
             retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
     
-        # --------------------------------------------------
-        # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
-        # --------------------------------------------------
-        # --------------------------------------------------
-        # CAJA DE BÚSQUEDA ESTILO ELITE - NEXION
-        # --------------------------------------------------
-        
-        # 1. CSS para el Título, la Caja y el Botón
+        # --------------------------------------------------------------------
+        # 1. UNIFICACIÓN DE ESTILOS (Nuevo diseño + Animaciones existentes)
         st.markdown("""
         <style>
-            /* Estilo para el texto principal */
+            /* --- NUEVO DISEÑO CAJA DE BÚSQUEDA --- */
             .search-title {
                 font-family: 'Inter', sans-serif;
-                font-size: 42px;
+                font-size: 38px;
                 font-weight: 800;
                 text-align: center;
-                color: #1e293b; /* Azul muy oscuro casi negro */
-                margin-bottom: 0px;
+                color: #FFFFFF; /* Texto blanco para fondo oscuro */
+                margin-bottom: 5px;
                 line-height: 1.2;
             }
-            .search-title span {
-                color: #fb7185; /* Rosa/Rojo coral como en tu imagen */
-            }
+            .search-title span { color: #fb7185; } /* Coral */
         
-            /* Estilo del contenedor de la caja */
             .stTextInput input {
-                font-size: 24px !important;
-                padding: 15px !important;
-                border: 2px solid #3b82f6 !important; /* Borde azul brillante */
+                font-size: 20px !important;
+                padding: 12px !important;
+                border: 2px solid #3b82f6 !important;
                 border-radius: 8px !important;
-                background-color: white !important;
-                color: #1e293b !important;
+                background-color: #111827 !important; /* Fondo oscuro para el input */
+                color: white !important;
                 text-align: center;
             }
         
-            /* Estilo para el botón de Streamlit para que parezca el de la imagen */
             div.stButton > button {
                 width: 100%;
-                background-color: #001f3f !important; /* Azul marino muy oscuro */
+                background-color: #001f3f !important;
                 color: white !important;
-                font-size: 18px !important;
+                font-size: 16px !important;
                 font-weight: bold !important;
-                border-radius: 4px !important;
-                padding: 12px !important;
+                border-radius: 6px !important;
+                padding: 10px !important;
                 border: none !important;
                 text-transform: uppercase;
-                letter-spacing: 2px;
-                transition: all 0.3s ease;
+                transition: 0.3s;
             }
+            div.stButton > button:hover { background-color: #003366 !important; }
+        
+            /* --- TUS ANIMACIONES EXISTENTES --- */
+            @keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+            @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+            @keyframes p-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } }
+            @keyframes p-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
             
-            div.stButton > button:hover {
-                background-color: #003366 !important;
-                box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
-            }
+            .dot-green { border-radius: 50% !important; animation: p-green 2s infinite; }
+            .dot-blue { border-radius: 50% !important; animation: p-blue 2s infinite; }
+            .dot-orange { border-radius: 50% !important; animation: p-orange 2s infinite; }
+            .dot-red { border-radius: 50% !important; animation: p-red 2s infinite; }
         </style>
         """, unsafe_allow_html=True)
         
-        # 2. Renderizado del Título
+        # 2. RENDERIZADO VISUAL
         st.markdown('<p class="search-title">Para realizar la <span>búsqueda</span><br>ingrese la <span>factura</span></p>', unsafe_allow_html=True)
         
-        # 3. Caja de entrada (usamos label vacía porque el título ya está arriba)
+        # 3. INPUT Y BOTÓN (Mantenemos el nombre de la variable 'pedido_buscar')
         pedido_buscar = st.text_input("", placeholder="Ej: F-12345", label_visibility="collapsed")
+        df_busqueda = pd.DataFrame() 
         
-        # 4. Botón estilizado
-        if st.button("RASTREAR »"):
+        # 4. LÓGICA DE ACTIVACIÓN
+        # Se activa al presionar el botón O al dar Enter en el input
+        if st.button("RASTREAR »") or pedido_buscar.strip() != "":
             if pedido_buscar.strip() == "":
                 st.warning("Por favor, ingrese un número de factura.")
             else:
-              
-              
-        st.markdown("""
-        <style>
-        /* Animaciones con radio de borde corregido para que siempre sean círculos */
-        @keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
-        @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
-        @keyframes p-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } }
-        @keyframes p-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+                # Tu filtrado original sin cambios
+                df_busqueda = df_filtrado[
+                    df_filtrado["NÚMERO DE PEDIDO"]
+                    .astype(str)
+                    .str.contains(pedido_buscar.strip(), case=False, na=False)
+                ].copy()
         
-        .dot-green { border-radius: 50% !important; animation: p-green 2s infinite; }
-        .dot-blue { border-radius: 50% !important; animation: p-blue 2s infinite; }
-        .dot-orange { border-radius: 50% !important; animation: p-orange 2s infinite; }
-        .dot-red { border-radius: 50% !important; animation: p-red 2s infinite; }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        pedido_buscar = st.text_input(
-            "Ver estatus por Factura",
-            value="",
-            help="Ingresa un número de pedido para mostrar solo esos registros"
-        )
-        
-        df_busqueda = pd.DataFrame() # Blindaje inicial
-    
-        if pedido_buscar.strip() != "":
-            # Filtrar solo por Número de Pedido
-            df_busqueda = df_filtrado[
-                df_filtrado["NÚMERO DE PEDIDO"]
-                .astype(str)
-                .str.contains(pedido_buscar.strip(), case=False, na=False)
-            ].copy()
-    
-            if df_busqueda.empty:
-                st.warning("No se encontró ningún pedido con ese número.")
-            else:
+                if df_busqueda.empty:
+                    st.warning("No se encontró ningún pedido con ese número.")
+                else:
                 hoy = pd.Timestamp.today().normalize()
                                              
                 # Cálculos de tiempo para las tarjetas
@@ -2685,6 +2657,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
