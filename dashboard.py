@@ -475,7 +475,7 @@ else:
             height: 85px !important; 
             font-size: 30px !important; 
             font-weight: 800 !important;
-            color: #00FFAA !important; 
+            color: #FFFFFF !important; 
             background-color: rgba(17, 24, 39, 1) !important; /* Fondo sólido para evitar transparencias raras */
             border: 3px solid #38bdf8 !important; 
             border-radius: 20px !important;
@@ -487,7 +487,7 @@ else:
         /* 3. Eliminación del borde fantasma al escribir (Focus) */
         div[data-testid="stTextInput"] input:focus {
             outline: none !important;
-            border: 3px solid #00FFAA !important; /* Cambia a verde neón perfectamente alineado */
+            border: 1px solid #00FFAA !important; /* Cambia a verde neón perfectamente alineado */
             box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
             -webkit-box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
         }
@@ -513,7 +513,7 @@ else:
             pedido_buscar = st.text_input(
                 "🛰️ INGRESE PEDIDO O NÚMERO DE GUÍA",
                 value="",
-                placeholder="--- ESPERANDO COMANDO ---",
+                placeholder="--- INGRESA NUMEROD DE FACTURA O GUIA ---",
                 key="buscador_compacto"
             )
         
@@ -743,16 +743,16 @@ else:
 
         with c_f1:
             # Filtro por No Cliente
-            f_cli = st.multiselect("🆔 No. Cliente", options=sorted(df_visual["NO CLIENTE"].unique()), key="f_cli_tab")
+            f_cli = st.multiselect("No. Cliente", options=sorted(df_visual["NO CLIENTE"].unique()), key="f_cli_tab")
         with c_f2:
             # Filtro por Fletera
-            f_flet = st.multiselect("🚚 Fletera", options=sorted(df_visual["FLETERA"].unique()), key="f_flet_tab")
+            f_flet = st.multiselect("Fletera", options=sorted(df_visual["FLETERA"].unique()), key="f_flet_tab")
         with c_f3:
             # Filtro por Destino
-            f_dest = st.multiselect("📍 Destino", options=sorted(df_visual["DESTINO"].unique()), key="f_dest_tab")
+            f_dest = st.multiselect("Destino", options=sorted(df_visual["DESTINO"].unique()), key="f_dest_tab")
         with c_f4:
             # Filtro por Estatus
-            f_est = st.multiselect("📊 Estatus", options=sorted(df_visual["ESTATUS_CALCULADO"].unique()), key="f_est_tab")
+            f_est = st.multiselect("Estatus", options=sorted(df_visual["ESTATUS_CALCULADO"].unique()), key="f_est_tab")
 
         # --- APLICACIÓN DE FILTROS A LA VISTA ---
         if f_cli:
@@ -2683,6 +2683,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
