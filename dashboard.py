@@ -466,43 +466,49 @@ else:
         # --------------------------------------------------
         # --------------------------------------------------
         # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
-        # --------------------------------------------------
-
+        # --- ESTILOS DE PROTAGONISMO PARA EL BUSCADOR ---
         st.markdown("""
         <style>
-        /* Animaciones y estilos de puntos (Mantenidos) */
-        @keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
-        @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
-        @keyframes p-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } }
-        @keyframes p-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        /* Aumentar altura, fuente y diseño de la caja de texto */
+        div[data-testid="stTextInput"] input {
+            height: 65px !important;  /* Altura PRO */
+            font-size: 24px !important; /* Fuente grande para lectura rápida */
+            font-weight: 800 !important;
+            color: #00FFAA !important; /* Color neón */
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            border: 2px solid #38bdf8 !important; /* Borde azul brillante */
+            border-radius: 15px !important;
+            text-align: center !important; /* Texto que escribes al centro */
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4) !important; /* Resplandor azul */
+        }
         
-        .dot-green { border-radius: 50% !important; animation: p-green 2s infinite; }
-        .dot-blue { border-radius: 50% !important; animation: p-blue 2s infinite; }
-        .dot-orange { border-radius: 50% !important; animation: p-orange 2s infinite; }
-        .dot-red { border-radius: 50% !important; animation: p-red 2s infinite; }
-        
-        /* Centrado del label del text_input */
-        div[data-testid="stTextInput"] label {
-            display: flex;
-            justify-content: center;
-            font-weight: bold;
-            color: #94a3b8;
+        /* Efecto al hacer clic (Focus) */
+        div[data-testid="stTextInput"] input:focus {
+            border-color: #00FFAA !important;
+            box-shadow: 0 0 25px rgba(0, 255, 170, 0.6) !important;
+            outline: none !important;
+        }
+
+        /* Centrado y tamaño del Label (Título de arriba) */
+        div[data-testid="stTextInput"] label p {
+            font-size: 18px !important;
+            color: #38bdf8 !important;
+            font-weight: 700 !important;
+            letter-spacing: 2px !important;
+            text-transform: uppercase !important;
         }
         </style>
         """, unsafe_allow_html=True)
 
-        # --- MANIOBRA DE CENTRADO ---
-        # Creamos 3 columnas iguales. La caja irá en la c_center.
-        c_left, c_center, c_right = st.columns([1, 1, 1])
+        # --- MANIOBRA DE CENTRADO (PROTAGONISTA) ---
+        c_left, c_center, c_right = st.columns([0.5, 1, 0.5]) # Ajustamos proporciones para que la central sea más ancha
         
         with c_center:
-            # Encabezado centrado manualmente para la caja
-            st.markdown("<p style='text-align:center; color:white; font-size:16px; margin-bottom:-10px;'>🔍 BÚSQUEDA TÁCTICA</p>", unsafe_allow_html=True)
             pedido_buscar = st.text_input(
-                "Ver estatus por Factura",
+                "🛰️ INGRESE NÚMERO DE FACTURA",
                 value="",
-                help="Ingresa un número de pedido para mostrar solo esos registros",
-                label_visibility="visible" # Mantiene el label arriba pero el CSS lo centra
+                placeholder="--- ESPERANDO COMANDO ---",
+                help="Radar de rastreo profundo de pedidos"
             )
         
         df_busqueda = pd.DataFrame() # Blindaje inicial
@@ -2636,6 +2642,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
