@@ -466,34 +466,50 @@ else:
         # ------------------------------------------------------------------------------------------
         # ------------------------------------------------------------------------------------------------------------------
         # --- BLINDAJE PARA EVITAR QUE LA CAJA SE CORTE ---
+        # --- BLINDAJE MAESTRO: ELIMINACIÓN DE CAJA FANTASMA Y SINCRONIZACIÓN ---
         st.markdown("""
         <style>
-        /* 1. Blindaje base de la caja */
-        div[data-testid="stTextInput"] input {
-            height: 80px !important; 
-            font-size: 28px !important; 
-            font-weight: 800 !important;
-            color: #00FFAA !important; 
-            background-color: rgba(17, 24, 39, 0.95) !important;
-            border: 3px solid #38bdf8 !important; /* Borde azul de mando */
-            border-radius: 20px !important;
-            text-align: center !important;
-            transition: all 0.3s ease-in-out !important;
-            outline: none !important; /* <--- ANULA EL BORDE ROJO DEL NAVEGADOR */
+        /* 1. Atacamos todos los contenedores posibles del Input para que no limiten el tamaño */
+        div[data-testid="stTextInput"], 
+        div[data-testid="stTextInput"] > div, 
+        div[data-testid="stTextInput"] > div > div {
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            height: auto !important;
         }
 
-        /* 2. Comportamiento cuando el Capitán está escribiendo (FOCUS) */
-        div[data-testid="stTextInput"] input:focus {
-            outline: none !important; /* Doble blindaje anti-borde rojo */
-            border: 3px solid #00FFAA !important; /* El borde cambia a verde neón al escribir */
-            box-shadow: 0 0 25px rgba(0, 255, 170, 0.4) !important; /* Resplandor de energía */
-            background-color: rgba(0, 0, 0, 0.8) !important;
+        /* 2. Sello total contra el borde rojo/naranja nativo */
+        div[data-testid="stTextInput"] input {
+            height: 85px !important; 
+            font-size: 30px !important; 
+            font-weight: 800 !important;
+            color: #00FFAA !important; 
+            background-color: rgba(17, 24, 39, 1) !important; /* Fondo sólido para evitar transparencias raras */
+            border: 3px solid #38bdf8 !important; 
+            border-radius: 20px !important;
+            text-align: center !important;
+            outline: none !important;
+            box-sizing: border-box !important;
         }
-        
-        /* 3. Corrección del contenedor para que NO corte la caja */
-        div[data-testid="stTextInput"] {
-            overflow: visible !important;
-            padding: 10px 0 !important;
+
+        /* 3. Eliminación del borde fantasma al escribir (Focus) */
+        div[data-testid="stTextInput"] input:focus {
+            outline: none !important;
+            border: 3px solid #00FFAA !important; /* Cambia a verde neón perfectamente alineado */
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
+            -webkit-box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
+        }
+
+        /* 4. Forzar que el label (título) no interfiera con el tamaño */
+        div[data-testid="stTextInput"] label {
+            min-height: 0px !important;
+            margin-bottom: 15px !important;
+        }
+
+        /* 5. Asegurar aire abajo para que nada lo succione */
+        .main .block-container {
+            padding-bottom: 10rem !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -2642,6 +2658,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
