@@ -400,15 +400,7 @@ else:
         if "filtro_cliente_actual" not in st.session_state:
             st.session_state.filtro_cliente_actual = ""
     
-        def actualizar_filtro():
-            st.session_state.filtro_cliente_actual = st.session_state.filtro_cliente_input
-    
-        st.sidebar.text_input(
-            "No. Cliente o Número de Guía",
-            value=st.session_state.filtro_cliente_actual,
-            key="filtro_cliente_input",
-            on_change=actualizar_filtro
-        )
+        
                 
         # 4. SELECTOR DE FLETERA
         fletera_sel = st.sidebar.selectbox(
@@ -2658,6 +2650,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
