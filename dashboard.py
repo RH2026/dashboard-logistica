@@ -517,17 +517,6 @@ else:
         c_left, c_main, c_right = st.columns([0.3, 1.4, 0.3])
         
         with c_main:
-            pedido_buscar = st.text_input(
-                "🛰️ INGRESE NÚMERO DE FACTURA", # Este label es el que activa el CSS arriba
-                value="",
-                placeholder="--- ESPERANDO COMANDO ---",
-                key="buscador_blindado_final"
-            )
-
-        # --- DISTRIBUCIÓN DE MANDO ---
-        c_left, c_main, c_right = st.columns([0.3, 1.4, 0.3])
-        
-        with c_main:
             # Usamos un contenedor vacío para empujar un poco antes
             st.write("") 
             pedido_buscar = st.text_input(
@@ -2668,6 +2657,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
