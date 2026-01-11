@@ -460,47 +460,50 @@ else:
         #---------------------------------------------------------------------
         st.markdown("""
         <style>
-        /* 1. FORZAR ESPACIO EN EL CONTENEDOR RAIZ */
-        [data-testid="stVerticalBlock"] {
-            gap: 0px !important;
+        /* 1. Contenedores (Sin cambios para mantener estabilidad) */
+        div[data-testid="stTextInput"], 
+        div[data-testid="stTextInput"] > div, 
+        div[data-testid="stTextInput"] > div > div {
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            height: auto !important;
         }
 
-        /* 2. CREAR UN BÚNKER PARA LA CAJA */
-        div[data-testid="stTextInput"] {
-            margin-top: 2rem !important;
-            margin-bottom: 4rem !important; /* Empuje masivo hacia abajo */
-            padding: 20px 0 !important;
-            overflow: visible !important;
-        }
-
-        /* 3. LA CAJA PROTAGONISTA (Garantizando visibilidad) */
+        /* 2. EL TEXTO INGRESADO (VALOR REAL) */
         div[data-testid="stTextInput"] input {
-            height: clamp(60px, 8vh, 85px) !important; 
-            font-size: clamp(18px, 2.5vw, 30px) !important; 
+            height: 85px !important; 
+            font-size: 30px !important; /* <--- TAMAÑO GIGANTE AL ESCRIBIR */
             font-weight: 800 !important;
             color: #FFFFFF !important; 
-            background-color: #0e1117 !important; /* Fondo sólido oscuro */
+            background-color: rgba(17, 24, 39, 1) !important;
             border: 3px solid #38bdf8 !important; 
-            border-radius: 15px !important;
+            border-radius: 20px !important;
             text-align: center !important;
-            
-            /* Asegurar que el texto no se corte */
-            line-height: normal !important;
-            display: flex !important;
-            align-items: center !important;
+            outline: none !important;
+            box-sizing: border-box !important;
         }
 
-        /* 4. PLACEHOLDER RESPONSIVE Y CENTRADO */
+        /* 3. EL TEXTO ANTES DE INGRESAR (PLACEHOLDER) */
+        /* Aquí ajustamos el tamaño de "--- ESPERANDO COMANDO ---" */
         div[data-testid="stTextInput"] input::placeholder {
-            font-size: clamp(12px, 1.2vw, 18px) !important;
-            color: rgba(255, 255, 255, 0.4) !important;
-            text-align: center !important;
-            letter-spacing: 2px !important;
+            font-size: 16px !important;  /* <--- MÁS PEQUEÑO Y DISCRETO */
+            font-weight: 400 !important;
+            color: rgba(255, 255, 255, 0.3) !important; /* Un blanco más transparente */
+            letter-spacing: 4px !important; /* Estilo cinemático */
         }
 
-        /* 5. ELIMINAR EL RECORTE DE LOS CONTENEDORES PADRES */
-        div[data-testid="stVerticalBlock"] > div {
-            overflow: visible !important;
+        /* 4. Focus (Efecto Neón al escribir) */
+        div[data-testid="stTextInput"] input:focus {
+            outline: none !important;
+            border: 1px solid #00FFAA !important;
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
+        }
+
+        /* 5. Estilo del Label (El título de arriba) */
+        div[data-testid="stTextInput"] label {
+            min-height: 0px !important;
+            margin-bottom: 15px !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -2683,6 +2686,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
