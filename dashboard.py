@@ -456,104 +456,66 @@ else:
                 df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
     
             # --------------------------------------------------
-            # -----------------------------------------------------
-            # 1. DEFINICIÓN DE VARIABLES GLOBALES (Evita NameError)
+            # ACTUALIZACIÓN DE MÉTRICAS (Para que los círculos cambien)
             # --------------------------------------------------
-            hoy = pd.Timestamp.today().normalize()
-            df_busqueda = pd.DataFrame() 
-            
-            # --------------------------------------------------
-            # 2. UNIFICACIÓN DE ESTILOS (Nuevo diseño + Animaciones)
-            # --------------------------------------------------
-            st.markdown("""
-            <style>
-                /* --- DISEÑO CAJA DE BÚSQUEDA --- */
-                .search-title {
-                    font-family: 'Inter', sans-serif;
-                    font-size: 38px;
-                    font-weight: 800;
-                    text-align: center;
-                    color: #FFFFFF;
-                    margin-bottom: 20px;
-                    line-height: 1.2;
-                }
-                .search-title span { color: #fb7185; }
-            
-                .stTextInput input {
-                    font-size: 20px !important;
-                    padding: 12px !important;
-                    border: 2px solid #3b82f6 !important;
-                    border-radius: 8px !important;
-                    background-color: #111827 !important;
-                    color: white !important;
-                    text-align: center;
-                }
-            
-                div.stButton > button {
-                    width: 100% !important;
-                    background-color: #001f3f !important;
-                    color: white !important;
-                    font-size: 16px !important;
-                    font-weight: bold !important;
-                    border-radius: 6px !important;
-                    padding: 10px !important;
-                    border: none !important;
-                    text-transform: uppercase;
-                    transition: 0.3s;
-                }
-                div.stButton > button:hover { background-color: #003366 !important; }
-            
-                /* --- TUS ANIMACIONES EXISTENTES --- */
-                @keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
-                @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
-                @keyframes p-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } }
-                @keyframes p-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-                
-                .dot-green { border-radius: 50% !important; animation: p-green 2s infinite; }
-                .dot-blue { border-radius: 50% !important; animation: p-blue 2s infinite; }
-                .dot-orange { border-radius: 50% !important; animation: p-orange 2s infinite; }
-                .dot-red { border-radius: 50% !important; animation: p-red 2s infinite; }
-            </style>
-            """, unsafe_allow_html=True)
-            
-            # 3. RENDERIZADO VISUAL DEL TÍTULO
-            st.markdown('<p class="search-title">Para realizar la <span>búsqueda</span><br>ingrese la <span>factura</span></p>', unsafe_allow_html=True)
-            
-            # 4. CENTRADO CON 3 COLUMNAS
-            col_izq, col_centro, col_der = st.columns([1, 2, 1])
-            
-            with col_centro:
-                pedido_buscar = st.text_input("", placeholder="Ej: F-12345", label_visibility="collapsed")
-                btn_rastrear = st.button("RASTREAR »")
-            
-            # 5. LÓGICA DE ACTIVACIÓN Y FILTRADO
-            # Se activa al presionar el botón O al dar Enter (si hay texto)
-            if btn_rastrear or (pedido_buscar and pedido_buscar.strip() != ""):
-                if pedido_buscar.strip() == "":
-                    st.warning("Por favor, ingrese un número de factura.")
-                else:
-                    # Filtrado original
-                    df_busqueda = df_filtrado[
-                        df_filtrado["NÚMERO DE PEDIDO"]
-                        .astype(str)
-                        .str.contains(pedido_buscar.strip(), case=False, na=False)
-                    ].copy()
-            
-                    if df_busqueda.empty:
-                        st.warning("No se encontró ningún pedido con ese número.")
-                    else:
-                        # Cálculos de tiempo para las tarjetas (Blindados con 'hoy' global)
-                        df_busqueda["DIAS_TRANSCURRIDOS"] = (
-                            (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["FECHA DE ENVÍO"]).dt.days
-                        )
-                        df_busqueda["DIAS_RETRASO"] = (
-                            (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["PROMESA DE ENTREGA"]).dt.days
-                        )
-                        df_busqueda["DIAS_RETRASO"] = df_busqueda["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
-            
-                        # Renderizado de Tarjetas y Timeline por cada registro encontrado
-                        for index, row in df_busqueda.iterrows():
-                            st.markdown(f'<p style="font-size:14px; font-weight:normal; color:gray; margin-bottom:-10px;">Resultados para: {row["NÚMERO DE PEDIDO"]}</p>', unsafe_allow_html=True)
+            total = len(df_filtrado)
+            entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
+            en_transito = (df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum()
+            retrasados = (df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum()
+    
+        # --------------------------------------------------
+        # CAJA DE BÚSQUEDA POR PEDIDO – TARJETAS + TIMELINE
+        # --------------------------------------------------
+
+              
+        st.markdown("""
+        <style>
+        /* Animaciones con radio de borde corregido para que siempre sean círculos */
+        @keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+        @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+        @keyframes p-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } }
+        @keyframes p-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        
+        .dot-green { border-radius: 50% !important; animation: p-green 2s infinite; }
+        .dot-blue { border-radius: 50% !important; animation: p-blue 2s infinite; }
+        .dot-orange { border-radius: 50% !important; animation: p-orange 2s infinite; }
+        .dot-red { border-radius: 50% !important; animation: p-red 2s infinite; }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        pedido_buscar = st.text_input(
+            "Ver estatus por Factura",
+            value="",
+            help="Ingresa un número de pedido para mostrar solo esos registros"
+        )
+        
+        df_busqueda = pd.DataFrame() # Blindaje inicial
+    
+        if pedido_buscar.strip() != "":
+            # Filtrar solo por Número de Pedido
+            df_busqueda = df_filtrado[
+                df_filtrado["NÚMERO DE PEDIDO"]
+                .astype(str)
+                .str.contains(pedido_buscar.strip(), case=False, na=False)
+            ].copy()
+    
+            if df_busqueda.empty:
+                st.warning("No se encontró ningún pedido con ese número.")
+            else:
+                hoy = pd.Timestamp.today().normalize()
+                                             
+                # Cálculos de tiempo para las tarjetas
+                df_busqueda["DIAS_TRANSCURRIDOS"] = (
+                    (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["FECHA DE ENVÍO"]).dt.days
+                )
+                df_busqueda["DIAS_RETRASO"] = (
+                    (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["PROMESA DE ENTREGA"]).dt.days
+                )
+                df_busqueda["DIAS_RETRASO"] = df_busqueda["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
+    
+                # Renderizado de Tarjetas y Timeline por cada registro encontrado
+                for index, row in df_busqueda.iterrows():
+                    st.markdown(f'<p style="font-size:14px; font-weight:normal; color:gray; margin-bottom:-10px;">Resultados para: {row["NÚMERO DE PEDIDO"]}</p>', unsafe_allow_html=True)
                     
                     # 1. Asegúrate de tener este bloque de Estilos CSS corregido antes de la búsqueda
                     st.markdown("""<style>@keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } } @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } } @keyframes p-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } } @keyframes p-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } } .dot-green { border-radius: 50% !important; animation: p-green 2s infinite; } .dot-blue { border-radius: 50% !important; animation: p-blue 2s infinite; } .dot-orange { border-radius: 50% !important; animation: p-orange 2s infinite; } .dot-red { border-radius: 50% !important; animation: p-red 2s infinite; }</style>""", unsafe_allow_html=True)
@@ -2658,11 +2620,6 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
-
-
-
-
-
 
 
 
