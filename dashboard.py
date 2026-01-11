@@ -634,7 +634,7 @@ else:
         st.markdown("<div style='background:rgba(255,255,255,0.02);padding:15px;border-radius:15px;border-left:5px solid #38bdf8;margin-bottom:25px;'><span style='color:white;font-size:16px;font-weight:800;letter-spacing:1.5px;'>CONSOLA GLOBAL DE RENDIMIENTO</span></div>", unsafe_allow_html=True)
     
         c1, c2, c3, c4 = st.columns(4)
-        l_style = "color:#ffffff;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;"
+        l_style = "color:##e2e8f0;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;"
 
         with c1:
             st.markdown(f"<div class='elite-card'><p style='{l_style}'>Total Pedidos</p>", unsafe_allow_html=True)
@@ -2620,6 +2620,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
