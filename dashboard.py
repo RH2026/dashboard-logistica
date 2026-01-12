@@ -1539,85 +1539,69 @@ else:
         
         
         # --------------------------------------------------
-        # GRÁFICOS DE BARRAS POR PAQUETERÍA (CORREGIDO)
+        # GRÁFICOS DE BARRAS POR PAQUETERÍA (CONECTADO A FILTRO DE FECHAS)
         # --------------------------------------------------
         
-        # Verificamos si df_filtrado existe en el sistema antes de graficar
-        if 'df_filtrado' in locals() or 'df_filtrado' in globals():
-            
+        st.markdown(f"""
+            <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 30px; margin-bottom: 25px;'>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>🚀 ESTADO DE CARGA EN TIEMPO REAL</span>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        color_transito = "#fbbf24" 
+        color_retraso = "#fb7185"  
+        
+        col1, col2 = st.columns(2)
+        
+        # --- COLUMNA 1: EN TRÁNSITO (Basado en df_kpi filtrado por fecha) ---
+        with col1:
+            # Agrupamos usando df_kpi que es el que ya tiene el filtro de fechas aplicado arriba
+            df_t = df_kpi[df_kpi["ESTATUS_CALCULADO"] == "EN TRANSITO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
+            total_t = df_t["CANTIDAD"].sum()
+        
             st.markdown(f"""
-                <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 30px; margin-bottom: 25px;'>
-                    <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>🚀 ESTADO DE CARGA EN TIEMPO REAL</span>
+                <div style='background: linear-gradient(90deg, rgba(251, 191, 36, 0.1) 0%, transparent 100%); padding: 15px; border-radius: 10px; border-bottom: 2px solid {color_transito}33;'>
+                    <p style='margin:0; color:{color_transito}; font-size:12px; font-weight:800; text-transform:uppercase;'>🟡 En Movimiento</p>
+                    <h2 style='margin:0; color:white; font-size:32px;'>{total_t} <span style='font-size:14px; color:#94a3b8;'>pedidos</span></h2>
                 </div>
             """, unsafe_allow_html=True)
-            
-            color_transito = "#fbbf24" 
-            color_retraso = "#fb7185"  
-            
-            col1, col2 = st.columns(2)
-            
-            # --- COLUMNA 1: EN TRÁNSITO ---
-            with col1:
-                # Usamos .get() o validamos que las columnas existan
-                try:
-                    df_t = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
-                    total_t = df_t["CANTIDAD"].sum()
-                except KeyError:
-                    df_t = pd.DataFrame()
-                    total_t = 0
         
-                st.markdown(f"""
-                    <div style='background: linear-gradient(90deg, rgba(251, 191, 36, 0.1) 0%, transparent 100%); padding: 15px; border-radius: 10px; border-bottom: 2px solid {color_transito}33;'>
-                        <p style='margin:0; color:{color_transito}; font-size:12px; font-weight:800; text-transform:uppercase;'>🟡 En Movimiento</p>
-                        <h2 style='margin:0; color:white; font-size:32px;'>{total_t} <span style='font-size:14px; color:#94a3b8;'>pedidos</span></h2>
-                    </div>
-                """, unsafe_allow_html=True)
-            
-                if not df_t.empty:
-                    dinamic_height_t = len(df_t) * 40 + 50
-                    base_t = alt.Chart(df_t).encode(
-                        x=alt.X("CANTIDAD:Q", title=None, axis=None),
-                        y=alt.Y("FLETERA:N", title=None, sort='-x', 
-                                axis=alt.Axis(labelColor='white', labelFontSize=12, labelLimit=200))
-                    )
-                    bars_t = base_t.mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5, size=20, color=color_transito)
-                    text_t = base_t.mark_text(align='left', baseline='middle', dx=8, color='white', fontWeight=700, fontSize=13).encode(text="CANTIDAD:Q")
-                    chart_t = (bars_t + text_t).properties(height=dinamic_height_t).configure_view(strokeOpacity=0).configure_axis(grid=False)
-                    st.altair_chart(chart_t, use_container_width=True)
-                else:
-                    st.markdown(f"<div style='padding:40px; text-align:center; color:#475569;'>Sin carga activa</div>", unsafe_allow_html=True)
-            
-            # --- COLUMNA 2: RETRASADOS ---
-            with col2:
-                try:
-                    df_r = df_filtrado[df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
-                    total_r = df_r["CANTIDAD"].sum()
-                except KeyError:
-                    df_r = pd.DataFrame()
-                    total_r = 0
+            if not df_t.empty:
+                # Altura dinámica para evitar que las barras se encimen
+                h_t = len(df_t) * 40 + 50
+                chart_t = alt.Chart(df_t).mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5, size=20, color=color_transito).encode(
+                    x=alt.X("CANTIDAD:Q", title=None, axis=None),
+                    y=alt.Y("FLETERA:N", title=None, sort='-x', axis=alt.Axis(labelColor='white', labelFontSize=12))
+                )
+                text_t = chart_t.mark_text(align='left', baseline='middle', dx=8, color='white', fontWeight=700).encode(text="CANTIDAD:Q")
+                
+                st.altair_chart((chart_t + text_t).properties(height=h_t).configure_view(strokeOpacity=0).configure_axis(grid=False), use_container_width=True)
+            else:
+                st.markdown(f"<div style='padding:40px; text-align:center; color:#475569;'>Sin carga activa en este rango</div>", unsafe_allow_html=True)
         
-                st.markdown(f"""
-                    <div style='background: linear-gradient(90deg, rgba(251, 113, 133, 0.1) 0%, transparent 100%); padding: 15px; border-radius: 10px; border-bottom: 2px solid {color_retraso}33;'>
-                        <p style='margin:0; color:{color_retraso}; font-size:12px; font-weight:800; text-transform:uppercase;'>🔴 Alerta de Retraso</p>
-                        <h2 style='margin:0; color:white; font-size:32px;'>{total_r} <span style='font-size:14px; color:#94a3b8;'>pedidos</span></h2>
-                    </div>
-                """, unsafe_allow_html=True)
-            
-                if not df_r.empty:
-                    dinamic_height_r = len(df_r) * 40 + 50
-                    base_r = alt.Chart(df_r).encode(
-                        x=alt.X("CANTIDAD:Q", title=None, axis=None),
-                        y=alt.Y("FLETERA:N", title=None, sort='-x', 
-                                axis=alt.Axis(labelColor='white', labelFontSize=12, labelLimit=200))
-                    )
-                    bars_r = base_r.mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5, size=20, color=color_retraso)
-                    text_r = base_r.mark_text(align='left', baseline='middle', dx=8, color='white', fontWeight=700, fontSize=13).encode(text="CANTIDAD:Q")
-                    chart_r = (bars_r + text_r).properties(height=dinamic_height_r).configure_view(strokeOpacity=0).configure_axis(grid=False)
-                    st.altair_chart(chart_r, use_container_width=True)
-                else:
-                    st.markdown(f"<div style='padding:40px; text-align:center; color:#059669; font-weight:bold;'>✓ Operación al día</div>", unsafe_allow_html=True)
-        else:
-            st.error("Error: No se encontró la base de datos filtrada. Revisa la carga de Matriz_Excel_Dashbard.csv")
+        # --- COLUMNA 2: RETRASADOS (Basado en df_kpi filtrado por fecha) ---
+        with col2:
+            df_r = df_kpi[df_kpi["ESTATUS_CALCULADO"] == "RETRASADO"].groupby("FLETERA").size().reset_index(name="CANTIDAD")
+            total_r = df_r["CANTIDAD"].sum()
+        
+            st.markdown(f"""
+                <div style='background: linear-gradient(90deg, rgba(251, 113, 133, 0.1) 0%, transparent 100%); padding: 15px; border-radius: 10px; border-bottom: 2px solid {color_retraso}33;'>
+                    <p style='margin:0; color:{color_retraso}; font-size:12px; font-weight:800; text-transform:uppercase;'>🔴 Alerta de Retraso</p>
+                    <h2 style='margin:0; color:white; font-size:32px;'>{total_r} <span style='font-size:14px; color:#94a3b8;'>pedidos</span></h2>
+                </div>
+            """, unsafe_allow_html=True)
+        
+            if not df_r.empty:
+                h_r = len(df_r) * 40 + 50
+                chart_r = alt.Chart(df_r).mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5, size=20, color=color_retraso).encode(
+                    x=alt.X("CANTIDAD:Q", title=None, axis=None),
+                    y=alt.Y("FLETERA:N", title=None, sort='-x', axis=alt.Axis(labelColor='white', labelFontSize=12))
+                )
+                text_r = chart_r.mark_text(align='left', baseline='middle', dx=8, color='white', fontWeight=700).encode(text="CANTIDAD:Q")
+                
+                st.altair_chart((chart_r + text_r).properties(height=h_r).configure_view(strokeOpacity=0).configure_axis(grid=False), use_container_width=True)
+            else:
+                st.markdown(f"<div style='padding:40px; text-align:center; color:#059669; font-weight:bold;'>✓ Operación al día en este rango</div>", unsafe_allow_html=True)
         
         # --- 8. SECCIÓN DE GRÁFICOS ELITE (CONTROL & RENDIMIENTO) ---
                        
@@ -2885,6 +2869,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
