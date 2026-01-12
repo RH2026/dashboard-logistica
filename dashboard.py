@@ -173,133 +173,117 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# CASO B: SPLASH SCREEN (Versión NEXION Premium Logística)
+# CASO B: SPLASH SCREEN (Versión Logística Premium / DHL / FedEx Style)
 elif not st.session_state.splash_completado:
     with placeholder.container():
         usuario = st.session_state.usuario_actual.upper() if st.session_state.usuario_actual else "CLIENTE"
         
-        # Colores extraídos de tu imagen
-        color_fondo = "#0e1117"  # El oscuro de tu UI
-        color_acento = "#00FFAA" # El verde/cian brillante de NEXION
-        color_texto = "#FFFFFF"
+        # Color de acento: Un azul corporativo profundo o el Cyan que tenías
+        color_brand = "#0056b3" # Azul logístico pro (puedes cambiarlo a #FFCC00 para estilo DHL)
         
         if st.session_state.motivo_splash == "logout":
-            mensajes = ["FINALIZANDO SESIÓN SEGURA", "RESGUARDANDO DATOS", "CONEXIÓN TERMINADA"]
+            mensajes = ["CERRANDO SESIÓN SEGURA", "GUARDANDO REGISTROS DE ACTIVIDAD", "CONEXIÓN FINALIZADA"]
         else:
             mensajes = [
-                f"BIENVENIDO A NEXION, {usuario}",
-                "SINCRONIZANDO RED LOGÍSTICA",
-                "PREPARANDO DASHBOARD INTELIGENTE",
-                "ACCESO CONCEDIDO"
+                f"BIENVENIDO DE VUELTA, {usuario}",
+                "SINCRONIZANDO MANIFIESTOS DE CARGA",
+                "ACTUALIZANDO ESTATUS DE ENVÍOS",
+                "AUTENTICACIÓN COMPLETADA"
             ]
 
         splash_placeholder = st.empty()
 
         for i, msg in enumerate(mensajes):
+            # Progreso real para la barra inferior
             progreso = int(((i + 1) / len(mensajes)) * 100)
             
             splash_placeholder.markdown(f"""
                 <style>
                     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;700&display=swap');
 
-                    .nexion-splash {{
+                    .corporate-splash {{
                         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                        background-color: {color_fondo};
+                        background-color: #F8F9FA; /* Gris ultra claro, muy limpio */
                         z-index: 999999;
                         display: flex; flex-direction: column; justify-content: center; align-items: center;
                         font-family: 'Inter', sans-serif;
                     }}
 
-                    /* Elemento decorativo: Círculos de radar sutiles */
-                    .radar {{
-                        position: absolute;
-                        width: 400px; height: 400px;
-                        border: 1px solid {color_acento}11;
-                        border-radius: 50%;
-                        animation: pulse-radar 4s infinite;
+                    /* Contenedor central */
+                    .branding-box {{
+                        text-align: left;
+                        width: 400px;
                     }}
 
-                    @keyframes pulse-radar {{
-                        0% {{ transform: scale(0.8); opacity: 0; }}
-                        50% {{ opacity: 1; }}
-                        100% {{ transform: scale(1.2); opacity: 0; }}
-                    }}
-
-                    .branding-content {{
-                        position: relative;
-                        text-align: center;
-                        z-index: 2;
-                    }}
-
-                    .nexion-logo {{
-                        font-size: 3rem;
+                    .logo-placeholder {{
                         font-weight: 700;
-                        letter-spacing: 12px;
-                        color: {color_texto};
-                        margin-bottom: 5px;
-                        text-shadow: 0 0 20px {color_acento}44;
+                        font-size: 12px;
+                        letter-spacing: 5px;
+                        color: #ADB5BD;
+                        margin-bottom: 10px;
+                        display: flex;
+                        align-items: center;
                     }}
 
-                    .nexion-tagline {{
-                        font-size: 0.7rem;
-                        letter-spacing: 4px;
-                        color: {color_acento};
-                        text-transform: uppercase;
-                        margin-bottom: 50px;
-                    }}
-
-                    .status-msg {{
-                        color: {color_texto};
-                        font-size: 0.9rem;
-                        font-weight: 300;
-                        letter-spacing: 2px;
-                        height: 20px;
-                        margin-bottom: 20px;
-                        opacity: 0.8;
-                    }}
-
-                    /* Barra de carga estilo NEXION */
-                    .load-bar-container {{
-                        width: 250px;
+                    .logo-placeholder::before {{
+                        content: '';
+                        width: 20px;
                         height: 2px;
-                        background: rgba(255,255,255,0.05);
-                        position: relative;
+                        background: {color_brand};
+                        margin-right: 10px;
                     }}
 
-                    .load-bar-fill {{
-                        position: absolute;
-                        top: 0; left: 0; height: 100%;
+                    .main-msg {{
+                        color: #212529;
+                        font-size: 1.2rem;
+                        font-weight: 300;
+                        letter-spacing: 1px;
+                        margin-bottom: 30px;
+                        height: 40px; /* Evita saltos de layout */
+                    }}
+
+                    /* Barra de progreso minimalista (estilo moderno) */
+                    .progress-container {{
+                        width: 100%;
+                        height: 4px;
+                        background-color: #E9ECEF;
+                        border-radius: 2px;
+                        overflow: hidden;
+                    }}
+
+                    .progress-fill {{
                         width: {progreso}%;
-                        background: {color_acento};
-                        box-shadow: 0 0 10px {color_acento}aa;
-                        transition: width 0.5s ease-out;
+                        height: 100%;
+                        background-color: {color_brand};
+                        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
                     }}
 
-                    .percent {{
-                        margin-top: 10px;
+                    .footer-info {{
+                        margin-top: 15px;
+                        display: flex;
+                        justify-content: space-between;
+                        color: #ADB5BD;
                         font-size: 10px;
-                        color: {color_acento};
-                        font-family: monospace;
+                        font-weight: 700;
                     }}
                 </style>
                 
-                <div class="nexion-splash">
-                    <div class="radar"></div>
-                    <div class="branding-content">
-                        <div class="nexion-logo">NEXION</div>
-                        <div class="nexion-tagline">Distribución y Logística: Inteligente</div>
-                        <div class="status-msg">{msg}</div>
-                        <div style="display:flex; flex-direction:column; align-items:center;">
-                            <div class="load-bar-container">
-                                <div class="load-bar-fill"></div>
-                            </div>
-                            <div class="percent">{progreso}%</div>
+                <div class="corporate-splash">
+                    <div class="branding-box">
+                        <div class="logo-placeholder">LOGISTICS CORE v2.0</div>
+                        <div class="main-msg">{msg}</div>
+                        <div class="progress-container">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <div class="footer-info">
+                            <span>ORD_ID: 2024-SYS</span>
+                            <span>{progreso}%</span>
                         </div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
             
-            time.sleep(0.8)
+            time.sleep(0.7)
         
         # Lógica de cierre de sesión
         if st.session_state.motivo_splash == "logout":
@@ -2810,6 +2794,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
