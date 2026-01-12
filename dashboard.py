@@ -173,102 +173,87 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# CASO B: SPLASH SCREEN (Versión Pantalla Completa "Matrix/Data")
+# CASO B: SPLASH SCREEN (Versión Minimalista de Terror)
 elif not st.session_state.splash_completado:
     with placeholder.container():
-        usuario = st.session_state.usuario_actual.upper() if st.session_state.usuario_actual else "SYSTEM"
-        color_tema = "#00FFAA" if st.session_state.motivo_splash != "logout" else "#FF3333"
+        usuario = st.session_state.usuario_actual.capitalize() if st.session_state.usuario_actual else "Sujeto"
         
-        # Mensajes
+        # Ajusta los mensajes para que suenen más "de terror"
         if st.session_state.motivo_splash == "logout":
-            mensajes = ["TERMINATING_CONNECTION...", "SAVING_ENCRYPTED_DATA...", f"GOODBYE_{usuario}", "OFFLINE."]
+            mensajes = [f"Desvaneciéndote, {usuario}...", "El silencio vuelve...", "Solo oscuridad."]
         else:
-            mensajes = ["INITIALIZING_BOOT_SEQUENCE...", f"USER_RECOGNIZED:_{usuario}", "LOADING_DATABASE_CORE...", "SYSTEM_READY."]
+            mensajes = ["Despertando...", "No estás solo...", "La realidad se distorsiona...", "Acepta tu destino."]
 
         splash_placeholder = st.empty()
 
         for i, msg in enumerate(mensajes):
-            # Calculamos opacidad para el efecto de desvanecimiento
-            opacidad = (i + 1) / len(mensajes)
-            
             splash_placeholder.markdown(f"""
                 <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&display=swap');
+                    @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;700&display=swap');
 
-                    .full-screen-splash {{
+                    .minimal-terror-splash {{
                         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                        background-color: #000;
-                        background-image: 
-                            radial-gradient(circle at center, {color_tema}22 0%, #000 70%),
-                            linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                            linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-                        background-size: 100% 100%, 100% 2px, 3px 100%;
+                        background-color: #000000; /* Fondo negro profundo */
                         z-index: 999999;
                         display: flex; flex-direction: column; justify-content: center; align-items: center;
-                        font-family: 'Space Mono', monospace;
+                        font-family: 'Crimson Text', serif; /* Fuente clásica de suspense */
                         overflow: hidden;
+                        color: #CCCCCC; /* Texto gris suave */
+                        animation: fadeIn 1s ease-out forwards; /* Fundido de entrada */
                     }}
 
-                    /* Efecto de Túnel de Datos */
-                    .data-lines {{
-                        position: absolute; width: 200%; height: 200%;
-                        background: repeating-linear-gradient(0deg, transparent, transparent 40px, {color_tema}11 41px);
-                        transform: perspective(500px) rotateX(60deg) translateY(-10%);
-                        animation: tunnel 10s linear infinite;
+                    /* Efecto de grano o estática sutil */
+                    .minimal-terror-splash::before {{
+                        content: '';
+                        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                        background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAAXNSR0IArs4c6QAAADVJREFUGFdjYGBgePj/P3kEGPz/f/n/P8sIIfn/v4GBgYOBgYHw/z+cDAwMTPz/P9kIMgAReA2G/cOQfAAAAABJRU5ErkJggg=='); /* Pequeño patrón de ruido */
+                        opacity: 0.05; /* Muy sutil */
+                        pointer-events: none;
+                        animation: grain 8s steps(10) infinite;
                     }}
 
-                    @keyframes tunnel {{
-                        from {{ background-position: 0 0; }}
-                        to {{ background-position: 0 1000px; }}
+                    @keyframes grain {{
+                        0%, 100% {{ transform: translate(0, 0); }}
+                        10% {{ transform: translate(-5%, -10%); }}
+                        20% {{ transform: translate(-15%, 5%); }}
+                        30% {{ transform: translate(7%, -8%); }}
+                        40% {{ transform: translate(-10%, 12%); }}
+                        50% {{ transform: translate(-5%, -8%); }}
+                        60% {{ transform: translate(10%, 0%); }}
+                        70% {{ transform: translate(0%, 15%); }}
+                        80% {{ transform: translate(-12%, -5%); }}
+                        90% {{ transform: translate(15%, 10%); }}
                     }}
 
-                    .message-container {{
-                        position: relative; text-align: center; z-index: 2;
+                    .main-message {{
+                        font-size: 3rem; /* Tamaño de texto importante */
+                        font-weight: 400; /* Peso normal para la fuente serif */
+                        letter-spacing: 2px;
+                        text-align: center;
+                        line-height: 1.4;
+                        opacity: 0; /* Empieza invisible */
+                        animation: textFadeIn 2s ease-out forwards; /* Aparece gradualmente */
+                        animation-delay: 0.5s; /* Pequeño retraso */
+                        padding: 0 20px; /* Padding para el texto */
                     }}
 
-                    .main-text {{
-                        color: {color_tema}; font-size: 3.5rem; font-weight: bold;
-                        letter-spacing: 8px; text-shadow: 0 0 20px {color_tema};
-                        animation: glitch 1s infinite;
+                    @keyframes textFadeIn {{
+                        from {{ opacity: 0; transform: translateY(20px); }}
+                        to {{ opacity: 1; transform: translateY(0); }}
                     }}
 
-                    .sub-text {{
-                        color: white; font-size: 1rem; margin-top: 20px;
-                        letter-spacing: 4px; opacity: 0.8; text-transform: uppercase;
-                    }}
-
-                    @keyframes glitch {{
-                        0% {{ transform: translate(0); }}
-                        20% {{ transform: translate(-2px, 2px); }}
-                        40% {{ transform: translate(-2px, -2px); }}
-                        60% {{ transform: translate(2px, 2px); }}
-                        80% {{ transform: translate(2px, -2px); }}
-                        100% {{ transform: translate(0); }}
-                    }}
-
-                    .scanline {{
-                        width: 100%; height: 100px; background: linear-gradient(0deg, transparent, {color_tema}33, transparent);
-                        position: absolute; top: -100px; animation: scanning 3s linear infinite;
-                    }}
-
-                    @keyframes scanning {{
-                        0% {{ top: -100px; }}
-                        100% {{ top: 100vh; }}
+                    @keyframes fadeIn {{
+                        from {{ opacity: 0; }}
+                        to {{ opacity: 1; }}
                     }}
                 </style>
                 
-                <div class="full-screen-splash">
-                    <div class="data-lines"></div>
-                    <div class="scanline"></div>
-                    <div class="message-container">
-                        <div style="color: {color_tema}; font-size: 12px; margin-bottom: 10px;">> ACCESSING SECURE_SERVER...</div>
-                        <div class="main-text">{msg}</div>
-                        <div class="sub-text">Encrypted_Session: ACTIVE</div>
-                    </div>
+                <div class="minimal-terror-splash">
+                    <div class="main-message">{msg}</div>
                 </div>
             """, unsafe_allow_html=True)
             
-            time.sleep(0.9)
+            time.sleep(1.8 if i < len(mensajes)-1 else 2.5) # Aumentamos el tiempo para más impacto
         
         # Lógica de cierre de sesión
         if st.session_state.motivo_splash == "logout":
@@ -2779,6 +2764,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
