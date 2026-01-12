@@ -1233,7 +1233,7 @@ else:
         # =========================================================
         
         # 1. Definición de colores y variables necesarias
-        verde_esmeralda_elec = "#00FFAA"
+        verde_esmeralda_elec = "#48C9B0"
         
         with st.container():
             # Título con el mismo diseño que el gráfico superior
@@ -2920,6 +2920,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
