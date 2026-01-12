@@ -1403,16 +1403,12 @@ else:
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
         st.markdown("""
-            <div style='text-align: center; padding: 10px 0px 30px 0px;'>
-                <h1 style='color: white; font-family: "Inter", sans-serif; font-weight: 800; font-size: 42px; margin-bottom: 5px; letter-spacing: -1px;'>
-                    PANEL DE SEGUIMIENTO<span style='color: #00FFAA;'></span>
-                </h1>
-                <p style='color: #94a3b8; font-size: 16px; font-weight: 400; letter-spacing: 1px;'>
-                    Análisis de Eficiencia y Seguimiento
-                </p>
-                <div style='height: 2px; width: 60px; background: #00FFAA; margin: 10px auto;'></div>
+            <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>
+                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>SEGUIMIENTO<span style='color:#FFFFFF;'>INDICATOR</span></h1>
+                <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>Logística & Rendimiento de Paqueterías</p>
+                <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
             </div>
-        """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)    
 
         #=========================================================
         #     MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
@@ -2996,6 +2992,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
