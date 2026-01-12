@@ -1022,7 +1022,7 @@ else:
         """, unsafe_allow_html=True)
         
         # 1. Definición de colores (Esto evita el NameError)
-        color_perfecto = "#39FF14"    # Verde
+        color_perfecto = "#0FFF10"    # Verde
         color_con_fallo = "#ef4444"   # Rojo
         
         # 2. Selector Elite
@@ -2920,6 +2920,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
