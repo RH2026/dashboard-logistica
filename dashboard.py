@@ -173,54 +173,95 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# CASO B: SPLASH SCREEN
+# CASO B: SPLASH SCREEN (Versión Pro Inmersiva)
 elif not st.session_state.splash_completado:
     with placeholder.container():
-        
-        # --- DEFINICIÓN GLOBAL (Para que no de NameError) ---
         usuario = st.session_state.usuario_actual.capitalize() if st.session_state.usuario_actual else "Usuario"
-        color_cyan = "#FFFFFF" # Usamos el Cyan que nos gustó
+        color_accent = "#00FFAA" if st.session_state.motivo_splash != "logout" else "#FF4B4B"
         
-        # Definición de mensajes según el motivo
         if st.session_state.motivo_splash == "logout":
-            mensajes = [
-                f"Cerrando sesión, <span style='color:{color_cyan};'>{usuario}</span>...", 
-                "Guardando cambios...", 
-                "Conexión con Nexion terminada!"
-            ]
-            c_caja = "#FF4B4B"
+            mensajes = [f"Desconectando a {usuario}...", "Sincronizando registros...", "Sesión Finalizada."]
         else:
-            # Mensajes dinámicos de bienvenida
-            mensajes = [
-                f"¡Hola de vuelta, <span style='color:{color_cyan};'>{usuario}</span>!",
-                "Actualizando base de datos...",
-                "Sincronizando estatus de envíos...",
-                "Accediendo al sistema..."
-            ]
-            c_caja = "#d2a679"
+            mensajes = [f"Iniciando Sistema...", f"Bienvenido, {usuario}", "Cargando Módulos...", "Acceso Concedido."]
 
-        # Contenedor vacío para actualizar el texto sin refrescar toda la página
         splash_placeholder = st.empty()
 
         for i, msg in enumerate(mensajes):
+            # Barra de progreso dinámica basada en los mensajes
+            progreso = int(((i + 1) / len(mensajes)) * 100)
+            
             splash_placeholder.markdown(f"""
-                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0e1117; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                    <div class="scene">
-                        <div class="cube" style="width:80px; height:80px; animation: move-pkg 3s infinite linear;">
-                            <div class="cube-face front"  style="width:80px; height:80px; background:{c_caja}; transform: rotateY(0deg) translateZ(40px);"></div>
-                            <div class="cube-face back"   style="width:80px; height:80px; background:{c_caja}; transform: rotateY(180deg) translateZ(40px);"></div>
-                            <div class="cube-face right"  style="width:80px; height:80px; background:{c_caja}; transform: rotateY(90deg) translateZ(40px);"></div>
-                            <div class="cube-face left"   style="width:80px; height:80px; background:{c_caja}; transform: rotateY(-90deg) translateZ(40px);"></div>
-                            <div class="cube-face top"    style="width:80px; height:80px; background:#e3bc94; transform: rotateX(90deg) translateZ(40px);"></div>
-                            <div class="cube-face bottom" style="width:80px; height:80px; background:#b08d5c; transform: rotateX(-90deg) translateZ(40px);"></div>
-                        </div>
+                <style>
+                    @keyframes scan {{
+                        0% {{ background-position: 0% 0%; }}
+                        100% {{ background-position: 0% 100%; }}
+                    }}
+                    @keyframes pulse-glow {{
+                        0%, 100% {{ filter: drop-shadow(0 0 15px {color_accent}66); transform: scale(1); }}
+                        50% {{ filter: drop-shadow(0 0 30px {color_accent}); transform: scale(1.05); }}
+                    }}
+                    .splash-container {{
+                        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                        background: radial-gradient(circle at center, #0e1117 0%, #000000 100%);
+                        z-index: 99999; display: flex; flex-direction: column;
+                        justify-content: center; align-items: center; overflow: hidden;
+                    }}
+                    /* Líneas de escaneo de fondo */
+                    .splash-container::before {{
+                        content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                        background: linear-gradient(0deg, rgba(0,255,170,0.03) 1px, transparent 1px);
+                        background-size: 100% 4px; animation: scan 4s linear infinite;
+                    }}
+                    .holo-cube {{
+                        width: 100px; height: 100px; position: relative;
+                        transform-style: preserve-3d; animation: rotate 4s infinite linear, pulse-glow 2s infinite ease-in-out;
+                    }}
+                    @keyframes rotate {{
+                        from {{ transform: rotateX(0deg) rotateY(0deg); }}
+                        to {{ transform: rotateX(360deg) rotateY(360deg); }}
+                    }}
+                    .face {{
+                        position: absolute; width: 100px; height: 100px;
+                        background: rgba(0, 255, 170, 0.1);
+                        border: 2px solid {color_accent};
+                        box-shadow: inset 0 0 20px {color_accent}44;
+                    }}
+                    .f1 {{ transform: translateZ(50px); }}
+                    .f2 {{ transform: rotateY(180deg) translateZ(50px); }}
+                    .f3 {{ transform: rotateY(90deg) translateZ(50px); }}
+                    .f4 {{ transform: rotateY(-90deg) translateZ(50px); }}
+                    .f5 {{ transform: rotateX(90deg) translateZ(50px); }}
+                    .f6 {{ transform: rotateX(-90deg) translateZ(50px); }}
+                    
+                    .loader-text {{
+                        color: {color_accent}; font-family: 'Courier New', monospace;
+                        margin-top: 40px; font-size: 18px; letter-spacing: 4px;
+                        text-transform: uppercase; text-align: center;
+                    }}
+                    .progress-box {{
+                        width: 250px; height: 2px; background: rgba(255,255,255,0.1);
+                        margin-top: 20px; position: relative;
+                    }}
+                    .progress-bar {{
+                        position: absolute; left: 0; top: 0; height: 100%;
+                        width: {progreso}%; background: {color_accent};
+                        box-shadow: 0 0 10px {color_accent}; transition: width 0.4s ease;
+                    }}
+                </style>
+                
+                <div class="splash-container">
+                    <div class="holo-cube">
+                        <div class="face f1"></div><div class="face f2"></div>
+                        <div class="face f3"></div><div class="face f4"></div>
+                        <div class="face f5"></div><div class="face f6"></div>
                     </div>
-                    <div style="color:#00FFAA; font-family:'monospace'; margin-top:25px; letter-spacing:2px; text-transform:none; font-size: 14px; font-weight: normal;">{msg}</div>
+                    <div class="loader-text">{msg}</div>
+                    <div class="progress-box"><div class="progress-bar"></div></div>
+                    <div style="color: grey; font-size: 10px; margin-top: 10px; font-family: sans-serif;">SYSTEM_STATUS: {progreso}%</div>
                 </div>
             """, unsafe_allow_html=True)
             
-            # Tiempo entre cada mensaje (ajustable)
-            time.sleep(0.8 if i < len(mensajes)-1 else 1.0)
+            time.sleep(0.7 if i < len(mensajes)-1 else 1.2)
         
         # Lógica de cierre de sesión
         if st.session_state.motivo_splash == "logout":
@@ -2731,6 +2772,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
