@@ -1020,7 +1020,7 @@ else:
 
         st.markdown(f"""
             <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid {rojo_coral}; margin-bottom: 20px;'>
-                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>⏱️ RETRASO REAL ACUMULADO (ENTREGADOS Y EN RUTA)</span>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>Retrasos en tiempo real</span>
             </div>
         """, unsafe_allow_html=True)
 
@@ -1104,7 +1104,7 @@ else:
         
         st.markdown(f"""
             <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #00FFAA; margin-top: 30px; margin-bottom: 20px;'>
-                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>🏆 RANKING DE CALIDAD: INCIDENCIAS POR FLETERA</span>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>Total de Entregas con retraso</span>
             </div>
         """, unsafe_allow_html=True)
         
@@ -1165,7 +1165,7 @@ else:
         
         st.markdown(f"""
             <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 30px; margin-bottom: 20px;'>
-                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>🔍 DISTRIBUCIÓN DE EXPERIENCIA</span>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>Cumplimiento de tiempos de transito</span>
             </div>
         """, unsafe_allow_html=True)
         
@@ -2803,6 +2803,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
