@@ -1754,45 +1754,66 @@ else:
                 </div>
             """, unsafe_allow_html=True)
 
-        # --- GRÁFICO 1: VOLUMEN DE OPERACIÓN (CON ETIQUETAS DE DATOS) ---
+        # --- GRÁFICO 1: VOLUMEN DE OPERACIÓN (ENFOQUE DIARIO) ---
         titulo_grafico_elite("Volumen Diario de Envíos", "")
-        df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="Pedidos")
         
-        # Base del gráfico
+        # Agrupamos estrictamente por fecha (día)
+        df_vol = df_kpi.groupby(df_kpi["FECHA DE ENVÍO"].dt.date).size().reset_index(name="Pedidos")
+        df_vol.columns = ["Fecha", "Pedidos"]
+        
+        # Base del gráfico con eje X configurado para días
         line_base = alt.Chart(df_vol).encode(
-            x=alt.X('FECHA DE ENVÍO:T', title=None, axis=alt.Axis(grid=False, labelColor='#94a3b8')),
+            x=alt.X('Fecha:T', 
+                    title=None, 
+                    axis=alt.Axis(
+                        format='%d %b', # Muestra "12 Jan" por ejemplo
+                        grid=False, 
+                        labelColor='#94a3b8',
+                        labelAngle=-45 # Inclinación para mejor lectura si hay muchos días
+                    )),
             y=alt.Y('Pedidos:Q', title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8'))
         )
-
-        # Capa 1: El área sombreada y la línea recta (Estilo Trading)
+        
+        # Capa 1: Área sombreada con degradado dorado (Trading Style)
         area = line_base.mark_area(
             line={'color': '#FFD700', 'strokeWidth': 2.5},
             color=alt.Gradient(
                 gradient='linear',
-                stops=[alt.GradientStop(color='#FFD700', offset=0), alt.GradientStop(color='#FFD700', offset=1)],
+                stops=[
+                    alt.GradientStop(color='rgba(255, 215, 0, 0.4)', offset=0), 
+                    alt.GradientStop(color='rgba(255, 215, 0, 0.0)', offset=1)
+                ],
                 x1=1, x2=1, y1=1, y2=0
             ),
             interpolate='linear'
         )
-
-        # Capa 2: Puntos en cada vértice
-        points = line_base.mark_point(color='#FFFF00', size=60, fill="#0f172a")
-
-        # Capa 3: ETIQUETAS DE DATOS (Los números sobre los puntos)
+        
+        # Capa 2: Puntos de impacto en cada día
+        points = line_base.mark_point(
+            color='#FFFF00', 
+            size=80, 
+            fill="#0f172a", 
+            strokeWidth=2
+        )
+        
+        # Capa 3: ETIQUETAS DE DATOS (Frecuencia diaria)
         labels = line_base.mark_text(
             align='center',
             baseline='bottom',
-            dy=-12, # Espacio para que no toque el punto
+            dy=-15, 
             color='#e2e8f0',
-            fontWeight=600,
-            fontSize=12
+            fontWeight=700,
+            fontSize=13
         ).encode(
             text='Pedidos:Q'
         )
-
-        # Combinar todas las capas
-        st.altair_chart((area + points + labels).properties(height=280).configure_view(strokeOpacity=0), use_container_width=True)
-
+        
+        # Renderizado con ajuste de altura para enfoque en datos
+        st.altair_chart(
+            (area + points + labels).properties(height=300).configure_view(strokeOpacity=0), 
+            use_container_width=True
+        )
+        
         st.write("##")
 
         # --- GRÁFICO 2: EFICIENCIA POR FLETERA (SEMÁFORO) ---
@@ -2975,6 +2996,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
