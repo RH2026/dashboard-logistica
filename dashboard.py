@@ -1585,36 +1585,56 @@ else:
         st.divider()
         
         # =========================================================
-        # --- 3. SECCIÓN DE ALERTAS (TABLA PREMIUM CON FILTROS) ---
+        # --- 3. SECCIÓN DE ALERTAS (FILTROS DE MANDO SIMPLIFICADOS) ---
         # =========================================================
         df_criticos = df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] > 0].copy()
         
         if not df_criticos.empty:
-            with st.expander("🚨 DETALLE DE PEDIDOS VENCIDOS (GESTIÓN CRÍTICA)", expanded=True):
+            # Estilo para las etiquetas de los multiselect (Color Verde Esmeralda)
+            st.markdown("""
+                <style>
+                span[data-baseweb="tag"] {
+                    background-color: #00FFAA !important;
+                    color: #000000 !important;
+                    font-weight: bold !important;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+
+            with st.expander("GESTIÓN DE PEDIDOS CRÍTICOS", expanded=True):
                 
-                # --- SUB-FILTROS INTERNOS PARA LA TABLA ---
+                # --- FILTROS DE OPERACIÓN ---
                 c1, c2 = st.columns(2)
                 with c1:
-                    filtro_cliente = st.multiselect("Filtrar Cliente en Alerta:", 
-                                                 options=sorted(df_criticos["NOMBRE DEL CLIENTE"].unique()),
-                                                 key="filter_alert_client")
-                with c2:
-                    filtro_flete = st.multiselect("Filtrar Fletera en Alerta:", 
+                    filtro_flete = st.multiselect("Filtrar Paquetería:", 
                                                 options=sorted(df_criticos["FLETERA"].unique()),
-                                                key="filter_alert_flete")
+                                                key="filter_alert_flete_v2")
+                with c2:
+                    opciones_retraso = ["1 Día de Retraso", "2 a 4 Días de Retraso", "Más de 5 Días de Retraso"]
+                    filtro_rango = st.multiselect("Filtrar por Gravedad:", 
+                                                options=opciones_retraso,
+                                                key="filter_alert_range")
 
-                # Aplicar filtros dinámicos
+                # --- LÓGICA DE FILTRADO DINÁMICO ---
                 df_ver = df_criticos.copy()
-                if filtro_cliente:
-                    df_ver = df_ver[df_ver["NOMBRE DEL CLIENTE"].isin(filtro_cliente)]
+                
                 if filtro_flete:
                     df_ver = df_ver[df_ver["FLETERA"].isin(filtro_flete)]
+                
+                if filtro_rango:
+                    mask_rango = pd.Series(False, index=df_ver.index)
+                    if "1 Día de Retraso" in filtro_rango:
+                        mask_rango |= (df_ver["DIAS_ATRASO_KPI"] == 1)
+                    if "2 a 4 Días de Retraso" in filtro_rango:
+                        mask_rango |= (df_ver["DIAS_ATRASO_KPI"] >= 2) & (df_ver["DIAS_ATRASO_KPI"] <= 4)
+                    if "Más de 5 Días de Retraso" in filtro_rango:
+                        mask_rango |= (df_ver["DIAS_ATRASO_KPI"] >= 5)
+                    df_ver = df_ver[mask_rango]
 
-                # Formateo de fechas
+                # Preparación de tabla
                 df_ver["FECHA DE ENVÍO"] = df_ver["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
                 df_ver["PROMESA DE ENTREGA"] = df_ver["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y')
                 
-                # Selección de columnas finales
                 columnas_finales = [
                     "NÚMERO DE PEDIDO", "NOMBRE DEL CLIENTE", "FLETERA", 
                     "FECHA DE ENVÍO", "PROMESA DE ENTREGA", "NÚMERO DE GUÍA", 
@@ -1626,41 +1646,33 @@ else:
                     "DIAS_TRANS": "DÍAS TRANS."
                 })
         
-                # --- RENDERIZADO PREMIUM ---
+                # --- TABLA PREMIUM CON INDICADORES DE BARRA ---
                 st.dataframe(
                     df_tabla_ver.sort_values("DÍAS ATRASO", ascending=False),
                     use_container_width=True,
                     hide_index=True,
                     column_config={
-                        "NÚMERO DE PEDIDO": st.column_config.TextColumn("🔢 PEDIDO"),
                         "NOMBRE DEL CLIENTE": st.column_config.TextColumn("👤 CLIENTE", width="large"),
-                        "FLETERA": st.column_config.TextColumn("🚛 TRANSPORTE"),
                         "DÍAS TRANS.": st.column_config.ProgressColumn(
-                            "⏳ DÍAS TRANS.",
-                            help="Días totales desde el envío",
+                            "⏳ TRANS.",
                             format="%d",
                             min_value=0,
-                            max_value=int(df_tabla_ver["DÍAS TRANS."].max() + 2),
+                            max_value=int(df_tabla_ver["DÍAS TRANS."].max() + 1) if not df_tabla_ver.empty else 10,
                             color="orange"
                         ),
                         "DÍAS ATRASO": st.column_config.ProgressColumn(
-                            "⚠️ DÍAS ATRASO",
-                            help="Días de retraso vs Promesa",
+                            "⚠️ ATRASO",
                             format="%d",
                             min_value=0,
-                            max_value=int(df_tabla_ver["DÍAS ATRASO"].max() + 2),
+                            max_value=int(df_tabla_ver["DÍAS ATRASO"].max() + 1) if not df_tabla_ver.empty else 10,
                             color="red"
-                        ),
-                        "NÚMERO DE GUÍA": st.column_config.TextColumn("📑 GUÍA")
+                        )
                     }
                 )
-                
-                st.caption(f"Mostrando {len(df_tabla_ver)} pedidos con retraso crítico.")
         else:
-            st.success("✅ Protocolo Limpio: No se detectan pedidos vencidos en este rango.")
-            
+            st.success("✅ Protocolo de Alertas: Limpio.")
+
         st.divider()
-        
         
         # --------------------------------------------------
         # GRÁFICOS DE BARRAS POR PAQUETERÍA (CONECTADO A FILTRO DE FECHAS)
@@ -1668,7 +1680,7 @@ else:
         
         st.markdown(f"""
             <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 30px; margin-bottom: 25px;'>
-                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>🚀 ESTADO DE CARGA EN TIEMPO REAL</span>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>ESTADO DE CARGA EN TIEMPO REAL</span>
             </div>
         """, unsafe_allow_html=True)
         
@@ -2963,6 +2975,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
