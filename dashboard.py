@@ -1011,6 +1011,63 @@ else:
             else:
                 st.markdown(f"<div style='padding:40px; text-align:center; color:#059669; font-weight:bold;'>✓ Operación al día</div>", unsafe_allow_html=True)
                
+        # --------------------------------------------------
+        # SECCIÓN UNIFICADA: ANÁLISIS DE EXPERIENCIA (LUPA)
+        # --------------------------------------------------
+        
+        st.markdown(f"""
+            <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 30px; margin-bottom: 20px;'>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>Cumplimiento de tiempos de transito, precisión y calidad del servicio.</span>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # 1. Selector Elite
+        lista_fleteras = ["TODAS"] + sorted(df_filtrado["FLETERA"].unique().tolist())
+        fletera_seleccionada = st.selectbox("🎯 Filtrar por Paquetería:", lista_fleteras, key="lupa_selector")
+        
+        # 2. Procesamiento
+        df_lupa = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
+        if fletera_seleccionada != "TODAS":
+            df_lupa = df_lupa[df_lupa["FLETERA"] == fletera_seleccionada]
+        
+        df_lupa["DIAS_DIF"] = (df_lupa["FECHA DE ENTREGA REAL"] - df_lupa["PROMESA DE ENTREGA"]).dt.days
+        
+        if not df_lupa.empty:
+            df_dist_lupa = df_lupa.groupby("DIAS_DIF").size().reset_index(name="PEDIDOS")
+            df_dist_lupa["COLOR_HEX"] = df_dist_lupa["DIAS_DIF"].apply(lambda x: color_perfecto if x <= 0 else color_con_fallo)
+        
+            # 3. Gráfico de Histograma Técnico RESPONSIVE
+            base_lupa = alt.Chart(df_dist_lupa).encode(
+                x=alt.X("DIAS_DIF:O", # Cambiado a Ordinal para mejor control de etiquetas
+                        title="Días vs Promesa (← Antes | Retraso →)", 
+                        axis=alt.Axis(labelAngle=0, labelColor='#94a3b8', labelOverlap='parity')),
+                y=alt.Y("PEDIDOS:Q", title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8', format='~s')),
+                color=alt.Color("COLOR_HEX:N", scale=None)
+            )
+        
+            bars_lupa = base_lupa.mark_bar(
+                cornerRadiusTopLeft=6, 
+                cornerRadiusTopRight=6
+            )
+        
+            text_lupa = base_lupa.mark_text(
+                align='center', baseline='bottom', dy=-8, fontWeight=700, color='white', fontSize=12
+            ).encode(text=alt.Text("PEDIDOS:Q", format='~s'))
+        
+            st.altair_chart((bars_lupa + text_lupa).properties(height=350).configure_view(strokeOpacity=0), use_container_width=True)
+        
+            st.markdown(f"""
+                <div style='background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 15px; border-radius: 10px;'>
+                    <p style='margin:0; color:#38bdf8; font-size:13px; font-weight:600;'>💡 TIP DE OPERACIONES:</p>
+                    <p style='margin:5px 0 0 0; color:#e2e8f0; font-size:14px;'>
+                        Las barras a la derecha del '0' representan promesas incumplidas. 
+                        Busca reducir la dispersión hacia el lado rojo para mejorar la lealtad del cliente.
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.warning("⚠️ Sin registros de entrega para los filtros seleccionados.")
+        
         # ----------------------------------------------------------
         # GRÁFICO EXCLUSIVO: RETRASO PROMEDIO (DÍAS) + NOTA
         # ----------------------------------------------------------
@@ -1165,7 +1222,7 @@ else:
         
         st.markdown(f"""
             <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 30px; margin-bottom: 20px;'>
-                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>Cumplimiento de tiempos de transito</span>
+                <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>Cumplimiento de tiempos de transito, precisión y calidad del servicio.</span>
             </div>
         """, unsafe_allow_html=True)
         
@@ -1753,7 +1810,7 @@ else:
         # --- BLOQUE 2: LEAD TIME (VERDE ESMERALDA ELÉCTRICO) ---
         # =========================================================
         with st.container():
-            titulo_grafico_elite("Días Promedio de Entrega (Lead Time)", "⏱️")
+            titulo_grafico_elite("Días Promedio de Entrega, capacidad y velocidad (Lead Time)")
             
             # Solo pedidos entregados para el cálculo de tiempo real
             df_entregados = df_kpi[df_kpi['FECHA DE ENTREGA REAL'].notna()].copy()
@@ -2869,6 +2926,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
