@@ -1016,7 +1016,7 @@ else:
         # --------------------------------------------------
         
         st.markdown(f"""
-            <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 30px; margin-bottom: 20px;'>
+            <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #00FFAA; margin-top: 30px; margin-bottom: 20px;'>
                 <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>Cumplimiento de tiempos de transito, precisión y calidad del servicio.</span>
             </div>
         """, unsafe_allow_html=True)
@@ -1081,7 +1081,7 @@ else:
         # ----------------------------------------------------------
         # GRÁFICO EXCLUSIVO: RETRASO PROMEDIO (DÍAS) + NOTA
         # ----------------------------------------------------------
-        verde_esmeralda = "#059669"
+        verde_esmeralda = "#00FFAA"
         naranja_ambar = "#d97706"
         rojo_coral = "#fb7185"
 
@@ -1285,7 +1285,7 @@ else:
                 # Tip informativo inferior
                 st.markdown(f"""
                     <div style='background: rgba(0, 255, 170, 0.05); border: 1px solid rgba(0, 255, 170, 0.2); padding: 15px; border-radius: 10px;'>
-                        <p style='margin:0; color:#00FFAA; font-size:13px; font-weight:600;'>📊 INSIGHT LOGÍSTICO:</p>
+                        <p style='margin:0; color:#00FFAA; font-size:13px; font-weight:600;'>Definicion:</p>
                         <p style='margin:5px 0 0 0; color:#e2e8f0; font-size:14px;'>
                             Este gráfico muestra el tiempo real desde que el paquete sale del almacén hasta que llega al cliente. 
                             <b>Menor tiempo = Mayor satisfacción.</b>
@@ -2920,6 +2920,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
