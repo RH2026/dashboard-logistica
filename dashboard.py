@@ -2996,24 +2996,39 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         # --- MOTOR DE DATOS PARA MATRIZ LOGÍSTICA ---
+        # --- MOTOR DE DATOS CORREGIDO ---
         @st.cache_data
         def cargar_matriz_logistica():
             try:
-                # Carga de tu archivo específico
+                # Cargamos el CSV
                 df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
                 df.columns = [str(c).strip().upper() for c in df.columns]
                 
-                # Conversión de fechas para cálculos de OTD
-                df['FECHA DE ENVÍO'] = pd.to_datetime(df['FECHA DE ENVÍO'])
-                df['PROMESA DE ENTREGA'] = pd.to_datetime(df['PROMESA DE ENTREGA'])
-                df['FECHA DE ENTREGA REAL'] = pd.to_datetime(df['FECHA DE ENTREGA REAL'])
+                # Lista de columnas de fecha a procesar
+                cols_fechas = ['FECHA DE ENVÍO', 'PROMESA DE ENTREGA', 'FECHA DE ENTREGA REAL']
                 
-                # Cálculo de Mes para filtros
+                for col in cols_fechas:
+                    if col in df.columns:
+                        # Usamos dayfirst=True para que entienda que 13/01 es 13 de Enero
+                        # errors='coerce' evita que el programa truene si hay una celda vacía o mal escrita
+                        df[col] = pd.to_datetime(df[col], dayfirst=True, errors='coerce')
+                
+                # Creamos la columna de MES basada en la Fecha de Envío para tus filtros
+                # .dt.month_name() devolverá el nombre del mes
                 df['MES_NOMBRE'] = df['FECHA DE ENVÍO'].dt.month_name()
+                
+                # Opcional: Traducir meses a español si lo prefieres
+                meses_esp = {
+                    'January': 'Enero', 'February': 'Febrero', 'March': 'Marzo', 
+                    'April': 'Abril', 'May': 'Mayo', 'June': 'Junio', 
+                    'July': 'Julio', 'August': 'Agosto', 'September': 'Septiembre', 
+                    'October': 'Octubre', 'November': 'Noviembre', 'December': 'Diciembre'
+                }
+                df['MES_NOMBRE'] = df['MES_NOMBRE'].map(meses_esp)
                 
                 return df
             except Exception as e:
-                st.error(f"Error cargando Matriz_Excel_Dashboard.csv: {e}")
+                st.error(f"❌ Error Crítico en Matriz: {e}")
                 return None
         
         df_matriz = cargar_matriz_logistica()
@@ -3092,6 +3107,7 @@ else:
                     </div>
                 </div>
             """, unsafe_allow_html=True)
+
 
 
 
