@@ -436,7 +436,11 @@ else:
 
                 if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
                     st.session_state.pagina = "HubLogistico"
-                    st.rerun()                                                
+                    st.rerun() 
+
+                if st.button("OTD", use_container_width=True, key="h_radar"):
+                    st.session_state.pagina = "RadarRastreo"
+                    st.rerun()
                                        
         st.divider()   
         # 1. FUNCIÓN DE LIMPIEZA
@@ -2981,7 +2985,7 @@ else:
                 if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
                     st.session_state.pagina = "HubLogistico"
                     st.rerun()
-                if st.button("RADAR RASTREO", use_container_width=True, key="h_radar"):
+                if st.button("OTD", use_container_width=True, key="h_radar"):
                     st.session_state.pagina = "RadarRastreo"
                     st.rerun()
         
@@ -2991,7 +2995,104 @@ else:
         # =========================================================
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
+        # --- MOTOR DE DATOS PARA MATRIZ LOGÍSTICA ---
+        @st.cache_data
+        def cargar_matriz_logistica():
+            try:
+                # Carga de tu archivo específico
+                df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
+                df.columns = [str(c).strip().upper() for c in df.columns]
+                
+                # Conversión de fechas para cálculos de OTD
+                df['FECHA DE ENVÍO'] = pd.to_datetime(df['FECHA DE ENVÍO'])
+                df['PROMESA DE ENTREGA'] = pd.to_datetime(df['PROMESA DE ENTREGA'])
+                df['FECHA DE ENTREGA REAL'] = pd.to_datetime(df['FECHA DE ENTREGA REAL'])
+                
+                # Cálculo de Mes para filtros
+                df['MES_NOMBRE'] = df['FECHA DE ENVÍO'].dt.month_name()
+                
+                return df
+            except Exception as e:
+                st.error(f"Error cargando Matriz_Excel_Dashboard.csv: {e}")
+                return None
         
+        df_matriz = cargar_matriz_logistica()
+        
+        if df_matriz is not None:
+            # --- SIDEBAR ELITE (FILTROS) ---
+            with st.sidebar:
+                st.markdown("### 🛠 CONFIGURACIÓN")
+                filtro_paq = st.multiselect("FLETERA", options=df_matriz['FLETERA'].unique(), default=df_matriz['FLETERA'].unique())
+                filtro_mes = st.multiselect("MES", options=df_matriz['MES_NOMBRE'].unique(), default=df_matriz['MES_NOMBRE'].unique())
+        
+            # Aplicar Filtros
+            df_f = df_matriz[(df_matriz['FLETERA'].isin(filtro_paq)) & (df_matriz['MES_NOMBRE'].isin(filtro_mes))]
+        
+            # --- CÁLCULOS LOGÍSTICOS (EL CEREBRO) ---
+            total_pedidos = len(df_f)
+            pedidos_con_retraso = len(df_f[df_f['FECHA DE ENTREGA REAL'] > df_f['PROMESA DE ENTREGA']])
+            efectividad_val = ((total_pedidos - pedidos_con_retraso) / total_pedidos * 100) if total_pedidos > 0 else 0
+            
+            gasto_total = df_f['COSTO DE LA GUÍA'].sum()
+            costo_por_envio = df_f['COSTO DE LA GUÍA'].mean()
+            costo_por_caja = (gasto_total / df_f['CANTIDAD DE CAJAS'].sum()) if df_f['CANTIDAD DE CAJAS'].sum() > 0 else 0
+            
+            # Lead Time Promedio (Días)
+            df_f['LEAD_TIME'] = (df_f['FECHA DE ENTREGA REAL'] - df_f['FECHA DE ENVÍO']).dt.days
+            lead_time_avg = df_f['LEAD_TIME'].mean()
+        
+            # --- RENDERIZADO UI ELITE ---
+            
+            # BLOQUE 1: CALIFICACIÓN (Tarjetas principales)
+            st.markdown("<h4 class='premium-header'>SCORECARD OPERATIVO</h4>", unsafe_allow_html=True)
+            c1, c2, c3 = st.columns(3)
+            with c1: render_card("GASTO TOTAL", f"${gasto_total:,.0f}", "Inversión en Fletes", border_base="border-blue")
+            with c2: render_card("% PARTICIPACIÓN", f"{(len(df_f)/len(df_matriz)*100):.1f}%", "Vs Total Histórico", border_base="border-purple")
+            with c3: render_card("% EFECTIVIDAD", f"{efectividad_val:.1f}%", "Entregas On-Time", actual_val=efectividad_val, target_val=95, inverse=True) # Target 95%
+        
+            # BLOQUE 2: OTD - DEEP DIVE
+            st.markdown("<h4 class='premium-header'>OTD & LEAD TIME ANALYSIS</h4>", unsafe_allow_html=True)
+            o1, o2, o3 = st.columns(3)
+            with o1:
+                st.markdown(f"""<div class='card-container border-green'>
+                    <div class='card-label'>OTD (On-Time Delivery)</div>
+                    <div class='card-value' style='color:#00ffa2'>{efectividad_val:.1f}%</div>
+                    <div class='card-footer'>Cumplimiento de Promesa</div>
+                </div>""", unsafe_allow_html=True)
+            with o2:
+                # Calculamos días de retraso solo de los que fallaron
+                retraso_solo_fallas = (df_f[df_f['FECHA DE ENTREGA REAL'] > df_f['PROMESA DE ENTREGA']]['FECHA DE ENTREGA REAL'] - \
+                                      df_f[df_f['FECHA DE ENTREGA REAL'] > df_f['PROMESA DE ENTREGA']]['PROMESA DE ENTREGA']).dt.days.mean()
+                render_card("RETRASO PROMEDIO", f"{retraso_solo_fallas:.1f} Días", "En casos de incumplimiento", actual_val=retraso_solo_fallas, target_val=1)
+            with o3:
+                render_card("LEAD TIME (TRÁNSITO)", f"{lead_time_avg:.1f} Días", "Envío a Entrega Real", border_base="border-blue")
+        
+            # BLOQUE 3: ANÁLISIS DE COSTOS
+            st.markdown("<h4 class='premium-header'>EFICIENCIA FINANCIERA</h4>", unsafe_allow_html=True)
+            cost1, cost2, cost3 = st.columns(3)
+            with cost1: render_card("COSTO POR ENVÍO", f"${costo_por_envio:,.2f}", "Promedio por Guía")
+            with cost2: render_card("COSTO POR CAJA", f"${costo_por_caja:,.2f}", "Eficiencia de Empaque")
+            with cost3:
+                # Destino más caro (Top 1)
+                top_destino = df_f.groupby('DESTINO')['COSTO DE LA GUÍA'].mean().idxmax()
+                render_card("ZONA CRÍTICA", f"{top_destino}", "Destino con flete más alto", border_base="border-red")
+        
+            # BLOQUE DE TOTALES TIPO "INFO BOX"
+            st.markdown(f"""
+                <div class="insight-box" style="border-left: 5px solid #00D4FF;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="color:#94a3b8; font-size:12px; font-weight:bold;">PEDIDOS PROCESADOS</span><br>
+                            <span style="font-size:24px; color:white; font-family:Inter; font-weight:800;">{total_pedidos}</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="color:#fb7185; font-size:12px; font-weight:bold;">PEDIDOS CON RETRASO</span><br>
+                            <span style="font-size:24px; color:#fb7185; font-family:Inter; font-weight:800;">{pedidos_con_retraso}</span>
+                        </div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
 
 
 
