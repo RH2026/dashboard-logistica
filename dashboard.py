@@ -1016,13 +1016,13 @@ else:
         # --------------------------------------------------
         
         st.markdown(f"""
-            <div style='background: #00FFAA; padding: 12px 20px; border-radius: 8px; border-left: 4px solid #00FFAA; margin-top: 30px; margin-bottom: 20px;'>
+            <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #00FFAA; margin-top: 30px; margin-bottom: 20px;'>
                 <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>Cumplimiento de tiempos de transito, precisión y calidad del servicio.</span>
             </div>
         """, unsafe_allow_html=True)
         
         # 1. Definición de colores (Esto evita el NameError)
-        color_perfecto = "#22c55e"    # Verde
+        color_perfecto = "#00FFAA"    # Verde
         color_con_fallo = "#ef4444"   # Rojo
         
         # 2. Selector Elite
@@ -2920,6 +2920,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
