@@ -173,20 +173,21 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# CASO B: SPLASH SCREEN (Versión NEXION Corporate - Dark Mode)
+# CASO B: SPLASH SCREEN (Versión NEXION Premium - Enfoque en Bienvenida)
 elif not st.session_state.splash_completado:
     with placeholder.container():
-        usuario = st.session_state.usuario_actual.upper() if st.session_state.usuario_actual else "CLIENTE"
+        # El nombre del usuario resaltado en Blanco
+        usuario_highlight = st.session_state.usuario_actual.upper() if st.session_state.usuario_actual else "CLIENTE"
         
-        # Colores extraídos de tu interfaz NEXION
         color_fondo_st = "#0e1117" 
         color_neon = "#00FFAA" 
         
         if st.session_state.motivo_splash == "logout":
             mensajes = ["CERRANDO SESIÓN SEGURA", "RESGUARDANDO REGISTROS", "CONEXIÓN FINALIZADA"]
         else:
+            # Aquí inyectamos el HTML para que el nombre sea blanco
             mensajes = [
-                f"BIENVENIDO DE VUELTA, {usuario}",
+                f"BIENVENIDO DE VUELTA, <span style='color:white; font-weight:700;'>{usuario_highlight}</span>",
                 "SINCRONIZANDO MANIFIESTOS NEXION",
                 "ACTUALIZANDO ESTATUS DE ENVÍOS",
                 "AUTENTICACIÓN COMPLETADA"
@@ -211,7 +212,7 @@ elif not st.session_state.splash_completado:
 
                     .branding-box {{
                         text-align: left;
-                        width: 420px;
+                        width: 450px;
                         padding: 20px;
                     }}
 
@@ -236,12 +237,13 @@ elif not st.session_state.splash_completado:
 
                     .main-msg {{
                         color: {color_neon};
-                        font-size: 1.3rem;
+                        font-size: 1.4rem;
                         font-weight: 300;
                         letter-spacing: 1.5px;
                         margin-bottom: 35px;
-                        height: 50px;
-                        text-shadow: 0 0 15px {color_neon}44;
+                        min-height: 60px;
+                        line-height: 1.4;
+                        text-shadow: 0 0 15px {color_neon}33;
                     }}
 
                     .progress-container {{
@@ -279,14 +281,18 @@ elif not st.session_state.splash_completado:
                             <div class="progress-fill"></div>
                         </div>
                         <div class="footer-info">
-                            <span>SESSION_ID: 002-NX</span>
+                            <span>SESSION_ID: NX-2024</span>
                             <span style="color: {color_neon}">{progreso}%</span>
                         </div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
             
-            time.sleep(0.7 if i < len(mensajes)-1 else 1.0)
+            # --- LÓGICA DE TIEMPO PERSONALIZADA ---
+            if i == 0 and st.session_state.motivo_splash != "logout":
+                time.sleep(2.5) # Pausa larga en la bienvenida para que se sientan acogidos
+            else:
+                time.sleep(0.7 if i < len(mensajes)-1 else 1.2)
         
         # Lógica de cierre de sesión
         if st.session_state.motivo_splash == "logout":
@@ -2797,6 +2803,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
