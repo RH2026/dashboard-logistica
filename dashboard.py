@@ -2993,6 +2993,37 @@ else:
         st.markdown('<hr style="border:0; height:2px; background:#00D4FF; box-shadow:0px 0px 15px 3px rgba(0,212,255,0.7); margin-top:10px; margin-bottom:30px; border-radius:10px; opacity:0.8;">', unsafe_allow_html=True)
 
         # =========================================================
+        # ZONA DE MANDO: FUNCIONES GLOBALES (PONER AL PRINCIPIO)
+        # =========================================================
+        def render_card(label, value, footer, target_val=None, actual_val=None, inverse=False, border_base="border-blue"):
+            """
+            Renderiza tarjetas con lógica de color elite.
+            """
+            if target_val is None or actual_val is None:
+                color = "#f0f6fc"
+                border = border_base
+            else:
+                # Lógica: Si inverse=True (ej. Efectividad), mayor es mejor.
+                # Si inverse=False (ej. Retrasos), menor es mejor.
+                if inverse:
+                    is_alert = actual_val < target_val
+                else:
+                    is_alert = actual_val > target_val
+                    
+                color = "#fb7185" if is_alert else "#00ffa2"
+                border = "border-red" if is_alert else "border-green"
+            
+            import streamlit as st # Asegurar acceso dentro de la función
+            st.markdown(f"""
+                <div class='card-container {border}'>
+                    <div class='card-label'>{label}</div>
+                    <div class='card-value' style='color:{color}'>{value}</div>
+                    <div class='card-footer'>{footer}</div>
+                </div>
+            """, unsafe_allow_html=True)
+        # =========================================================
+                
+        # =========================================================
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         # --- MOTOR DE DATOS PARA MATRIZ LOGÍSTICA ---
@@ -3071,6 +3102,7 @@ else:
             # --- BLOQUE DE COMENTARIOS ---
             with st.expander("📝 VER COMENTARIOS DE LA OPERACIÓN"):
                 st.dataframe(df_f[['NÚMERO DE PEDIDO', 'FLETERA', 'COMENTARIOS']].dropna(subset=['COMENTARIOS']), use_container_width=True)
+
 
 
 
