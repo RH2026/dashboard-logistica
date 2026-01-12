@@ -1226,6 +1226,39 @@ else:
         else:
             st.info("No se detectaron entregas fuera de tiempo en el periodo actual.")
                 
+        # =========================================================
+        # --- BLOQUE 2: LEAD TIME (VERDE ESMERALDA ELÉCTRICO) ---
+        # =========================================================
+        with st.container():
+            titulo_grafico_elite("Días Promedio de Entrega, capacidad y velocidad (Lead Time)")
+            
+            # Solo pedidos entregados para el cálculo de tiempo real
+            df_entregados = df_kpi[df_kpi['FECHA DE ENTREGA REAL'].notna()].copy()
+            df_entregados['LEAD_TIME'] = (df_entregados['FECHA DE ENTREGA REAL'] - df_entregados['FECHA DE ENVÍO']).dt.days
+            lead_data = df_entregados.groupby('FLETERA')['LEAD_TIME'].mean().reset_index()
+            
+            # Capa de Barras
+            bars_lead = alt.Chart(lead_data).mark_bar(
+                cornerRadiusTopRight=10,
+                cornerRadiusBottomRight=10,
+                size=25
+            ).encode(
+                x=alt.X('LEAD_TIME:Q', title="Días en Tránsito"),
+                y=alt.Y('FLETERA:N', sort='x', title=None),
+                color=alt.value(verde_esmeralda) # <--- VERDE ESMERALDA ELÉCTRICO
+            )
+        
+            # Capa de Etiquetas (Texto)
+            text_lead = bars_lead.mark_text(
+                align='left', baseline='middle', dx=8,
+                color='white', fontSize=13, fontWeight='bold'
+            ).encode(
+                text=alt.Text('LEAD_TIME:Q', format='.1f')
+            )
+        
+            st.altair_chart((bars_lead + text_lead).properties(height=400), use_container_width=True)
+        
+        
         # --------------------------------------------------
         # TABLA SCORECARD: CALIFICACIÓN DE FLETERAS
         # --------------------------------------------------
@@ -2879,6 +2912,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
