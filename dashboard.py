@@ -173,87 +173,117 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# CASO B: SPLASH SCREEN (Versión Minimalista de Terror)
+# CASO B: SPLASH SCREEN (Versión Logística Premium / DHL / FedEx Style)
 elif not st.session_state.splash_completado:
     with placeholder.container():
-        usuario = st.session_state.usuario_actual.capitalize() if st.session_state.usuario_actual else "Sujeto"
+        usuario = st.session_state.usuario_actual.upper() if st.session_state.usuario_actual else "CLIENTE"
         
-        # Ajusta los mensajes para que suenen más "de terror"
+        # Color de acento: Un azul corporativo profundo o el Cyan que tenías
+        color_brand = "#0056b3" # Azul logístico pro (puedes cambiarlo a #FFCC00 para estilo DHL)
+        
         if st.session_state.motivo_splash == "logout":
-            mensajes = [f"Desvaneciéndote, {usuario}...", "El silencio vuelve...", "Solo oscuridad."]
+            mensajes = ["CERRANDO SESIÓN SEGURA", "GUARDANDO REGISTROS DE ACTIVIDAD", "CONEXIÓN FINALIZADA"]
         else:
-            mensajes = ["Despertando...", "No estás solo...", "La realidad se distorsiona...", "Acepta tu destino."]
+            mensajes = [
+                f"BIENVENIDO DE VUELTA, {usuario}",
+                "SINCRONIZANDO MANIFIESTOS DE CARGA",
+                "ACTUALIZANDO ESTATUS DE ENVÍOS",
+                "AUTENTICACIÓN COMPLETADA"
+            ]
 
         splash_placeholder = st.empty()
 
         for i, msg in enumerate(mensajes):
+            # Progreso real para la barra inferior
+            progreso = int(((i + 1) / len(mensajes)) * 100)
+            
             splash_placeholder.markdown(f"""
                 <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;700&display=swap');
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;700&display=swap');
 
-                    .minimal-terror-splash {{
+                    .corporate-splash {{
                         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                        background-color: #000000; /* Fondo negro profundo */
+                        background-color: #F8F9FA; /* Gris ultra claro, muy limpio */
                         z-index: 999999;
                         display: flex; flex-direction: column; justify-content: center; align-items: center;
-                        font-family: 'Crimson Text', serif; /* Fuente clásica de suspense */
-                        overflow: hidden;
-                        color: #CCCCCC; /* Texto gris suave */
-                        animation: fadeIn 1s ease-out forwards; /* Fundido de entrada */
+                        font-family: 'Inter', sans-serif;
                     }}
 
-                    /* Efecto de grano o estática sutil */
-                    .minimal-terror-splash::before {{
+                    /* Contenedor central */
+                    .branding-box {{
+                        text-align: left;
+                        width: 400px;
+                    }}
+
+                    .logo-placeholder {{
+                        font-weight: 700;
+                        font-size: 12px;
+                        letter-spacing: 5px;
+                        color: #ADB5BD;
+                        margin-bottom: 10px;
+                        display: flex;
+                        align-items: center;
+                    }}
+
+                    .logo-placeholder::before {{
                         content: '';
-                        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                        background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAAXNSR0IArs4c6QAAADVJREFUGFdjYGBgePj/P3kEGPz/f/n/P8sIIfn/v4GBgYOBgYHw/z+cDAwMTPz/P9kIMgAReA2G/cOQfAAAAABJRU5ErkJggg=='); /* Pequeño patrón de ruido */
-                        opacity: 0.05; /* Muy sutil */
-                        pointer-events: none;
-                        animation: grain 8s steps(10) infinite;
+                        width: 20px;
+                        height: 2px;
+                        background: {color_brand};
+                        margin-right: 10px;
                     }}
 
-                    @keyframes grain {{
-                        0%, 100% {{ transform: translate(0, 0); }}
-                        10% {{ transform: translate(-5%, -10%); }}
-                        20% {{ transform: translate(-15%, 5%); }}
-                        30% {{ transform: translate(7%, -8%); }}
-                        40% {{ transform: translate(-10%, 12%); }}
-                        50% {{ transform: translate(-5%, -8%); }}
-                        60% {{ transform: translate(10%, 0%); }}
-                        70% {{ transform: translate(0%, 15%); }}
-                        80% {{ transform: translate(-12%, -5%); }}
-                        90% {{ transform: translate(15%, 10%); }}
+                    .main-msg {{
+                        color: #212529;
+                        font-size: 1.2rem;
+                        font-weight: 300;
+                        letter-spacing: 1px;
+                        margin-bottom: 30px;
+                        height: 40px; /* Evita saltos de layout */
                     }}
 
-                    .main-message {{
-                        font-size: 3rem; /* Tamaño de texto importante */
-                        font-weight: 400; /* Peso normal para la fuente serif */
-                        letter-spacing: 2px;
-                        text-align: center;
-                        line-height: 1.4;
-                        opacity: 0; /* Empieza invisible */
-                        animation: textFadeIn 2s ease-out forwards; /* Aparece gradualmente */
-                        animation-delay: 0.5s; /* Pequeño retraso */
-                        padding: 0 20px; /* Padding para el texto */
+                    /* Barra de progreso minimalista (estilo moderno) */
+                    .progress-container {{
+                        width: 100%;
+                        height: 4px;
+                        background-color: #E9ECEF;
+                        border-radius: 2px;
+                        overflow: hidden;
                     }}
 
-                    @keyframes textFadeIn {{
-                        from {{ opacity: 0; transform: translateY(20px); }}
-                        to {{ opacity: 1; transform: translateY(0); }}
+                    .progress-fill {{
+                        width: {progreso}%;
+                        height: 100%;
+                        background-color: {color_brand};
+                        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
                     }}
 
-                    @keyframes fadeIn {{
-                        from {{ opacity: 0; }}
-                        to {{ opacity: 1; }}
+                    .footer-info {{
+                        margin-top: 15px;
+                        display: flex;
+                        justify-content: space-between;
+                        color: #ADB5BD;
+                        font-size: 10px;
+                        font-weight: 700;
                     }}
                 </style>
                 
-                <div class="minimal-terror-splash">
-                    <div class="main-message">{msg}</div>
+                <div class="corporate-splash">
+                    <div class="branding-box">
+                        <div class="logo-placeholder">LOGISTICS CORE v2.0</div>
+                        <div class="main-msg">{msg}</div>
+                        <div class="progress-container">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <div class="footer-info">
+                            <span>ORD_ID: 2024-SYS</span>
+                            <span>{progreso}%</span>
+                        </div>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
             
-            time.sleep(1.8 if i < len(mensajes)-1 else 2.5) # Aumentamos el tiempo para más impacto
+            time.sleep(0.7)
         
         # Lógica de cierre de sesión
         if st.session_state.motivo_splash == "logout":
@@ -2764,6 +2794,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
