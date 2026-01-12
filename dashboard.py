@@ -1238,7 +1238,7 @@ else:
         with st.container():
             # Título con el mismo diseño que el gráfico superior
             st.markdown(f"""
-                <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #00FFAA; margin-top: 30px; margin-bottom: 20px;'>
+                <div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #48C9B0; margin-top: 30px; margin-bottom: 20px;'>
                     <span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>Días Promedio de Entrega, capacidad y velocidad (Lead Time)</span>
                 </div>
             """, unsafe_allow_html=True)
@@ -2920,6 +2920,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
