@@ -1022,7 +1022,7 @@ else:
         """, unsafe_allow_html=True)
         
         # 1. Definición de colores (Esto evita el NameError)
-        color_perfecto = "#00FFAA"    # Verde
+        color_perfecto = "#48C9B0"    # Verde
         color_con_fallo = "#ef4444"   # Rojo
         
         # 2. Selector Elite
@@ -1081,7 +1081,7 @@ else:
         # ----------------------------------------------------------
         # GRÁFICO EXCLUSIVO: RETRASO PROMEDIO (DÍAS) + NOTA
         # ----------------------------------------------------------
-        verde_esmeralda = "#00FFAA"
+        verde_esmeralda = "#48C9B0"
         naranja_ambar = "#d97706"
         rojo_coral = "#fb7185"
 
@@ -2920,6 +2920,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
