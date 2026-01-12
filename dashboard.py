@@ -1514,7 +1514,6 @@ else:
         df_kpi.columns = [c.upper() for c in df_kpi.columns]
         
         # APLICAMOS EL FILTRO DE FECHAS ANTES DE CUALQUIER CÁLCULO
-        # Validamos que el usuario haya seleccionado un rango completo (inicio y fin)
         if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
             start_date, end_date = rango_fechas
             df_kpi = df_kpi[
@@ -1533,22 +1532,21 @@ else:
         df_sin_entregar["DIAS_ATRASO_KPI"] = df_sin_entregar["DIAS_ATRASO_KPI"].apply(lambda x: x if x > 0 else 0)
         df_sin_entregar["DIAS_TRANS"] = (hoy - df_sin_entregar["FECHA DE ENVÍO"]).dt.days
         
-        
-        
         # =========================================================
         # --- 4. CÁLCULO DE MÉTRICAS PARA TARJETAS ---
         # =========================================================
         total_p = len(df_kpi)
         pend_p = len(df_sin_entregar)
-        # Asegúrate de que 'ESTATUS_CALCULADO' existe en tu df original
         eficiencia_p = (len(df_kpi[df_kpi['ESTATUS_CALCULADO'] == 'ENTREGADO']) / total_p * 100) if total_p > 0 else 0
         
-        # Valores para monitoreo de atrasos
+        # --- LÓGICA DE RANGOS CORREGIDA ---
         a1_val = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] == 1])
-        a2_val = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] == 2])
+        # Captura el rango intermedio de 2 a 4 días
+        a2_val = len(df_sin_entregar[(df_sin_entregar["DIAS_ATRASO_KPI"] >= 2) & (df_sin_entregar["DIAS_ATRASO_KPI"] <= 4)])
+        # Captura retrasos críticos de 5 días en adelante
         a5_val = len(df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] >= 5])
         
-        # --- ESTILO CSS ---
+        # --- ESTILO CSS (MANTENIDO) ---
         st.markdown("""
             <style>
             .main-card-kpi {
@@ -1564,7 +1562,7 @@ else:
             </style>
         """, unsafe_allow_html=True)
         
-        # --- DIBUJAR TARJETAS ---
+        # --- DIBUJAR TARJETAS (MANTENIDO) ---
         m1, m2, m3 = st.columns(3)
         with m1:
             st.markdown(f"<div class='main-card-kpi' style='border-left-color: #f1f5f9;'><div class='kpi-label'>Pedidos Totales</div><div class='kpi-value'>{total_p}</div></div>", unsafe_allow_html=True)
@@ -1576,22 +1574,23 @@ else:
         
         st.divider()
         
-        # --- DIBUJAR FILA DE ATRASOS ---
+        # --- DIBUJAR FILA DE ATRASOS (ACTUALIZADO CON RANGOS) ---
         st.markdown("<p style='color:#9CA3AF; font-size:13px; font-weight:bold; letter-spacing:1px; margin-bottom:20px;'>⚠️ MONITOREO DE ATRASOS (PERIODO ACTUAL)</p>", unsafe_allow_html=True)
         a1, a2, a3 = st.columns(3)
         a1.markdown(f"<div class='card-alerta' style='border-left: 6px solid yellow;'><div style='color:#9CA3AF; font-size:11px;'>1 Día Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a1_val}</div></div>", unsafe_allow_html=True)
-        a2.markdown(f"<div class='card-alerta' style='border-left: 6px solid #f97316;'><div style='color:#9CA3AF; font-size:11px;'>2 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a2_val}</div></div>", unsafe_allow_html=True)
+        # Se ajustó el texto a '2-4 Días' para ser coherente con la nueva lógica
+        a2.markdown(f"<div class='card-alerta' style='border-left: 6px solid #f97316;'><div style='color:#9CA3AF; font-size:11px;'>2-4 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a2_val}</div></div>", unsafe_allow_html=True)
         a3.markdown(f"<div class='card-alerta' style='border-left: 6px solid #FF4B4B;'><div style='color:#9CA3AF; font-size:11px;'>+5 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a5_val}</div></div>", unsafe_allow_html=True)
 
         st.divider()
         
         # =========================================================
-        # --- 3. SECCIÓN DE ALERTAS (TABLA DINÁMICA) ---
+        # --- 3. SECCIÓN DE ALERTAS (TABLA DINÁMICA - MANTENIDA) ---
         # =========================================================
         df_criticos = df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] > 0].copy()
         
         if not df_criticos.empty:
-            with st.expander("Ver detalle de pedidos vencidos de la fecha seleccionada)", expanded=False):
+            with st.expander("Ver detalle de pedidos vencidos de la fecha seleccionada", expanded=False):
                 df_ver = df_criticos.copy()
                 df_ver["FECHA DE ENVÍO"] = df_ver["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
                 df_ver["PROMESA DE ENTREGA"] = df_ver["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y')
@@ -2920,6 +2919,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
