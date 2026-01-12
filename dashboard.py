@@ -477,7 +477,7 @@ else:
             font-weight: 800 !important;
             color: #FFFFFF !important; 
             background-color: rgba(17, 24, 39, 1) !important;
-            border: 3px solid #38bdf8 !important; 
+            border: 1px solid #38bdf8 !important; 
             border-radius: 20px !important;
             text-align: center !important;
             outline: none !important;
@@ -2731,6 +2731,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
