@@ -2997,116 +2997,81 @@ else:
         # =========================================================
         # --- MOTOR DE DATOS PARA MATRIZ LOGÍSTICA ---
         # --- MOTOR DE DATOS CORREGIDO ---
-        @st.cache_data
-        def cargar_matriz_logistica():
-            try:
-                # Cargamos el CSV
-                df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
-                df.columns = [str(c).strip().upper() for c in df.columns]
-                
-                # Lista de columnas de fecha a procesar
-                cols_fechas = ['FECHA DE ENVÍO', 'PROMESA DE ENTREGA', 'FECHA DE ENTREGA REAL']
-                
-                for col in cols_fechas:
-                    if col in df.columns:
-                        # Usamos dayfirst=True para que entienda que 13/01 es 13 de Enero
-                        # errors='coerce' evita que el programa truene si hay una celda vacía o mal escrita
-                        df[col] = pd.to_datetime(df[col], dayfirst=True, errors='coerce')
-                
-                # Creamos la columna de MES basada en la Fecha de Envío para tus filtros
-                # .dt.month_name() devolverá el nombre del mes
-                df['MES_NOMBRE'] = df['FECHA DE ENVÍO'].dt.month_name()
-                
-                # Opcional: Traducir meses a español si lo prefieres
-                meses_esp = {
-                    'January': 'Enero', 'February': 'Febrero', 'March': 'Marzo', 
-                    'April': 'Abril', 'May': 'Mayo', 'June': 'Junio', 
-                    'July': 'Julio', 'August': 'Agosto', 'September': 'Septiembre', 
-                    'October': 'Octubre', 'November': 'Noviembre', 'December': 'Diciembre'
-                }
-                df['MES_NOMBRE'] = df['MES_NOMBRE'].map(meses_esp)
-                
-                return df
-            except Exception as e:
-                st.error(f"❌ Error Crítico en Matriz: {e}")
-                return None
+        # --- 1. CARGA Y LIMPIEZA DE LA MATRIZ ---
+        try:
+            df_matriz = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
+            df_matriz.columns = [str(c).strip().upper() for c in df_matriz.columns]
+            
+            # Limpieza de Fechas con el parche 'dayfirst' para evitar el error anterior
+            cols_f = ['FECHA DE ENVÍO', 'PROMESA DE ENTREGA', 'FECHA DE ENTREGA REAL']
+            for col in cols_f:
+                df_matriz[col] = pd.to_datetime(df_matriz[col], dayfirst=True, errors='coerce')
+            
+            # Filtro de seguridad: eliminar filas sin fecha de envío
+            df_matriz = df_matriz.dropna(subset=['FECHA DE ENVÍO'])
+            
+            # Crear columna de Mes para el Sidebar
+            df_matriz['MES_TX'] = df_matriz['FECHA DE ENVÍO'].dt.month_name()
+        except Exception as e:
+            st.error(f"Error en el casco de datos: {e}")
+            df_matriz = pd.DataFrame()
         
-        df_matriz = cargar_matriz_logistica()
-        
-        if df_matriz is not None:
-            # --- SIDEBAR ELITE (FILTROS) ---
+        if not df_matriz.empty:
+            # --- 2. FILTROS DE OPERACIÓN ---
             with st.sidebar:
-                st.markdown("### 🛠 CONFIGURACIÓN")
-                filtro_paq = st.multiselect("FLETERA", options=df_matriz['FLETERA'].unique(), default=df_matriz['FLETERA'].unique())
-                filtro_mes = st.multiselect("MES", options=df_matriz['MES_NOMBRE'].unique(), default=df_matriz['MES_NOMBRE'].unique())
+                st.markdown("---")
+                lista_meses = df_matriz['MES_TX'].unique()
+                mes_f = st.selectbox("📅 SELECCIONAR MES DE ANÁLISIS", lista_meses)
+                
+                lista_fleteras = df_matriz['FLETERA'].unique()
+                fletera_f = st.multiselect("🚚 FILTRAR FLETERA", lista_fleteras, default=lista_fleteras)
         
-            # Aplicar Filtros
-            df_f = df_matriz[(df_matriz['FLETERA'].isin(filtro_paq)) & (df_matriz['MES_NOMBRE'].isin(filtro_mes))]
+            # Aplicar filtros
+            mask = (df_matriz['MES_TX'] == mes_f) & (df_matriz['FLETERA'].isin(fletera_f))
+            df_f = df_matriz.loc[mask]
         
-            # --- CÁLCULOS LOGÍSTICOS (EL CEREBRO) ---
-            total_pedidos = len(df_f)
-            pedidos_con_retraso = len(df_f[df_f['FECHA DE ENTREGA REAL'] > df_f['PROMESA DE ENTREGA']])
-            efectividad_val = ((total_pedidos - pedidos_con_retraso) / total_pedidos * 100) if total_pedidos > 0 else 0
-            
+            # --- 3. CÁLCULO DE MÉTRICAS (TELEMETRÍA) ---
+            total_p = len(df_f)
             gasto_total = df_f['COSTO DE LA GUÍA'].sum()
-            costo_por_envio = df_f['COSTO DE LA GUÍA'].mean()
-            costo_por_caja = (gasto_total / df_f['CANTIDAD DE CAJAS'].sum()) if df_f['CANTIDAD DE CAJAS'].sum() > 0 else 0
+            cajas_totales = df_f['CANTIDAD DE CAJAS'].sum()
             
-            # Lead Time Promedio (Días)
-            df_f['LEAD_TIME'] = (df_f['FECHA DE ENTREGA REAL'] - df_f['FECHA DE ENVÍO']).dt.days
-            lead_time_avg = df_f['LEAD_TIME'].mean()
+            # Cálculo de OTD (On-Time Delivery)
+            # Filtramos entregas que superan la promesa
+            atrasados = df_f[df_f['FECHA DE ENTREGA REAL'] > df_f['PROMESA DE ENTREGA']]
+            num_atrasados = len(atrasados)
+            efectividad = ((total_p - num_atrasados) / total_p * 100) if total_p > 0 else 0
+            
+            # Cálculo de Lead Time (Tránsito real)
+            lead_time = (df_f['FECHA DE ENTREGA REAL'] - df_f['FECHA DE ENVÍO']).dt.days.mean()
         
-            # --- RENDERIZADO UI ELITE ---
-            
-            # BLOQUE 1: CALIFICACIÓN (Tarjetas principales)
-            st.markdown("<h4 class='premium-header'>SCORECARD OPERATIVO</h4>", unsafe_allow_html=True)
+            # --- 4. RENDERIZADO VISUAL ---
+            # Fila 1: Calificación General
+            st.markdown("<h4 class='premium-header'>CALIFICACIÓN GENERAL</h4>", unsafe_allow_html=True)
             c1, c2, c3 = st.columns(3)
-            with c1: render_card("GASTO TOTAL", f"${gasto_total:,.0f}", "Inversión en Fletes", border_base="border-blue")
-            with c2: render_card("% PARTICIPACIÓN", f"{(len(df_f)/len(df_matriz)*100):.1f}%", "Vs Total Histórico", border_base="border-purple")
-            with c3: render_card("% EFECTIVIDAD", f"{efectividad_val:.1f}%", "Entregas On-Time", actual_val=efectividad_val, target_val=95, inverse=True) # Target 95%
+            with c1: render_card("GASTO TOTAL", f"${gasto_total:,.0f}", "Inversión en Logística", border_base="border-blue")
+            with c2: render_card("% PARTICIPACIÓN", f"{(total_p/len(df_matriz)*100):.1f}%", "Carga sobre el Histórico", border_base="border-purple")
+            with c3: render_card("% EFECTIVIDAD", f"{efectividad:.1f}%", "Target: 95%", target_val=95, actual_val=efectividad, inverse=True)
         
-            # BLOQUE 2: OTD - DEEP DIVE
-            st.markdown("<h4 class='premium-header'>OTD & LEAD TIME ANALYSIS</h4>", unsafe_allow_html=True)
+            # Fila 2: OTD y Tiempos
+            st.markdown("<h4 class='premium-header'>OTD & LOGISTICS PERFORMANCE</h4>", unsafe_allow_html=True)
             o1, o2, o3 = st.columns(3)
-            with o1:
-                st.markdown(f"""<div class='card-container border-green'>
-                    <div class='card-label'>OTD (On-Time Delivery)</div>
-                    <div class='card-value' style='color:#00ffa2'>{efectividad_val:.1f}%</div>
-                    <div class='card-footer'>Cumplimiento de Promesa</div>
-                </div>""", unsafe_allow_html=True)
-            with o2:
-                # Calculamos días de retraso solo de los que fallaron
-                retraso_solo_fallas = (df_f[df_f['FECHA DE ENTREGA REAL'] > df_f['PROMESA DE ENTREGA']]['FECHA DE ENTREGA REAL'] - \
-                                      df_f[df_f['FECHA DE ENTREGA REAL'] > df_f['PROMESA DE ENTREGA']]['PROMESA DE ENTREGA']).dt.days.mean()
-                render_card("RETRASO PROMEDIO", f"{retraso_solo_fallas:.1f} Días", "En casos de incumplimiento", actual_val=retraso_solo_fallas, target_val=1)
-            with o3:
-                render_card("LEAD TIME (TRÁNSITO)", f"{lead_time_avg:.1f} Días", "Envío a Entrega Real", border_base="border-blue")
+            with o1: render_card("PEDIDOS ENVIADOS", f"{total_p}", "Volumen del periodo")
+            with o2: render_card("PEDIDOS CON RETRASO", f"{num_atrasados}", "Alertas de entrega", target_val=0, actual_val=num_atrasados)
+            with o3: render_card("LEAD TIME PROM.", f"{lead_time:.1f} Días", "Ciclo de envío a entrega")
         
-            # BLOQUE 3: ANÁLISIS DE COSTOS
-            st.markdown("<h4 class='premium-header'>EFICIENCIA FINANCIERA</h4>", unsafe_allow_html=True)
-            cost1, cost2, cost3 = st.columns(3)
-            with cost1: render_card("COSTO POR ENVÍO", f"${costo_por_envio:,.2f}", "Promedio por Guía")
-            with cost2: render_card("COSTO POR CAJA", f"${costo_por_caja:,.2f}", "Eficiencia de Empaque")
-            with cost3:
-                # Destino más caro (Top 1)
-                top_destino = df_f.groupby('DESTINO')['COSTO DE LA GUÍA'].mean().idxmax()
-                render_card("ZONA CRÍTICA", f"{top_destino}", "Destino con flete más alto", border_base="border-red")
+            # Fila 3: Análisis de Costos
+            st.markdown("<h4 class='premium-header'>ANÁLISIS DE COSTOS UNITARIOS</h4>", unsafe_allow_html=True)
+            ct1, ct2, ct3 = st.columns(3)
+            with ct1: render_card("COSTO POR ENVÍO", f"${(gasto_total/total_p if total_p > 0 else 0):,.2f}", "Promedio por guía")
+            with ct2: render_card("COSTO POR CAJA", f"${(gasto_total/cajas_totales if cajas_totales > 0 else 0):,.2f}", "Eficiencia de empaque")
+            with ct3:
+                top_dest = df_f.groupby('DESTINO')['COSTO DE LA GUÍA'].sum().idxmax() if not df_f.empty else "N/A"
+                render_card("DESTINO TOP GASTO", f"{top_dest}", "Mayor concentración de costo")
         
-            # BLOQUE DE TOTALES TIPO "INFO BOX"
-            st.markdown(f"""
-                <div class="insight-box" style="border-left: 5px solid #00D4FF;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span style="color:#94a3b8; font-size:12px; font-weight:bold;">PEDIDOS PROCESADOS</span><br>
-                            <span style="font-size:24px; color:white; font-family:Inter; font-weight:800;">{total_pedidos}</span>
-                        </div>
-                        <div style="text-align: right;">
-                            <span style="color:#fb7185; font-size:12px; font-weight:bold;">PEDIDOS CON RETRASO</span><br>
-                            <span style="font-size:24px; color:#fb7185; font-family:Inter; font-weight:800;">{pedidos_con_retraso}</span>
-                        </div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
+            # --- BLOQUE DE COMENTARIOS ---
+            with st.expander("📝 VER COMENTARIOS DE LA OPERACIÓN"):
+                st.dataframe(df_f[['NÚMERO DE PEDIDO', 'FLETERA', 'COMENTARIOS']].dropna(subset=['COMENTARIOS']), use_container_width=True)
+
 
 
 
