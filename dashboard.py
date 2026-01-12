@@ -173,95 +173,102 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# CASO B: SPLASH SCREEN (Versión Pro Inmersiva)
+# CASO B: SPLASH SCREEN (Versión Pantalla Completa "Matrix/Data")
 elif not st.session_state.splash_completado:
     with placeholder.container():
-        usuario = st.session_state.usuario_actual.capitalize() if st.session_state.usuario_actual else "Usuario"
-        color_accent = "#00FFAA" if st.session_state.motivo_splash != "logout" else "#FF4B4B"
+        usuario = st.session_state.usuario_actual.upper() if st.session_state.usuario_actual else "SYSTEM"
+        color_tema = "#00FFAA" if st.session_state.motivo_splash != "logout" else "#FF3333"
         
+        # Mensajes
         if st.session_state.motivo_splash == "logout":
-            mensajes = [f"Desconectando a {usuario}...", "Sincronizando registros...", "Sesión Finalizada."]
+            mensajes = ["TERMINATING_CONNECTION...", "SAVING_ENCRYPTED_DATA...", f"GOODBYE_{usuario}", "OFFLINE."]
         else:
-            mensajes = [f"Iniciando Sistema...", f"Bienvenido, {usuario}", "Cargando Módulos...", "Acceso Concedido."]
+            mensajes = ["INITIALIZING_BOOT_SEQUENCE...", f"USER_RECOGNIZED:_{usuario}", "LOADING_DATABASE_CORE...", "SYSTEM_READY."]
 
         splash_placeholder = st.empty()
 
         for i, msg in enumerate(mensajes):
-            # Barra de progreso dinámica basada en los mensajes
-            progreso = int(((i + 1) / len(mensajes)) * 100)
+            # Calculamos opacidad para el efecto de desvanecimiento
+            opacidad = (i + 1) / len(mensajes)
             
             splash_placeholder.markdown(f"""
                 <style>
-                    @keyframes scan {{
-                        0% {{ background-position: 0% 0%; }}
-                        100% {{ background-position: 0% 100%; }}
-                    }}
-                    @keyframes pulse-glow {{
-                        0%, 100% {{ filter: drop-shadow(0 0 15px {color_accent}66); transform: scale(1); }}
-                        50% {{ filter: drop-shadow(0 0 30px {color_accent}); transform: scale(1.05); }}
-                    }}
-                    .splash-container {{
+                    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&display=swap');
+
+                    .full-screen-splash {{
                         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                        background: radial-gradient(circle at center, #0e1117 0%, #000000 100%);
-                        z-index: 99999; display: flex; flex-direction: column;
-                        justify-content: center; align-items: center; overflow: hidden;
+                        background-color: #000;
+                        background-image: 
+                            radial-gradient(circle at center, {color_tema}22 0%, #000 70%),
+                            linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                            linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+                        background-size: 100% 100%, 100% 2px, 3px 100%;
+                        z-index: 999999;
+                        display: flex; flex-direction: column; justify-content: center; align-items: center;
+                        font-family: 'Space Mono', monospace;
+                        overflow: hidden;
                     }}
-                    /* Líneas de escaneo de fondo */
-                    .splash-container::before {{
-                        content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                        background: linear-gradient(0deg, rgba(0,255,170,0.03) 1px, transparent 1px);
-                        background-size: 100% 4px; animation: scan 4s linear infinite;
+
+                    /* Efecto de Túnel de Datos */
+                    .data-lines {{
+                        position: absolute; width: 200%; height: 200%;
+                        background: repeating-linear-gradient(0deg, transparent, transparent 40px, {color_tema}11 41px);
+                        transform: perspective(500px) rotateX(60deg) translateY(-10%);
+                        animation: tunnel 10s linear infinite;
                     }}
-                    .holo-cube {{
-                        width: 100px; height: 100px; position: relative;
-                        transform-style: preserve-3d; animation: rotate 4s infinite linear, pulse-glow 2s infinite ease-in-out;
+
+                    @keyframes tunnel {{
+                        from {{ background-position: 0 0; }}
+                        to {{ background-position: 0 1000px; }}
                     }}
-                    @keyframes rotate {{
-                        from {{ transform: rotateX(0deg) rotateY(0deg); }}
-                        to {{ transform: rotateX(360deg) rotateY(360deg); }}
+
+                    .message-container {{
+                        position: relative; text-align: center; z-index: 2;
                     }}
-                    .face {{
-                        position: absolute; width: 100px; height: 100px;
-                        background: rgba(0, 255, 170, 0.1);
-                        border: 2px solid {color_accent};
-                        box-shadow: inset 0 0 20px {color_accent}44;
+
+                    .main-text {{
+                        color: {color_tema}; font-size: 3.5rem; font-weight: bold;
+                        letter-spacing: 8px; text-shadow: 0 0 20px {color_tema};
+                        animation: glitch 1s infinite;
                     }}
-                    .f1 {{ transform: translateZ(50px); }}
-                    .f2 {{ transform: rotateY(180deg) translateZ(50px); }}
-                    .f3 {{ transform: rotateY(90deg) translateZ(50px); }}
-                    .f4 {{ transform: rotateY(-90deg) translateZ(50px); }}
-                    .f5 {{ transform: rotateX(90deg) translateZ(50px); }}
-                    .f6 {{ transform: rotateX(-90deg) translateZ(50px); }}
-                    
-                    .loader-text {{
-                        color: {color_accent}; font-family: 'Courier New', monospace;
-                        margin-top: 40px; font-size: 18px; letter-spacing: 4px;
-                        text-transform: uppercase; text-align: center;
+
+                    .sub-text {{
+                        color: white; font-size: 1rem; margin-top: 20px;
+                        letter-spacing: 4px; opacity: 0.8; text-transform: uppercase;
                     }}
-                    .progress-box {{
-                        width: 250px; height: 2px; background: rgba(255,255,255,0.1);
-                        margin-top: 20px; position: relative;
+
+                    @keyframes glitch {{
+                        0% {{ transform: translate(0); }}
+                        20% {{ transform: translate(-2px, 2px); }}
+                        40% {{ transform: translate(-2px, -2px); }}
+                        60% {{ transform: translate(2px, 2px); }}
+                        80% {{ transform: translate(2px, -2px); }}
+                        100% {{ transform: translate(0); }}
                     }}
-                    .progress-bar {{
-                        position: absolute; left: 0; top: 0; height: 100%;
-                        width: {progreso}%; background: {color_accent};
-                        box-shadow: 0 0 10px {color_accent}; transition: width 0.4s ease;
+
+                    .scanline {{
+                        width: 100%; height: 100px; background: linear-gradient(0deg, transparent, {color_tema}33, transparent);
+                        position: absolute; top: -100px; animation: scanning 3s linear infinite;
+                    }}
+
+                    @keyframes scanning {{
+                        0% {{ top: -100px; }}
+                        100% {{ top: 100vh; }}
                     }}
                 </style>
                 
-                <div class="splash-container">
-                    <div class="holo-cube">
-                        <div class="face f1"></div><div class="face f2"></div>
-                        <div class="face f3"></div><div class="face f4"></div>
-                        <div class="face f5"></div><div class="face f6"></div>
+                <div class="full-screen-splash">
+                    <div class="data-lines"></div>
+                    <div class="scanline"></div>
+                    <div class="message-container">
+                        <div style="color: {color_tema}; font-size: 12px; margin-bottom: 10px;">> ACCESSING SECURE_SERVER...</div>
+                        <div class="main-text">{msg}</div>
+                        <div class="sub-text">Encrypted_Session: ACTIVE</div>
                     </div>
-                    <div class="loader-text">{msg}</div>
-                    <div class="progress-box"><div class="progress-bar"></div></div>
-                    <div style="color: grey; font-size: 10px; margin-top: 10px; font-family: sans-serif;">SYSTEM_STATUS: {progreso}%</div>
                 </div>
             """, unsafe_allow_html=True)
             
-            time.sleep(0.7 if i < len(mensajes)-1 else 1.2)
+            time.sleep(0.9)
         
         # Lógica de cierre de sesión
         if st.session_state.motivo_splash == "logout":
@@ -2772,6 +2779,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
