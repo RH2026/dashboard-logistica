@@ -1021,28 +1021,38 @@ else:
             </div>
         """, unsafe_allow_html=True)
         
-        # 1. Selector Elite
+        # 1. Definición de colores (Esto evita el NameError)
+        color_perfecto = "#22c55e"    # Verde
+        color_con_fallo = "#ef4444"   # Rojo
+        
+        # 2. Selector Elite
         lista_fleteras = ["TODAS"] + sorted(df_filtrado["FLETERA"].unique().tolist())
         fletera_seleccionada = st.selectbox("🎯 Filtrar por Paquetería:", lista_fleteras, key="lupa_selector")
         
-        # 2. Procesamiento
+        # 3. Procesamiento
         df_lupa = df_filtrado[df_filtrado["FECHA DE ENTREGA REAL"].notna()].copy()
         if fletera_seleccionada != "TODAS":
             df_lupa = df_lupa[df_lupa["FLETERA"] == fletera_seleccionada]
         
-        df_lupa["DIAS_DIF"] = (df_lupa["FECHA DE ENTREGA REAL"] - df_lupa["PROMESA DE ENTREGA"]).dt.days
+        # Asegurar que las fechas sean datetime y calcular diferencia
+        df_lupa["DIAS_DIF"] = (pd.to_datetime(df_lupa["FECHA DE ENTREGA REAL"]) - 
+                               pd.to_datetime(df_lupa["PROMESA DE ENTREGA"])).dt.days
         
         if not df_lupa.empty:
             df_dist_lupa = df_lupa.groupby("DIAS_DIF").size().reset_index(name="PEDIDOS")
-            df_dist_lupa["COLOR_HEX"] = df_dist_lupa["DIAS_DIF"].apply(lambda x: color_perfecto if x <= 0 else color_con_fallo)
+            
+            # Aquí se usan las variables definidas arriba
+            df_dist_lupa["COLOR_HEX"] = df_dist_lupa["DIAS_DIF"].apply(
+                lambda x: color_perfecto if x <= 0 else color_con_fallo
+            )
         
-            # 3. Gráfico de Histograma Técnico RESPONSIVE
+            # 4. Gráfico de Histograma Técnico RESPONSIVE
             base_lupa = alt.Chart(df_dist_lupa).encode(
-                x=alt.X("DIAS_DIF:O", # Cambiado a Ordinal para mejor control de etiquetas
+                x=alt.X("DIAS_DIF:O", 
                         title="Días vs Promesa (← Antes | Retraso →)", 
                         axis=alt.Axis(labelAngle=0, labelColor='#94a3b8', labelOverlap='parity')),
                 y=alt.Y("PEDIDOS:Q", title=None, axis=alt.Axis(gridOpacity=0.05, labelColor='#94a3b8', format='~s')),
-                color=alt.Color("COLOR_HEX:N", scale=None)
+                color=alt.Color("COLOR_HEX:N", scale=None) # scale=None permite usar los hex directamente
             )
         
             bars_lupa = base_lupa.mark_bar(
@@ -2926,6 +2936,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
