@@ -1585,16 +1585,36 @@ else:
         st.divider()
         
         # =========================================================
-        # --- 3. SECCIÓN DE ALERTAS (TABLA DINÁMICA - MANTENIDA) ---
+        # --- 3. SECCIÓN DE ALERTAS (TABLA PREMIUM CON FILTROS) ---
         # =========================================================
         df_criticos = df_sin_entregar[df_sin_entregar["DIAS_ATRASO_KPI"] > 0].copy()
         
         if not df_criticos.empty:
-            with st.expander("Ver detalle de pedidos vencidos de la fecha seleccionada", expanded=False):
+            with st.expander("🚨 DETALLE DE PEDIDOS VENCIDOS (GESTIÓN CRÍTICA)", expanded=True):
+                
+                # --- SUB-FILTROS INTERNOS PARA LA TABLA ---
+                c1, c2 = st.columns(2)
+                with c1:
+                    filtro_cliente = st.multiselect("Filtrar Cliente en Alerta:", 
+                                                 options=sorted(df_criticos["NOMBRE DEL CLIENTE"].unique()),
+                                                 key="filter_alert_client")
+                with c2:
+                    filtro_flete = st.multiselect("Filtrar Fletera en Alerta:", 
+                                                options=sorted(df_criticos["FLETERA"].unique()),
+                                                key="filter_alert_flete")
+
+                # Aplicar filtros dinámicos
                 df_ver = df_criticos.copy()
+                if filtro_cliente:
+                    df_ver = df_ver[df_ver["NOMBRE DEL CLIENTE"].isin(filtro_cliente)]
+                if filtro_flete:
+                    df_ver = df_ver[df_ver["FLETERA"].isin(filtro_flete)]
+
+                # Formateo de fechas
                 df_ver["FECHA DE ENVÍO"] = df_ver["FECHA DE ENVÍO"].dt.strftime('%d/%m/%Y')
                 df_ver["PROMESA DE ENTREGA"] = df_ver["PROMESA DE ENTREGA"].dt.strftime('%d/%m/%Y')
                 
+                # Selección de columnas finales
                 columnas_finales = [
                     "NÚMERO DE PEDIDO", "NOMBRE DEL CLIENTE", "FLETERA", 
                     "FECHA DE ENVÍO", "PROMESA DE ENTREGA", "NÚMERO DE GUÍA", 
@@ -1606,15 +1626,39 @@ else:
                     "DIAS_TRANS": "DÍAS TRANS."
                 })
         
+                # --- RENDERIZADO PREMIUM ---
                 st.dataframe(
                     df_tabla_ver.sort_values("DÍAS ATRASO", ascending=False),
                     use_container_width=True,
                     hide_index=True,
                     column_config={
-                        "NOMBRE DEL CLIENTE": st.column_config.TextColumn("NOMBRE DEL CLIENTE", width="large"),
-                        "DÍAS ATRASO": st.column_config.TextColumn("DÍAS ATRASO ⚠️")
+                        "NÚMERO DE PEDIDO": st.column_config.TextColumn("🔢 PEDIDO"),
+                        "NOMBRE DEL CLIENTE": st.column_config.TextColumn("👤 CLIENTE", width="large"),
+                        "FLETERA": st.column_config.TextColumn("🚛 TRANSPORTE"),
+                        "DÍAS TRANS.": st.column_config.ProgressColumn(
+                            "⏳ DÍAS TRANS.",
+                            help="Días totales desde el envío",
+                            format="%d",
+                            min_value=0,
+                            max_value=int(df_tabla_ver["DÍAS TRANS."].max() + 2),
+                            color="orange"
+                        ),
+                        "DÍAS ATRASO": st.column_config.ProgressColumn(
+                            "⚠️ DÍAS ATRASO",
+                            help="Días de retraso vs Promesa",
+                            format="%d",
+                            min_value=0,
+                            max_value=int(df_tabla_ver["DÍAS ATRASO"].max() + 2),
+                            color="red"
+                        ),
+                        "NÚMERO DE GUÍA": st.column_config.TextColumn("📑 GUÍA")
                     }
                 )
+                
+                st.caption(f"Mostrando {len(df_tabla_ver)} pedidos con retraso crítico.")
+        else:
+            st.success("✅ Protocolo Limpio: No se detectan pedidos vencidos en este rango.")
+            
         st.divider()
         
         
@@ -2919,6 +2963,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
