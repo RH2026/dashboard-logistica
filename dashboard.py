@@ -1404,7 +1404,7 @@ else:
         
         st.markdown("""
             <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>
-                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>RASTREO &<span style='color:#FFFFFF;'>SEGUIMIENTO</span></h1>
+                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>RASTREO &<span style='color:#FFFFFF;'> SEGUIMIENTO</span></h1>
                 <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>Logística & Rendimiento de Paqueterías</p>
                 <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
             </div>
@@ -2992,6 +2992,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
