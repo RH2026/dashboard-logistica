@@ -1229,34 +1229,61 @@ else:
         # =========================================================
         # --- BLOQUE 2: LEAD TIME (VERDE ESMERALDA ELÉCTRICO) ---
         # =========================================================
+        # 1. Definimos la función de título si no existe (Para evitar el NameError)
+        def titulo_grafico_elite(texto):
+            st.markdown(f"""
+                <h3 style='color: #00FFAA; font-family: sans-serif; border-bottom: 2px solid #00FFAA; padding-bottom: 10px;'>
+                    {texto}
+                </h3>
+            """, unsafe_allow_html=True)
+        
+        # 2. Definimos el color que faltaba
+        verde_esmeralda = "#00FFAA" 
+        
+        # =========================================================
+        # --- BLOQUE 2: LEAD TIME (VERDE ESMERALDA ELÉCTRICO) ---
+        # =========================================================
         with st.container():
-            titulo_grafico_elite("Días Promedio de Entrega, capacidad y velocidad (Lead Time)")
+            titulo_grafico_elite("Días Promedio de Entrega (Lead Time)")
             
+            # Usamos df_filtrado que es el que venías procesando arriba
+            # Aseguramos que las fechas sean tipo datetime
+            df_lupa_lt = df_filtrado.copy()
+            df_lupa_lt['FECHA DE ENTREGA REAL'] = pd.to_datetime(df_lupa_lt['FECHA DE ENTREGA REAL'], errors='coerce')
+            df_lupa_lt['FECHA DE ENVÍO'] = pd.to_datetime(df_lupa_lt['FECHA DE ENVÍO'], errors='coerce')
+        
             # Solo pedidos entregados para el cálculo de tiempo real
-            df_entregados = df_kpi[df_kpi['FECHA DE ENTREGA REAL'].notna()].copy()
-            df_entregados['LEAD_TIME'] = (df_entregados['FECHA DE ENTREGA REAL'] - df_entregados['FECHA DE ENVÍO']).dt.days
-            lead_data = df_entregados.groupby('FLETERA')['LEAD_TIME'].mean().reset_index()
+            df_entregados = df_lupa_lt[df_lupa_lt['FECHA DE ENTREGA REAL'].notna()].copy()
             
-            # Capa de Barras
-            bars_lead = alt.Chart(lead_data).mark_bar(
-                cornerRadiusTopRight=10,
-                cornerRadiusBottomRight=10,
-                size=25
-            ).encode(
-                x=alt.X('LEAD_TIME:Q', title="Días en Tránsito"),
-                y=alt.Y('FLETERA:N', sort='x', title=None),
-                color=alt.value(verde_esmeralda) # <--- VERDE ESMERALDA ELÉCTRICO
-            )
-        
-            # Capa de Etiquetas (Texto)
-            text_lead = bars_lead.mark_text(
-                align='left', baseline='middle', dx=8,
-                color='white', fontSize=13, fontWeight='bold'
-            ).encode(
-                text=alt.Text('LEAD_TIME:Q', format='.1f')
-            )
-        
-            st.altair_chart((bars_lead + text_lead).properties(height=400), use_container_width=True)
+            if not df_entregados.empty:
+                # Calcular la diferencia en días
+                df_entregados['LEAD_TIME'] = (df_entregados['FECHA DE ENTREGA REAL'] - df_entregados['FECHA DE ENVÍO']).dt.days
+                
+                # Agrupar por fletera y promediar
+                lead_data = df_entregados.groupby('FLETERA')['LEAD_TIME'].mean().reset_index()
+                
+                # Capa de Barras
+                bars_lead = alt.Chart(lead_data).mark_bar(
+                    cornerRadiusTopRight=10,
+                    cornerRadiusBottomRight=10,
+                    size=25
+                ).encode(
+                    x=alt.X('LEAD_TIME:Q', title="Días promedio en Tránsito"),
+                    y=alt.Y('FLETERA:N', sort='-x', title=None), # Sort -x para ver las más lentas arriba o x para las rápidas
+                    color=alt.value(verde_esmeralda)
+                )
+            
+                # Capa de Etiquetas (Texto)
+                text_lead = bars_lead.mark_text(
+                    align='left', baseline='middle', dx=8,
+                    color='white', fontSize=13, fontWeight='bold'
+                ).encode(
+                    text=alt.Text('LEAD_TIME:Q', format='.1f')
+                )
+            
+                st.altair_chart((bars_lead + text_lead).properties(height=400), use_container_width=True)
+            else:
+                st.info("No hay datos suficientes para calcular el Lead Time (faltan fechas de entrega o envío).")
         
         
         # --------------------------------------------------
@@ -2912,6 +2939,7 @@ else:
         # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
         # =========================================================
         
+
 
 
 
