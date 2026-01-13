@@ -3113,54 +3113,60 @@ else:
         except Exception as e:
             st.error(f"Error crítico en el casco: {e}")
 
-        # --- 5. RADAR DE DESTINOS (TARJETA GRANDE - GRISES TÁCTICOS) ---
-        st.markdown("<h4 class='premium-header'>COBERTURA GEOGRÁFICA</h4>", unsafe_allow_html=True)
+        # --- 5. RADAR DE DESTINOS (MOSAICO DE GRISES TÁCTICOS) ---
+        st.markdown("<h4 class='premium-header'>COBERTURA: MOSAICO DE DESTINOS</h4>", unsafe_allow_html=True)
         
         # Procesamiento y limpieza de Ciudades
         ciudades_raw = df_f['DESTINO'].unique()
         ciudades_limpias = [str(c).split(',')[0].split('-')[0].strip().upper() for c in ciudades_raw]
+        # Eliminamos espacios internos para el efecto "pegado"
         ciudades_final = sorted(list(set(ciudades_limpias)))
 
-        # CSS Ajustado para Grises Semi-Oscuros
+        # CSS para el efecto de texto pegado y tonos de gris
         st.markdown("""
             <style>
-                .destinos-container {
+                .mosaico-container {
                     background-color: #0d1117;
                     border: 1px solid #30363d;
                     border-radius: 12px;
                     padding: 30px;
-                    text-align: center;
-                    min-height: 100px;
-                    border-bottom: 3px solid #484f58; /* Detalle en gris oscuro */
+                    text-align: justify;
+                    line-height: 1.2;
+                    word-break: break-all;
                 }
-                .city-tag {
-                    display: inline-block;
-                    margin: 8px 15px;
+                .mosaico-tag {
+                    display: inline;
                     font-family: 'Inter', sans-serif;
-                    font-weight: 700;
-                    font-size: 18px;
-                    letter-spacing: 0.5px;
-                    color: #6e7681 !important; /* Gris semi-oscuro base */
-                    transition: all 0.4s ease;
-                    cursor: default;
+                    font-weight: 800;
+                    font-size: 24px;
+                    letter-spacing: -1.5px; /* Pegamos las letras */
+                    transition: all 0.3s ease;
+                    cursor: crosshair;
                 }
-                .city-tag:hover {
-                    transform: translateY(-3px);
-                    color: #00FFAA !important; /* Brillo esmeralda suave al pasar el mouse */
-                    text-shadow: 0px 0px 10px rgba(0, 255, 170, 0.3);
+                .mosaico-tag:hover {
+                    color: #00FFAA !important; /* Brillo esmeralda al detectar */
+                    background: rgba(0, 255, 170, 0.1);
                 }
             </style>
         """, unsafe_allow_html=True)
 
-        # Construcción del Mosaico de Ciudades
-        html_destinos = "<div class='destinos-container'>"
+        # Definición de la escala de grises tácticos
+        grises_elite = ["#30363d", "#484f58", "#6e7681", "#8b949e", "#21262d"]
         
-        for ciudad in ciudades_final:
-            html_destinos += f"<span class='city-tag'>{ciudad}</span>"
+        # Construcción del Mosaico
+        html_mosaico = "<div class='mosaico-container'>"
         
-        html_destinos += "</div>"
+        for i, ciudad in enumerate(ciudades_final):
+            # Seleccionamos un tono de gris diferente para cada ciudad
+            color_gris = grises_elite[i % len(grises_elite)]
+            # Quitamos espacios para que se vea "pegado"
+            ciudad_pegada = ciudad.replace(" ", "")
+            html_mosaico += f"<span class='mosaico-tag' style='color: {color_gris};'>{ciudad_pegada}</span>"
         
-        st.markdown(html_destinos, unsafe_allow_html=True)
+        html_mosaico += "</div>"
+        
+        st.markdown(html_mosaico, unsafe_allow_html=True)
+
 
 
 
