@@ -3022,7 +3022,7 @@ else:
                 </div>
             """, unsafe_allow_html=True)
 
-        # 4. Motor de Datos y Cálculos Elite (Reparado)
+        # 4. Motor de Datos y Cálculos Elite (Reparación Total)
         try:
             df_matriz = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
             df_matriz.columns = [str(c).strip().upper() for c in df_matriz.columns]
@@ -3049,9 +3049,18 @@ else:
                     total_enviados = len(df_f)
                     pedidos_mes_global = len(df_mes_global)
                     
-                    # Participación de mercado (basado en envíos totales)
+                    # Participación de mercado
                     participacion = (total_enviados / pedidos_mes_global * 100) if pedidos_mes_global > 0 else 0
                     
+                    # Cálculo de Costo por Caja Promedio (Solo guías con costo y cajas > 0)
+                    df_costos = df_f[(df_f['COSTO DE LA GUÍA'] > 0) & (df_f['CANTIDAD DE CAJAS'] > 0)].copy()
+                    if not df_costos.empty:
+                        costo_total_f = df_costos['COSTO DE LA GUÍA'].sum()
+                        cajas_totales_f = df_costos['CANTIDAD DE CAJAS'].sum()
+                        costo_por_caja_prom = costo_total_f / cajas_totales_f
+                    else:
+                        costo_por_caja_prom = 0.0
+
                     # SECCIÓN CRÍTICA: Eficiencia basada SOLO en ENTREGADOS
                     df_entregados = df_f.dropna(subset=['FECHA DE ENTREGA REAL'])
                     total_entregados = len(df_entregados)
@@ -3059,7 +3068,6 @@ else:
                     if total_entregados > 0:
                         a_tiempo = df_entregados[df_entregados['FECHA DE ENTREGA REAL'] <= df_entregados['PROMESA DE ENTREGA']]
                         eficiencia_val = (len(a_tiempo) / total_entregados * 100)
-                        # El OTD lo mantenemos igual para consistencia
                         otd_val = eficiencia_val 
                     else:
                         eficiencia_val = 0.0
@@ -3070,7 +3078,6 @@ else:
                     num_retrasos = len(df_retraso)
                     dias_retraso_prom = (df_retraso['FECHA DE ENTREGA REAL'] - df_retraso['PROMESA DE ENTREGA']).dt.days.mean() if not df_retraso.empty else 0
                     
-                    # Lead Time promedio de los ya entregados
                     lead_time_prom = (df_entregados['FECHA DE ENTREGA REAL'] - df_entregados['FECHA DE ENVÍO']).dt.days.mean() if total_entregados > 0 else 0
                     
                     destinos = df_f.groupby('DESTINO')['COSTO DE LA GUÍA'].sum()
@@ -3081,7 +3088,9 @@ else:
                     # FILA 1: NEGOCIO
                     st.markdown("<h4 class='premium-header'>NEGOCIO Y PARTICIPACIÓN</h4>", unsafe_allow_html=True)
                     n1, n2, n3 = st.columns(3)
-                    with n1: render_card("COSTO TOTAL INVERSIÓN", f"${g_total:,.0f}", f"Inversión {mes_f}", border_base="border-blue")
+                    with n1: 
+                        # Aquí integramos el dato extra en el footer
+                        render_card("COSTO TOTAL INVERSIÓN", f"${g_total:,.0f}", f"Promedio: ${costo_por_caja_prom:,.2f} por caja", border_base="border-blue")
                     with n2: render_card("% PARTICIPACIÓN", f"{participacion:.1f}%", f"Cuota de Mercado", border_base="border-purple")
                     with n3: render_card("% EFICIENCIA", f"{eficiencia_val:.1f}%", "Basado en Entregas Reales", 95, eficiencia_val, True)
 
@@ -3103,7 +3112,7 @@ else:
                     st.info(f"Sin registros para {fletera_f} en {mes_f}.")
         except Exception as e:
             st.error(f"Error crítico en el casco: {e}")
-        
+
 
 
 
