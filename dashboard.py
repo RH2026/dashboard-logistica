@@ -3113,6 +3113,55 @@ else:
         except Exception as e:
             st.error(f"Error crítico en el casco: {e}")
 
+        # --- 5. RADAR DE DESTINOS (TARJETA GRANDE) ---
+                st.markdown("<h4 class='premium-header'>RADAR DE COBERTURA: DESTINOS FRECUENTES</h4>", unsafe_allow_html=True)
+                
+                # Procesamiento de ciudades (Limpieza de "Ciudad, Estado")
+                # Tomamos los destinos únicos de la fletera seleccionada
+                ciudades_raw = df_f['DESTINO'].unique()
+                ciudades_limpias = [str(c).split(',')[0].split('-')[0].strip().upper() for c in ciudades_raw]
+                # Eliminamos duplicados después de limpiar y ordenamos
+                ciudades_final = sorted(list(set(ciudades_limpias)))
+
+                # CSS Extra para la Tarjeta de Destinos
+                st.markdown("""
+                    <style>
+                        .destinos-container {
+                            background-color: #0d1117;
+                            border: 1px solid #30363d;
+                            border-radius: 12px;
+                            padding: 25px;
+                            text-align: center;
+                            min-height: 100px;
+                            border-left: 5px solid #00FFAA;
+                        }
+                        .city-tag {
+                            display: inline-block;
+                            margin: 5px 10px;
+                            font-family: 'Inter', sans-serif;
+                            font-weight: 800;
+                            font-size: 22px;
+                            letter-spacing: -0.5px;
+                            transition: transform 0.3s;
+                        }
+                        .city-tag:hover {
+                            transform: scale(1.1);
+                            color: #ffffff !important;
+                        }
+                    </style>
+                """, unsafe_allow_html=True)
+
+                # Construcción de la "Nube de Destinos" con colores alternos (Azul y Morado Elite)
+                html_destinos = "<div class='destinos-container'>"
+                colores = ["#00D4FF", "#a78bfa"] # Azul y Morado de su paleta
+                
+                for i, ciudad in enumerate(ciudades_final):
+                    color = colores[i % 2]
+                    html_destinos += f"<span class='city-tag' style='color: {color};'>{ciudad}</span>"
+                
+                html_destinos += "</div>"
+                
+                st.markdown(html_destinos, unsafe_allow_html=True)
 
 
 
