@@ -3005,7 +3005,7 @@ else:
         
         st.markdown('<hr style="border:0; height:2px; background:#00D4FF; box-shadow:0px 0px 15px 3px rgba(0,212,255,0.7); margin-bottom:30px; border-radius:10px; opacity:0.8;">', unsafe_allow_html=True)
 
-        # 3. Función de Renderizado Interna
+       # 3. Función de Renderizado Interna (Blindada)
         def render_card(label, value, footer, target_val=None, actual_val=None, inverse=False, border_base="border-blue"):
             if target_val is None or actual_val is None:
                 color, border = "#f0f6fc", border_base
@@ -3022,10 +3022,11 @@ else:
                 </div>
             """, unsafe_allow_html=True)
 
-        # 4. Motor de Datos y Cálculos
+        # 4. Motor de Datos y Cálculos Elite
         try:
             df_matriz = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
             df_matriz.columns = [str(c).strip().upper() for c in df_matriz.columns]
+            
             cols_f = ['FECHA DE ENVÍO', 'PROMESA DE ENTREGA', 'FECHA DE ENTREGA REAL']
             for col in cols_f:
                 df_matriz[col] = pd.to_datetime(df_matriz[col], dayfirst=True, errors='coerce')
@@ -3039,36 +3040,61 @@ else:
                     fletera_f = st.selectbox("FLETERA (MANDO ÚNICO)", sorted(df_matriz['FLETERA'].unique()))
                     mes_f = st.selectbox("MES DE ANÁLISIS", df_matriz['MES_TX'].unique())
 
+                # Filtrado por mes y fletera
                 df_f = df_matriz[(df_matriz['MES_TX'] == mes_f) & (df_matriz['FLETERA'] == fletera_f)]
+                # Data global del mes para % de Participación
+                df_mes_global = df_matriz[df_matriz['MES_TX'] == mes_f]
 
                 if not df_f.empty:
-                    # Cálculos OTD y Retraso
+                    # --- CÁLCULOS DE ALTO NIVEL ---
                     total_p = len(df_f)
-                    otd_val = (len(df_f[df_f['FECHA DE ENTREGA REAL'] <= df_f['PROMESA DE ENTREGA']]) / total_p * 100)
+                    pedidos_mes_global = len(df_mes_global)
                     
+                    # Participación de mercado
+                    participacion = (total_p / pedidos_mes_global * 100) if pedidos_mes_global > 0 else 0
+                    
+                    # OTD y Eficiencia
+                    pedidos_a_tiempo = df_f[df_f['FECHA DE ENTREGA REAL'] <= df_f['PROMESA DE ENTREGA']]
+                    otd_val = (len(pedidos_a_tiempo) / total_p * 100)
+                    
+                    # Retrasos y Lead Time
                     df_retraso = df_f[df_f['FECHA DE ENTREGA REAL'] > df_f['PROMESA DE ENTREGA']].copy()
-                    dias_retraso_prom = (df_retraso['FECHA DE entrega real'] - df_retraso['PROMESA DE ENTREGA']).dt.days.mean() if not df_retraso.empty else 0
+                    num_retrasos = len(df_retraso)
+                    dias_retraso_prom = (df_retraso['FECHA DE ENTREGA REAL'] - df_retraso['PROMESA DE ENTREGA']).dt.days.mean() if not df_retraso.empty else 0
+                    
+                    df_f['LT'] = (df_f['FECHA DE ENTREGA REAL'] - df_f['FECHA DE ENVÍO']).dt.days
+                    lead_time_prom = df_f['LT'].mean()
                     
                     destinos = df_f.groupby('DESTINO')['COSTO DE LA GUÍA'].sum()
-                    
-                    # Layout de Tarjetas
-                    st.markdown("<h4 class='premium-header'>KPI DE CUMPLIMIENTO Y SERVICIO</h4>", unsafe_allow_html=True)
-                    c1, c2, c3 = st.columns(3)
-                    with c1: render_card("OTD FINAL", f"{otd_val:.1f}%", "Meta: 95%", 95, otd_val, True)
-                    with c2: render_card("RETRASO PROM.", f"{dias_retraso_prom:.1f} DÍAS", "Desviación", 1.5, dias_retraso_prom)
-                    with c3: render_card("DESTINO TOP", f"{destinos.idxmax()}", f"Gasto: ${destinos.max():,.0f}", border_base="border-red")
-
-                    st.markdown("<h4 class='premium-header'>EFICIENCIA FINANCIERA</h4>", unsafe_allow_html=True)
-                    e1, e2, e3 = st.columns(3)
                     g_total = df_f['COSTO DE LA GUÍA'].sum()
-                    with e1: render_card("COSTO TOTAL", f"${g_total:,.0f}", fletera_f)
-                    with e2: render_card("COSTO X CAJA", f"${(g_total/df_f['CANTIDAD DE CAJAS'].sum()):,.2f}", "Promedio")
-                    with e3: render_card("VOLUMEN", f"{int(df_f['CANTIDAD DE CAJAS'].sum())}", "Cajas totales", border_base="border-purple")
+
+                    # --- FILA 1: NEGOCIO ---
+                    st.markdown("<h4 class='premium-header'>NEGOCIO Y PARTICIPACIÓN</h4>", unsafe_allow_html=True)
+                    n1, n2, n3 = st.columns(3)
+                    with n1: render_card("COSTO TOTAL INVERSIÓN", f"${g_total:,.0f}", f"Gasto Neto {mes_f}", border_base="border-blue")
+                    with n2: render_card("% PARTICIPACIÓN", f"{participacion:.1f}%", f"Cuota vs Total Mes", border_base="border-purple")
+                    with n3: render_card("% EFICIENCIA", f"{otd_val:.1f}%", "Efectividad Operativa", 95, otd_val, True)
+
+                    # --- FILA 2: CUMPLIMIENTO ---
+                    st.markdown("<h4 class='premium-header'>CUMPLIMIENTO Y SERVICIO</h4>", unsafe_allow_html=True)
+                    c1, c2, c3 = st.columns(3)
+                    with c1: render_card("OTD (PUNTUALIDAD)", f"{otd_val:.1f}%", "Cumplimiento Promesa", 95, otd_val, True)
+                    with c2: render_card("CON RETRASO", f"{num_retrasos}", "Pedidos fuera de tiempo", 0, num_retrasos)
+                    with c3: render_card("RETRASO PROM.", f"{dias_retraso_prom:.1f} DÍAS", "Gravedad del desvío", 1.5, dias_retraso_prom)
+
+                    # --- FILA 3: OPERACIÓN ---
+                    st.markdown("<h4 class='premium-header'>VOLUMEN Y VELOCIDAD</h4>", unsafe_allow_html=True)
+                    o1, o2, o3 = st.columns(3)
+                    with o1: render_card("PEDIDOS ENVIADOS", f"{total_p}", "Volumen total guías", border_base="border-blue")
+                    with o2: render_card("LEAD TIME", f"{lead_time_prom:.1f} DÍAS", "Ciclo Envío-Entrega", border_base="border-green")
+                    with o3: render_card("DESTINO TOP", f"{destinos.idxmax()}", f"Inversión: ${destinos.max():,.0f}", border_base="border-red")
+                    
                 else:
-                    st.info("Sin datos para esta selección.")
+                    st.info(f"Sin registros para {fletera_f} en {mes_f}.")
         except Exception as e:
-            st.error(f"Error en Radar: {e}")
+            st.error(f"Falla en sistemas: {e}")
         
+
 
 
 
