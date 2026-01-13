@@ -2983,7 +2983,7 @@ else:
                 
                 .card-label { color: #8b949e; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
                 .card-value { font-size: 1.6rem; font-weight: 800; margin: 4px 0; font-family: 'Inter', sans-serif; }
-                .card-footer { color: #484f58; font-size: 0.6rem; font-weight: 600; }
+                .card-footer { color: #FFFFFF; font-size: 0.6rem; font-weight: 600; }
             </style>
             
             <div class='header-container'>
@@ -3112,6 +3112,7 @@ else:
                     st.info(f"Sin registros para {fletera_f} en {mes_f}.")
         except Exception as e:
             st.error(f"Error crítico en el casco: {e}")
+
 
 
 
