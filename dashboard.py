@@ -196,112 +196,126 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# =========================================================
-# CASO B: SPLASH SCREEN (VERSIÓN NEXION - REPARACIÓN TOTAL)
-# =========================================================
+# CASO B: SPLASH SCREEN (Versión NEXION Premium - Enfoque en Bienvenida)
 elif not st.session_state.splash_completado:
     with placeholder.container():
-        # 1. GENERACIÓN DEL MOSAICO DE FONDO (TODOS LOS DESTINOS)
-        try:
-            # Cargamos la matriz para extraer el ADN geográfico
-            df_splash = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
-            destinos_raw = df_splash['DESTINO'].dropna().unique()
-            # Limpiamos ciudades (solo nombre, sin espacios)
-            destinos_list = [str(d).split(',')[0].split('-')[0].strip().upper().replace(" ", "") for d in destinos_raw]
-            
-            # Escala de grises tácticos para el fondo
-            grises = ["#1a1d23", "#21262d", "#30363d", "#161b22", "#0d1117"]
-            # Multiplicamos para cubrir resoluciones altas
-            mosaico_html = "".join([
-                f"<span style='color:{grises[i % len(grises)]}; font-size:15px; font-weight:900; letter-spacing:-1px; padding:4px; display:inline-block;'>{destinos_list[i % len(destinos_list)]}</span>" 
-                for i in range(1200) 
-            ])
-        except:
-            mosaico_html = "NEXION CORE " * 500
-
-        # 2. CONFIGURACIÓN DE MENSAJES SEGÚN EL MODO (LOGIN / LOGOUT)
+        # El nombre del usuario resaltado en Blanco
         usuario_highlight = st.session_state.usuario_actual.upper() if st.session_state.usuario_actual else "CLIENTE"
+        
+        color_fondo_st = "#0e1117" 
+        color_neon = "#00FFAA" 
         
         if st.session_state.motivo_splash == "logout":
             mensajes = ["CERRANDO SESIÓN SEGURA", "RESGUARDANDO REGISTROS", "CONEXIÓN FINALIZADA"]
-            color_neon_splash = "#fb7185"  # Rojo Alerta para salida
-            status_text = "LOGGING_OUT"
         else:
+            # Aquí inyectamos el HTML para que el nombre sea blanco
             mensajes = [
                 f"BIENVENIDO DE VUELTA, <span style='color:white; font-weight:700;'>{usuario_highlight}</span>",
                 "SINCRONIZANDO MANIFIESTOS NEXION",
                 "ACTUALIZANDO ESTATUS DE ENVÍOS",
                 "AUTENTICACIÓN COMPLETADA"
             ]
-            color_neon_splash = "#00FFAA"  # Verde Esmeralda para entrada
-            status_text = "SYSTEM_READY"
 
         splash_placeholder = st.empty()
 
-        # 3. BUCLE DE RENDERIZADO (ANIMACIÓN DE CARGA)
         for i, msg in enumerate(mensajes):
             progreso = int(((i + 1) / len(mensajes)) * 100)
             
             splash_placeholder.markdown(f"""
-                <div style="
-                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-                    background-color: #0e1117; z-index: 999999; overflow: hidden;
-                    display: flex; align-items: center; justify-content: center;
-                ">
-                    <div style="
-                        position: absolute; top: -5%; left: -5%; width: 110%; height: 110%; 
-                        opacity: 0.4; pointer-events: none; line-height: 0.85;
-                        word-break: break-all; filter: blur(1px);
-                    ">
-                        {mosaico_html}
-                    </div>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;700&display=swap');
 
-                    <div style="
-                        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                        background: radial-gradient(circle, transparent 20%, #0e1117 85%);
-                    "></div>
+                    .corporate-splash {{
+                        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                        background-color: {color_fondo_st}; 
+                        z-index: 999999;
+                        display: flex; flex-direction: column; justify-content: center; align-items: center;
+                        font-family: 'Inter', sans-serif;
+                    }}
 
-                    <div style="
-                        position: relative; width: 450px; padding: 40px;
-                        background: rgba(13, 17, 23, 0.95);
-                        border: 1px solid {color_neon_splash}44;
-                        border-radius: 15px; backdrop-filter: blur(15px);
-                        box-shadow: 0 0 50px rgba(0,0,0,0.9);
-                        z-index: 1000000;
-                    ">
-                        <div style="color: rgba(255,255,255,0.4); font-size: 10px; letter-spacing: 5px; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center;">
-                            <div style="width: 20px; height: 2px; background: {color_neon_splash}; margin-right: 10px; box-shadow: 0 0 10px {color_neon_splash};"></div>
-                            NEXION LOGISTICS CORE
+                    .branding-box {{
+                        text-align: left;
+                        width: 450px;
+                        padding: 20px;
+                    }}
+
+                    .logo-placeholder {{
+                        font-weight: 700;
+                        font-size: 11px;
+                        letter-spacing: 6px;
+                        color: rgba(255, 255, 255, 0.4);
+                        margin-bottom: 15px;
+                        display: flex;
+                        align-items: center;
+                    }}
+
+                    .logo-placeholder::before {{
+                        content: '';
+                        width: 25px;
+                        height: 2px;
+                        background: {color_neon};
+                        margin-right: 12px;
+                        box-shadow: 0 0 10px {color_neon};
+                    }}
+
+                    .main-msg {{
+                        color: {color_neon};
+                        font-size: 1.4rem;
+                        font-weight: 300;
+                        letter-spacing: 1.5px;
+                        margin-bottom: 35px;
+                        min-height: 60px;
+                        line-height: 1.4;
+                        text-shadow: 0 0 15px {color_neon}33;
+                    }}
+
+                    .progress-container {{
+                        width: 100%;
+                        height: 2px;
+                        background-color: rgba(255, 255, 255, 0.1);
+                        border-radius: 1px;
+                        overflow: hidden;
+                    }}
+
+                    .progress-fill {{
+                        width: {progreso}%;
+                        height: 100%;
+                        background-color: {color_neon};
+                        box-shadow: 0 0 15px {color_neon};
+                        transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+                    }}
+
+                    .footer-info {{
+                        margin-top: 18px;
+                        display: flex;
+                        justify-content: space-between;
+                        color: rgba(255, 255, 255, 0.3);
+                        font-size: 10px;
+                        font-weight: 700;
+                        font-family: monospace;
+                    }}
+                </style>
+                
+                <div class="corporate-splash">
+                    <div class="branding-box">
+                        <div class="logo-placeholder">NEXION LOGISTICS CORE</div>
+                        <div class="main-msg">{msg}</div>
+                        <div class="progress-container">
+                            <div class="progress-fill"></div>
                         </div>
-                        
-                        <div style="color: {color_neon_splash}; font-size: 1.4rem; font-weight: 300; margin-bottom: 30px; letter-spacing: 1.2px; line-height: 1.4;">
-                            {msg}
-                        </div>
-
-                        <div style="width: 100%; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
-                            <div style="width: {progreso}%; height: 100%; background: {color_neon_splash}; box-shadow: 0 0 15px {color_neon_splash}; transition: width 0.5s ease;"></div>
-                        </div>
-
-                        <div style="display: flex; justify-content: space-between; margin-top: 15px; color: rgba(255,255,255,0.3); font-size: 9px; font-family: monospace;">
-                            <span>STATUS: {status_text}</span>
-                            <span style="color: {color_neon_splash};">{progreso}%</span>
+                        <div class="footer-info">
+                            <span>SESSION_ID: NX-2024</span>
+                            <span style="color: {color_neon}">{progreso}%</span>
                         </div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
             
-            # Tiempos de carga tácticos
-            time.sleep(1.8 if i == 0 else 0.8)
-
-        # 4. FINALIZACIÓN Y LIMPIEZA DE SESIÓN
-        splash_placeholder.empty()
-        
-        if st.session_state.motivo_splash == "logout":
-            st.session_state.clear() # Limpieza total de los radares
-            st.rerun()
-        else:
-            st.session_state.splash_completado = True # Apertura de compuertas
-            st.rerun()
+            # --- LÓGICA DE TIEMPO PERSONALIZADA ---
+            if i == 0 and st.session_state.motivo_splash != "logout":
+                time.sleep(2.5) # Pausa larga en la bienvenida para que se sientan acogidos
+            else:
+                time.sleep(0.7 if i < len(mensajes)-1 else 1.2)
         
         # Lógica de cierre de sesión
         if st.session_state.motivo_splash == "logout":
@@ -3170,9 +3184,6 @@ else:
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
         
-
-
-
 
 
 
