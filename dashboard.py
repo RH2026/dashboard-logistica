@@ -2942,121 +2942,78 @@ else:
         
 
     # ------------------------------------------------------------------
-    # MAIN 05: SEGUIMIENTO 2
+    # MAIN 05: SEGUIMIENTO 2 (RadarRastreo)
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "RadarRastreo":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
-        # Título con estilo minimalista (Mantenido según su columna vertebral)
-        st.markdown("""
-            <div style='text-align: center; padding: 10px 0px 10px 0px;'>
-                <h1 style='color: white; font-family: "Inter", sans-serif; font-weight: 800; font-size: 42px; margin-bottom: 5px; letter-spacing: -1px;'>
-                    REPORTE MENSUAL<span style='color: #00FFAA;'>OPS</span>
-                </h1>
-                <p style='color: #94a3b8; font-size: 16px; font-weight: 400; letter-spacing: 1px;'>
-                    Análisis de Eficiencia Logística y Rentabilidad
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
-
-        # =========================================================
-        # MENÚ DE NAVEGACIÓN FLOTANTE (Mantenido)
-        # =========================================================
+        # 1. Título y Estilos CSS (Aquí estaba el error, ya está blindado)
         st.markdown("""
             <style>
+                /* Título y Contenedores */
+                .header-container { text-align: center; padding: 10px 0px; }
+                .main-title { color: white; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 42px; margin-bottom: 5px; letter-spacing: -1px; }
+                
+                /* Botón Popover Navegación */
                 div[data-testid="stPopover"] > button {
                     background-color: #0d1117 !important;
                     border: 1px solid #00ffa2 !important;
-                    padding: 5px 15px !important;
                     border-radius: 8px !important;
-                    width: auto !important;
                 }
-                div[data-testid="stPopoverContent"] button {
-                    text-align: left !important;
-                    justify-content: flex-start !important;
-                    border: none !important;
-                    background: transparent !important;
-                    font-size: 14px !important;
+
+                /* --- EL PARCHE ESMERALDA (CORREGIDO) --- */
+                div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+                    border: 1px solid #50C878 !important;
+                    border-radius: 8px;
                 }
-                div[data-testid="stPopoverContent"] button:hover {
-                    color: #00ffa2 !important;
-                    background: rgba(0, 255, 162, 0.1) !important;
+
+                /* Tarjetas de Reporte */
+                .card-container { 
+                    background-color: #0d1117; 
+                    border-radius: 10px; 
+                    padding: 15px; 
+                    border: 1px solid #30363d; 
+                    height: 130px; 
+                    margin-bottom: 15px;
                 }
-                /* Estilo extra para los KPIs */
-                [data-testid="stMetric"] {
-                    background-color: #0d1117;
-                    border: 1px solid #1f2937;
-                    padding: 15px;
-                    border-radius: 12px;
-                }
+                .border-red { border-left: 5px solid #fb7185; }
+                .border-green { border-left: 5px solid #00ffa2; }
+                .border-blue { border-left: 5px solid #38bdf8; }
+                .border-purple { border-left: 5px solid #a78bfa; }
+                
+                .card-label { color: #8b949e; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
+                .card-value { font-size: 1.6rem; font-weight: 800; margin: 4px 0; font-family: 'Inter', sans-serif; }
+                .card-footer { color: #484f58; font-size: 0.6rem; font-weight: 600; }
             </style>
+            
+            <div class='header-container'>
+                <h1 class='main-title'>REPORTE MENSUAL<span style='color: #00FFAA;'>OPS</span></h1>
+                <p style='color: #94a3b8; font-size: 16px; font-weight: 400;'>Análisis de Eficiencia Logística y Rentabilidad</p>
+            </div>
         """, unsafe_allow_html=True)
 
-        /* Filtro Fletera Verde Esmeralda */
-        div[data-testid="stSelectbox"] div[data-baseweb="select"] {
-            border: 1px solid #50C878 !important;
-            border-radius: 8px;
-        }
-        
-        /* Ajustes de tarjetas para el reporte */
-        .card-container { 
-            background-color: #0d1117; 
-            border-radius: 10px; 
-            padding: 15px; 
-            border: 1px solid #30363d; 
-            height: 130px; 
-            margin-bottom: 15px;
-        }
-        .border-red { border-left: 5px solid #fb7185; }
-        .border-green { border-left: 5px solid #00ffa2; }
-        .border-blue { border-left: 5px solid #38bdf8; }
-        .border-purple { border-left: 5px solid #a78bfa; }
-        
+        # 2. Menú de Navegación
         c1, c2 = st.columns([0.85, 0.15])
         with c2:
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                if st.button("TRACKING", use_container_width=True, key="h_aac"):
-                    st.session_state.pagina = "principal"
-                    st.rerun()
-                if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
-                    st.session_state.pagina = "KPIs"
-                    st.rerun()
-                if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
-                    st.session_state.pagina = "Reporte"
-                    st.rerun()
-                if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
-                    st.session_state.pagina = "HubLogistico"
-                    st.rerun()
-                if st.button("OTD", use_container_width=True, key="h_radar"):
-                    st.session_state.pagina = "RadarRastreo"
-                    st.rerun()
+                if st.button("TRACKING", use_container_width=True): st.session_state.pagina = "principal"; st.rerun()
+                if st.button("SEGUIMIENTO", use_container_width=True): st.session_state.pagina = "KPIs"; st.rerun()
+                if st.button("REPORTE OPS", use_container_width=True): st.session_state.pagina = "Reporte"; st.rerun()
+                if st.button("HUB LOGISTIC", use_container_width=True): st.session_state.pagina = "HubLogistico"; st.rerun()
+                if st.button("OTD", use_container_width=True): st.session_state.pagina = "RadarRastreo"; st.rerun()
         
-        # LÍNEA AZUL CON RESPLANDOR (Mantenida)
-        st.markdown('<hr style="border:0; height:2px; background:#00D4FF; box-shadow:0px 0px 15px 3px rgba(0,212,255,0.7); margin-top:10px; margin-bottom:30px; border-radius:10px; opacity:0.8;">', unsafe_allow_html=True)
+        st.markdown('<hr style="border:0; height:2px; background:#00D4FF; box-shadow:0px 0px 15px 3px rgba(0,212,255,0.7); margin-bottom:30px; border-radius:10px; opacity:0.8;">', unsafe_allow_html=True)
 
-        # =========================================================
-        # ZONA DE MANDO: FUNCIONES GLOBALES (PONER AL PRINCIPIO)
-        # =========================================================
+        # 3. Función de Renderizado Interna
         def render_card(label, value, footer, target_val=None, actual_val=None, inverse=False, border_base="border-blue"):
-            """
-            Renderiza tarjetas con lógica de color elite.
-            """
             if target_val is None or actual_val is None:
-                color = "#f0f6fc"
-                border = border_base
+                color, border = "#f0f6fc", border_base
             else:
-                # Lógica: Si inverse=True (ej. Efectividad), mayor es mejor.
-                # Si inverse=False (ej. Retrasos), menor es mejor.
-                if inverse:
-                    is_alert = actual_val < target_val
-                else:
-                    is_alert = actual_val > target_val
-                    
+                is_alert = actual_val < target_val if inverse else actual_val > target_val
                 color = "#fb7185" if is_alert else "#00ffa2"
                 border = "border-red" if is_alert else "border-green"
             
-            import streamlit as st # Asegurar acceso dentro de la función
             st.markdown(f"""
                 <div class='card-container {border}'>
                     <div class='card-label'>{label}</div>
@@ -3064,79 +3021,55 @@ else:
                     <div class='card-footer'>{footer}</div>
                 </div>
             """, unsafe_allow_html=True)
-        # =========================================================
-                
-        # =========================================================
-        # 1. MONITOR DE SALUD OPERATIVA (KPIs DE SEMÁFORO)
-        # =========================================================
-        # --- MOTOR DE DATOS PARA MATRIZ LOGÍSTICA ---
-        # --- MOTOR DE DATOS CORREGIDO ---
-        # --- 1. CARGA Y LIMPIEZA DE LA MATRIZ ---
-        # --- MOTOR DE DATOS (REPARADO) ---
+
+        # 4. Motor de Datos y Cálculos
         try:
             df_matriz = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
             df_matriz.columns = [str(c).strip().upper() for c in df_matriz.columns]
-            
-            # Parche de fechas: día primero para evitar el Error Rojo
             cols_f = ['FECHA DE ENVÍO', 'PROMESA DE ENTREGA', 'FECHA DE ENTREGA REAL']
             for col in cols_f:
                 df_matriz[col] = pd.to_datetime(df_matriz[col], dayfirst=True, errors='coerce')
             
             df_matriz = df_matriz.dropna(subset=['FECHA DE ENVÍO'])
             df_matriz['MES_TX'] = df_matriz['FECHA DE ENVÍO'].dt.month_name()
-        except Exception as e:
-            st.error(f"Falla en el motor de datos: {e}")
-            df_matriz = pd.DataFrame()
-        
-        if not df_matriz.empty:
-            # --- FILTROS DE MANDO ---
-            with st.sidebar:
-                st.markdown("<h3 style='color:#50C878;'>🛰️ CONTROL FLETERA</h3>", unsafe_allow_html=True)
-                fletera_f = st.selectbox("FLETERA (MANDO ÚNICO)", sorted(df_matriz['FLETERA'].unique()))
-                mes_f = st.selectbox("MES DE ANÁLISIS", df_matriz['MES_TX'].unique())
-        
-            # Filtrado Dinámico
-            df_f = df_matriz[(df_matriz['MES_TX'] == mes_f) & (df_matriz['FLETERA'] == fletera_f)]
-        
-            if not df_f.empty:
-                # --- CÁLCULOS DE PRECISIÓN ---
-                total_p = len(df_f)
-                gasto_total = df_f['COSTO DE LA GUÍA'].sum()
-                cajas_totales = df_f['CANTIDAD DE CAJAS'].sum()
-                
-                # 1. OTD (On-Time Delivery)
-                entregas_ok = df_f[df_f['FECHA DE ENTREGA REAL'] <= df_f['PROMESA DE ENTREGA']]
-                otd_val = (len(entregas_ok) / total_p * 100) if total_p > 0 else 0
-                
-                # 2. Días de Retraso Promedio (Solo si hubo retraso)
-                df_retraso = df_f[df_f['FECHA DE ENTREGA REAL'] > df_f['PROMESA DE ENTREGA']].copy()
-                if not df_retraso.empty:
-                    df_retraso['DIFF'] = (df_retraso['FECHA DE ENTREGA REAL'] - df_retraso['PROMESA DE ENTREGA']).dt.days
-                    dias_retraso_prom = df_retraso['DIFF'].mean()
+            
+            if not df_matriz.empty:
+                with st.sidebar:
+                    st.markdown("<h3 style='color:#50C878;'>🛰️ CONTROL FLETERA</h3>", unsafe_allow_html=True)
+                    fletera_f = st.selectbox("FLETERA (MANDO ÚNICO)", sorted(df_matriz['FLETERA'].unique()))
+                    mes_f = st.selectbox("MES DE ANÁLISIS", df_matriz['MES_TX'].unique())
+
+                df_f = df_matriz[(df_matriz['MES_TX'] == mes_f) & (df_matriz['FLETERA'] == fletera_f)]
+
+                if not df_f.empty:
+                    # Cálculos OTD y Retraso
+                    total_p = len(df_f)
+                    otd_val = (len(df_f[df_f['FECHA DE ENTREGA REAL'] <= df_f['PROMESA DE ENTREGA']]) / total_p * 100)
+                    
+                    df_retraso = df_f[df_f['FECHA DE ENTREGA REAL'] > df_f['PROMESA DE ENTREGA']].copy()
+                    dias_retraso_prom = (df_retraso['FECHA DE entrega real'] - df_retraso['PROMESA DE ENTREGA']).dt.days.mean() if not df_retraso.empty else 0
+                    
+                    destinos = df_f.groupby('DESTINO')['COSTO DE LA GUÍA'].sum()
+                    
+                    # Layout de Tarjetas
+                    st.markdown("<h4 class='premium-header'>KPI DE CUMPLIMIENTO Y SERVICIO</h4>", unsafe_allow_html=True)
+                    c1, c2, c3 = st.columns(3)
+                    with c1: render_card("OTD FINAL", f"{otd_val:.1f}%", "Meta: 95%", 95, otd_val, True)
+                    with c2: render_card("RETRASO PROM.", f"{dias_retraso_prom:.1f} DÍAS", "Desviación", 1.5, dias_retraso_prom)
+                    with c3: render_card("DESTINO TOP", f"{destinos.idxmax()}", f"Gasto: ${destinos.max():,.0f}", border_base="border-red")
+
+                    st.markdown("<h4 class='premium-header'>EFICIENCIA FINANCIERA</h4>", unsafe_allow_html=True)
+                    e1, e2, e3 = st.columns(3)
+                    g_total = df_f['COSTO DE LA GUÍA'].sum()
+                    with e1: render_card("COSTO TOTAL", f"${g_total:,.0f}", fletera_f)
+                    with e2: render_card("COSTO X CAJA", f"${(g_total/df_f['CANTIDAD DE CAJAS'].sum()):,.2f}", "Promedio")
+                    with e3: render_card("VOLUMEN", f"{int(df_f['CANTIDAD DE CAJAS'].sum())}", "Cajas totales", border_base="border-purple")
                 else:
-                    dias_retraso_prom = 0
+                    st.info("Sin datos para esta selección.")
+        except Exception as e:
+            st.error(f"Error en Radar: {e}")
         
-                # 3. Destino Top Gasto con Monto
-                destinos = df_f.groupby('DESTINO')['COSTO DE LA GUÍA'].sum()
-                top_dest_name = destinos.idxmax()
-                top_dest_monto = destinos.max()
-        
-                # --- RENDERIZADO UI ELITE ---
-                st.markdown("<h4 class='premium-header'>KPI DE CUMPLIMIENTO Y SERVICIO</h4>", unsafe_allow_html=True)
-                c1, c2, c3 = st.columns(3)
-                with c1: render_card("OTD FINAL", f"{otd_val:.1f}%", "Meta: 95% de puntualidad", target_val=95, actual_val=otd_val, inverse=True)
-                with c2: render_card("RETRASO PROM.", f"{dias_retraso_prom:.1f} DÍAS", "Desviación en fallas", target_val=1.5, actual_val=dias_retraso_prom)
-                with c3: render_card("DESTINO CRÍTICO", f"{top_dest_name}", f"Gasto: ${top_dest_monto:,.0f}", border_base="border-red")
-        
-                st.markdown("<h4 class='premium-header'>EFICIENCIA FINANCIERA</h4>", unsafe_allow_html=True)
-                e1, e2, e3 = st.columns(3)
-                with e1: render_card("COSTO TOTAL", f"${gasto_total:,.0f}", f"Fletera: {fletera_f}", border_base="border-blue")
-                with e2: render_card("COSTO X CAJA", f"${(gasto_total/cajas_totales if cajas_totales > 0 else 0):,.2f}", "Eficiencia logística")
-                with e3: render_card("CANTIDAD CAJAS", f"{int(cajas_totales)}", "Volumen movilizado", border_base="border-purple")
-        
-            else:
-                st.info(f"Sin registros para {fletera_f} en {mes_f}.")
-        
+
 
 
 
