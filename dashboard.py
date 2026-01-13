@@ -196,132 +196,103 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# CASO B: SPLASH SCREEN (Versión NEXION con Fondo de Mosaico de Destinos)
+# CASO B: SPLASH SCREEN (Versión NEXION - Reparación Total de Casco)
 elif not st.session_state.splash_completado:
     with placeholder.container():
-        # --- PREPARACIÓN DEL MOSAICO DE FONDO ---
+        # 1. GENERACIÓN DEL MOSAICO (Solo nombres de ciudades)
         try:
             df_splash = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
-            # Extraer ciudades únicas y limpiarlas
             destinos_raw = df_splash['DESTINO'].dropna().unique()
-            destinos_mosaico = [str(d).split(',')[0].split('-')[0].strip().upper().replace(" ", "") for d in destinos_raw]
+            # Limpiamos y pegamos destinos
+            destinos_list = [str(d).split(',')[0].split('-')[0].strip().upper().replace(" ", "") for d in destinos_raw]
             
-            # Generar el bloque de texto repetido para llenar la pantalla
-            grises_elite = ["#1a1d23", "#21262d", "#30363d", "#161b22"]
-            html_mosaico_fondo = ""
-            # Repetimos la lista varias veces para asegurar cobertura total
-            for i in range(500): 
-                ciudad = destinos_mosaico[i % len(destinos_mosaico)]
-                color = grises_elite[i % len(grises_elite)]
-                html_mosaico_fondo += f"<span style='color:{color}; font-size:14px; font-weight:800; letter-spacing:-1px; padding:2px;'>{ciudad}</span>"
+            # Crear una cadena masiva de ciudades con grises aleatorios
+            grises = ["#1a1d23", "#21262d", "#30363d", "#161b22", "#0d1117"]
+            # Multiplicamos los destinos para llenar la pantalla (aprox 1000 repeticiones)
+            mosaico_html = "".join([
+                f"<span style='color:{grises[i % len(grises)]}; font-size:15px; font-weight:900; letter-spacing:-1px; padding:3px; display:inline-block;'>{destinos_list[i % len(destinos_list)]}</span>" 
+                for i in range(1000)
+            ])
         except:
-            html_mosaico_fondo = ""
+            mosaico_html = "NEXION CORE " * 500
 
         usuario_highlight = st.session_state.usuario_actual.upper() if st.session_state.usuario_actual else "CLIENTE"
-        color_fondo_st = "#0e1117" 
-        color_neon = "#00FFAA" 
-        
-        mensajes = ["CERRANDO SESIÓN SEGURA", "RESGUARDANDO REGISTROS", "CONEXIÓN FINALIZADA"] if st.session_state.motivo_splash == "logout" else [
-            f"BIENVENIDO DE VUELTA, <span style='color:white; font-weight:700;'>{usuario_highlight}</span>",
-            "SINCRONIZANDO MANIFIESTOS NEXION",
-            "ACTUALIZANDO ESTATUS DE ENVÍOS",
-            "AUTENTICACIÓN COMPLETADA"
-        ]
+        mensajes = ["BIENVENIDO DE VUELTA", "SINCRONIZANDO NEXION", "CARGANDO RADAR", "SISTEMA LISTO"]
 
         splash_placeholder = st.empty()
 
         for i, msg in enumerate(mensajes):
             progreso = int(((i + 1) / len(mensajes)) * 100)
             
+            # INYECCIÓN DIRECTA AL DOM (Cubre todo el navegador)
             splash_placeholder.markdown(f"""
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;700&display=swap');
-
-                    .mosaico-background {{
-                        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                        background-color: {color_fondo_st};
-                        overflow: hidden;
-                        z-index: 999998;
-                        opacity: 0.6;
+                <div style="
+                    position: fixed; 
+                    top: 0; left: 0; 
+                    width: 100vw; height: 100vh; 
+                    background-color: #0e1117; 
+                    z-index: 999999; 
+                    overflow: hidden;
+                    font-family: 'Inter', sans-serif;
+                ">
+                    <div style="
+                        position: absolute; 
+                        top: 0; left: 0; 
+                        width: 110%; height: 110%; 
+                        padding: 20px;
+                        opacity: 0.5;
                         user-select: none;
-                        line-height: 0.9;
-                        padding: 10px;
-                        filter: blur(0.5px);
-                    }}
+                        line-height: 0.8;
+                        filter: blur(0.3px);
+                    ">
+                        {mosaico_html}
+                    </div>
 
-                    .corporate-splash {{
-                        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                        background: radial-gradient(circle, transparent 20%, {color_fondo_st} 80%);
-                        z-index: 999999;
-                        display: flex; justify-content: center; align-items: center;
-                        font-family: 'Inter', sans-serif;
-                    }}
+                    <div style="
+                        position: absolute;
+                        top: 0; left: 0;
+                        width: 100%; height: 100%;
+                        background: radial-gradient(circle, transparent 10%, #0e1117 90%);
+                    "></div>
 
-                    .branding-box {{
-                        background: rgba(13, 17, 23, 0.85);
-                        backdrop-filter: blur(10px);
-                        border: 1px solid rgba(0, 255, 170, 0.2);
-                        text-align: left;
+                    <div style="
+                        position: absolute;
+                        top: 50%; left: 50%;
+                        transform: translate(-50%, -50%);
                         width: 450px;
                         padding: 40px;
+                        background: rgba(13, 17, 23, 0.9);
+                        border: 1px solid rgba(0, 255, 170, 0.3);
                         border-radius: 15px;
-                        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-                    }}
-
-                    .logo-placeholder {{
-                        font-weight: 700; font-size: 11px; letter-spacing: 6px;
-                        color: rgba(255, 255, 255, 0.4); margin-bottom: 15px;
-                        display: flex; align-items: center;
-                    }}
-
-                    .logo-placeholder::before {{
-                        content: ''; width: 25px; height: 2px;
-                        background: {color_neon}; margin-right: 12px;
-                        box-shadow: 0 0 10px {color_neon};
-                    }}
-
-                    .main-msg {{
-                        color: {color_neon}; font-size: 1.4rem; font-weight: 300;
-                        letter-spacing: 1.5px; margin-bottom: 35px;
-                        min-height: 60px; line-height: 1.4;
-                    }}
-
-                    .progress-container {{ width: 100%; height: 2px; background: rgba(255,255,255,0.1); overflow: hidden; }}
-                    .progress-fill {{ 
-                        width: {progreso}%; height: 100%; background: {color_neon};
-                        box-shadow: 0 0 15px {color_neon}; transition: width 0.7s ease; 
-                    }}
-
-                    .footer-info {{
-                        margin-top: 18px; display: flex; justify-content: space-between;
-                        color: rgba(255, 255, 255, 0.3); font-size: 10px; font-family: monospace;
-                    }}
-                </style>
-                
-                <div class="mosaico-background">
-                    {html_mosaico_fondo}
-                </div>
-
-                <div class="corporate-splash">
-                    <div class="branding-box">
-                        <div class="logo-placeholder">NEXION LOGISTICS CORE</div>
-                        <div class="main-msg">{msg}</div>
-                        <div class="progress-container">
-                            <div class="progress-fill"></div>
+                        backdrop-filter: blur(10px);
+                        box-shadow: 0 0 50px rgba(0,0,0,0.8);
+                    ">
+                        <div style="color: rgba(255,255,255,0.4); font-size: 10px; letter-spacing: 5px; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center;">
+                            <div style="width: 20px; height: 2px; background: #00FFAA; margin-right: 10px; box-shadow: 0 0 10px #00FFAA;"></div>
+                            NEXION LOGISTICS CORE
                         </div>
-                        <div class="footer-info">
-                            <span>SESSION_ID: NX-2026</span>
-                            <span style="color: {color_neon}">{progreso}%</span>
+                        
+                        <div style="color: #00FFAA; font-size: 1.5rem; font-weight: 300; margin-bottom: 30px; letter-spacing: 1px;">
+                            {msg}, <span style="color: white; font-weight: 700;">{usuario_highlight}</span>
+                        </div>
+
+                        <div style="width: 100%; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+                            <div style="width: {progreso}%; height: 100%; background: #00FFAA; box-shadow: 0 0 15px #00FFAA; transition: width 0.5s ease;"></div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; margin-top: 15px; color: rgba(255,255,255,0.3); font-size: 9px; font-family: monospace;">
+                            <span>STATUS_OK: SYSTEM_READY</span>
+                            <span style="color: #00FFAA;">{progreso}%</span>
                         </div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
             
-            # Lógica de tiempos
-            if i == 0 and st.session_state.motivo_splash != "logout":
-                time.sleep(2.5)
-            else:
-                time.sleep(0.7 if i < len(mensajes)-1 else 1.2)
+            time.sleep(0.8 if i > 0 else 2.0)
+
+        splash_placeholder.empty()
+        st.session_state.splash_completado = True
+        st.rerun()
         
         # Lógica de cierre de sesión
         if st.session_state.motivo_splash == "logout":
@@ -3190,6 +3161,7 @@ else:
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
         
+
 
 
 
