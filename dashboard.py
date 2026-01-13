@@ -3113,55 +3113,55 @@ else:
         except Exception as e:
             st.error(f"Error crítico en el casco: {e}")
 
-        # --- 5. RADAR DE DESTINOS (TARJETA GRANDE) ---
-        st.markdown("<h4 class='premium-header'>RADAR DE COBERTURA: DESTINOS FRECUENTES</h4>", unsafe_allow_html=True)
+        # --- 5. RADAR DE DESTINOS (TARJETA GRANDE - GRISES TÁCTICOS) ---
+        st.markdown("<h4 class='premium-header'>COBERTURA GEOGRÁFICA</h4>", unsafe_allow_html=True)
         
-        # Procesamiento de ciudades (Limpieza de "Ciudad, Estado")
-        # Tomamos los destinos únicos de la fletera seleccionada
+        # Procesamiento y limpieza de Ciudades
         ciudades_raw = df_f['DESTINO'].unique()
         ciudades_limpias = [str(c).split(',')[0].split('-')[0].strip().upper() for c in ciudades_raw]
-        # Eliminamos duplicados después de limpiar y ordenamos
         ciudades_final = sorted(list(set(ciudades_limpias)))
 
-        # CSS Extra para la Tarjeta de Destinos
+        # CSS Ajustado para Grises Semi-Oscuros
         st.markdown("""
             <style>
                 .destinos-container {
                     background-color: #0d1117;
                     border: 1px solid #30363d;
                     border-radius: 12px;
-                    padding: 25px;
+                    padding: 30px;
                     text-align: center;
                     min-height: 100px;
-                    border-left: 5px solid #00FFAA;
+                    border-bottom: 3px solid #484f58; /* Detalle en gris oscuro */
                 }
                 .city-tag {
                     display: inline-block;
-                    margin: 5px 10px;
+                    margin: 8px 15px;
                     font-family: 'Inter', sans-serif;
-                    font-weight: 800;
-                    font-size: 22px;
-                    letter-spacing: -0.5px;
-                    transition: transform 0.3s;
+                    font-weight: 700;
+                    font-size: 18px;
+                    letter-spacing: 0.5px;
+                    color: #6e7681 !important; /* Gris semi-oscuro base */
+                    transition: all 0.4s ease;
+                    cursor: default;
                 }
                 .city-tag:hover {
-                    transform: scale(1.1);
-                    color: #ffffff !important;
+                    transform: translateY(-3px);
+                    color: #00FFAA !important; /* Brillo esmeralda suave al pasar el mouse */
+                    text-shadow: 0px 0px 10px rgba(0, 255, 170, 0.3);
                 }
             </style>
         """, unsafe_allow_html=True)
 
-        # Construcción de la "Nube de Destinos" con colores alternos (Azul y Morado Elite)
+        # Construcción del Mosaico de Ciudades
         html_destinos = "<div class='destinos-container'>"
-        colores = ["#00D4FF", "#a78bfa"] # Azul y Morado de su paleta
         
-        for i, ciudad in enumerate(ciudades_final):
-            color = colores[i % 2]
-            html_destinos += f"<span class='city-tag' style='color: {color};'>{ciudad}</span>"
+        for ciudad in ciudades_final:
+            html_destinos += f"<span class='city-tag'>{ciudad}</span>"
         
         html_destinos += "</div>"
         
         st.markdown(html_destinos, unsafe_allow_html=True)
+
 
 
 
