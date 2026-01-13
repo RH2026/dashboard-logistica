@@ -30,6 +30,29 @@ try:
 except (ImportError, ModuleNotFoundError):
     PDF_READY = False
 
+# --- FUNCIÓN ELITE DE RENDERIZADO ---REPORTE DE OTS
+def render_card(label, value, footer, target_val=None, actual_val=None, inverse=False, border_base="border-blue"):
+    if target_val is None or actual_val is None:
+        color = "#f0f6fc"
+        border = border_base
+    else:
+        # Lógica: Si inverse=True (ej. OTD), mayor es mejor.
+        if inverse:
+            is_alert = actual_val < target_val
+        else:
+            is_alert = actual_val > target_val
+            
+        color = "#fb7185" if is_alert else "#00ffa2"
+        border = "border-red" if is_alert else "border-green"
+    
+    st.markdown(f"""
+        <div class='card-container {border}'>
+            <div class='card-label'>{label}</div>
+            <div class='card-value' style='color:{color}'>{value}</div>
+            <div class='card-footer'>{footer}</div>
+        </div>
+    """, unsafe_allow_html=True)
+
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Distribucion y Logística Inteligente", layout="wide", initial_sidebar_state="expanded")
 
@@ -2968,6 +2991,26 @@ else:
                 }
             </style>
         """, unsafe_allow_html=True)
+
+        /* Filtro Fletera Verde Esmeralda */
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+            border: 1px solid #50C878 !important;
+            border-radius: 8px;
+        }
+        
+        /* Ajustes de tarjetas para el reporte */
+        .card-container { 
+            background-color: #0d1117; 
+            border-radius: 10px; 
+            padding: 15px; 
+            border: 1px solid #30363d; 
+            height: 130px; 
+            margin-bottom: 15px;
+        }
+        .border-red { border-left: 5px solid #fb7185; }
+        .border-green { border-left: 5px solid #00ffa2; }
+        .border-blue { border-left: 5px solid #38bdf8; }
+        .border-purple { border-left: 5px solid #a78bfa; }
         
         c1, c2 = st.columns([0.85, 0.15])
         with c2:
@@ -3029,79 +3072,71 @@ else:
         # --- MOTOR DE DATOS PARA MATRIZ LOGÍSTICA ---
         # --- MOTOR DE DATOS CORREGIDO ---
         # --- 1. CARGA Y LIMPIEZA DE LA MATRIZ ---
+        # --- MOTOR DE DATOS (REPARADO) ---
         try:
             df_matriz = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
             df_matriz.columns = [str(c).strip().upper() for c in df_matriz.columns]
             
-            # Limpieza de Fechas con el parche 'dayfirst' para evitar el error anterior
+            # Parche de fechas: día primero para evitar el Error Rojo
             cols_f = ['FECHA DE ENVÍO', 'PROMESA DE ENTREGA', 'FECHA DE ENTREGA REAL']
             for col in cols_f:
                 df_matriz[col] = pd.to_datetime(df_matriz[col], dayfirst=True, errors='coerce')
             
-            # Filtro de seguridad: eliminar filas sin fecha de envío
             df_matriz = df_matriz.dropna(subset=['FECHA DE ENVÍO'])
-            
-            # Crear columna de Mes para el Sidebar
             df_matriz['MES_TX'] = df_matriz['FECHA DE ENVÍO'].dt.month_name()
         except Exception as e:
-            st.error(f"Error en el casco de datos: {e}")
+            st.error(f"Falla en el motor de datos: {e}")
             df_matriz = pd.DataFrame()
         
         if not df_matriz.empty:
-            # --- 2. FILTROS DE OPERACIÓN ---
+            # --- FILTROS DE MANDO ---
             with st.sidebar:
-                st.markdown("---")
-                lista_meses = df_matriz['MES_TX'].unique()
-                mes_f = st.selectbox("📅 SELECCIONAR MES DE ANÁLISIS", lista_meses)
+                st.markdown("<h3 style='color:#50C878;'>🛰️ CONTROL FLETERA</h3>", unsafe_allow_html=True)
+                fletera_f = st.selectbox("FLETERA (MANDO ÚNICO)", sorted(df_matriz['FLETERA'].unique()))
+                mes_f = st.selectbox("MES DE ANÁLISIS", df_matriz['MES_TX'].unique())
+        
+            # Filtrado Dinámico
+            df_f = df_matriz[(df_matriz['MES_TX'] == mes_f) & (df_matriz['FLETERA'] == fletera_f)]
+        
+            if not df_f.empty:
+                # --- CÁLCULOS DE PRECISIÓN ---
+                total_p = len(df_f)
+                gasto_total = df_f['COSTO DE LA GUÍA'].sum()
+                cajas_totales = df_f['CANTIDAD DE CAJAS'].sum()
                 
-                lista_fleteras = df_matriz['FLETERA'].unique()
-                fletera_f = st.multiselect("🚚 FILTRAR FLETERA", lista_fleteras, default=lista_fleteras)
+                # 1. OTD (On-Time Delivery)
+                entregas_ok = df_f[df_f['FECHA DE ENTREGA REAL'] <= df_f['PROMESA DE ENTREGA']]
+                otd_val = (len(entregas_ok) / total_p * 100) if total_p > 0 else 0
+                
+                # 2. Días de Retraso Promedio (Solo si hubo retraso)
+                df_retraso = df_f[df_f['FECHA DE ENTREGA REAL'] > df_f['PROMESA DE ENTREGA']].copy()
+                if not df_retraso.empty:
+                    df_retraso['DIFF'] = (df_retraso['FECHA DE ENTREGA REAL'] - df_retraso['PROMESA DE ENTREGA']).dt.days
+                    dias_retraso_prom = df_retraso['DIFF'].mean()
+                else:
+                    dias_retraso_prom = 0
         
-            # Aplicar filtros
-            mask = (df_matriz['MES_TX'] == mes_f) & (df_matriz['FLETERA'].isin(fletera_f))
-            df_f = df_matriz.loc[mask]
+                # 3. Destino Top Gasto con Monto
+                destinos = df_f.groupby('DESTINO')['COSTO DE LA GUÍA'].sum()
+                top_dest_name = destinos.idxmax()
+                top_dest_monto = destinos.max()
         
-            # --- 3. CÁLCULO DE MÉTRICAS (TELEMETRÍA) ---
-            total_p = len(df_f)
-            gasto_total = df_f['COSTO DE LA GUÍA'].sum()
-            cajas_totales = df_f['CANTIDAD DE CAJAS'].sum()
-            
-            # Cálculo de OTD (On-Time Delivery)
-            # Filtramos entregas que superan la promesa
-            atrasados = df_f[df_f['FECHA DE ENTREGA REAL'] > df_f['PROMESA DE ENTREGA']]
-            num_atrasados = len(atrasados)
-            efectividad = ((total_p - num_atrasados) / total_p * 100) if total_p > 0 else 0
-            
-            # Cálculo de Lead Time (Tránsito real)
-            lead_time = (df_f['FECHA DE ENTREGA REAL'] - df_f['FECHA DE ENVÍO']).dt.days.mean()
+                # --- RENDERIZADO UI ELITE ---
+                st.markdown("<h4 class='premium-header'>KPI DE CUMPLIMIENTO Y SERVICIO</h4>", unsafe_allow_html=True)
+                c1, c2, c3 = st.columns(3)
+                with c1: render_card("OTD FINAL", f"{otd_val:.1f}%", "Meta: 95% de puntualidad", target_val=95, actual_val=otd_val, inverse=True)
+                with c2: render_card("RETRASO PROM.", f"{dias_retraso_prom:.1f} DÍAS", "Desviación en fallas", target_val=1.5, actual_val=dias_retraso_prom)
+                with c3: render_card("DESTINO CRÍTICO", f"{top_dest_name}", f"Gasto: ${top_dest_monto:,.0f}", border_base="border-red")
         
-            # --- 4. RENDERIZADO VISUAL ---
-            # Fila 1: Calificación General
-            st.markdown("<h4 class='premium-header'>CALIFICACIÓN GENERAL</h4>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            with c1: render_card("GASTO TOTAL", f"${gasto_total:,.0f}", "Inversión en Logística", border_base="border-blue")
-            with c2: render_card("% PARTICIPACIÓN", f"{(total_p/len(df_matriz)*100):.1f}%", "Carga sobre el Histórico", border_base="border-purple")
-            with c3: render_card("% EFECTIVIDAD", f"{efectividad:.1f}%", "Target: 95%", target_val=95, actual_val=efectividad, inverse=True)
+                st.markdown("<h4 class='premium-header'>EFICIENCIA FINANCIERA</h4>", unsafe_allow_html=True)
+                e1, e2, e3 = st.columns(3)
+                with e1: render_card("COSTO TOTAL", f"${gasto_total:,.0f}", f"Fletera: {fletera_f}", border_base="border-blue")
+                with e2: render_card("COSTO X CAJA", f"${(gasto_total/cajas_totales if cajas_totales > 0 else 0):,.2f}", "Eficiencia logística")
+                with e3: render_card("CANTIDAD CAJAS", f"{int(cajas_totales)}", "Volumen movilizado", border_base="border-purple")
         
-            # Fila 2: OTD y Tiempos
-            st.markdown("<h4 class='premium-header'>OTD & LOGISTICS PERFORMANCE</h4>", unsafe_allow_html=True)
-            o1, o2, o3 = st.columns(3)
-            with o1: render_card("PEDIDOS ENVIADOS", f"{total_p}", "Volumen del periodo")
-            with o2: render_card("PEDIDOS CON RETRASO", f"{num_atrasados}", "Alertas de entrega", target_val=0, actual_val=num_atrasados)
-            with o3: render_card("LEAD TIME PROM.", f"{lead_time:.1f} Días", "Ciclo de envío a entrega")
+            else:
+                st.info(f"Sin registros para {fletera_f} en {mes_f}.")
         
-            # Fila 3: Análisis de Costos
-            st.markdown("<h4 class='premium-header'>ANÁLISIS DE COSTOS UNITARIOS</h4>", unsafe_allow_html=True)
-            ct1, ct2, ct3 = st.columns(3)
-            with ct1: render_card("COSTO POR ENVÍO", f"${(gasto_total/total_p if total_p > 0 else 0):,.2f}", "Promedio por guía")
-            with ct2: render_card("COSTO POR CAJA", f"${(gasto_total/cajas_totales if cajas_totales > 0 else 0):,.2f}", "Eficiencia de empaque")
-            with ct3:
-                top_dest = df_f.groupby('DESTINO')['COSTO DE LA GUÍA'].sum().idxmax() if not df_f.empty else "N/A"
-                render_card("DESTINO TOP GASTO", f"{top_dest}", "Mayor concentración de costo")
-        
-            # --- BLOQUE DE COMENTARIOS ---
-            with st.expander("📝 VER COMENTARIOS DE LA OPERACIÓN"):
-                st.dataframe(df_f[['NÚMERO DE PEDIDO', 'FLETERA', 'COMENTARIOS']].dropna(subset=['COMENTARIOS']), use_container_width=True)
 
 
 
