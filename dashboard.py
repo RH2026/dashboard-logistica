@@ -196,103 +196,112 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# CASO B: SPLASH SCREEN (Versión NEXION - Reparación Total de Casco)
+# =========================================================
+# CASO B: SPLASH SCREEN (VERSIÓN NEXION - REPARACIÓN TOTAL)
+# =========================================================
 elif not st.session_state.splash_completado:
     with placeholder.container():
-        # 1. GENERACIÓN DEL MOSAICO (Solo nombres de ciudades)
+        # 1. GENERACIÓN DEL MOSAICO DE FONDO (TODOS LOS DESTINOS)
         try:
+            # Cargamos la matriz para extraer el ADN geográfico
             df_splash = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
             destinos_raw = df_splash['DESTINO'].dropna().unique()
-            # Limpiamos y pegamos destinos
+            # Limpiamos ciudades (solo nombre, sin espacios)
             destinos_list = [str(d).split(',')[0].split('-')[0].strip().upper().replace(" ", "") for d in destinos_raw]
             
-            # Crear una cadena masiva de ciudades con grises aleatorios
+            # Escala de grises tácticos para el fondo
             grises = ["#1a1d23", "#21262d", "#30363d", "#161b22", "#0d1117"]
-            # Multiplicamos los destinos para llenar la pantalla (aprox 1000 repeticiones)
+            # Multiplicamos para cubrir resoluciones altas
             mosaico_html = "".join([
-                f"<span style='color:{grises[i % len(grises)]}; font-size:15px; font-weight:900; letter-spacing:-1px; padding:3px; display:inline-block;'>{destinos_list[i % len(destinos_list)]}</span>" 
-                for i in range(1000)
+                f"<span style='color:{grises[i % len(grises)]}; font-size:15px; font-weight:900; letter-spacing:-1px; padding:4px; display:inline-block;'>{destinos_list[i % len(destinos_list)]}</span>" 
+                for i in range(1200) 
             ])
         except:
             mosaico_html = "NEXION CORE " * 500
 
+        # 2. CONFIGURACIÓN DE MENSAJES SEGÚN EL MODO (LOGIN / LOGOUT)
         usuario_highlight = st.session_state.usuario_actual.upper() if st.session_state.usuario_actual else "CLIENTE"
-        mensajes = ["BIENVENIDO DE VUELTA", "SINCRONIZANDO NEXION", "CARGANDO RADAR", "SISTEMA LISTO"]
+        
+        if st.session_state.motivo_splash == "logout":
+            mensajes = ["CERRANDO SESIÓN SEGURA", "RESGUARDANDO REGISTROS", "CONEXIÓN FINALIZADA"]
+            color_neon_splash = "#fb7185"  # Rojo Alerta para salida
+            status_text = "LOGGING_OUT"
+        else:
+            mensajes = [
+                f"BIENVENIDO DE VUELTA, <span style='color:white; font-weight:700;'>{usuario_highlight}</span>",
+                "SINCRONIZANDO MANIFIESTOS NEXION",
+                "ACTUALIZANDO ESTATUS DE ENVÍOS",
+                "AUTENTICACIÓN COMPLETADA"
+            ]
+            color_neon_splash = "#00FFAA"  # Verde Esmeralda para entrada
+            status_text = "SYSTEM_READY"
 
         splash_placeholder = st.empty()
 
+        # 3. BUCLE DE RENDERIZADO (ANIMACIÓN DE CARGA)
         for i, msg in enumerate(mensajes):
             progreso = int(((i + 1) / len(mensajes)) * 100)
             
-            # INYECCIÓN DIRECTA AL DOM (Cubre todo el navegador)
             splash_placeholder.markdown(f"""
                 <div style="
-                    position: fixed; 
-                    top: 0; left: 0; 
-                    width: 100vw; height: 100vh; 
-                    background-color: #0e1117; 
-                    z-index: 999999; 
-                    overflow: hidden;
-                    font-family: 'Inter', sans-serif;
+                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+                    background-color: #0e1117; z-index: 999999; overflow: hidden;
+                    display: flex; align-items: center; justify-content: center;
                 ">
                     <div style="
-                        position: absolute; 
-                        top: 0; left: 0; 
-                        width: 110%; height: 110%; 
-                        padding: 20px;
-                        opacity: 0.5;
-                        user-select: none;
-                        line-height: 0.8;
-                        filter: blur(0.3px);
+                        position: absolute; top: -5%; left: -5%; width: 110%; height: 110%; 
+                        opacity: 0.4; pointer-events: none; line-height: 0.85;
+                        word-break: break-all; filter: blur(1px);
                     ">
                         {mosaico_html}
                     </div>
 
                     <div style="
-                        position: absolute;
-                        top: 0; left: 0;
-                        width: 100%; height: 100%;
-                        background: radial-gradient(circle, transparent 10%, #0e1117 90%);
+                        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                        background: radial-gradient(circle, transparent 20%, #0e1117 85%);
                     "></div>
 
                     <div style="
-                        position: absolute;
-                        top: 50%; left: 50%;
-                        transform: translate(-50%, -50%);
-                        width: 450px;
-                        padding: 40px;
-                        background: rgba(13, 17, 23, 0.9);
-                        border: 1px solid rgba(0, 255, 170, 0.3);
-                        border-radius: 15px;
-                        backdrop-filter: blur(10px);
-                        box-shadow: 0 0 50px rgba(0,0,0,0.8);
+                        position: relative; width: 450px; padding: 40px;
+                        background: rgba(13, 17, 23, 0.95);
+                        border: 1px solid {color_neon_splash}44;
+                        border-radius: 15px; backdrop-filter: blur(15px);
+                        box-shadow: 0 0 50px rgba(0,0,0,0.9);
+                        z-index: 1000000;
                     ">
                         <div style="color: rgba(255,255,255,0.4); font-size: 10px; letter-spacing: 5px; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center;">
-                            <div style="width: 20px; height: 2px; background: #00FFAA; margin-right: 10px; box-shadow: 0 0 10px #00FFAA;"></div>
+                            <div style="width: 20px; height: 2px; background: {color_neon_splash}; margin-right: 10px; box-shadow: 0 0 10px {color_neon_splash};"></div>
                             NEXION LOGISTICS CORE
                         </div>
                         
-                        <div style="color: #00FFAA; font-size: 1.5rem; font-weight: 300; margin-bottom: 30px; letter-spacing: 1px;">
-                            {msg}, <span style="color: white; font-weight: 700;">{usuario_highlight}</span>
+                        <div style="color: {color_neon_splash}; font-size: 1.4rem; font-weight: 300; margin-bottom: 30px; letter-spacing: 1.2px; line-height: 1.4;">
+                            {msg}
                         </div>
 
                         <div style="width: 100%; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
-                            <div style="width: {progreso}%; height: 100%; background: #00FFAA; box-shadow: 0 0 15px #00FFAA; transition: width 0.5s ease;"></div>
+                            <div style="width: {progreso}%; height: 100%; background: {color_neon_splash}; box-shadow: 0 0 15px {color_neon_splash}; transition: width 0.5s ease;"></div>
                         </div>
 
                         <div style="display: flex; justify-content: space-between; margin-top: 15px; color: rgba(255,255,255,0.3); font-size: 9px; font-family: monospace;">
-                            <span>STATUS_OK: SYSTEM_READY</span>
-                            <span style="color: #00FFAA;">{progreso}%</span>
+                            <span>STATUS: {status_text}</span>
+                            <span style="color: {color_neon_splash};">{progreso}%</span>
                         </div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
             
-            time.sleep(0.8 if i > 0 else 2.0)
+            # Tiempos de carga tácticos
+            time.sleep(1.8 if i == 0 else 0.8)
 
+        # 4. FINALIZACIÓN Y LIMPIEZA DE SESIÓN
         splash_placeholder.empty()
-        st.session_state.splash_completado = True
-        st.rerun()
+        
+        if st.session_state.motivo_splash == "logout":
+            st.session_state.clear() # Limpieza total de los radares
+            st.rerun()
+        else:
+            st.session_state.splash_completado = True # Apertura de compuertas
+            st.rerun()
         
         # Lógica de cierre de sesión
         if st.session_state.motivo_splash == "logout":
@@ -3161,6 +3170,7 @@ else:
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
         
+
 
 
 
