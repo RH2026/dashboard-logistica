@@ -341,7 +341,7 @@ else:
         df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
         df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
         
-        hoy = pd.Timestamp(datetime.date.today())
+        hoy_sistema = pd.Timestamp(datetime.date.today())
         def calcular_estatus(row):
             if pd.notna(row["FECHA DE ENTREGA REAL"]): return "ENTREGADO"
             if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy: return "RETRASADO"
@@ -634,7 +634,7 @@ else:
             if df_busqueda.empty:
                 st.warning(f"No se encontró registro para: {pedido_buscar}")
             else:
-                hoy = pd.Timestamp.today().normalize()
+                hoy_sistema = pd.Timestamp(datetime.date.today())
                                              
                 # Cálculos de tiempo para las tarjetas
                 df_busqueda["DIAS_TRANSCURRIDOS"] = (
@@ -827,7 +827,7 @@ else:
         
         # Preparación de datos final
         df_visual = df_filtrado.copy()
-        hoy = pd.Timestamp(datetime.date.today())
+        hoy_sistema = pd.Timestamp(datetime.date.today())
         
         # Cálculos de tiempo para las barras de progreso y métricas
         df_visual["DIAS_TRANSCURRIDOS"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["FECHA DE ENVÍO"]).dt.days)
@@ -3184,6 +3184,7 @@ else:
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
         
+
 
 
 
