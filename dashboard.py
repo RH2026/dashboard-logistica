@@ -521,7 +521,7 @@ else:
                 df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
     
             # --------------------------------------------------
-            # ACTUALIZACIÓN DE MÉTRICAS (Para que los círculos cambien)
+            # ACTUALIZACIÓN DE MÉTRICAS (Sincronizadas con hoy_sistema)
             # --------------------------------------------------
             total = len(df_filtrado)
             entregados = (df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum()
@@ -533,7 +533,7 @@ else:
         #---------------------------------------------------------------------
         st.markdown("""
         <style>
-        /* 1. Contenedores (Sin cambios para mantener estabilidad) */
+        /* 1. Contenedores */
         div[data-testid="stTextInput"], 
         div[data-testid="stTextInput"] > div, 
         div[data-testid="stTextInput"] > div > div {
@@ -546,7 +546,7 @@ else:
         /* 2. EL TEXTO INGRESADO (VALOR REAL) */
         div[data-testid="stTextInput"] input {
             height: 85px !important; 
-            font-size: 30px !important; /* <--- TAMAÑO GIGANTE AL ESCRIBIR */
+            font-size: 30px !important; 
             font-weight: 800 !important;
             color: #FFFFFF !important; 
             background-color: rgba(17, 24, 39, 1) !important;
@@ -558,22 +558,21 @@ else:
         }
 
         /* 3. EL TEXTO ANTES DE INGRESAR (PLACEHOLDER) */
-        /* Aquí ajustamos el tamaño de "--- ESPERANDO COMANDO ---" */
         div[data-testid="stTextInput"] input::placeholder {
-            font-size: 16px !important;  /* <--- MÁS PEQUEÑO Y DISCRETO */
+            font-size: 16px !important; 
             font-weight: 400 !important;
-            color: rgba(255, 255, 255, 0.3) !important; /* Un blanco más transparente */
-            letter-spacing: 4px !important; /* Estilo cinemático */
+            color: rgba(255, 255, 255, 0.3) !important; 
+            letter-spacing: 4px !important; 
         }
 
-        /* 4. Focus (Efecto Neón al escribir) */
+        /* 4. Focus (Efecto Neón) */
         div[data-testid="stTextInput"] input:focus {
             outline: none !important;
             border: 1px solid #00FFAA !important;
             box-shadow: 0 0 20px rgba(0, 255, 170, 0.5) !important;
         }
 
-        /* 5. Estilo del Label (El título de arriba) */
+        /* 5. Estilo del Label */
         div[data-testid="stTextInput"] label {
             min-height: 0px !important;
             margin-bottom: 15px !important;
@@ -585,7 +584,6 @@ else:
         c_left, c_main, c_right = st.columns([0.4, 1.2, 0.4])
         
         with c_main:
-            # Actualizamos el Label para que el usuario sepa que puede buscar ambos
             pedido_buscar = st.text_input(
                 "",
                 value="",
@@ -593,13 +591,10 @@ else:
                 key="buscador_compacto"
             )
         
-        df_busqueda = pd.DataFrame() # Blindaje inicial
+        df_busqueda = pd.DataFrame() 
     
         if pedido_buscar.strip() != "":
-            # --- MANIOBRA MULTI-FILTRO (PEDIDO | GUÍA) ---
             query = pedido_buscar.strip().lower()
-            
-            # Buscamos en ambas columnas simultáneamente
             df_busqueda = df_filtrado[
                 (df_filtrado["NÚMERO DE PEDIDO"].astype(str).str.contains(query, case=False, na=False)) |
                 (df_filtrado["NÚMERO DE GUÍA"].astype(str).str.contains(query, case=False, na=False))
@@ -608,167 +603,47 @@ else:
             if df_busqueda.empty:
                 st.warning(f"No se encontró registro para: {pedido_buscar}")
             else:
-                hoy_sistema = pd.Timestamp(datetime.date.today())
-                                             
-                # Cálculos de tiempo para las tarjetas
+                # REPARACIÓN DE VARIABLES DE TIEMPO EN BUSQUEDA
                 df_busqueda["DIAS_TRANSCURRIDOS"] = (
-                    (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["FECHA DE ENVÍO"]).dt.days
+                    (df_busqueda["FECHA DE ENTREGA REAL"].fillna(ahora_maestro) - df_busqueda["FECHA DE ENVÍO"]).dt.days
                 )
                 df_busqueda["DIAS_RETRASO"] = (
-                    (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["PROMESA DE ENTREGA"]).dt.days
+                    (df_busqueda["FECHA DE ENTREGA REAL"].fillna(ahora_maestro) - df_busqueda["PROMESA DE ENTREGA"]).dt.days
                 )
                 df_busqueda["DIAS_RETRASO"] = df_busqueda["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
     
-                # Renderizado de Tarjetas y Timeline por cada registro encontrado
                 for index, row in df_busqueda.iterrows():
                     st.markdown(f'<p style="font-size:14px; font-weight:normal; color:gray; margin-bottom:-10px;">Resultados para: {row["NÚMERO DE PEDIDO"]}</p>', unsafe_allow_html=True)
                     
-                    # 1. Asegúrate de tener este bloque de Estilos CSS corregido antes de la búsqueda
+                    # Estilos de puntos animados
                     st.markdown("""<style>@keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } } @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } } @keyframes p-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } } @keyframes p-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } } .dot-green { border-radius: 50% !important; animation: p-green 2s infinite; } .dot-blue { border-radius: 50% !important; animation: p-blue 2s infinite; } .dot-orange { border-radius: 50% !important; animation: p-orange 2s infinite; } .dot-red { border-radius: 50% !important; animation: p-red 2s infinite; }</style>""", unsafe_allow_html=True)
                     
-                    # 2. Bloque de Lógica y Timeline (Dentro de tu bucle for)
                     f_envio_dt = pd.to_datetime(row.get("FECHA DE ENVÍO"), errors='coerce')
                     f_promesa_dt = pd.to_datetime(row.get("PROMESA DE ENTREGA"), errors='coerce')
                     f_real_dt = pd.to_datetime(row.get("FECHA DE ENTREGA REAL"), errors='coerce')
-                    hoy_dt = pd.Timestamp.now().normalize()
                     entregado = pd.notna(f_real_dt)
                     
-                    # Definición de animaciones y estados
                     if entregado:
                         t_fin, c_fin, anim_fin = "ENTREGADO", "#22c55e", "dot-green"
-                        if f_real_dt <= f_promesa_dt:
-                            t_medio, c_medio, anim_medio = "ENTREGADA EN TIEMPO", "#22c55e", "dot-green"
-                        else:
-                            t_medio, c_medio, anim_medio = "ENTREGADA CON RETRASO", "#ef4444", "dot-red"
+                        t_medio, c_medio, anim_medio = ("ENTREGADA EN TIEMPO", "#22c55e", "dot-green") if f_real_dt <= f_promesa_dt else ("ENTREGADA CON RETRASO", "#ef4444", "dot-red")
                     else:
                         t_fin, c_fin, anim_fin = "EN ESPERA", "#374151", ""
-                        if pd.notna(f_promesa_dt) and f_promesa_dt < hoy_dt:
-                            t_medio, c_medio, anim_medio = "RETRASO", "#f97316", "dot-orange"
-                        else:
-                            t_medio, c_medio, anim_medio = "EN TRÁNSITO", "#3b82f6", "dot-blue"
+                        t_medio, c_medio, anim_medio = ("RETRASO", "#f97316", "dot-orange") if pd.notna(f_promesa_dt) and f_promesa_dt < ahora_maestro else ("EN TRÁNSITO", "#3b82f6", "dot-blue")
                     
-                    # Formateo de fechas
                     txt_f_envio = f_envio_dt.strftime('%d/%m/%Y') if pd.notna(f_envio_dt) else "S/D"
                     txt_f_promesa = f_promesa_dt.strftime('%d/%m/%Y') if pd.notna(f_promesa_dt) else "S/D"
                     txt_f_real = f_real_dt.strftime('%d/%m/%Y') if entregado else "PENDIENTE"
-                    txt_f_actual = hoy_dt.strftime('%d/%m/%Y')
+                    txt_f_actual = ahora_maestro.strftime('%d/%m/%Y')
                     
-                    # HTML en UNA SOLA LÍNEA para renderizado óptimo
                     html_timeline = f'<div style="background:#111827;padding:25px;border-radius:12px;border:1px solid #374151;margin-top:15px;margin-bottom:20px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;width:100%;"><div style="position:absolute;top:20px;left:10%;right:10%;height:6px;background:#374151;z-index:0;"></div><div style="text-align:center;z-index:1;width:25%;"><div class="dot-green" style="width:40px;height:40px;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">ENVIADO</div><div style="color:gray;font-size:12px;">{txt_f_envio}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="dot-green" style="width:40px;height:40px;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">FECHA ACTUAL</div><div style="color:gray;font-size:12px;">{txt_f_actual}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="{anim_medio}" style="width:40px;height:40px;background:{c_medio};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_medio}</div><div style="color:gray;font-size:12px;"><span style="color:#22c55e;">PROMESA DE ENTREGA</span> {txt_f_promesa}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="{anim_fin}" style="width:40px;height:40px;border-radius:50%;background:{c_fin};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_fin}</div><div style="color:gray;font-size:12px;">FECHA ENTREGA: {txt_f_real}</div></div></div></div>'
-                    
                     st.markdown(html_timeline, unsafe_allow_html=True)
-                    
-                                       
-                    
-                    ## --- PASO 1: INYECTAR EL ADN (ESTILOS OCULTOS) ---
-                    st.markdown("<style>.elite-card{transition:all 0.4s ease;display:flex;flex-direction:column;justify-content:space-between;}.elite-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,0.7)!important;border:1px solid rgba(255,255,255,0.25)!important;background:rgba(255,255,255,0.04)!important;}</style>", unsafe_allow_html=True)
-                    
-                    c1, c2, c3 = st.columns(3)
 
-                    # Altura común para simetría total
-                    h_size = "360px"
-                    
-                    # --- TARJETA 1: EXPEDICIÓN (CON FLETERA) ---
-                    with c1:
-                        costo = f"${float(row.get('COSTO DE LA GUÍA', 0)):,.2f}"
-                        html_c1 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #38bdf8;min-height:{h_size};'><div style='display:flex;align-items:center;margin-bottom:15px;'><div style='background:#38bdf822;padding:10px;border-radius:12px;margin-right:15px;'>📦</div><div style='color:white;font-weight:800;font-size:14px;'>DATOS DEL CLIENTE</div></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Tracking</span><span style='color:#38bdf8;font-size:13px;font-weight:800;'>{row.get('NÚMERO DE GUÍA','—')}</span></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Cliente</span><span style='color:#e2e8f0;font-size:13px;'>{row.get('NOMBRE DEL CLIENTE','—')}</span></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Destino</span><span style='color:#e2e8f0;font-size:13px;'>{row.get('DESTINO','—')}</span></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Fletera</span><span style='color:#fbbf24;font-size:13px;font-weight:700;'>{row.get('FLETERA','—')}</span></div><div style='margin-top:auto;text-align:right;'><div style='color:#64748b;font-size:12px;font-weight:800;'>Costo Guia</div><div style='color:#00FFAA;font-size:26px;font-weight:900;'>{costo}</div></div></div>"
-                        st.markdown(html_c1, unsafe_allow_html=True)
-                    
-                    # --- TARJETA 2: TIEMPOS ---
-                    with c2:
-                        retraso = row.get('DIAS_RETRASO', 0)
-                        color_t = "#fb7185" if retraso > 0 else "#00FFAA"
-                        html_c2 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #fbbf24;min-height:{h_size};'><div style='display:flex;align-items:center;margin-bottom:15px;'><div style='background:#fbbf2422;padding:10px;border-radius:12px;margin-right:15px;'>⏱️</div><div style='color:white;font-weight:800;font-size:14px;'>TIEMPOS</div></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Fecha de Envio</span><span style='color:#e2e8f0;font-size:13px;'>{txt_f_envio}</span></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Promesa de entrega</span><span style='color:#e2e8f0;font-size:13px;'>{txt_f_promesa}</span></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Fecha de entrega</span><span style='color:#00FFAA;font-size:13px;'>{txt_f_real}</span></div><div style='margin-top:auto;background:rgba(255,255,255,0.03);padding:15px;border-radius:12px;border-left:4px solid {color_t};'><div style='color:{color_t};font-size:10px;font-weight:800;'>DESVIACIÓN</div><div style='color:white;font-size:22px;font-weight:900;'>{retraso} DÍAS</div></div></div>"
-                        st.markdown(html_c2, unsafe_allow_html=True)
-                    
-                    # --- TARJETA 3: ESTADO ---
-                    with c3:
-                        est = row.get('ESTATUS_CALCULADO', '—')
-                        color_e = "#00FFAA" if est == "ENTREGADO" else "#fb7185" if est == "RETRASADO" else "#3b82f6"
-                        html_c3 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #a855f7;min-height:{h_size};'><div style='display:flex;align-items:center;margin-bottom:15px;'><div style='background:#a855f722;padding:10px;border-radius:12px;margin-right:15px;'>📊</div><div style='color:white;font-weight:800;font-size:14px;'>ESTATUS</div></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Estatus</span><span style='color:{color_e};font-size:13px;font-weight:800;'>{est}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Prioridad</span><span style='color:#e2e8f0;font-size:13px;'>{row.get('PRIORIDAD','NORMAL')}</span></div><div style='margin-top:auto;'><div style='color:#64748b;font-size:14px;font-weight:700;margin-bottom:8px;'>NOTAS</div><div style='background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;border:1px dashed rgba(255,255,255,0.1);color:#cbd5e1;font-size:12px;min-height:90px;'>{row.get('COMENTARIOS','Sin incidencias.')}</div></div></div>"
-                        st.markdown(html_c3, unsafe_allow_html=True)
-        
-              
-        st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True)
-        # --- 1. CÁLCULO DE MÉTRICAS ---
-        st.markdown("<style>.elite-card{transition:all 0.4s ease;padding:20px;border-radius:20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);text-align:center;margin-bottom:10px;}.elite-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,0.7)!important;border:1px solid rgba(255,255,255,0.25)!important;}</style>", unsafe_allow_html=True)
-        
-        total = int(len(df_filtrado))
-        entregados = int((df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum())
-        en_transito = int((df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum())
-        retrasados = int((df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum())
-
-        # --- 2. COLORES ---
-        COLOR_AVANCE_ENTREGADOS = "#00FFAA" 
-        COLOR_AVANCE_TRANSITO   = "#38bdf8" 
-        COLOR_AVANCE_RETRASADOS = "#fb7185" 
-        COLOR_TOTAL             = "#fbbf24" 
-        COLOR_FALTANTE          = "#262730" 
-
-        # --- 3. FUNCIÓN CORREGIDA (Sintaxis simplificada para evitar el TypeError) ---
-        def donut_con_numero(avance, total_val, color_avance, color_faltante):
-            porcentaje = int((avance / total_val) * 100) if total_val > 0 else 0
-            
-            # DataFrame con tipos de datos limpios
-            data_dona = pd.DataFrame({
-                "segmento": ["A", "B"], 
-                "valor": [float(avance), float(max(total_val - avance, 0))]
-            })
-            
-            # 1. El arco (Dona) con sintaxis explícita
-            donut = alt.Chart(data_dona).mark_arc(innerRadius=52, outerRadius=65, cornerRadius=10).encode(
-                theta=alt.Theta(field="valor", type="quantitative"),
-                color=alt.Color(field="segmento", type="nominal", 
-                                scale=alt.Scale(domain=["A", "B"], range=[color_avance, color_faltante]), 
-                                legend=None),
-                tooltip=alt.value(None) # Forma segura de desactivar tooltip
-            )
-            
-            # 2. Número central
-            texto_n = alt.Chart(pd.DataFrame({"t": [str(avance)]})).mark_text(
-                align="center", baseline="middle", fontSize=28, fontWeight=800, dy=-6, color="white"
-            ).encode(text=alt.Text(field="t", type="nominal"))
-            
-            # 3. Porcentaje inferior
-            texto_p = alt.Chart(pd.DataFrame({"t": [f"{porcentaje}%"]})).mark_text(
-                align="center", baseline="middle", fontSize=12, fontWeight=400, dy=18, color="#94a3b8"
-            ).encode(text=alt.Text(field="t", type="nominal"))
-            
-            return (donut + texto_n + texto_p).properties(width=180, height=180).configure_view(strokeOpacity=0)
-
-        # --- 4. RENDERIZADO DE COLUMNAS ---
-        st.markdown("<div style='background:rgba(255,255,255,0.02);padding:15px;border-radius:15px;border-left:5px solid #38bdf8;margin-bottom:25px;'><span style='color:white;font-size:16px;font-weight:800;letter-spacing:1.5px;'>CONSOLA GLOBAL DE RENDIMIENTO</span></div>", unsafe_allow_html=True)
-    
-        c1, c2, c3, c4 = st.columns(4)
-        l_style = "color:##e2e8f0;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;"
-
-        with c1:
-            st.markdown(f"<div class='elite-card'><p style='{l_style}'>Total Pedidos</p>", unsafe_allow_html=True)
-            st.altair_chart(donut_con_numero(total, total, COLOR_TOTAL, COLOR_FALTANTE), use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-    
-        with c2:
-            st.markdown(f"<div class='elite-card'><p style='{l_style}'>Entregados</p>", unsafe_allow_html=True)
-            st.altair_chart(donut_con_numero(entregados, total, COLOR_AVANCE_ENTREGADOS, COLOR_FALTANTE), use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-    
-        with c3:
-            st.markdown(f"<div class='elite-card'><p style='{l_style}'>En Tránsito en tiempo</p>", unsafe_allow_html=True)
-            st.altair_chart(donut_con_numero(en_transito, total, COLOR_AVANCE_TRANSITO, COLOR_FALTANTE), use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-    
-        with c4:
-            st.markdown(f"<div class='elite-card'><p style='{l_style}'>En Tránsito con retraso</p>", unsafe_allow_html=True)
-            st.altair_chart(donut_con_numero(retrasados, total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-        
         # --------------------------------------------------
-        # TABLA DE ENVÍOS – DISEÑO PREMIUM ELITE (SIN CAJA)
+        # TABLA DE ENVÍOS – DISEÑO PREMIUM
         # --------------------------------------------------
-        # Espaciador para separar de las donas
         st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
         st.divider() 
-        # Estructura de 3 columnas para centrado perfecto
+        
         col_izq, col_centro, col_der = st.columns([2, 3, 2])
         
         with col_izq:
@@ -783,29 +658,14 @@ else:
                     st.rerun()
         
         with col_centro:
-            # Título con padding-bottom para empujar la tabla hacia abajo
-            st.markdown("""
-                <div style="text-align:center; padding-bottom: 25px;">
-                    <span style="color:white; font-size:24px; font-weight:800; letter-spacing:3px; text-transform:uppercase;">
-                        REGISTRO DE ENVIOS
-                    </span>
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown('<div style="text-align:center; padding-bottom: 25px;"><span style="color:white; font-size:24px; font-weight:800; letter-spacing:3px; text-transform:uppercase;">REGISTRO DE ENVIOS</span></div>', unsafe_allow_html=True)
 
-        with col_der:
-            # Columna de equilibrio
-            st.write("")
-        
-        # Lógica de altura dinámica
-        h_dinamica = 850 if st.session_state.get('tabla_expandida', False) else 400
-        
-        # Preparación de datos final
+        # PREPARACIÓN DE DATOS FINAL (REPARADA)
         df_visual = df_filtrado.copy()
-        hoy_sistema = pd.Timestamp(datetime.date.today())
         
-        # Cálculos de tiempo para las barras de progreso y métricas
-        df_visual["DIAS_TRANSCURRIDOS"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["FECHA DE ENVÍO"]).dt.days)
-        df_visual["DIAS_RETRASO_VAL"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["PROMESA DE ENTREGA"]).dt.days).clip(lower=0)
+        # REPARACIÓN LÍNEA 807: Usamos ahora_maestro en lugar de hoy_t
+        df_visual["DIAS_TRANSCURRIDOS"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(ahora_maestro) - df_visual["FECHA DE ENVÍO"]).dt.days)
+        df_visual["DIAS_RETRASO_VAL"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(ahora_maestro) - df_visual["PROMESA DE ENTREGA"]).dt.days).clip(lower=0)
         
         
         # --- FILTROS DE CUBIERTA (ENCIMA DE LA TABLA) ---
@@ -3158,6 +3018,7 @@ else:
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
         
+
 
 
 
