@@ -3004,8 +3004,8 @@ else:
         
         st.markdown('<hr style="border:0; height:2px; background:#00D4FF; box-shadow:0px 0px 15px 3px rgba(0,212,255,0.7); margin-bottom:30px; border-radius:10px; opacity:0.8;">', unsafe_allow_html=True)
 
-        # 3. Función de Renderizado Interna (Blindada)
-        # 3. Función de Renderizado Interna (Blindada con Animación)
+        # 3. Función de Renderizado Interna (Blindada)====
+        # ============================================================================================
         def render_card(label, value, footer, target_val=None, actual_val=None, inverse=False, border_base="border-blue"):
             if target_val is None or actual_val is None:
                 color, border = "#f0f6fc", border_base
@@ -3015,7 +3015,6 @@ else:
                 color = "#fb7185" if is_alert else "#00ffa2"
                 border = "border-red" if is_alert else "border-green"
             
-            # Inyectamos la clase 'animated-card' para el efecto visual cinemático
             st.markdown(f"""
                 <div class='card-container {border} animated-card'>
                     <div class='card-label'>{label}</div>
@@ -3023,84 +3022,91 @@ else:
                     <div class='card-footer'>{footer}</div>
                 </div>
             """, unsafe_allow_html=True)
-
-        # 4. Motor de Datos y Cálculos Elite (Reparación Total)
+        
+        # =========================================================
+        # 4. MOTOR DE DATOS Y CÁLCULOS ELITE
+        # =========================================================
         try:
             df_matriz = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
             df_matriz.columns = [str(c).strip().upper() for c in df_matriz.columns]
             
+            # Conversión de fechas con protocolo de seguridad
             cols_f = ['FECHA DE ENVÍO', 'PROMESA DE ENTREGA', 'FECHA DE ENTREGA REAL']
             for col in cols_f:
                 df_matriz[col] = pd.to_datetime(df_matriz[col], dayfirst=True, errors='coerce')
             
             df_matriz = df_matriz.dropna(subset=['FECHA DE ENVÍO'])
             df_matriz['MES_TX'] = df_matriz['FECHA DE ENVÍO'].dt.month_name()
-            
+        
             if not df_matriz.empty:
                 with st.sidebar:
                     st.markdown("<h3 style='color:#50C878;'>🛰️ CONTROL FLETERA</h3>", unsafe_allow_html=True)
                     fletera_f = st.selectbox("FLETERA (MANDO ÚNICO)", sorted(df_matriz['FLETERA'].unique()))
                     mes_f = st.selectbox("MES DE ANÁLISIS", df_matriz['MES_TX'].unique())
-
-                # Filtrado por mes y fletera
+        
+                # Filtrado reactivo por Mes y Fletera
                 df_f = df_matriz[(df_matriz['MES_TX'] == mes_f) & (df_matriz['FLETERA'] == fletera_f)]
                 df_mes_global = df_matriz[df_matriz['MES_TX'] == mes_f]
-
+        
                 if not df_f.empty:
-                    # --- CÁLCULOS DE PRECISIÓN ---
+                    # --- CÁLCULOS DE PRECISIÓN QUIRÚRGICA ---
                     total_enviados = len(df_f)
                     pedidos_mes_global = len(df_mes_global)
                     participacion = (total_enviados / pedidos_mes_global * 100) if pedidos_mes_global > 0 else 0
                     
                     df_costos = df_f[(df_f['COSTO DE LA GUÍA'] > 0) & (df_f['CANTIDAD DE CAJAS'] > 0)].copy()
                     costo_por_caja_prom = df_costos['COSTO DE LA GUÍA'].sum() / df_costos['CANTIDAD DE CAJAS'].sum() if not df_costos.empty else 0.0
-
+        
                     df_entregados = df_f.dropna(subset=['FECHA DE ENTREGA REAL'])
                     total_entregados = len(df_entregados)
-                    
-                    if total_entregados > 0:
-                        a_tiempo = df_entregados[df_entregados['FECHA DE ENTREGA REAL'] <= df_entregados['PROMESA DE ENTREGA']]
-                        eficiencia_val = (len(a_tiempo) / total_entregados * 100)
-                    else:
-                        eficiencia_val = 0.0
-
+                    eficiencia_val = (len(df_entregados[df_entregados['FECHA DE ENTREGA REAL'] <= df_entregados['PROMESA DE ENTREGA']]) / total_entregados * 100) if total_entregados > 0 else 0.0
+        
                     df_retraso = df_entregados[df_entregados['FECHA DE ENTREGA REAL'] > df_entregados['PROMESA DE ENTREGA']].copy()
                     num_retrasos = len(df_retraso)
                     dias_retraso_prom = (df_retraso['FECHA DE ENTREGA REAL'] - df_retraso['PROMESA DE ENTREGA']).dt.days.mean() if not df_retraso.empty else 0
                     lead_time_prom = (df_entregados['FECHA DE ENTREGA REAL'] - df_entregados['FECHA DE ENVÍO']).dt.days.mean() if total_entregados > 0 else 0
                     destinos = df_f.groupby('DESTINO')['COSTO DE LA GUÍA'].sum()
                     g_total = df_f['COSTO DE LA GUÍA'].sum()
-
+        
                     # --- INYECCIÓN DE ESTILOS DE ANIMACIÓN ---
                     st.markdown("""
                         <style>
                             @keyframes slideUpFade {
-                                from { opacity: 0; transform: translateY(20px); }
+                                from { opacity: 0; transform: translateY(30px); }
                                 to { opacity: 1; transform: translateY(0); }
                             }
-                            .animated-card { animation: slideUpFade 0.6s ease-out forwards; }
+                            .animated-card { 
+                                animation: slideUpFade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+                            }
                         </style>
                     """, unsafe_allow_html=True)
-
-                    # --- RENDERIZADO DE LAS 9 TARJETAS ---
-                    st.markdown("<h4 class='premium-header'>NEGOCIO Y PARTICIPACIÓN</h4>", unsafe_allow_html=True)
-                    n1, n2, n3 = st.columns(3)
-                    with n1: render_card("COSTO TOTAL INVERSIÓN", f"${g_total:,.0f}", f"Promedio: ${costo_por_caja_prom:,.2f} por caja")
-                    with n2: render_card("% PARTICIPACIÓN", f"{participacion:.1f}%", f"Cuota de Mercado", border_base="border-purple")
-                    with n3: render_card("% EFICIENCIA", f"{eficiencia_val:.1f}%", "Basado en Entregas Reales", 95, eficiencia_val, True)
-
-                    st.markdown("<h4 class='premium-header'>CUMPLIMIENTO Y SERVICIO</h4>", unsafe_allow_html=True)
-                    c1, c2, c3 = st.columns(3)
-                    with c1: render_card("OTD (PUNTUALIDAD)", f"{eficiencia_val:.1f}%", "Cumplimiento de Promesa", 95, eficiencia_val, True)
-                    with c2: render_card("CON RETRASO", f"{num_retrasos}", "Pedidos entregados tarde", 0, num_retrasos)
-                    with c3: render_card("RETRASO PROM.", f"{dias_retraso_prom:.1f} DÍAS", "Severidad del desvío", 1.5, dias_retraso_prom)
-
-                    st.markdown("<h4 class='premium-header'>VOLUMEN Y VELOCIDAD</h4>", unsafe_allow_html=True)
-                    o1, o2, o3 = st.columns(3)
-                    with o1: render_card("PEDIDOS ENVIADOS", f"{total_enviados}", "Total de guías generadas")
-                    with o2: render_card("LEAD TIME", f"{lead_time_prom:.1f} DÍAS", "Promedio Envío-Entrega", border_base="border-green")
-                    with o3: render_card("DESTINO TOP", f"{destinos.idxmax() if not destinos.empty else 'N/A'}", f"Gasto: ${destinos.max() if not destinos.empty else 0:,.0f}", border_base="border-red")
-                    
+        
+                    # --- CONTENEDOR CON KEY DINÁMICA (ACTIVA LA ANIMACIÓN AL CAMBIAR FLETERA) ---
+                    with st.container(key=f"kpi_sector_{fletera_f}_{mes_f}"):
+                        
+                        # FILA 1: NEGOCIO
+                        st.markdown("<h4 class='premium-header'>NEGOCIO Y PARTICIPACIÓN</h4>", unsafe_allow_html=True)
+                        n1, n2, n3 = st.columns(3)
+                        with n1: render_card("COSTO TOTAL INVERSIÓN", f"${g_total:,.0f}", f"Promedio: ${costo_por_caja_prom:,.2f} por caja")
+                        with n2: render_card("% PARTICIPACIÓN", f"{participacion:.1f}%", f"Cuota de Mercado", border_base="border-purple")
+                        with n3: render_card("% EFICIENCIA", f"{eficiencia_val:.1f}%", "Basado en Entregas Reales", 95, eficiencia_val, True)
+        
+                        # FILA 2: CUMPLIMIENTO
+                        st.markdown("<h4 class='premium-header'>CUMPLIMIENTO Y SERVICIO</h4>", unsafe_allow_html=True)
+                        c1, c2, c3 = st.columns(3)
+                        with c1: render_card("OTD (PUNTUALIDAD)", f"{eficiencia_val:.1f}%", "Cumplimiento de Promesa", 95, eficiencia_val, True)
+                        with c2: render_card("CON RETRASO", f"{num_retrasos}", "Pedidos entregados tarde", 0, num_retrasos)
+                        with c3: render_card("RETRASO PROM.", f"{dias_retraso_prom:.1f} DÍAS", "Severidad del desvío", 1.5, dias_retraso_prom)
+        
+                        # FILA 3: OPERACIÓN
+                        st.markdown("<h4 class='premium-header'>VOLUMEN Y VELOCIDAD</h4>", unsafe_allow_html=True)
+                        o1, o2, o3 = st.columns(3)
+                        with o1: render_card("PEDIDOS ENVIADOS", f"{total_enviados}", "Total de guías generadas")
+                        with o2: render_card("LEAD TIME", f"{lead_time_prom:.1f} DÍAS", "Promedio Envío-Entrega", border_base="border-green")
+                        with o3: 
+                            top_dest = destinos.idxmax() if not destinos.empty else "N/A"
+                            render_card("DESTINO TOP", f"{top_dest}", f"Gasto: ${destinos.max() if not destinos.empty else 0:,.0f}", border_base="border-red")
+                            
                 else:
                     st.info(f"Sin registros para {fletera_f} en {mes_f}.")
         except Exception as e:
@@ -3177,6 +3183,7 @@ else:
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
         
+
 
 
 
