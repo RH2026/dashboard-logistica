@@ -638,6 +638,108 @@ else:
                     html_timeline = f'<div style="background:#111827;padding:25px;border-radius:12px;border:1px solid #374151;margin-top:15px;margin-bottom:20px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;width:100%;"><div style="position:absolute;top:20px;left:10%;right:10%;height:6px;background:#374151;z-index:0;"></div><div style="text-align:center;z-index:1;width:25%;"><div class="dot-green" style="width:40px;height:40px;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">ENVIADO</div><div style="color:gray;font-size:12px;">{txt_f_envio}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="dot-green" style="width:40px;height:40px;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">FECHA ACTUAL</div><div style="color:gray;font-size:12px;">{txt_f_actual}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="{anim_medio}" style="width:40px;height:40px;background:{c_medio};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_medio}</div><div style="color:gray;font-size:12px;"><span style="color:#22c55e;">PROMESA DE ENTREGA</span> {txt_f_promesa}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="{anim_fin}" style="width:40px;height:40px;border-radius:50%;background:{c_fin};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_fin}</div><div style="color:gray;font-size:12px;">FECHA ENTREGA: {txt_f_real}</div></div></div></div>'
                     st.markdown(html_timeline, unsafe_allow_html=True)
 
+        
+        # =========================================================
+        # --- BLOQUE: MÉTRICAS CIRCULARES (DONITAS) ---
+        # =========================================================
+        st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True)
+        st.markdown("<style>.elite-card{transition:all 0.4s ease;padding:20px;border-radius:20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);text-align:center;margin-bottom:10px;}.elite-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,0.7)!important;border:1px solid rgba(255,255,255,0.25)!important;}</style>", unsafe_allow_html=True)
+        
+        # Cálculos limpios para las donas
+        t_total = int(len(df_filtrado))
+        t_entregados = int((df_filtrado["ESTATUS_CALCULADO"] == "ENTREGADO").sum())
+        t_transito = int((df_filtrado["ESTATUS_CALCULADO"] == "EN TRANSITO").sum())
+        t_retrasados = int((df_filtrado["ESTATUS_CALCULADO"] == "RETRASADO").sum())
+
+        COLOR_AVANCE_ENTREGADOS = "#00FFAA" 
+        COLOR_AVANCE_TRANSITO   = "#38bdf8" 
+        COLOR_AVANCE_RETRASADOS = "#fb7185" 
+        COLOR_TOTAL             = "#fbbf24" 
+        COLOR_FALTANTE          = "#262730" 
+
+        def donut_con_numero(avance, total_val, color_avance, color_faltante):
+            porcentaje = int((avance / total_val) * 100) if total_val > 0 else 0
+            data_dona = pd.DataFrame({
+                "segmento": ["A", "B"], 
+                "valor": [float(avance), float(max(total_val - avance, 0))]
+            })
+            
+            donut = alt.Chart(data_dona).mark_arc(innerRadius=52, outerRadius=65, cornerRadius=10).encode(
+                theta=alt.Theta(field="valor", type="quantitative"),
+                color=alt.Color(field="segmento", type="nominal", 
+                                scale=alt.Scale(domain=["A", "B"], range=[color_avance, color_faltante]), 
+                                legend=None),
+                tooltip=alt.value(None)
+            )
+            
+            texto_n = alt.Chart(pd.DataFrame({"t": [str(avance)]})).mark_text(
+                align="center", baseline="middle", fontSize=28, fontWeight=800, dy=-6, color="white"
+            ).encode(text=alt.Text(field="t", type="nominal"))
+            
+            texto_p = alt.Chart(pd.DataFrame({"t": [f"{porcentaje}%"]})).mark_text(
+                align="center", baseline="middle", fontSize=12, fontWeight=400, dy=18, color="#94a3b8"
+            ).encode(text=alt.Text(field="t", type="nominal"))
+            
+            return (donut + texto_n + texto_p).properties(width=180, height=180).configure_view(strokeOpacity=0)
+
+        st.markdown("<div style='background:rgba(255,255,255,0.02);padding:15px;border-radius:15px;border-left:5px solid #38bdf8;margin-bottom:25px;'><span style='color:white;font-size:16px;font-weight:800;letter-spacing:1.5px;'>CONSOLA GLOBAL DE RENDIMIENTO</span></div>", unsafe_allow_html=True)
+    
+        c1, c2, c3, c4 = st.columns(4)
+        l_style = "color:#e2e8f0;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;"
+
+        with c1:
+            st.markdown(f"<div class='elite-card'><p style='{l_style}'>Total Pedidos</p>", unsafe_allow_html=True)
+            st.altair_chart(donut_con_numero(t_total, t_total, COLOR_TOTAL, COLOR_FALTANTE), use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+    
+        with c2:
+            st.markdown(f"<div class='elite-card'><p style='{l_style}'>Entregados</p>", unsafe_allow_html=True)
+            st.altair_chart(donut_con_numero(t_entregados, t_total, COLOR_AVANCE_ENTREGADOS, COLOR_FALTANTE), use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+    
+        with c3:
+            st.markdown(f"<div class='elite-card'><p style='{l_style}'>En Tránsito</p>", unsafe_allow_html=True)
+            st.altair_chart(donut_con_numero(t_transito, t_total, COLOR_AVANCE_TRANSITO, COLOR_FALTANTE), use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+    
+        with c4:
+            st.markdown(f"<div class='elite-card'><p style='{l_style}'>Retrasados</p>", unsafe_allow_html=True)
+            st.altair_chart(donut_con_numero(t_retrasados, t_total, COLOR_AVANCE_RETRASADOS, COLOR_FALTANTE), use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # =========================================================
+        # --- BLOQUE: ANÁLISIS DE RETRASOS (REPARADO) ---
+        # =========================================================
+        st.markdown(f"""<div style='background: rgba(255,255,255,0.02); padding: 12px 20px; border-radius: 8px; border-left: 4px solid #fb7185; margin-top: 30px; margin-bottom: 20px;'><span style='color: #e2e8f0; font-weight: 700; font-size: 15px; letter-spacing: 1.5px;'>Retrasos en tiempo real</span></div>""", unsafe_allow_html=True)
+
+        df_analisis_real = df_filtrado.copy()
+        
+        # REPARACIÓN LÍNEA 978: Función sincronizada
+        def calcular_dias_reales(row):
+            meta = row["PROMESA DE ENTREGA"]
+            final = row["FECHA DE ENTREGA REAL"]
+            if pd.isna(final):
+                # Usamos ahora_maestro en lugar de hoy_dt
+                desviacion = (ahora_maestro - meta).days if pd.notna(meta) else 0
+            else:
+                desviacion = (final - meta).days if pd.notna(meta) else 0
+            return desviacion
+
+        df_analisis_real["DIAS_DESVIACION"] = df_analisis_real.apply(calcular_dias_reales, axis=1)
+        
+        # Gráfico de barras de desviación por fletera
+        df_prom = df_analisis_real.groupby("FLETERA")["DIAS_DESVIACION"].mean().reset_index(name="PROMEDIO")
+        
+        if not df_prom.empty:
+            df_prom["COLOR_HEX"] = df_prom["PROMEDIO"].apply(lambda x: "#48C9B0" if x <= 0 else ("#d97706" if x <= 2 else "#fb7185"))
+            
+            bars = alt.Chart(df_prom).mark_bar(cornerRadiusTopRight=10, cornerRadiusBottomRight=10, size=22).encode(
+                y=alt.Y("FLETERA:N", title=None, sort='-x'),
+                x=alt.X("PROMEDIO:Q", title="Días de Desviación (Promedio)"),
+                color=alt.Color("COLOR_HEX:N", scale=None)
+            )
+            st.altair_chart(bars.properties(height=300), use_container_width=True)
+        
         # --------------------------------------------------
         # TABLA DE ENVÍOS – DISEÑO PREMIUM
         # --------------------------------------------------
@@ -3018,6 +3120,7 @@ else:
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
         
+
 
 
 
