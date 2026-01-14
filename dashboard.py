@@ -331,6 +331,9 @@ elif not st.session_state.splash_completado:
 
 # 3. CONTENIDO PRIVADO (DASHBOARD)
 else:      
+    # --- RELOJ MAESTRO DEL SISTEMA (EVITA NAMEERROR) ---
+    ahora_maestro = pd.Timestamp(datetime.date.today())
+
     # --- MOTOR DE DATOS (REPARADO Y BLINDADO) ---
     @st.cache_data
     def cargar_datos():
@@ -343,18 +346,15 @@ else:
         df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
         df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
         
-        # FUNCIÓN DE CÁLCULO INTERNA (Sin dependencias externas para evitar NameError)
+        # FUNCIÓN DE CÁLCULO INTERNA (Sincronizada con el reloj maestro)
         def calcular_estatus(row):
-            # Obtener fecha de hoy dentro de la función
-            ahora = pd.Timestamp(datetime.date.today())
-            
             # 1. Si ya tiene fecha de entrega real -> ENTREGADO
             if pd.notna(row["FECHA DE ENTREGA REAL"]):
                 return "ENTREGADO"
             
             # 2. Si no ha llegado y la promesa ya pasó -> RETRASADO
             if pd.notna(row["PROMESA DE ENTREGA"]):
-                if row["PROMESA DE ENTREGA"].date() < ahora.date():
+                if row["PROMESA DE ENTREGA"].date() < ahora_maestro.date():
                     return "RETRASADO"
             
             # 3. En cualquier otro caso -> EN TRANSITO
@@ -367,23 +367,23 @@ else:
     df = cargar_datos()
 
     # BARRA LATERAL
-    
     # --- RECONEXIÓN DE LOGO NEXION (FUERZA BRUTA) ---
     import base64
     def get_base64(path):
-        with open(path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
+        try:
+            with open(path, "rb") as f:
+                return base64.b64encode(f.read()).decode()
+        except:
+            return ""
 
     try:
         logo_base64 = get_base64("n1.png")
-        # Inyectamos el logo como un bloque HTML real, no como fondo de CSS
         st.sidebar.markdown(
             f"""
             <div style="text-align: center; padding: 10px 0px;">
                 <img src="data:image/png;base64,{logo_base64}" width="220">
             </div>
             <style>
-                /* Esto elimina el espacio vacío que Streamlit deja arriba por defecto */
                 [data-testid="stSidebarNav"] {{
                     padding-top: 20px !important;
                 }}
@@ -403,15 +403,11 @@ else:
         st.session_state.motivo_splash = "logout"
         st.rerun()
 
-        
     # --------------------------------------------------
     # 🛣️ INICIO DE LA LÓGICA DE NAVEGACIÓN
     # --------------------------------------------------
     if st.session_state.pagina == "principal":
-        # A partir de aquí pondremos todo lo del Dashboard Principal
-        # --------------------------------------------------
         # TÍTULO Y ENCABEZADO
-        # --------------------------------------------------
         st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
         st.markdown("""
             <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>
@@ -421,14 +417,9 @@ else:
             </div>
         """, unsafe_allow_html=True)    
     
-        # =========================================================
-        #MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
-        # =========================================================
-        
-        # 1. ESTILO PARA QUE EL BOTÓN PAREZCA UN MENÚ DE APP
+        # MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
         st.markdown("""
             <style>
-                /* Estilizar el botón del menú para que sea cuadrado y discreto */
                 div[data-testid="stPopover"] > button {
                     background-color: #0d1117 !important;
                     border: 1px solid #00ffa2 !important;
@@ -436,7 +427,6 @@ else:
                     border-radius: 8px !important;
                     width: auto !important;
                 }
-                /* Ajustar el texto dentro del menú desplegado */
                 div[data-testid="stPopoverContent"] button {
                     text-align: left !important;
                     justify-content: flex-start !important;
@@ -451,42 +441,34 @@ else:
             </style>
         """, unsafe_allow_html=True)
         
-        # 2. POSICIONAMIENTO DEL MENÚ (Alineado a la derecha del título)
-        c1, c2 = st.columns([0.85, 0.15]) # El 0.15 es el espacio para el cuadro del menú
+        c1, c2 = st.columns([0.85, 0.15])
         
         with c2:
-            # El label "☰" es el icono estándar de hamburguesa
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                
                 if st.button("TRACKING", use_container_width=True, key="h_aac"):
                     st.session_state.pagina = "principal"
                     st.rerun()
-                    
                 if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
                     st.session_state.pagina = "KPIs"
                     st.rerun()
-                    
                 if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
                     st.session_state.pagina = "Reporte"
                     st.rerun()
-
                 if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
                     st.session_state.pagina = "HubLogistico"
                     st.rerun() 
-
                 if st.button("OTD", use_container_width=True, key="h_radar"):
                     st.session_state.pagina = "RadarRastreo"
                     st.rerun()
-                                       
+                                        
         st.divider()   
-        # 1. FUNCIÓN DE LIMPIEZA
+        
+        # FUNCIONES DE FILTRO
         def limpiar_filtros():
             st.session_state.filtro_cliente_actual = ""
             st.session_state.filtro_cliente_input = ""
-            f_min_res = df["FECHA DE ENVÍO"].min()
-            f_max_res = df["FECHA DE ENVÍO"].max()
-            st.session_state["fecha_filtro"] = (f_min_res, f_max_res)
+            st.session_state["fecha_filtro"] = (df["FECHA DE ENVÍO"].min(), df["FECHA DE ENVÍO"].max())
             st.session_state["fletera_filtro"] = ""
             st.rerun()
     
@@ -495,7 +477,6 @@ else:
     
         st.sidebar.markdown("---")
                 
-        # 3. CALENDARIO
         f_min_data = df["FECHA DE ENVÍO"].min()
         f_max_data = df["FECHA DE ENVÍO"].max()
     
@@ -509,54 +490,33 @@ else:
             key="fecha_filtro"
         )
     
-         # 2. BUSCADOR (CLIENTE O GUÍA)
         if "filtro_cliente_actual" not in st.session_state:
             st.session_state.filtro_cliente_actual = ""
-    
-        
                 
-        # 4. SELECTOR DE FLETERA
         fletera_sel = st.sidebar.selectbox(
             "Selecciona Fletera",
             options=[""] + sorted(df["FLETERA"].dropna().unique()),
             index=0,
             key="fletera_filtro"
         )
-        # --------------------------------------------------
-        # APLICACIÓN DE FILTROS (CORREGIDO Y REFORZADO)
-        # --------------------------------------------------
+
+        # APLICACIÓN DE FILTROS
         df_filtrado = df.copy()
-        
-        # 1. Limpiamos el valor buscado para evitar errores de espacios
         valor_buscado = str(st.session_state.filtro_cliente_actual).strip().lower()
     
-        # PRIORIDAD 1: Si el usuario escribió algo en el buscador
         if valor_buscado != "":
-            # Convertimos las columnas a texto y quitamos el .0 que pone Excel a veces
             col_cliente_txt = df_filtrado["NO CLIENTE"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
             col_guia_txt = df_filtrado["NÚMERO DE GUÍA"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().str.lower()
-            
-            # Creamos la máscara de búsqueda
             mask_cliente = col_cliente_txt.str.contains(valor_buscado, na=False)
             mask_guia = col_guia_txt.str.contains(valor_buscado, na=False)
-            
-            # Filtramos (Si coincide con cliente O con guía)
             df_filtrado = df_filtrado[mask_cliente | mask_guia]
-            
-        # PRIORIDAD 2: Si el buscador está vacío, aplicamos fechas y fletera
         else:
-            # Validación de fechas
             if isinstance(rango_fechas, (list, tuple)) and len(rango_fechas) == 2:
                 f_inicio, f_fin = rango_fechas
-                f_ini_dt = pd.to_datetime(f_inicio)
-                f_fin_dt = pd.to_datetime(f_fin)
-                
                 df_filtrado = df_filtrado[
-                    (df_filtrado["FECHA DE ENVÍO"] >= f_ini_dt) & 
-                    (df_filtrado["FECHA DE ENVÍO"] <= f_fin_dt)
+                    (df_filtrado["FECHA DE ENVÍO"] >= pd.to_datetime(f_inicio)) & 
+                    (df_filtrado["FECHA DE ENVÍO"] <= pd.to_datetime(f_fin))
                 ]
-            
-            # Filtro de fletera
             if fletera_sel != "":
                 df_filtrado = df_filtrado[df_filtrado["FLETERA"].astype(str).str.strip() == fletera_sel]
     
@@ -3198,6 +3158,7 @@ else:
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
         
+
 
 
 
