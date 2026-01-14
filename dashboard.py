@@ -331,22 +331,36 @@ elif not st.session_state.splash_completado:
 
 # 3. CONTENIDO PRIVADO (DASHBOARD)
 else:      
-    # --- MOTOR DE DATOS ---
+    # --- MOTOR DE DATOS (REPARADO Y BLINDADO) ---
     @st.cache_data
     def cargar_datos():
         df = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
         df.columns = df.columns.str.strip().str.upper()
         df["NO CLIENTE"] = df["NO CLIENTE"].astype(str).str.strip()
+        
+        # Conversión de fechas con protocolo de seguridad
         df["FECHA DE ENVÍO"] = pd.to_datetime(df["FECHA DE ENVÍO"], errors="coerce", dayfirst=True)
         df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
         df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
         
-        hoy_sistema = pd.Timestamp(datetime.date.today())
+        # FUNCIÓN DE CÁLCULO INTERNA (Sin dependencias externas para evitar NameError)
         def calcular_estatus(row):
-            if pd.notna(row["FECHA DE ENTREGA REAL"]): return "ENTREGADO"
-            if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy: return "RETRASADO"
+            # Obtener fecha de hoy dentro de la función
+            ahora = pd.Timestamp(datetime.date.today())
+            
+            # 1. Si ya tiene fecha de entrega real -> ENTREGADO
+            if pd.notna(row["FECHA DE ENTREGA REAL"]):
+                return "ENTREGADO"
+            
+            # 2. Si no ha llegado y la promesa ya pasó -> RETRASADO
+            if pd.notna(row["PROMESA DE ENTREGA"]):
+                if row["PROMESA DE ENTREGA"].date() < ahora.date():
+                    return "RETRASADO"
+            
+            # 3. En cualquier otro caso -> EN TRANSITO
             return "EN TRANSITO"
         
+        # Aplicación del estatus
         df["ESTATUS_CALCULADO"] = df.apply(calcular_estatus, axis=1)
         return df
 
@@ -3184,6 +3198,7 @@ else:
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
         
+
 
 
 
