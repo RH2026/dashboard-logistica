@@ -341,7 +341,7 @@ else:
         df["PROMESA DE ENTREGA"] = pd.to_datetime(df["PROMESA DE ENTREGA"], errors="coerce", dayfirst=True)
         df["FECHA DE ENTREGA REAL"] = pd.to_datetime(df["FECHA DE ENTREGA REAL"], errors="coerce", dayfirst=True)
         
-        hoy = pd.Timestamp.today().normalize()
+        hoy = pd.Timestamp(datetime.date.today())
         def calcular_estatus(row):
             if pd.notna(row["FECHA DE ENTREGA REAL"]): return "ENTREGADO"
             if pd.notna(row["PROMESA DE ENTREGA"]) and row["PROMESA DE ENTREGA"] < hoy: return "RETRASADO"
@@ -827,7 +827,7 @@ else:
         
         # Preparación de datos final
         df_visual = df_filtrado.copy()
-        hoy_t = pd.Timestamp.today().normalize()
+        hoy = pd.Timestamp(datetime.date.today())
         
         # Cálculos de tiempo para las barras de progreso y métricas
         df_visual["DIAS_TRANSCURRIDOS"] = ((df_visual["FECHA DE ENTREGA REAL"].fillna(hoy_t) - df_visual["FECHA DE ENVÍO"]).dt.days)
@@ -1126,7 +1126,7 @@ else:
         df_analisis_real["FECHA DE ENTREGA REAL"] = pd.to_datetime(df_analisis_real["FECHA DE ENTREGA REAL"])
         
         # Obtener fecha de hoy para el cálculo de pendientes
-        hoy_dt = pd.Timestamp.now().normalize()
+        hoy = pd.Timestamp(datetime.date.today())
 
         # 2. Lógica Maestra: Si es nulo, usamos hoy. Si no, usamos la fecha real.
         def calcular_dias_reales(row):
@@ -3184,6 +3184,7 @@ else:
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
         
+
 
 
 
