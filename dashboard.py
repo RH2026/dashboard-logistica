@@ -625,7 +625,6 @@ else:
             # --- MANIOBRA MULTI-FILTRO (PEDIDO | GUÍA) ---
             query = pedido_buscar.strip().lower()
             
-            # Buscamos en ambas columnas simultáneamente
             df_busqueda = df_filtrado[
                 (df_filtrado["NÚMERO DE PEDIDO"].astype(str).str.contains(query, case=False, na=False)) |
                 (df_filtrado["NÚMERO DE GUÍA"].astype(str).str.contains(query, case=False, na=False))
@@ -634,84 +633,75 @@ else:
             if df_busqueda.empty:
                 st.warning(f"No se encontró registro para: {pedido_buscar}")
             else:
+                # RELOJ DE SEGURIDAD
                 hoy = pd.Timestamp.today().normalize()
-                                             
-                # Cálculos de tiempo para las tarjetas
-                df_busqueda["DIAS_TRANSCURRIDOS"] = (
-                    (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["FECHA DE ENVÍO"]).dt.days
-                )
-                df_busqueda["DIAS_RETRASO"] = (
-                    (df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["PROMESA DE ENTREGA"]).dt.days
-                )
+                                                              
+                # CÁLCULOS DE TIEMPO
+                df_busqueda["DIAS_TRANSCURRIDOS"] = ((df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["FECHA DE ENVÍO"]).dt.days)
+                df_busqueda["DIAS_RETRASO"] = ((df_busqueda["FECHA DE ENTREGA REAL"].fillna(hoy) - df_busqueda["PROMESA DE ENTREGA"]).dt.days)
                 df_busqueda["DIAS_RETRASO"] = df_busqueda["DIAS_RETRASO"].apply(lambda x: x if x > 0 else 0)
     
-                # Renderizado de Tarjetas y Timeline por cada registro encontrado
                 for index, row in df_busqueda.iterrows():
                     st.markdown(f'<p style="font-size:14px; font-weight:normal; color:gray; margin-bottom:-10px;">Resultados para: {row["NÚMERO DE PEDIDO"]}</p>', unsafe_allow_html=True)
                     
-                    # 1. Asegúrate de tener este bloque de Estilos CSS corregido antes de la búsqueda
-                    st.markdown("""<style>@keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } } @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } } @keyframes p-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } } @keyframes p-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } } .dot-green { border-radius: 50% !important; animation: p-green 2s infinite; } .dot-blue { border-radius: 50% !important; animation: p-blue 2s infinite; } .dot-orange { border-radius: 50% !important; animation: p-orange 2s infinite; } .dot-red { border-radius: 50% !important; animation: p-red 2s infinite; }</style>""", unsafe_allow_html=True)
+                    # --- ESTILOS CSS ANIMADOS ---
+                    st.markdown("""<style>@keyframes p-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } } @keyframes p-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } } @keyframes p-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } } @keyframes p-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } } .dot-green { border-radius: 50% !important; animation: p-green 2s infinite; } .dot-blue { border-radius: 50% !important; animation: p-blue 2s infinite; } .dot-orange { border-radius: 50% !important; animation: p-orange 2s infinite; } .dot-red { border-radius: 50% !important; animation: p-red 2s infinite; } .elite-card{transition:all 0.4s ease;display:flex;flex-direction:column;justify-content:space-between;}.elite-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,0.7)!important;border:1px solid rgba(255,255,255,0.25)!important;background:rgba(255,255,255,0.04)!important;}</style>""", unsafe_allow_html=True)
                     
-                    # 2. Bloque de Lógica y Timeline (Dentro de tu bucle for)
+                    # --- LÓGICA DE NODOS (PEDIDO DEL CAPITÁN) ---
                     f_envio_dt = pd.to_datetime(row.get("FECHA DE ENVÍO"), errors='coerce')
                     f_promesa_dt = pd.to_datetime(row.get("PROMESA DE ENTREGA"), errors='coerce')
                     f_real_dt = pd.to_datetime(row.get("FECHA DE ENTREGA REAL"), errors='coerce')
-                    hoy_dt = pd.Timestamp.now().normalize()
                     entregado = pd.notna(f_real_dt)
                     
-                    # Definición de animaciones y estados
+                    guia_val = str(row.get("NÚMERO DE GUÍA", "")).strip().upper()
+                    tiene_guia = pd.notna(row.get("NÚMERO DE GUÍA")) and guia_val not in ["", "NAN", "0", "PENDIENTE"]
+                    
+                    # Nodo 2
+                    t_env = "ENTREGADO A PAQUETERÍA" if not tiene_guia and not entregado else "ENVIADO"
+                    
+                    # Nodo 3 (Solo se activa si tiene guía o está entregado)
                     if entregado:
-                        t_fin, c_fin, anim_fin = "ENTREGADO", "#22c55e", "dot-green"
-                        if f_real_dt <= f_promesa_dt:
-                            t_medio, c_medio, anim_medio = "ENTREGADA EN TIEMPO", "#22c55e", "dot-green"
-                        else:
-                            t_medio, c_medio, anim_medio = "ENTREGADA CON RETRASO", "#ef4444", "dot-red"
+                        t_medio, c_medio, anim_medio = ("ENTREGADA EN TIEMPO", "#22c55e", "dot-green") if f_real_dt <= f_promesa_dt else ("ENTREGADA CON RETRASO", "#ef4444", "dot-red")
+                    elif not tiene_guia:
+                        t_medio, c_medio, anim_medio = "PROCESANDO GUÍA", "#374151", ""
                     else:
-                        t_fin, c_fin, anim_fin = "EN ESPERA", "#374151", ""
-                        if pd.notna(f_promesa_dt) and f_promesa_dt < hoy_dt:
-                            t_medio, c_medio, anim_medio = "RETRASO", "#f97316", "dot-orange"
+                        if pd.notna(f_promesa_dt) and f_promesa_dt < hoy:
+                            t_medio, c_medio, anim_medio = "RETRASO EN TRÁNSITO", "#f97316", "dot-orange"
                         else:
                             t_medio, c_medio, anim_medio = "EN TRÁNSITO", "#3b82f6", "dot-blue"
                     
-                    # Formateo de fechas
-                    txt_f_envio = f_envio_dt.strftime('%d/%m/%Y') if pd.notna(f_envio_dt) else "S/D"
-                    txt_f_promesa = f_promesa_dt.strftime('%d/%m/%Y') if pd.notna(f_promesa_dt) else "S/D"
-                    txt_f_real = f_real_dt.strftime('%d/%m/%Y') if entregado else "PENDIENTE"
-                    txt_f_actual = hoy_dt.strftime('%d/%m/%Y')
+                    # Nodo 4
+                    t_fin, c_fin, anim_fin = ("ENTREGADO", "#22c55e", "dot-green") if entregado else ("EN ESPERA", "#374151", "")
+
+                    # Formateo de textos
+                    txt_f_env = f_envio_dt.strftime('%d/%m/%Y') if pd.notna(f_envio_dt) else "S/D"
+                    txt_f_pro = f_promesa_dt.strftime('%d/%m/%Y') if pd.notna(f_promesa_dt) else "S/D"
+                    txt_f_rea = f_real_dt.strftime('%d/%m/%Y') if entregado else "PENDIENTE"
+                    txt_f_act = hoy.strftime('%d/%m/%Y')
                     
-                    # HTML en UNA SOLA LÍNEA para renderizado óptimo
-                    html_timeline = f'<div style="background:#111827;padding:25px;border-radius:12px;border:1px solid #374151;margin-top:15px;margin-bottom:20px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;width:100%;"><div style="position:absolute;top:20px;left:10%;right:10%;height:6px;background:#374151;z-index:0;"></div><div style="text-align:center;z-index:1;width:25%;"><div class="dot-green" style="width:40px;height:40px;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">ENVIADO</div><div style="color:gray;font-size:12px;">{txt_f_envio}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="dot-green" style="width:40px;height:40px;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">FECHA ACTUAL</div><div style="color:gray;font-size:12px;">{txt_f_actual}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="{anim_medio}" style="width:40px;height:40px;background:{c_medio};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_medio}</div><div style="color:gray;font-size:12px;"><span style="color:#22c55e;">PROMESA DE ENTREGA</span> {txt_f_promesa}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="{anim_fin}" style="width:40px;height:40px;border-radius:50%;background:{c_fin};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_fin}</div><div style="color:gray;font-size:12px;">FECHA ENTREGA: {txt_f_real}</div></div></div></div>'
-                    
+                    # --- RENDER TIMELINE (UNA SOLA LÍNEA) ---
+                    html_timeline = f'<div style="background:#111827;padding:25px;border-radius:12px;border:1px solid #374151;margin-top:15px;margin-bottom:20px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;width:100%;"><div style="position:absolute;top:20px;left:10%;right:10%;height:6px;background:#374151;z-index:0;"></div><div style="text-align:center;z-index:1;width:25%;"><div class="dot-green" style="width:40px;height:40px;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">ALMACÉN</div><div style="color:gray;font-size:12px;">{txt_f_env}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="dot-green" style="width:40px;height:40px;background:#22c55e;margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_env}</div><div style="color:gray;font-size:12px;">{txt_f_act}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="{anim_medio}" style="width:40px;height:40px;background:{c_medio};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_medio}</div><div style="color:gray;font-size:12px;">PROMESA: {txt_f_pro}</div></div><div style="text-align:center;z-index:1;width:25%;"><div class="{anim_fin}" style="width:40px;height:40px;border-radius:50%;background:{c_fin};margin:0 auto 10px auto;border:4px solid #111827;"></div><div style="color:white;font-size:11px;font-weight:bold;">{t_fin}</div><div style="color:gray;font-size:12px;">{txt_f_rea}</div></div></div></div>'
                     st.markdown(html_timeline, unsafe_allow_html=True)
                     
-                                       
-                    
-                    ## --- PASO 1: INYECTAR EL ADN (ESTILOS OCULTOS) ---
-                    st.markdown("<style>.elite-card{transition:all 0.4s ease;display:flex;flex-direction:column;justify-content:space-between;}.elite-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,0.7)!important;border:1px solid rgba(255,255,255,0.25)!important;background:rgba(255,255,255,0.04)!important;}</style>", unsafe_allow_html=True)
-                    
+                    # --- TARJETAS ELITE (RECONECTADAS) ---
                     c1, c2, c3 = st.columns(3)
-
-                    # Altura común para simetría total
                     h_size = "360px"
                     
-                    # --- TARJETA 1: EXPEDICIÓN (CON FLETERA) ---
                     with c1:
                         costo = f"${float(row.get('COSTO DE LA GUÍA', 0)):,.2f}"
                         html_c1 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #38bdf8;min-height:{h_size};'><div style='display:flex;align-items:center;margin-bottom:15px;'><div style='background:#38bdf822;padding:10px;border-radius:12px;margin-right:15px;'>📦</div><div style='color:white;font-weight:800;font-size:14px;'>DATOS DEL CLIENTE</div></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Tracking</span><span style='color:#38bdf8;font-size:13px;font-weight:800;'>{row.get('NÚMERO DE GUÍA','—')}</span></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Cliente</span><span style='color:#e2e8f0;font-size:13px;'>{row.get('NOMBRE DEL CLIENTE','—')}</span></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Destino</span><span style='color:#e2e8f0;font-size:13px;'>{row.get('DESTINO','—')}</span></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Fletera</span><span style='color:#fbbf24;font-size:13px;font-weight:700;'>{row.get('FLETERA','—')}</span></div><div style='margin-top:auto;text-align:right;'><div style='color:#64748b;font-size:12px;font-weight:800;'>Costo Guia</div><div style='color:#00FFAA;font-size:26px;font-weight:900;'>{costo}</div></div></div>"
                         st.markdown(html_c1, unsafe_allow_html=True)
                     
-                    # --- TARJETA 2: TIEMPOS ---
                     with c2:
-                        retraso = row.get('DIAS_RETRASO', 0)
-                        color_t = "#fb7185" if retraso > 0 else "#00FFAA"
-                        html_c2 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #fbbf24;min-height:{h_size};'><div style='display:flex;align-items:center;margin-bottom:15px;'><div style='background:#fbbf2422;padding:10px;border-radius:12px;margin-right:15px;'>⏱️</div><div style='color:white;font-weight:800;font-size:14px;'>TIEMPOS</div></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Fecha de Envio</span><span style='color:#e2e8f0;font-size:13px;'>{txt_f_envio}</span></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Promesa de entrega</span><span style='color:#e2e8f0;font-size:13px;'>{txt_f_promesa}</span></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Fecha de entrega</span><span style='color:#00FFAA;font-size:13px;'>{txt_f_real}</span></div><div style='margin-top:auto;background:rgba(255,255,255,0.03);padding:15px;border-radius:12px;border-left:4px solid {color_t};'><div style='color:{color_t};font-size:10px;font-weight:800;'>DESVIACIÓN</div><div style='color:white;font-size:22px;font-weight:900;'>{retraso} DÍAS</div></div></div>"
+                        retraso_v = row.get('DIAS_RETRASO', 0)
+                        color_t = "#fb7185" if retraso_v > 0 else "#00FFAA"
+                        html_c2 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #fbbf24;min-height:{h_size};'><div style='display:flex;align-items:center;margin-bottom:15px;'><div style='background:#fbbf2422;padding:10px;border-radius:12px;margin-right:15px;'>⏱️</div><div style='color:white;font-weight:800;font-size:14px;'>TIEMPOS</div></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Fecha de Envio</span><span style='color:#e2e8f0;font-size:13px;'>{txt_f_env}</span></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Promesa</span><span style='color:#e2e8f0;font-size:13px;'>{txt_f_pro}</span></div><div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Entrega Real</span><span style='color:#00FFAA;font-size:13px;'>{txt_f_rea}</span></div><div style='margin-top:auto;background:rgba(255,255,255,0.03);padding:15px;border-radius:12px;border-left:4px solid {color_t};'><div style='color:{color_t};font-size:10px;font-weight:800;'>DESVIACIÓN</div><div style='color:white;font-size:22px;font-weight:900;'>{retraso_v} DÍAS</div></div></div>"
                         st.markdown(html_c2, unsafe_allow_html=True)
                     
-                    # --- TARJETA 3: ESTADO ---
                     with c3:
-                        est = row.get('ESTATUS_CALCULADO', '—')
-                        color_e = "#00FFAA" if est == "ENTREGADO" else "#fb7185" if est == "RETRASADO" else "#3b82f6"
-                        html_c3 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #a855f7;min-height:{h_size};'><div style='display:flex;align-items:center;margin-bottom:15px;'><div style='background:#a855f722;padding:10px;border-radius:12px;margin-right:15px;'>📊</div><div style='color:white;font-weight:800;font-size:14px;'>ESTATUS</div></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Estatus</span><span style='color:{color_e};font-size:13px;font-weight:800;'>{est}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Prioridad</span><span style='color:#e2e8f0;font-size:13px;'>{row.get('PRIORIDAD','NORMAL')}</span></div><div style='margin-top:auto;'><div style='color:#64748b;font-size:14px;font-weight:700;margin-bottom:8px;'>NOTAS</div><div style='background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;border:1px dashed rgba(255,255,255,0.1);color:#cbd5e1;font-size:12px;min-height:90px;'>{row.get('COMENTARIOS','Sin incidencias.')}</div></div></div>"
+                        est_v = row.get('ESTATUS_CALCULADO', '—')
+                        color_e = "#00FFAA" if est_v == "ENTREGADO" else "#fb7185" if est_v == "RETRASADO" else "#3b82f6"
+                        html_c3 = f"<div class='elite-card' style='background:#11141C;padding:24px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);border-top:4px solid #a855f7;min-height:{h_size};'><div style='display:flex;align-items:center;margin-bottom:15px;'><div style='background:#a855f722;padding:10px;border-radius:12px;margin-right:15px;'>📊</div><div style='color:white;font-weight:800;font-size:14px;'>ESTATUS</div></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Estatus</span><span style='color:{color_e};font-size:13px;font-weight:800;'>{est_v}</span></div><div style='display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span style='color:#64748b;font-size:14px;font-weight:700;text-transform:uppercase;'>Prioridad</span><span style='color:#e2e8f0;font-size:13px;'>{row.get('PRIORIDAD','NORMAL')}</span></div><div style='margin-top:auto;'><div style='color:#64748b;font-size:14px;font-weight:700;margin-bottom:8px;'>NOTAS</div><div style='background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;border:1px dashed rgba(255,255,255,0.1);color:#cbd5e1;font-size:12px;min-height:90px;'>{row.get('COMENTARIOS','Sin incidencias.')}</div></div></div>"
                         st.markdown(html_c3, unsafe_allow_html=True)
         
               
@@ -3184,6 +3174,7 @@ else:
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
         
+
 
 
 
