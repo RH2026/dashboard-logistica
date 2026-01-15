@@ -1574,7 +1574,7 @@ else:
                     sha=contents.sha,
                     branch="main"
                 )
-                st.toast("✅ Sincronizado con GitHub", icon="🚀")
+                st.toast("✅ Sincronizado con GitHub", icon="")
             except Exception as e:
                 st.error(f"❌ Error al sincronizar: {e}")
         
@@ -1583,7 +1583,7 @@ else:
             st.session_state.df_tareas = obtener_datos_github()
         
         # --- 5. VENTANA EMERGENTE (DIALOG) ---
-        @st.dialog("📋 AGENDA DE LOGÍSTICA - NEXION", width="large")
+        @st.dialog(" Pendientes", width="large")
         def ventana_pendientes():
             st.write("### Bitácora de Operaciones")
             
@@ -1605,7 +1605,7 @@ else:
                 hide_index=True,
             )
         
-            if st.button("💾 Guardar cambios realizados en la tabla", use_container_width=True):
+            if st.button("Guardar cambios manuales realizados en la tabla", use_container_width=True):
                 st.session_state.df_tareas = edited_df
                 guardar_en_github(st.session_state.df_tareas)
         
@@ -1621,7 +1621,7 @@ else:
                     t_nueva = st.text_input("¿Qué hay que hacer?")
                     a_nueva = st.text_input("Última acción tomada")
                 
-                if st.form_submit_button("🚀 AÑADIR Y SINCRONIZAR", use_container_width=True):
+                if st.form_submit_button("Añadir y Sincronizar", use_container_width=True):
                     if t_nueva:
                         t_limpia = t_nueva.replace(",", "-")
                         a_limpia = a_nueva.replace(",", "-")
@@ -1635,7 +1635,7 @@ else:
         # --- 6. INTERFAZ EN LA BARRA LATERAL (SIDEBAR) ---
         with st.sidebar:
             st.write("### Menú de Control")
-            if st.button("📅 AGENDA DE LOGÍSTICA", use_container_width=True):
+            if st.button("Pendientes", use_container_width=True):
                 ventana_pendientes()
         
         # =========================================================
@@ -3294,139 +3294,9 @@ else:
         
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
-    # --- 1. CONFIGURACIÓN DE CRÉDENCIALES Y REPO ---
-    TOKEN = st.secrets.get("GITHUB_TOKEN", None)
-    REPO_NAME = "RH2026/dashboard-logistica"
-    FILE_PATH = "tareas.csv"
-    CSV_URL = f"https://raw.githubusercontent.com/{REPO_NAME}/main/tareas.csv"
-    
-    # --- 2. AJUSTE DE ZONA HORARIA MÉXICO ---
-    def obtener_fecha_mexico():
-        # Desfase de -6 horas respecto a UTC (CDMX/Tlaquepaque)
-        utc_ahora = datetime.datetime.now(datetime.timezone.utc)
-        mexico_ahora = utc_ahora - datetime.timedelta(hours=6) 
-        return mexico_ahora.date()
-    
-    # --- 3. FUNCIONES DE DATOS (LECTURA Y ESCRITURA) ---
-    def obtener_datos_github():
-        try:
-            response = requests.get(CSV_URL)
-            if response.status_code == 200:
-                df = pd.read_csv(StringIO(response.text))
-                # Convertimos la columna FECHA a tipo fecha para que el editor no falle
-                if 'FECHA' in df.columns and not df.empty:
-                    df['FECHA'] = pd.to_datetime(df['FECHA']).dt.date
-                return df
-            return pd.DataFrame(columns=['FECHA', 'IMPORTANCIA', 'TAREA', 'ULTIMO ACCION'])
-        except Exception:
-            return pd.DataFrame(columns=['FECHA', 'IMPORTANCIA', 'TAREA', 'ULTIMO ACCION'])
-    
-    def guardar_en_github(df):
-        if not TOKEN:
-            st.error("No se encontró el GITHUB_TOKEN en los Secrets.")
-            return
-        try:
-            g = Github(TOKEN)
-            repo = g.get_repo(REPO_NAME)
-            contents = repo.get_contents(FILE_PATH, ref="main")
-            
-            # Convertimos todo a string antes de guardar el CSV
-            csv_data = df.to_csv(index=False)
-            
-            repo.update_file(
-                path=contents.path,
-                message=f"Sincronización NEXION - {obtener_fecha_mexico()}",
-                content=csv_data,
-                sha=contents.sha,
-                branch="main"
-            )
-            st.toast("✅ Sincronizado con GitHub", icon="🚀")
-        except Exception as e:
-            st.error(f"❌ Error al sincronizar: {e}")
-    
-    # --- 4. INICIALIZACIÓN DEL ESTADO ---
-    if 'df_tareas' not in st.session_state:
-        st.session_state.df_tareas = obtener_datos_github()
-    
-    # --- 5. VENTANA EMERGENTE (DIALOG) ---
-    @st.dialog("📋 AGENDA DE LOGÍSTICA - NEXION", width="large")
-    def ventana_pendientes():
-        st.write("### Bitácora de Operaciones")
+   
         
-        # Aseguramos formato de fecha antes de mostrar el editor
-        df_pro = st.session_state.df_tareas.copy()
-        if not df_pro.empty:
-            df_pro['FECHA'] = pd.to_datetime(df_pro['FECHA']).dt.date
-    
-        # Editor con diseño Profesional
-        edited_df = st.data_editor(
-            df_pro,
-            use_container_width=True,
-            num_rows="dynamic",
-            key="workspace_editor",
-            column_config={
-                "FECHA": st.column_config.DateColumn(
-                    "📆 Fecha", 
-                    format="DD/MM/YYYY",
-                    default=obtener_fecha_mexico()
-                ),
-                "IMPORTANCIA": st.column_config.SelectboxColumn(
-                    "🚦 Prioridad",
-                    options=["Baja", "Media", "Alta", "Urgente"],
-                    required=True,
-                ),
-                "TAREA": st.column_config.TextColumn("📝 Tarea Principal", width="large"),
-                "ULTIMO ACCION": st.column_config.TextColumn("🚚 Último Estatus", width="medium"),
-            },
-            hide_index=True,
-        )
-    
-        # Botón para sincronizar cambios manuales en la tabla
-        if st.button("💾 Guardar cambios realizados en la tabla", use_container_width=True):
-            st.session_state.df_tareas = edited_df
-            guardar_en_github(st.session_state.df_tareas)
-    
-        st.divider()
-    
-        # Formulario para añadir nueva tarea
-        with st.form("form_nueva_tarea", clear_on_submit=True):
-            st.markdown("**➕ Nuevo Registro de Actividad**")
-            c1, c2 = st.columns(2)
-            with c1:
-                f_nueva = st.date_input("Fecha de hoy", value=obtener_fecha_mexico())
-                i_nueva = st.selectbox("Importancia", ["Baja", "Media", "Alta", "Urgente"])
-            with c2:
-                t_nueva = st.text_input("¿Qué hay que hacer?")
-                a_nueva = st.text_input("Última acción tomada")
-            
-            # El botón de formulario que cierra la ventana al terminar
-            if st.form_submit_button("🚀 AÑADIR Y SINCRONIZAR", use_container_width=True):
-                if t_nueva:
-                    # Reemplazamos comas por guiones para no romper el CSV
-                    t_limpia = t_nueva.replace(",", "-")
-                    a_limpia = a_nueva.replace(",", "-")
-                    
-                    nueva_fila = pd.DataFrame([{
-                        'FECHA': str(f_nueva),
-                        'IMPORTANCIA': i_nueva,
-                        'TAREA': t_limpia,
-                        'ULTIMO ACCION': a_limpia
-                    }])
-                    
-                    # Actualizar memoria y subir a la nube
-                    st.session_state.df_tareas = pd.concat([st.session_state.df_tareas, nueva_fila], ignore_index=True)
-                    guardar_en_github(st.session_state.df_tareas)
-                    st.rerun() # Esto cierra el diálogo y refresca el dashboard
-                else:
-                    st.warning("Debes escribir una tarea antes de guardar.")
-    
-    # --- 6. INTERFAZ PRINCIPAL ---
-    st.title("🚀 NEXION Logistics Dashboard")
-    st.info(f"📅 Fecha Local: {obtener_fecha_mexico().strftime('%d/%m/%Y')} | Tlaquepaque, MX")
-    
-    if st.button("📝 GESTIONAR TAREAS", use_container_width=True):
-        ventana_pendientes()
-        
+
 
 
 
