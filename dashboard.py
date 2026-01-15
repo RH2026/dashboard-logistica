@@ -15,6 +15,7 @@ import requests
 from io import StringIO
 
 
+
 # --- FUNCIÓN PARA CARGAR EL LOGO ---
 def get_base64_bin(path):
     try:
@@ -3191,58 +3192,48 @@ else:
         try:
             response = requests.get(CSV_URL)
             if response.status_code == 200:
-                # Leemos el CSV con tus campos específicos
-                df = pd.read_csv(StringIO(response.text))
-                return df
-            else:
-                return pd.DataFrame(columns=['FECHA', 'IMPORTANCIA', 'TAREA', 'ULTIMO ACCION'])
-        except Exception:
+                return pd.read_csv(StringIO(response.text))
+            return pd.DataFrame(columns=['FECHA', 'IMPORTANCIA', 'TAREA', 'ULTIMO ACCION'])
+        except:
             return pd.DataFrame(columns=['FECHA', 'IMPORTANCIA', 'TAREA', 'ULTIMO ACCION'])
     
-    # Inicializar los datos en la sesión para que no se pierdan al interactuar
     if 'df_tareas' not in st.session_state:
         st.session_state.df_tareas = obtener_datos_github()
     
     @st.dialog("📋 AGENDA DE LOGÍSTICA - NEXION", width="large")
     def ventana_pendientes():
-        st.write("### Tareas registradas en GitHub")
+        st.write("### Tareas registradas")
         
-        # 1. Editor de datos para modificar celdas directamente (Importancia o Última Acción)
-        # Esto permite cambios sin que la ventana se cierre
+        # Editor de datos
         edited_df = st.data_editor(
             st.session_state.df_tareas,
             use_container_width=True,
             num_rows="dynamic",
-            key="workspace_editor",
-            column_config={
-                "IMPORTANCIA": st.column_config.SelectboxColumn(
-                    "Nivel",
-                    options=["Baja", "Media", "Alta", "Urgente"],
-                    required=True,
-                ),
-                "FECHA": st.column_config.DateColumn("Fecha Entrega"),
-            }
+            key="workspace_editor"
         )
-        
-        # Actualizamos el estado con los cambios del editor
         st.session_state.df_tareas = edited_df
     
         st.divider()
     
-        # 2. Formulario para añadir nuevas tareas de forma rápida
+        # FORMULARIO CORREGIDO
         with st.form("form_nueva_tarea", clear_on_submit=True):
             st.markdown("**➕ Registro de nueva actividad**")
-            c1, c2, c3 = st.columns([2, 2, 4])
-            with c1:
-                f_nueva = st.date_input("Fecha", value=datetime.now())
-            with c2:
+            
+            # Usamos datetime.date.today() para evitar el AttributeError
+            fecha_hoy = datetime.date.today()
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                f_nueva = st.date_input("Fecha", value=fecha_hoy)
                 i_nueva = st.selectbox("Importancia", ["Baja", "Media", "Alta", "Urgente"])
-            with c3:
+            with col2:
                 t_nueva = st.text_input("Descripción de la Tarea")
+                a_nueva = st.text_input("Última Acción Realizada")
             
-            a_nueva = st.text_input("Última Acción Realizada")
+            # EL BOTÓN DEBE ESTAR DENTRO DEL WITH FORM
+            enviado = st.form_submit_button("Añadir a la lista")
             
-            if st.form_submit_button("Añadir a la lista"):
+            if enviado:
                 if t_nueva:
                     nueva_fila = pd.DataFrame([{
                         'FECHA': str(f_nueva),
@@ -3251,26 +3242,18 @@ else:
                         'ULTIMO ACCION': a_nueva
                     }])
                     st.session_state.df_tareas = pd.concat([st.session_state.df_tareas, nueva_fila], ignore_index=True)
-                    st.rerun() # Refresca el diálogo sin cerrarlo
+                    st.rerun()
+                else:
+                    st.warning("Por favor, escribe una tarea.")
     
-        # 3. Botón de cierre manual
-        if st.button("Cerrar y Sincronizar Dashboard", type="primary", use_container_width=True):
+        if st.button("Cerrar Ventana", type="primary"):
             st.rerun()
     
-    # --- INTERFAZ PRINCIPAL ---
-    st.title("🚚 NEXION Dashboard")
-    
-    col_status, col_action = st.columns([3, 1])
-    
-    with col_status:
-        total_tareas = len(st.session_state.df_tareas)
-        st.write(f"Conectado a: `RH2026/dashboard-logistica`")
-        st.write(f"Tienes **{total_tareas}** pendientes en tu archivo CSV.")
-    
-    with col_action:
-        if st.button("📝 GESTIONAR TAREAS", use_container_width=True):
-            ventana_pendientes()                          
+    # --- BOTÓN PRINCIPAL ---
+    if st.button("📝 GESTIONAR TAREAS"):
+        ventana_pendientes()                
         
+
 
 
 
