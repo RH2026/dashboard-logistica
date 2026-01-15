@@ -3185,6 +3185,13 @@ else:
         
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
+    # --- AJUSTE DE ZONA HORARIA MÉXICO ---
+    def obtener_fecha_mexico():
+        # Desfase de -6 horas respecto a UTC (Estándar para México Central)
+        utc_ahora = datetime.datetime.now(datetime.timezone.utc)
+        mexico_ahora = utc_ahora - datetime.timedelta(hours=6) 
+        return mexico_ahora.date()
+    
     # --- CONFIGURACIÓN DE TU REPOSITORIO ---
     CSV_URL = "https://raw.githubusercontent.com/RH2026/dashboard-logistica/refs/heads/main/tareas.csv"
     
@@ -3194,9 +3201,10 @@ else:
             if response.status_code == 200:
                 return pd.read_csv(StringIO(response.text))
             return pd.DataFrame(columns=['FECHA', 'IMPORTANCIA', 'TAREA', 'ULTIMO ACCION'])
-        except:
+        except Exception:
             return pd.DataFrame(columns=['FECHA', 'IMPORTANCIA', 'TAREA', 'ULTIMO ACCION'])
     
+    # Inicialización del estado del DataFrame
     if 'df_tareas' not in st.session_state:
         st.session_state.df_tareas = obtener_datos_github()
     
@@ -3204,7 +3212,7 @@ else:
     def ventana_pendientes():
         st.write("### Tareas registradas")
         
-        # Editor de datos
+        # 1. Editor de datos para cambios rápidos
         edited_df = st.data_editor(
             st.session_state.df_tareas,
             use_container_width=True,
@@ -3215,12 +3223,11 @@ else:
     
         st.divider()
     
-        # FORMULARIO CORREGIDO
+        # 2. Formulario de ingreso (Corregido para evitar cierres y errores de fecha)
         with st.form("form_nueva_tarea", clear_on_submit=True):
             st.markdown("**➕ Registro de nueva actividad**")
             
-            # Usamos datetime.date.today() para evitar el AttributeError
-            fecha_hoy = datetime.date.today()
+            fecha_hoy = obtener_fecha_mexico()
             
             col1, col2 = st.columns(2)
             with col1:
@@ -3230,7 +3237,6 @@ else:
                 t_nueva = st.text_input("Descripción de la Tarea")
                 a_nueva = st.text_input("Última Acción Realizada")
             
-            # EL BOTÓN DEBE ESTAR DENTRO DEL WITH FORM
             enviado = st.form_submit_button("Añadir a la lista")
             
             if enviado:
@@ -3242,17 +3248,23 @@ else:
                         'ULTIMO ACCION': a_nueva
                     }])
                     st.session_state.df_tareas = pd.concat([st.session_state.df_tareas, nueva_fila], ignore_index=True)
-                    st.rerun()
+                    st.rerun() # Esto refresca la tabla dentro del diálogo
                 else:
                     st.warning("Por favor, escribe una tarea.")
     
-        if st.button("Cerrar Ventana", type="primary"):
+        # 3. Botón de cierre manual
+        if st.button("Finalizar y Cerrar Ventana", type="primary", use_container_width=True):
             st.rerun()
     
-    # --- BOTÓN PRINCIPAL ---
-    if st.button("📝 GESTIONAR TAREAS"):
-        ventana_pendientes()                
+    # --- INTERFAZ PRINCIPAL ---
+    st.title("🚀 NEXION Logistics Dashboard")
+    
+    st.info(f"📅 Fecha Local: {obtener_fecha_mexico().strftime('%d/%m/%Y')} | Usuario: Rigoberto Hernández")
+    
+    if st.button("📝 GESTIONAR TAREAS", use_container_width=True):
+        ventana_pendientes()              
         
+
 
 
 
