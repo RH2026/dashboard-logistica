@@ -3182,7 +3182,47 @@ else:
         
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
+        # Configuración inicial
+        if 'pendientes' not in st.session_state:
+            st.session_state.pendientes = [
+                {"tarea": "Revisar facturación Jypesa", "completada": False},
+                {"tarea": "Salida de camión #A45", "completada": True}
+            ]
         
+        # Definimos la ventana emergente (Modal)
+        @st.dialog("📋 Mis Pendientes - NEXION")
+        def mostrar_pendientes():
+            st.write("Gestiona tus tareas diarias de logística:")
+            
+            # Mostrar lista actual
+            for i, item in enumerate(st.session_state.pendientes):
+                col1, col2 = st.columns([0.8, 0.2])
+                with col1:
+                    estado = "✅" if item['completada'] else "⏳"
+                    st.write(f"{estado} {item['tarea']}")
+                with col2:
+                    if st.button("Ok", key=f"btn_{i}"):
+                        st.session_state.pendientes[i]['completada'] = not st.session_state.pendientes[i]['completada']
+                        st.rerun()
+        
+            st.divider()
+            
+            # Agregar nueva tarea dentro del modal
+            nueva_tarea = st.text_input("Nueva tarea:")
+            if st.button("Añadir a la lista"):
+                if nueva_tarea:
+                    st.session_state.pendientes.append({"tarea": nueva_tarea, "completada": False})
+                    st.rerun()
+        
+        # --- Interfaz Principal ---
+        st.title("Panel de Control Logístico")
+        
+        st.write("Bienvenido al sistema de gestión de flotas y rutas.")
+        
+        # Botón que dispara la ventana emergente
+        if st.button("📝 Ver mis pendientes"):
+            mostrar_pendientes()
+
 
 
 
