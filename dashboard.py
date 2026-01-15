@@ -1534,7 +1534,7 @@ else:
                 max_value=f_fin_default,
                 help="Todas las métricas y tablas mostrarán solo pedidos enviados en este rango."
             )
-        st.divider()
+        
         
         # AGENDA--- 1. CONFIGURACIÓN DE CRÉDENCIALES Y REPO ---
         TOKEN = st.secrets.get("GITHUB_TOKEN", None)
@@ -1636,6 +1636,7 @@ else:
                         st.warning("Escribe una tarea.")
         
         # --- 6. INTERFAZ EN LA BARRA LATERAL (SIDEBAR) ---
+        st.divider()
         with st.sidebar:
             if st.button("Pendientes", use_container_width=True):
                 ventana_pendientes()
@@ -3299,6 +3300,7 @@ else:
         
    
         
+
 
 
 
