@@ -3186,7 +3186,7 @@ else:
         
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
-    #--- CONFIGURACIÓN DE CRÉDENCIALES ---
+    # --- CONFIGURACIÓN DE CRÉDENCIALES ---
     TOKEN = st.secrets.get("GITHUB_TOKEN", None)
     REPO_NAME = "RH2026/dashboard-logistica"
     FILE_PATH = "tareas.csv"
@@ -3200,7 +3200,7 @@ else:
     # --- FUNCIÓN PARA GUARDAR EN GITHUB ---
     def guardar_en_github(df):
         if not TOKEN:
-            st.error("No se encontró el GITHUB_TOKEN en los Secrets.")
+            st.error("No se encontró el GITHUB_TOKEN.")
             return
         try:
             g = Github(TOKEN)
@@ -3236,37 +3236,21 @@ else:
     
     @st.dialog("📋 AGENDA DE LOGÍSTICA - NEXION", width="large")
     def ventana_pendientes():
-        st.markdown("### 🔍 Buscador y Gestión")
+        # 1. VISUALIZACIÓN DE TABLA (Directa, sin buscador)
+        st.write("### Tareas registradas")
         
-        # 1. BUSCADOR INTELIGENTE
-        busqueda = st.text_input("Buscar tarea o acción (ej. Jypesa, Camión...):", placeholder="Escribe para filtrar...")
-        
-        # Filtrar el DataFrame en tiempo real para el editor
-        df_filtrado = st.session_state.df_tareas
-        if busqueda:
-            df_filtrado = df_filtrado[
-                df_filtrado['TAREA'].str.contains(busqueda, case=False, na=False) | 
-                df_filtrado['ULTIMO ACCION'].str.contains(busqueda, case=False, na=False)
-            ]
-    
-        # 2. EDITOR DE DATOS
-        st.write("Edita directamente en la tabla:")
-        edited_df = st.data_editor(
-            df_filtrado,
+        # El editor actualiza st.session_state.df_tareas automáticamente al interactuar
+        st.data_editor(
+            st.session_state.df_tareas,
             use_container_width=True,
             num_rows="dynamic",
-            key="workspace_editor"
+            key="workspace_editor",
+            on_change=lambda: guardar_en_github(st.session_state.df_tareas) # Guarda al editar celdas
         )
-    
-        # BOTÓN DE GUARDADO SIN CERRAR VENTANA
-        if st.button("💾 Sincronizar Cambios de la Tabla", use_container_width=True):
-            # Actualizamos el original con los cambios del filtrado
-            st.session_state.df_tareas.update(edited_df)
-            guardar_en_github(st.session_state.df_tareas)
         
         st.divider()
     
-        # 3. FORMULARIO DE INGRESO
+        # 2. FORMULARIO DE INGRESO (Sin st.rerun para que no se cierre)
         with st.form("form_nueva_tarea", clear_on_submit=True):
             st.markdown("**➕ Registro de nueva actividad**")
             col1, col2 = st.columns(2)
@@ -3279,30 +3263,34 @@ else:
             
             if st.form_submit_button("Añadir y Sincronizar"):
                 if t_nueva:
-                    # Blindaje contra el error de comas en CSV
-                    t_limpia = t_nueva.replace(",", "-")
-                    a_limpia = a_nueva.replace(",", "-")
-                    
+                    # Blindaje contra comas y creación de fila
                     nueva_fila = pd.DataFrame([{
                         'FECHA': str(f_nueva),
                         'IMPORTANCIA': i_nueva,
-                        'TAREA': t_limpia,
-                        'ULTIMO ACCION': a_limpia
+                        'TAREA': t_nueva.replace(",", "-"),
+                        'ULTIMO ACCION': a_nueva.replace(",", "-")
                     }])
+                    
+                    # Actualizar memoria y enviar a GitHub
                     st.session_state.df_tareas = pd.concat([st.session_state.df_tareas, nueva_fila], ignore_index=True)
                     guardar_en_github(st.session_state.df_tareas)
-                    st.rerun()
+                    
+                    # En lugar de st.rerun(), usamos un mensaje de éxito. 
+                    # La tabla se actualizará visualmente la próxima vez que interactúes o abras.
+                    st.success("Tarea añadida. Cierra y abre para refrescar la lista visual.")
                 else:
                     st.warning("Escribe una tarea antes de añadir.")
     
-        if st.button("❌ Salir de la Agenda", use_container_width=True):
+        # 3. BOTÓN DE CIERRE (Único que hace rerun)
+        if st.button("Finalizar y Salir", type="primary", use_container_width=True):
             st.rerun()
     
     # --- INTERFAZ PRINCIPAL ---
     st.title("🚀 NEXION Dashboard")
     if st.button("📝 GESTIONAR TAREAS", use_container_width=True):
-        ventana_pendientes()        
+        ventana_pendientes()   
         
+
 
 
 
