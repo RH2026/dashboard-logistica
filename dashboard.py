@@ -3182,47 +3182,88 @@ else:
         
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
-    # Configuración inicial
-    if 'pendientes' not in st.session_state:
-        st.session_state.pendientes = [
-            {"tarea": "Revisar facturación Jypesa", "completada": False},
-            {"tarea": "Salida de camión #A45", "completada": True}
+    # 1. Configuración de estilo Pro (Tarjetas y Colores)
+st.markdown("""
+    <style>
+    .todo-card {
+        background-color: #1E293B;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #3B82F6;
+        margin-bottom: 10px;
+    }
+    .stButton>button {
+        width: 100%;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# 2. Inicialización del estado
+if 'pendientes' not in st.session_state:
+    st.session_state.pendientes = [
+        {"tarea": "Revisar facturación JYPESA", "completada": False, "prioridad": "Alta"},
+        {"tarea": "Coordinación salida Camión #A45", "completada": True, "prioridad": "Media"}
     ]
 
-# Definimos la ventana emergente (Modal)
-@st.dialog("📋 Mis Pendientes - NEXION")
+# 3. Ventana Emergente Pro (Ancha y con control de cierre)
+@st.dialog("📋 GESTIÓN DE PENDIENTES - NEXION", width="large")
 def mostrar_pendientes():
-    st.write("Gestiona tus tareas diarias de logística:")
+    st.write("### Flujo de Trabajo Actual")
     
-    # Mostrar lista actual
+    # Progreso visual
+    completadas = sum(1 for t in st.session_state.pendientes if t['completada'])
+    total = len(st.session_state.pendientes)
+    st.progress(completadas/total if total > 0 else 0)
+    
+    st.write("") # Espaciado
+
+    # Lista de tareas con diseño de tarjetas
     for i, item in enumerate(st.session_state.pendientes):
-        col1, col2 = st.columns([0.8, 0.2])
-        with col1:
-            estado = "✅" if item['completada'] else "⏳"
-            st.write(f"{estado} {item['tarea']}")
-        with col2:
-            if st.button("Ok", key=f"btn_{i}"):
-                st.session_state.pendientes[i]['completada'] = not st.session_state.pendientes[i]['completada']
+        with st.container():
+            col_check, col_txt, col_del = st.columns([1, 6, 1])
+            
+            with col_check:
+                if st.checkbox("", value=item['completada'], key=f"check_{i}"):
+                    st.session_state.pendientes[i]['completada'] = True
+                else:
+                    st.session_state.pendientes[i]['completada'] = False
+            
+            with col_txt:
+                texto = f"~~{item['tarea']}~~" if item['completada'] else f"**{item['tarea']}**"
+                st.markdown(f"{texto}")
+            
+            with col_del:
+                if st.button("🗑️", key=f"del_{i}"):
+                    st.session_state.pendientes.pop(i)
+                    st.rerun()
+        st.divider()
+
+    # Sección para añadir nuevas
+    with st.expander("➕ Añadir nuevo pendiente de logística"):
+        nueva = st.text_input("Descripción:")
+        if st.button("Guardar en Sistema"):
+            if nueva:
+                st.session_state.pendientes.append({"tarea": nueva, "completada": False})
                 st.rerun()
 
-    st.divider()
-    
-    # Agregar nueva tarea dentro del modal
-    nueva_tarea = st.text_input("Nueva tarea:")
-    if st.button("Añadir a la lista"):
-        if nueva_tarea:
-            st.session_state.pendientes.append({"tarea": nueva_tarea, "completada": False})
-            st.rerun()
+    st.write("") # Espaciado
+    # Botón de cierre manual
+    if st.button("Finalizar y Cerrar Ventana", type="primary"):
+        st.rerun()
 
 # --- Interfaz Principal ---
-st.title("Panel de Control Logístico")
+st.title("🚀 Panel de Control Logístico")
 
-st.write("Bienvenido al sistema de gestión de flotas y rutas.")
+col_info, col_btn = st.columns([3, 1])
 
-# Botón que dispara la ventana emergente
-if st.button("📝 Ver mis pendientes"):
-    mostrar_pendientes()                                
+with col_info:
+    st.info("Bienvenido, Rigoberto. El sistema está sincronizado con la base de datos de logística.")
+
+with col_btn:
+    if st.button("📝 GESTIONAR TAREAS", use_container_width=True):
+        mostrar_pendientes()                           
     
+
 
 
 
