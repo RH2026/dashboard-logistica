@@ -1634,9 +1634,9 @@ else:
         
         # --- 6. INTERFAZ EN LA BARRA LATERAL (SIDEBAR) ---
         with st.sidebar:
-            st.write("### Menú de Control")
             if st.button("Pendientes", use_container_width=True):
                 ventana_pendientes()
+            
         
         # =========================================================
         # --- 2. LÓGICA DE DATOS FILTRADA (POR FECHA) ---
@@ -3296,6 +3296,7 @@ else:
         
    
         
+
 
 
 
