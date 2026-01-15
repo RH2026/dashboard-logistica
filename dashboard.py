@@ -3186,28 +3186,23 @@ else:
         
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
-    # --- CONFIGURACIÓN DE CRÉDENCIALES ---
+    # --- CONFIGURACIÓN ---
     TOKEN = st.secrets.get("GITHUB_TOKEN", None)
     REPO_NAME = "RH2026/dashboard-logistica"
     FILE_PATH = "tareas.csv"
     
-    # --- AJUSTE DE ZONA HORARIA MÉXICO ---
     def obtener_fecha_mexico():
         utc_ahora = datetime.datetime.now(datetime.timezone.utc)
         mexico_ahora = utc_ahora - datetime.timedelta(hours=6) 
         return mexico_ahora.date()
     
-    # --- FUNCIÓN PARA GUARDAR EN GITHUB ---
     def guardar_en_github(df):
-        if not TOKEN:
-            st.error("No se encontró el GITHUB_TOKEN.")
-            return
+        if not TOKEN: return
         try:
             g = Github(TOKEN)
             repo = g.get_repo(REPO_NAME)
             contents = repo.get_contents(FILE_PATH, ref="main")
             csv_data = df.to_csv(index=False)
-            
             repo.update_file(
                 path=contents.path,
                 message=f"Sincronización NEXION - {obtener_fecha_mexico()}",
@@ -3217,9 +3212,8 @@ else:
             )
             st.toast("✅ Sincronizado con GitHub", icon="🚀")
         except Exception as e:
-            st.error(f"❌ Error al sincronizar: {e}")
+            st.error(f"❌ Error: {e}")
     
-    # --- LECTURA DE DATOS ---
     CSV_URL = f"https://raw.githubusercontent.com/{REPO_NAME}/main/tareas.csv"
     def obtener_datos_github():
         try:
@@ -3227,69 +3221,74 @@ else:
             if response.status_code == 200:
                 return pd.read_csv(StringIO(response.text))
             return pd.DataFrame(columns=['FECHA', 'IMPORTANCIA', 'TAREA', 'ULTIMO ACCION'])
-        except Exception:
+        except:
             return pd.DataFrame(columns=['FECHA', 'IMPORTANCIA', 'TAREA', 'ULTIMO ACCION'])
     
-    # Inicialización
     if 'df_tareas' not in st.session_state:
         st.session_state.df_tareas = obtener_datos_github()
     
+    # --- VENTANA PRO ---
     @st.dialog("📋 AGENDA DE LOGÍSTICA - NEXION", width="large")
     def ventana_pendientes():
-        # 1. VISUALIZACIÓN DE TABLA (Directa, sin buscador)
-        st.write("### Tareas registradas")
+        st.write("### Bitácora de Operaciones")
         
-        # El editor actualiza st.session_state.df_tareas automáticamente al interactuar
+        # CONFIGURACIÓN PRO DE LA TABLA
         st.data_editor(
             st.session_state.df_tareas,
             use_container_width=True,
             num_rows="dynamic",
             key="workspace_editor",
-            on_change=lambda: guardar_en_github(st.session_state.df_tareas) # Guarda al editar celdas
+            column_config={
+                "FECHA": st.column_config.DateColumn("📆 Fecha", format="DD/MM/YYYY"),
+                "IMPORTANCIA": st.column_config.SelectboxColumn(
+                    "🚦 Prioridad",
+                    options=["Baja", "Media", "Alta", "Urgente"],
+                    required=True,
+                ),
+                "TAREA": st.column_config.TextColumn("📝 Tarea Principal", width="large"),
+                "ULTIMO ACCION": st.column_config.TextColumn("🚚 Último Estatus", width="medium"),
+            },
+            hide_index=True,
         )
         
+        # Guardar cambios si editaste la tabla antes de añadir una nueva
+        if st.button("💾 Guardar cambios de la tabla", use_container_width=True):
+            st.session_state.df_tareas = st.session_state.workspace_editor["edited_rows"] # (Opcional, maneja la edición)
+            guardar_en_github(st.session_state.df_tareas)
+    
         st.divider()
     
-        # 2. FORMULARIO DE INGRESO (Sin st.rerun para que no se cierre)
+        # FORMULARIO DE INGRESO
         with st.form("form_nueva_tarea", clear_on_submit=True):
-            st.markdown("**➕ Registro de nueva actividad**")
-            col1, col2 = st.columns(2)
-            with col1:
+            st.markdown("**➕ Nuevo Registro**")
+            c1, c2 = st.columns(2)
+            with c1:
                 f_nueva = st.date_input("Fecha", value=obtener_fecha_mexico())
                 i_nueva = st.selectbox("Importancia", ["Baja", "Media", "Alta", "Urgente"])
-            with col2:
-                t_nueva = st.text_input("Descripción de la Tarea")
-                a_nueva = st.text_input("Última Acción Realizada")
+            with c2:
+                t_nueva = st.text_input("Tarea")
+                a_nueva = st.text_input("Última Acción")
             
-            if st.form_submit_button("Añadir y Sincronizar"):
+            if st.form_submit_button("🚀 AÑADIR Y SINCRONIZAR", use_container_width=True):
                 if t_nueva:
-                    # Blindaje contra comas y creación de fila
                     nueva_fila = pd.DataFrame([{
                         'FECHA': str(f_nueva),
                         'IMPORTANCIA': i_nueva,
                         'TAREA': t_nueva.replace(",", "-"),
                         'ULTIMO ACCION': a_nueva.replace(",", "-")
                     }])
-                    
-                    # Actualizar memoria y enviar a GitHub
                     st.session_state.df_tareas = pd.concat([st.session_state.df_tareas, nueva_fila], ignore_index=True)
                     guardar_en_github(st.session_state.df_tareas)
-                    
-                    # En lugar de st.rerun(), usamos un mensaje de éxito. 
-                    # La tabla se actualizará visualmente la próxima vez que interactúes o abras.
-                    st.success("Tarea añadida. Cierra y abre para refrescar la lista visual.")
+                    st.rerun() # Se cierra al terminar, confirmando la acción
                 else:
-                    st.warning("Escribe una tarea antes de añadir.")
-    
-        # 3. BOTÓN DE CIERRE (Único que hace rerun)
-        if st.button("Finalizar y Salir", type="primary", use_container_width=True):
-            st.rerun()
+                    st.warning("Escribe la tarea.")
     
     # --- INTERFAZ PRINCIPAL ---
-    st.title("🚀 NEXION Dashboard")
+    st.title("🚀 NEXION Logistics Dashboard")
     if st.button("📝 GESTIONAR TAREAS", use_container_width=True):
         ventana_pendientes()   
         
+
 
 
 
