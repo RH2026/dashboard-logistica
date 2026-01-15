@@ -3182,87 +3182,60 @@ else:
         
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
-    # 1. Configuración de estilo Pro (Tarjetas y Colores)
-st.markdown("""
-    <style>
-    .todo-card {
-        background-color: #1E293B;
-        padding: 15px;
-        border-radius: 10px;
-        border-left: 5px solid #3B82F6;
-        margin-bottom: 10px;
-    }
-    .stButton>button {
-        width: 100%;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# 2. Inicialización del estado
-if 'pendientes' not in st.session_state:
-    st.session_state.pendientes = [
-        {"tarea": "Revisar facturación JYPESA", "completada": False, "prioridad": "Alta"},
-        {"tarea": "Coordinación salida Camión #A45", "completada": True, "prioridad": "Media"}
-    ]
-
-# 3. Ventana Emergente Pro (Ancha y con control de cierre)
-@st.dialog("📋 GESTIÓN DE PENDIENTES - NEXION", width="large")
-def mostrar_pendientes():
-    st.write("### Flujo de Trabajo Actual")
+    #1. Inicialización del estado (Persistent Data)
+    if 'pendientes' not in st.session_state:
+        st.session_state.pendientes = [
+            {"tarea": "Revisar facturación JYPESA", "completada": False},
+            {"tarea": "Coordinación salida Camión #A45", "completada": True}
+        ]
     
-    # Progreso visual
-    completadas = sum(1 for t in st.session_state.pendientes if t['completada'])
-    total = len(st.session_state.pendientes)
-    st.progress(completadas/total if total > 0 else 0)
-    
-    st.write("") # Espaciado
-
-    # Lista de tareas con diseño de tarjetas
-    for i, item in enumerate(st.session_state.pendientes):
-        with st.container():
+    # 2. Ventana Emergente que NO se cierra sola
+    @st.dialog("📋 PANEL DE TRABAJO - NEXION", width="large")
+    def mostrar_pendientes():
+        st.write("### Tareas Activas")
+        
+        # Contenedor para la lista de tareas
+        # Usamos un contenedor vacío para refrescar solo esta parte si fuera necesario
+        container = st.container()
+        
+        # Mostrar y gestionar tareas
+        # Nota: No usamos st.rerun() dentro de los botones de la lista para evitar el cierre
+        for i, item in enumerate(st.session_state.pendientes):
             col_check, col_txt, col_del = st.columns([1, 6, 1])
-            
             with col_check:
-                if st.checkbox("", value=item['completada'], key=f"check_{i}"):
-                    st.session_state.pendientes[i]['completada'] = True
-                else:
-                    st.session_state.pendientes[i]['completada'] = False
-            
+                # El cambio de estado es inmediato en session_state
+                st.session_state.pendientes[i]['completada'] = st.checkbox("", value=item['completada'], key=f"check_{i}")
             with col_txt:
-                texto = f"~~{item['tarea']}~~" if item['completada'] else f"**{item['tarea']}**"
-                st.markdown(f"{texto}")
-            
+                st.write(f"~~{item['tarea']}~~" if item['completada'] else f"**{item['tarea']}**")
             with col_del:
                 if st.button("🗑️", key=f"del_{i}"):
                     st.session_state.pendientes.pop(i)
-                    st.rerun()
-        st.divider()
-
-    # Sección para añadir nuevas
-    with st.expander("➕ Añadir nuevo pendiente de logística"):
-        nueva = st.text_input("Descripción:")
-        if st.button("Guardar en Sistema"):
-            if nueva:
-                st.session_state.pendientes.append({"tarea": nueva, "completada": False})
-                st.rerun()
-
-    st.write("") # Espaciado
-    # Botón de cierre manual
-    if st.button("Finalizar y Cerrar Ventana", type="primary"):
-        st.rerun()
-
-# --- Interfaz Principal ---
-st.title("🚀 Panel de Control Logístico")
-
-col_info, col_btn = st.columns([3, 1])
-
-with col_info:
-    st.info("Bienvenido, Rigoberto. El sistema está sincronizado con la base de datos de logística.")
-
-with col_btn:
-    if st.button("📝 GESTIONAR TAREAS", use_container_width=True):
-        mostrar_pendientes()                           
+                    st.rerun() # Aquí sí refrescamos porque eliminamos un elemento
     
+        st.divider()
+    
+        # FORMULARIO PARA AÑADIR (Esto evita que la ventana se cierre al escribir)
+        with st.form("nueva_tarea_form", clear_on_submit=True):
+            st.write("➕ **Añadir Pendiente Logístico**")
+            nueva = st.text_input("Descripción del pendiente:")
+            submit = st.form_submit_button("Agregar a la lista")
+            
+            if submit and nueva:
+                st.session_state.pendientes.append({"tarea": nueva, "completada": False})
+                st.rerun() # El rerun dentro de dialog ahora es más estable con forms
+    
+        st.write("\n")
+        # BOTÓN ÚNICO DE CIERRE
+        if st.button("CERRAR Y GUARDAR CAMBIOS", type="primary", use_container_width=True):
+            st.rerun()
+    
+    # --- Interfaz Principal ---
+    st.title("🚀 NEXION Logistics System")
+    
+    if st.button("📝 ABRIR AGENDA DE TRABAJO", use_container_width=True):
+        mostrar_pendientes()                          
+    
+
 
 
 
