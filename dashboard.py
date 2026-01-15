@@ -3186,8 +3186,8 @@ else:
         
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
-    # --- CONFIGURACIÓN DE CRÉDENCIALES ---
-    TOKEN = st.secrets["GITHUB_TOKEN"]
+    #--- CONFIGURACIÓN DE CRÉDENCIALES ---
+    TOKEN = st.secrets.get("GITHUB_TOKEN", None)
     REPO_NAME = "RH2026/dashboard-logistica"
     FILE_PATH = "tareas.csv"
     
@@ -3199,17 +3199,18 @@ else:
     
     # --- FUNCIÓN PARA GUARDAR EN GITHUB ---
     def guardar_en_github(df):
+        if not TOKEN:
+            st.error("No se encontró el GITHUB_TOKEN en los Secrets.")
+            return
         try:
             g = Github(TOKEN)
             repo = g.get_repo(REPO_NAME)
-            # Obtenemos el archivo actual para tener su SHA (necesario para actualizar)
             contents = repo.get_contents(FILE_PATH, ref="main")
-            
             csv_data = df.to_csv(index=False)
             
             repo.update_file(
                 path=contents.path,
-                message=f"Sincronización automática NEXION - {obtener_fecha_mexico()}",
+                message=f"Sincronización NEXION - {obtener_fecha_mexico()}",
                 content=csv_data,
                 sha=contents.sha,
                 branch="main"
@@ -3218,9 +3219,8 @@ else:
         except Exception as e:
             st.error(f"❌ Error al sincronizar: {e}")
     
-    # --- CONFIGURACIÓN DE REPOSITORIO (LECTURA) ---
+    # --- LECTURA DE DATOS ---
     CSV_URL = f"https://raw.githubusercontent.com/{REPO_NAME}/main/tareas.csv"
-    
     def obtener_datos_github():
         try:
             response = requests.get(CSV_URL)
@@ -3236,61 +3236,74 @@ else:
     
     @st.dialog("📋 AGENDA DE LOGÍSTICA - NEXION", width="large")
     def ventana_pendientes():
-        st.write("### Tareas registradas")
+        st.markdown("### 🔍 Buscador y Gestión")
         
-        # 1. Editor de datos para cambios rápidos
+        # 1. BUSCADOR INTELIGENTE
+        busqueda = st.text_input("Buscar tarea o acción (ej. Jypesa, Camión...):", placeholder="Escribe para filtrar...")
+        
+        # Filtrar el DataFrame en tiempo real para el editor
+        df_filtrado = st.session_state.df_tareas
+        if busqueda:
+            df_filtrado = df_filtrado[
+                df_filtrado['TAREA'].str.contains(busqueda, case=False, na=False) | 
+                df_filtrado['ULTIMO ACCION'].str.contains(busqueda, case=False, na=False)
+            ]
+    
+        # 2. EDITOR DE DATOS
+        st.write("Edita directamente en la tabla:")
         edited_df = st.data_editor(
-            st.session_state.df_tareas,
+            df_filtrado,
             use_container_width=True,
             num_rows="dynamic",
             key="workspace_editor"
         )
-        st.session_state.df_tareas = edited_df
     
+        # BOTÓN DE GUARDADO SIN CERRAR VENTANA
+        if st.button("💾 Sincronizar Cambios de la Tabla", use_container_width=True):
+            # Actualizamos el original con los cambios del filtrado
+            st.session_state.df_tareas.update(edited_df)
+            guardar_en_github(st.session_state.df_tareas)
+        
         st.divider()
     
-        # 2. Formulario de ingreso con guardado automático
+        # 3. FORMULARIO DE INGRESO
         with st.form("form_nueva_tarea", clear_on_submit=True):
             st.markdown("**➕ Registro de nueva actividad**")
-            fecha_hoy = obtener_fecha_mexico()
-            
             col1, col2 = st.columns(2)
             with col1:
-                f_nueva = st.date_input("Fecha", value=fecha_hoy)
+                f_nueva = st.date_input("Fecha", value=obtener_fecha_mexico())
                 i_nueva = st.selectbox("Importancia", ["Baja", "Media", "Alta", "Urgente"])
             with col2:
                 t_nueva = st.text_input("Descripción de la Tarea")
                 a_nueva = st.text_input("Última Acción Realizada")
             
-            enviado = st.form_submit_button("Añadir y Sincronizar")
-            
-            if enviado:
+            if st.form_submit_button("Añadir y Sincronizar"):
                 if t_nueva:
+                    # Blindaje contra el error de comas en CSV
+                    t_limpia = t_nueva.replace(",", "-")
+                    a_limpia = a_nueva.replace(",", "-")
+                    
                     nueva_fila = pd.DataFrame([{
                         'FECHA': str(f_nueva),
                         'IMPORTANCIA': i_nueva,
-                        'TAREA': t_nueva,
-                        'ULTIMO ACCION': a_nueva
+                        'TAREA': t_limpia,
+                        'ULTIMO ACCION': a_limpia
                     }])
                     st.session_state.df_tareas = pd.concat([st.session_state.df_tareas, nueva_fila], ignore_index=True)
-                    # GUARDAR EN GITHUB AL INSTANTE
                     guardar_en_github(st.session_state.df_tareas)
                     st.rerun()
                 else:
-                    st.warning("Por favor, escribe una tarea.")
+                    st.warning("Escribe una tarea antes de añadir.")
     
-        # 3. Botón de cierre y guardado final
-        if st.button("Finalizar y Guardar Todo", type="primary", use_container_width=True):
-            guardar_en_github(st.session_state.df_tareas)
+        if st.button("❌ Salir de la Agenda", use_container_width=True):
             st.rerun()
     
     # --- INTERFAZ PRINCIPAL ---
-    st.title("🚀 NEXION Logistics Dashboard")
-    st.info(f"📅 Fecha Local: {obtener_fecha_mexico().strftime('%d/%m/%Y')} | Usuario: Rigoberto Hernández")
-    
+    st.title("🚀 NEXION Dashboard")
     if st.button("📝 GESTIONAR TAREAS", use_container_width=True):
-        ventana_pendientes()          
+        ventana_pendientes()        
         
+
 
 
 
