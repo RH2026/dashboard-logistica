@@ -2787,10 +2787,10 @@ else:
         st.markdown("""
             <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>                
                 <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>
-                    LOGISTIC <span style='color:#00FFAA;'>HUB</span>
+                    OPTIMIAZCION AUTOMATICA DE FLETERAS  <span style='color:#00FFAA;'>Y COSTOS</span>
                 </h1>                
                 <p style='color:#94a3b8; font-size:12px; margin:10px 0 5px 0; font-weight:400;'>
-                    Optimización Automática de Fleteras y Costos
+                    Logistics Intelligence Hub
                 </p>
             </div>
         """, unsafe_allow_html=True)                    
@@ -3300,6 +3300,7 @@ else:
         
    
         
+
 
 
 
