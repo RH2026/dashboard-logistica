@@ -1524,9 +1524,11 @@ else:
             f_inicio_default = df["FECHA DE ENVÍO"].min().date()
             f_fin_default = df["FECHA DE ENVÍO"].max().date()
             
+            st.divider()
+            
             # El filtro de calendario
             rango_fechas = st.date_input(
-                "Seleccionar Fecha:",
+                " Seleccionar Fecha:",
                 value=(f_inicio_default, f_fin_default),
                 min_value=f_inicio_default,
                 max_value=f_fin_default,
@@ -3296,6 +3298,7 @@ else:
         
    
         
+
 
 
 
