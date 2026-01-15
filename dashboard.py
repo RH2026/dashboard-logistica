@@ -1534,7 +1534,8 @@ else:
                 max_value=f_fin_default,
                 help="Todas las métricas y tablas mostrarán solo pedidos enviados en este rango."
             )
-
+        st.divider()
+        
         # AGENDA--- 1. CONFIGURACIÓN DE CRÉDENCIALES Y REPO ---
         TOKEN = st.secrets.get("GITHUB_TOKEN", None)
         REPO_NAME = "RH2026/dashboard-logistica"
@@ -3298,6 +3299,7 @@ else:
         
    
         
+
 
 
 
