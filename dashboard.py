@@ -2787,7 +2787,7 @@ else:
         st.markdown("""
             <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>                
                 <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>
-                    ASIGNACIÓN <span style='color:#00FFAA;'>PAQUETERIAS</span>
+                    ASIGNACIÓN DE <span style='color:#00FFAA;'>PAQUETERIAS</span>
                 </h1>                
                 <p style='color:#94a3b8; font-size:12px; margin:10px 0 5px 0; font-weight:400;'>
                     Logistics Intelligence Hub
@@ -3300,6 +3300,7 @@ else:
         
    
         
+
 
 
 
