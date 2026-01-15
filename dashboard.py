@@ -13,6 +13,7 @@ import re
 import unicodedata
 import requests
 from io import StringIO
+from github import Github
 
 
 
@@ -3185,15 +3186,40 @@ else:
         
         st.markdown(html_mosaico, unsafe_allow_html=True)
         
+    # --- CONFIGURACIÓN DE CRÉDENCIALES ---
+    TOKEN = st.secrets["GITHUB_TOKEN"]
+    REPO_NAME = "RH2026/dashboard-logistica"
+    FILE_PATH = "tareas.csv"
+    
     # --- AJUSTE DE ZONA HORARIA MÉXICO ---
     def obtener_fecha_mexico():
-        # Desfase de -6 horas respecto a UTC (Estándar para México Central)
         utc_ahora = datetime.datetime.now(datetime.timezone.utc)
         mexico_ahora = utc_ahora - datetime.timedelta(hours=6) 
         return mexico_ahora.date()
     
-    # --- CONFIGURACIÓN DE TU REPOSITORIO ---
-    CSV_URL = "https://raw.githubusercontent.com/RH2026/dashboard-logistica/refs/heads/main/tareas.csv"
+    # --- FUNCIÓN PARA GUARDAR EN GITHUB ---
+    def guardar_en_github(df):
+        try:
+            g = Github(TOKEN)
+            repo = g.get_repo(REPO_NAME)
+            # Obtenemos el archivo actual para tener su SHA (necesario para actualizar)
+            contents = repo.get_contents(FILE_PATH, ref="main")
+            
+            csv_data = df.to_csv(index=False)
+            
+            repo.update_file(
+                path=contents.path,
+                message=f"Sincronización automática NEXION - {obtener_fecha_mexico()}",
+                content=csv_data,
+                sha=contents.sha,
+                branch="main"
+            )
+            st.toast("✅ Sincronizado con GitHub", icon="🚀")
+        except Exception as e:
+            st.error(f"❌ Error al sincronizar: {e}")
+    
+    # --- CONFIGURACIÓN DE REPOSITORIO (LECTURA) ---
+    CSV_URL = f"https://raw.githubusercontent.com/{REPO_NAME}/main/tareas.csv"
     
     def obtener_datos_github():
         try:
@@ -3204,7 +3230,7 @@ else:
         except Exception:
             return pd.DataFrame(columns=['FECHA', 'IMPORTANCIA', 'TAREA', 'ULTIMO ACCION'])
     
-    # Inicialización del estado del DataFrame
+    # Inicialización
     if 'df_tareas' not in st.session_state:
         st.session_state.df_tareas = obtener_datos_github()
     
@@ -3223,10 +3249,9 @@ else:
     
         st.divider()
     
-        # 2. Formulario de ingreso (Corregido para evitar cierres y errores de fecha)
+        # 2. Formulario de ingreso con guardado automático
         with st.form("form_nueva_tarea", clear_on_submit=True):
             st.markdown("**➕ Registro de nueva actividad**")
-            
             fecha_hoy = obtener_fecha_mexico()
             
             col1, col2 = st.columns(2)
@@ -3237,7 +3262,7 @@ else:
                 t_nueva = st.text_input("Descripción de la Tarea")
                 a_nueva = st.text_input("Última Acción Realizada")
             
-            enviado = st.form_submit_button("Añadir a la lista")
+            enviado = st.form_submit_button("Añadir y Sincronizar")
             
             if enviado:
                 if t_nueva:
@@ -3248,22 +3273,25 @@ else:
                         'ULTIMO ACCION': a_nueva
                     }])
                     st.session_state.df_tareas = pd.concat([st.session_state.df_tareas, nueva_fila], ignore_index=True)
-                    st.rerun() # Esto refresca la tabla dentro del diálogo
+                    # GUARDAR EN GITHUB AL INSTANTE
+                    guardar_en_github(st.session_state.df_tareas)
+                    st.rerun()
                 else:
                     st.warning("Por favor, escribe una tarea.")
     
-        # 3. Botón de cierre manual
-        if st.button("Finalizar y Cerrar Ventana", type="primary", use_container_width=True):
+        # 3. Botón de cierre y guardado final
+        if st.button("Finalizar y Guardar Todo", type="primary", use_container_width=True):
+            guardar_en_github(st.session_state.df_tareas)
             st.rerun()
     
     # --- INTERFAZ PRINCIPAL ---
     st.title("🚀 NEXION Logistics Dashboard")
-    
     st.info(f"📅 Fecha Local: {obtener_fecha_mexico().strftime('%d/%m/%Y')} | Usuario: Rigoberto Hernández")
     
     if st.button("📝 GESTIONAR TAREAS", use_container_width=True):
-        ventana_pendientes()              
+        ventana_pendientes()          
         
+
 
 
 
