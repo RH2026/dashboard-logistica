@@ -1577,7 +1577,7 @@ else:
                     sha=contents.sha,
                     branch="main"
                 )
-                st.toast("✅ Sincronizado con GitHub", icon="")
+                st.toast("✅ Sincronizado con GitHub")
             except Exception as e:
                 st.error(f"❌ Error al sincronizar: {e}")
         
@@ -3300,6 +3300,7 @@ else:
         
    
         
+
 
 
 
