@@ -404,13 +404,42 @@ else:
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
         st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
-        st.markdown("""
-            <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>
-                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>TRACKING <span style='color:#FFFFFF;'>INDICATOR</span></h1>
-                <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>Logística & Rendimiento de Paqueterías</p>
-                <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
-            </div>
-        """, unsafe_allow_html=True)    
+        # Creamos 3 columnas para que el título se mantenga bien centrado
+        # La columna del centro es la más ancha, y la de la derecha lleva la música
+        col_espacio, col_titulo, col_musica = st.columns([1, 4, 1])
+        
+        with col_titulo:
+            st.markdown("""
+                <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>
+                    <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>
+                        TRACKING <span style='color:#FFFFFF;'>INDICATOR</span>
+                    </h1>
+                    <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>
+                        Logística & Rendimiento de Paqueterías
+                    </p>
+                    <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        with col_musica:
+            # El popover es ideal porque se esconde solo al hacer clic fuera
+            with st.popover("🎵", help="Ambiente de trabajo"):
+                st.write("### Play & Focus")
+                playlist_id = "2IESMkjsXG2MAiA7Qfr4mA"
+                
+                st.components.v1.html(
+                    f"""
+                    <iframe style="border-radius:12px" 
+                        src="https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator&theme=0" 
+                        width="100%" height="80" frameBorder="0" 
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
+                    </iframe>
+                    """,
+                    height=100,
+                )
+        
+        # Espaciado extra después del encabezado
+        st.write("")
     
         # =========================================================
         #MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
@@ -3304,6 +3333,7 @@ else:
         
    
         
+
 
 
 
