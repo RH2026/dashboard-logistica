@@ -393,33 +393,7 @@ else:
         st.session_state.motivo_splash = "logout"
         st.rerun()
     
-    # --- Bloque de la Sidebar ---
-    with st.sidebar:
-        st.divider()
-        st.markdown("### 🎧 Mi Música")
-        
-        # Tu ID de playlist
-        playlist_id = "2IESMkjsXG2MAiA7Qfr4mA" 
-        
-        # REPRODUCTOR ULTRA COMPACTO
-        # Usamos src con 'compact' y forzamos el estilo para que no se corte
-        st.components.v1.html(
-            f"""
-            <div style="display: flex; justify-content: center;">
-                <iframe style="border-radius:12px" 
-                    src="https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator&theme=0" 
-                    width="100%" 
-                    height="80" 
-                    frameBorder="0" 
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-                    loading="lazy">
-                </iframe>
-            </div>
-            """,
-            height=80, # Altura mínima para que no aparezca scroll
-        )
-        
-        st.divider()
+    
             
     # --------------------------------------------------
     # 🛣️ INICIO DE LA LÓGICA DE NAVEGACIÓN
@@ -1667,37 +1641,7 @@ else:
             if st.button("Pendientes", use_container_width=True):
                 ventana_pendientes()
         
-        # --- SPOTIFY TODO ESTO VA EN LA SIDEBAR ---
-        with st.sidebar:
-            st.title("Estación de Control 🎙️")
-            st.write("Configura tu ambiente de trabajo:")
-            
-            # Un toque de personalización
-            nombre = st.text_input("¿Quién está programando?", "User")
-            st.write(f"¡Hola, {nombre}! Qué gusto saludarte. ✨")
-            
-            st.divider() # Una línea divisoria para separar secciones
-            
-            # El reproductor de Spotify
-            # Usamos un height de 152 para que sea la versión "compacta"
-            playlist_id = "2IESMkjsXG2MAiA7Qfr4mA" 
-            
-            st.components.v1.html(
-                f"""
-                <iframe style="border-radius:12px" 
-                    src="https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator&theme=0" 
-                    width="100%" height="152" frameBorder="0" allowfullscreen="" 
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-                    loading="lazy">
-                </iframe>
-                """,
-                height=160, # Un poquito más que el iframe para evitar el scroll interno
-            )
-            
-            st.caption("🎧 Dale al play para fluir con el código.")
-            
-            st.divider()
-        
+                
         # --- CONTENIDO PRINCIPAL ---
         st.header("Área de Trabajo")
         st.write("Aquí puedes poner tus gráficas, tablas o lo que necesites.")    
@@ -3360,6 +3304,7 @@ else:
         
    
         
+
 
 
 
