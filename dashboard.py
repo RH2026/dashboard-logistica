@@ -393,30 +393,34 @@ else:
         st.session_state.motivo_splash = "logout"
         st.rerun()
     
-    with st.sidebar:    
+    # --- Bloque de la Sidebar ---
+    with st.sidebar:
+        st.divider()
         st.markdown("### 🎧 Mi Música")
-    
-        # ID de tu playlist
+        
+        # Tu ID de playlist
         playlist_id = "2IESMkjsXG2MAiA7Qfr4mA" 
         
-        # Usamos height=80 para la versión ultra-compacta
+        # REPRODUCTOR ULTRA COMPACTO
+        # Usamos src con 'compact' y forzamos el estilo para que no se corte
         st.components.v1.html(
             f"""
-            <iframe style="border-radius:12px" 
-                src="https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator&theme=0" 
-                width="100%" 
-                height="80" 
-                frameBorder="0" 
-                allowfullscreen="" 
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-                loading="lazy">
-            </iframe>
+            <div style="display: flex; justify-content: center;">
+                <iframe style="border-radius:12px" 
+                    src="https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator&theme=0" 
+                    width="100%" 
+                    height="80" 
+                    frameBorder="0" 
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                    loading="lazy">
+                </iframe>
+            </div>
             """,
-            height=100, # El contenedor de Streamlit un poquito más grande para que no corte los bordes
+            height=85, # Altura mínima para que no aparezca scroll
         )
         
         st.divider()
-        
+            
     # --------------------------------------------------
     # 🛣️ INICIO DE LA LÓGICA DE NAVEGACIÓN
     # --------------------------------------------------
@@ -3356,6 +3360,7 @@ else:
         
    
         
+
 
 
 
