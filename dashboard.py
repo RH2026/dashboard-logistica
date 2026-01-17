@@ -396,26 +396,26 @@ else:
     
     st.markdown("### 🎧 Mi Música")
     
-    # ID de tu playlist
-    playlist_id = "2IESMkjsXG2MAiA7Qfr4mA" 
-    
-    # Usamos height=80 para la versión ultra-compacta
-    st.components.v1.html(
-        f"""
-        <iframe style="border-radius:12px" 
-            src="https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator&theme=0" 
-            width="100%" 
-            height="80" 
-            frameBorder="0" 
-            allowfullscreen="" 
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-            loading="lazy">
-        </iframe>
-        """,
-        height=100, # El contenedor de Streamlit un poquito más grande para que no corte los bordes
-    )
-    
-    st.divider()
+        # ID de tu playlist
+        playlist_id = "2IESMkjsXG2MAiA7Qfr4mA" 
+        
+        # Usamos height=80 para la versión ultra-compacta
+        st.components.v1.html(
+            f"""
+            <iframe style="border-radius:12px" 
+                src="https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator&theme=0" 
+                width="100%" 
+                height="80" 
+                frameBorder="0" 
+                allowfullscreen="" 
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                loading="lazy">
+            </iframe>
+            """,
+            height=100, # El contenedor de Streamlit un poquito más grande para que no corte los bordes
+        )
+        
+        st.divider()
         
     # --------------------------------------------------
     # 🛣️ INICIO DE LA LÓGICA DE NAVEGACIÓN
@@ -3356,6 +3356,7 @@ else:
         
    
         
+
 
 
 
