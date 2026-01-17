@@ -392,9 +392,9 @@ else:
         st.session_state.splash_completado = False 
         st.session_state.motivo_splash = "logout"
         st.rerun()
-    with st.sidebar:
     
-    st.markdown("### 🎧 Mi Música")
+    with st.sidebar:    
+        st.markdown("### 🎧 Mi Música")
     
         # ID de tu playlist
         playlist_id = "2IESMkjsXG2MAiA7Qfr4mA" 
@@ -3356,6 +3356,7 @@ else:
         
    
         
+
 
 
 
