@@ -404,55 +404,13 @@ else:
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
         st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
-        # CSS "Rompe-Aferrados": Este selector es más agresivo para forzar el ancho
         st.markdown("""
-            <style>
-            /* Buscamos el contenedor específico del popover */
-            div[data-testid="stPopoverBody"] > div:first-child {
-                width: 400px !important;
-                max-width: 400px !important;
-            }
-            
-            /* Esto quita los márgenes internos que a veces aprietan el contenido */
-            div[data-testid="stPopoverBody"] {
-                padding: 10px !important;
-            }
-            </style>
+            <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>
+                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>TRACKING <span style='color:#FFFFFF;'>INDICATOR</span></h1>
+                <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>Logística & Rendimiento de Paqueterías</p>
+                <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
+            </div>
         """, unsafe_allow_html=True)
-        
-        # Mantenemos tus columnas centradas
-        col_musica, col_titulo = st.columns([0.1, 0.9], vertical_alignment="center")
-        
-        with col_musica:
-            # El botón minimalista
-            with st.popover("🎵"):
-                st.markdown("### Play & Focus 🎧")
-                playlist_id = "2IESMkjsXG2MAiA7Qfr4mA"
-                
-                # Metemos el iframe en un div con ancho fijo también por si acaso
-                st.components.v1.html(
-                    f"""
-                    <div style="width: 380px;">
-                        <iframe style="border-radius:12px" 
-                            src="https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator&theme=0" 
-                            width="100%" height="80" frameBorder="0" 
-                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
-                        </iframe>
-                    </div>
-                    """,
-                    height=100,
-                    width=380, # Aquí también le avisamos a Streamlit que el componente es ancho
-                )
-        
-        with col_titulo:
-            # Tu diseño de TRACKING INDICATOR
-            st.markdown("""
-                <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>
-                    <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>TRACKING <span style='color:#FFFFFF;'>INDICATOR</span></h1>
-                    <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>Logística & Rendimiento de Paqueterías</p>
-                    <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
-                </div>
-            """, unsafe_allow_html=True)
         # =========================================================
         #MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
         # =========================================================
@@ -3345,6 +3303,7 @@ else:
         
    
         
+
 
 
 
