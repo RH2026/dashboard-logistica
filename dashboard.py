@@ -416,7 +416,7 @@ else:
                 </iframe>
             </div>
             """,
-            height=150, # Altura mínima para que no aparezca scroll
+            height=80, # Altura mínima para que no aparezca scroll
         )
         
         st.divider()
@@ -3360,6 +3360,7 @@ else:
         
    
         
+
 
 
 
