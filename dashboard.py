@@ -404,31 +404,38 @@ else:
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
         st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
-        # Aumentamos un poco el ancho de la columna de música (de 0.1 a 0.2 o 0.15)
-        # 'vertical_alignment' asegura que el botón flote a la altura del título
-        col_musica, col_titulo = st.columns([0.18, 0.82], vertical_alignment="center")
+        # CSS para que la ventana del popover sea ancha aunque el botón sea pequeño
+        st.markdown("""
+            <style>
+            [data-testid="stPopoverBody"] {
+                width: 320px; /* Ajusta este ancho a tu gusto para que el Play se vea perfecto */
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        
+        # Creamos las columnas. La primera muy pequeña para el botón minimalista.
+        col_musica, col_titulo = st.columns([0.08, 0.92], vertical_alignment="center")
         
         with col_musica:
-            # Usamos un label un poquito más largo o un ícono con espacio para que el botón sea más ancho
-            with st.popover("🎧 Música", use_container_width=True):
-                st.markdown("### Ambiente de Trabajo")
+            # El botón ahora es solo el emoji, súper minimalista
+            with st.popover("🎵"):
+                st.write("### Play & Focus 🎧")
                 playlist_id = "2IESMkjsXG2MAiA7Qfr4mA"
                 
-                # El secreto está en width: 100% y un height exacto de 80
+                # El reproductor ahora tiene espacio de sobra gracias al CSS de arriba
                 st.components.v1.html(
                     f"""
-                    <div style="width: 100%; min-width: 250px;">
-                        <iframe style="border-radius:12px" 
-                            src="https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator&theme=0" 
-                            width="100%" height="80" frameBorder="0" 
-                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
-                        </iframe>
-                    </div>
+                    <iframe style="border-radius:12px" 
+                        src="https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator&theme=0" 
+                        width="100%" height="80" frameBorder="0" 
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
+                    </iframe>
                     """,
-                    height=100,
+                    height=90,
                 )
         
         with col_titulo:
+            # Tu hermoso diseño de TRACKING INDICATOR
             st.markdown("""
                 <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>
                     <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>
@@ -3332,6 +3339,7 @@ else:
         
    
         
+
 
 
 
