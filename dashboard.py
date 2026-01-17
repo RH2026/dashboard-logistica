@@ -404,46 +404,53 @@ else:
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
         st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
-        # CSS para que la ventana del popover sea ancha aunque el botón sea pequeño
+        # 1. CSS inyectado para que la ventana del popup sea ancha
         st.markdown("""
             <style>
-            [data-testid="stPopoverBody"] {
-                width: 320px; /* Ajusta este ancho a tu gusto para que el Play se vea perfecto */
+            /* Esto fuerza a que la cajita que sale sea ancha */
+            div[data-testid="stPopoverBody"] {
+                width: 350px !important; 
+                min-width: 350px !important;
+            }
+            /* Estilo opcional para que el botón minimalista no tenga tanto margen */
+            div[data-testid="stPopover"] > button {
+                border: none;
+                background-color: transparent;
+                padding: 0;
             }
             </style>
         """, unsafe_allow_html=True)
         
-        # Creamos las columnas. La primera muy pequeña para el botón minimalista.
-        col_musica, col_titulo = st.columns([0.08, 0.92], vertical_alignment="center")
+        # 2. Columnas para alinear con el título
+        # Usamos columnas para que el botón esté a la izquierda de tu diseño
+        col_musica, col_titulo = st.columns([0.1, 0.9], vertical_alignment="center")
         
         with col_musica:
-            # El botón ahora es solo el emoji, súper minimalista
+            # El botón minimalista
             with st.popover("🎵"):
                 st.write("### Play & Focus 🎧")
                 playlist_id = "2IESMkjsXG2MAiA7Qfr4mA"
                 
-                # El reproductor ahora tiene espacio de sobra gracias al CSS de arriba
+                # El reproductor de Spotify
                 st.components.v1.html(
                     f"""
-                    <iframe style="border-radius:12px" 
-                        src="https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator&theme=0" 
-                        width="100%" height="80" frameBorder="0" 
-                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
-                    </iframe>
+                    <div style="width: 100%;">
+                        <iframe style="border-radius:12px" 
+                            src="https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator&theme=0" 
+                            width="100%" height="80" frameBorder="0" 
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
+                        </iframe>
+                    </div>
                     """,
-                    height=90,
+                    height=100,
                 )
         
         with col_titulo:
-            # Tu hermoso diseño de TRACKING INDICATOR
+            # Tu diseño de TRACKING INDICATOR
             st.markdown("""
                 <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>
-                    <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>
-                        TRACKING <span style='color:#FFFFFF;'>INDICATOR</span>
-                    </h1>
-                    <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>
-                        Logística & Rendimiento de Paqueterías
-                    </p>
+                    <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>TRACKING <span style='color:#FFFFFF;'>INDICATOR</span></h1>
+                    <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>Logística & Rendimiento de Paqueterías</p>
                     <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
                 </div>
             """, unsafe_allow_html=True)
@@ -3339,6 +3346,7 @@ else:
         
    
         
+
 
 
 
