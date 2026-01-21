@@ -1473,114 +1473,107 @@ else:
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "KPIs":
         # 1. Fuerza el scroll hacia arriba
-        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
-        
-        # --- 1. ESTILOS CSS UNIFICADOS (Limpieza y Espacio) ---
+        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)                
+        # --- 1. CSS PARA MINIMIZAR ESPACIO Y ESTILIZAR ---
         st.markdown("""
             <style>
-                /* Elimina el espacio superior muerto de Streamlit */
+                /* Sube el contenido al límite superior */
                 .block-container {
                     padding-top: 1rem !important;
                     padding-bottom: 0rem !important;
                 }
         
-                /* Contenedor del Título */
-                .data-header-container {
+                /* Contenedor Flex para Título + Subtítulo */
+                .header-tech {
                     display: flex;
                     align-items: baseline;
                     gap: 12px;
                     font-family: 'Inter', sans-serif;
                 }
         
-                .main-title {
-                    font-size: 24px !important;
+                .header-tech h1 {
+                    font-size: 22px !important;
                     font-weight: 800;
                     margin: 0;
                     color: #ffffff;
-                    letter-spacing: -1px;
+                    letter-spacing: -0.8px;
+                    text-transform: uppercase;
                 }
         
-                .highlight {
-                    color: #00FFAA;
-                }
-        
-                .subtitle-tech {
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 11px;
+                /* El "& SEGUIMIENTO" con estilo minimalista */
+                .header-tech h1 span {
+                    font-weight: 300;
                     color: #94a3b8;
-                    letter-spacing: 0.5px;
+                }
+        
+                /* Etiqueta técnica lateral */
+                .label-tech {
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 10px;
+                    color: #00FFAA;
                     border-left: 1px solid #334155;
                     padding-left: 12px;
                     margin-left: 5px;
+                    letter-spacing: 1px;
+                    opacity: 0.8;
                 }
         
-                /* TU ESTILO: Botón de menú (Mejorado para minimalismo) */
+                /* TU ESTILO: Botón de menú minimalista (Igual al anterior) */
                 div[data-testid="stPopover"] > button {
-                    background-color: #0d1117 !important;
-                    border: 1px solid rgba(0, 255, 170, 0.4) !important;
-                    padding: 2px 15px !important;
+                    background-color: transparent !important;
+                    border: 1px solid rgba(0, 255, 170, 0.3) !important;
+                    padding: 2px 10px !important;
                     border-radius: 6px !important;
-                    height: 35px !important;
-                    width: 100% !important;
-                    transition: all 0.3s ease;
+                    height: 32px !important;
                 }
                 
                 div[data-testid="stPopover"] > button:hover {
                     border: 1px solid #00FFAA !important;
-                    box-shadow: 0 0 12px rgba(0, 255, 170, 0.15);
+                    background-color: rgba(0, 255, 170, 0.05) !important;
                 }
         
-                /* Estilo botones internos del Menú */
                 div[data-testid="stPopoverContent"] button {
                     text-align: left !important;
                     justify-content: flex-start !important;
                     border: none !important;
-                    background: transparent !important;
                     font-size: 13px !important;
-                    padding: 8px 12px !important;
-                }
-        
-                div[data-testid="stPopoverContent"] button:hover {
-                    color: #00FFAA !important;
-                    background: rgba(0, 255, 170, 0.08) !important;
                 }
             </style>
         """, unsafe_allow_html=True)
         
-        # --- 2. ESTRUCTURA EN COLUMNAS (Para ahorrar espacio vertical) ---
-        c1, c2 = st.columns([0.82, 0.18], vertical_alignment="center")
+        # --- 2. ESTRUCTURA (Header + Menú) ---
+        c1, c2 = st.columns([0.85, 0.15], vertical_alignment="bottom")
         
         with c1:
             st.markdown("""
-                <div class="data-header-container">
-                    <h1 class="main-title">RASTREO <span class="highlight">& SEGUIMIENTO</span></h1>
-                    <div class="subtitle-tech">
+                <div class="header-tech">
+                    <h1>RASTREO <span>& SEGUIMIENTO</span></h1>
+                    <div class="label-tech">
                         LOGÍSTICA & RENDIMIENTO
                     </div>
                 </div>
             """, unsafe_allow_html=True)
         
         with c2:
-            # Tu menú de navegación integrado
             with st.popover("☰", use_container_width=True):
-                st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:8px; letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
-                # Diccionario para gestionar la navegación limpiamente
-                nav_options = {
-                    "TRACKING": "principal",
-                    "SEGUIMIENTO": "KPIs",
-                    "REPORTE OPS": "Reporte",
-                    "HUB LOGISTIC": "HubLogistico",
-                    "OTD": "RadarRastreo"
-                }
+                # Botones de navegación
+                if st.button("TRACKING", use_container_width=True, key="nav_1"):
+                    st.session_state.pagina = "principal"
+                    st.rerun()
+                if st.button("SEGUIMIENTO", use_container_width=True, key="nav_2"):
+                    st.session_state.pagina = "KPIs"
+                    st.rerun()
+                if st.button("REPORTE OPS", use_container_width=True, key="nav_3"):
+                    st.session_state.pagina = "Reporte"
+                    st.rerun()
+                if st.button("HUB LOGISTIC", use_container_width=True, key="nav_4"):
+                    st.session_state.pagina = "HubLogistico"
+                    st.rerun()
         
-                for label, page in nav_options.items():
-                    if st.button(label, use_container_width=True, key=f"nav_{page}"):
-                        st.session_state.pagina = page
-                        st.rerun()
-        
-        # Línea de cierre sutil
-        st.markdown("<hr style='margin: 10px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
+        # Línea divisoria muy fina
+        st.markdown("<hr style='margin: 8px 0 25px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
         
               
                       
@@ -3389,6 +3382,7 @@ else:
         
    
         
+
 
 
 
