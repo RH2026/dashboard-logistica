@@ -3222,7 +3222,7 @@ else:
                 .border-blue { border-left: 5px solid #38bdf8; }
                 .border-purple { border-left: 5px solid #a78bfa; }
                 
-                .card-label { color: #8b949e; font-size: 0.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
+                .card-label { color: #8b949e; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
                 .card-value { font-size: 1.6rem; font-weight: 800; margin: 4px 0; font-family: 'Inter', sans-serif; }
                 .card-footer { color: #FFFFFF; font-size: 0.6rem; font-weight: 600; }
             </style>
@@ -3440,6 +3440,7 @@ else:
         
    
         
+
 
 
 
