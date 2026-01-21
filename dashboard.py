@@ -404,158 +404,113 @@ else:
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
         st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
-        # 1. Configuración de estilo para maximizar área de trabajo
+        # --- 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS (Sube el contenido y estiliza el menú) ---
         st.markdown("""
             <style>
-            /* Sube todo el contenido hacia arriba */
-            .block-container {
-                padding-top: 1rem !important;
-                padding-bottom: 0rem !important;
-            }
-            
-            /* Estilo para el título y subtítulo */
-            .header-text-container {
-                display: flex;
-                align-items: baseline;
-                gap: 10px;
-                font-family: 'Inter', sans-serif;
-            }
-        
-            .main-title {
-                font-size: 20px !important;
-                font-weight: 800;
-                margin: 0;
-                color: #ffffff;
-                letter-spacing: -0.5px;
-            }
-        
-            .sub-title {
-                font-size: 14px;
-                font-weight: 300;
-                color: #94a3b8;
-                text-transform: uppercase;
-            }
-        
-            .tech-tag {
-                font-family: 'JetBrains Mono', monospace;
-                font-size: 10px;
-                color: #00FFAA;
-                border-left: 1px solid #334155;
-                padding-left: 10px;
-                margin-left: 5px;
-            }
-        
-            /* Estilo específico para que el botón popover sea minimalista */
-            div[data-testid="stPopover"] > button {
-                border: 1px solid rgba(148, 163, 184, 0.2) !important;
-                background-color: transparent !important;
-                color: #00FFAA !important;
-                padding: 0px 10px !important;
-                height: 32px !important;
-                width: 50px !important;
-            }
-            </style>
-            """, unsafe_allow_html=True)
-        
-        # 2. Estructura de la Cabecera (Header)
-        # Creamos dos columnas: una ancha para el título y una pequeña para el botón
-        col1, col2 = st.columns([0.85, 0.15], vertical_alignment="center")
-        
-        with col1:
-            st.markdown("""
-                <div class="header-text-container">
-                    <h1 class="main-title">TRACKING</h1>
-                    <span class="sub-title">Indicator</span>
-                    <span class="tech-tag">LOGÍSTICA & RENDIMIENTO</span>
-                </div>
-            """, unsafe_allow_html=True)
-        
-        with col2:
-            # Tu botón popover integrado en la misma línea
-            with st.popover("☰", use_container_width=True):
-                st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700; margin-bottom:10px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                
-                if st.button("TRACKING", use_container_width=True, key="h_aac"):
-                    st.session_state.pagina = "principal"
-                    st.rerun()
-                    
-                if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
-                    st.session_state.pagina = "KPIs"
-                    st.rerun()
-                    
-                if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
-                    st.session_state.pagina = "Reporte"
-                    st.rerun()
-        
-                if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
-                    st.session_state.pagina = "HubLogistico"
-                    st.rerun() 
-        
-                if st.button("OTD", use_container_width=True, key="h_radar"):
-                    st.session_state.pagina = "RadarRastreo"
-                    st.rerun()
-        
-        # Línea divisoria sutil para cerrar el encabezado
-        st.markdown("<hr style='margin: 10px 0 25px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
-        # =========================================================
-        #MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
-        # =========================================================
-        
-        # 1. ESTILO PARA QUE EL BOTÓN PAREZCA UN MENÚ DE APP
-        st.markdown("""
-            <style>
-                /* Estilizar el botón del menú para que sea cuadrado y discreto */
-                div[data-testid="stPopover"] > button {
-                    background-color: #0d1117 !important;
-                    border: 1px solid #00ffa2 !important;
-                    padding: 5px 15px !important;
-                    border-radius: 8px !important;
-                    width: auto !important;
+                /* Reducir márgenes de Streamlit al mínimo */
+                .block-container {
+                    padding-top: 1rem !important;
+                    padding-bottom: 0rem !important;
+                    max-width: 95% !important;
                 }
-                /* Ajustar el texto dentro del menú desplegado */
+        
+                /* Estilo para el contenedor del título */
+                .header-wrapper {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 12px;
+                    font-family: 'Inter', sans-serif;
+                }
+        
+                .header-wrapper h1 {
+                    font-size: 22px !important;
+                    font-weight: 800;
+                    margin: 0;
+                    color: #ffffff;
+                    letter-spacing: -0.8px;
+                }
+        
+                .header-wrapper span {
+                    font-size: 14px;
+                    font-weight: 300;
+                    color: #94a3b8;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
+        
+                /* TU ESTILO: Botón de menú minimalista */
+                div[data-testid="stPopover"] > button {
+                    background-color: transparent !important;
+                    border: 1px solid rgba(0, 255, 162, 0.3) !important;
+                    padding: 2px 10px !important;
+                    border-radius: 6px !important;
+                    height: 32px !important;
+                    transition: all 0.3s ease;
+                }
+                
+                div[data-testid="stPopover"] > button:hover {
+                    border: 1px solid #00ffa2 !important;
+                    box-shadow: 0 0 10px rgba(0, 255, 162, 0.2);
+                }
+        
+                /* Ajustes de los botones dentro del menú desplegable */
                 div[data-testid="stPopoverContent"] button {
                     text-align: left !important;
                     justify-content: flex-start !important;
                     border: none !important;
                     background: transparent !important;
-                    font-size: 14px !important;
+                    font-size: 13px !important;
+                    padding: 8px 10px !important;
                 }
+        
                 div[data-testid="stPopoverContent"] button:hover {
                     color: #00ffa2 !important;
-                    background: rgba(0, 255, 162, 0.1) !important;
+                    background: rgba(0, 255, 162, 0.05) !important;
                 }
             </style>
         """, unsafe_allow_html=True)
         
-        # 2. POSICIONAMIENTO DEL MENÚ (Alineado a la derecha del título)
-        c1, c2 = st.columns([0.85, 0.15]) # El 0.15 es el espacio para el cuadro del menú
+        # --- 2. POSICIONAMIENTO (Header + Navegación) ---
+        # Usamos columnas para que el botón esté a la derecha del título
+        c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
+        
+        with c1:
+            st.markdown("""
+                <div class="header-wrapper">
+                    <h1>TRACKING</h1>
+                    <span>Indicator</span>
+                    <div style="font-family: 'JetBrains Mono'; font-size: 10px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
+                        LOGÍSTICA & RENDIMIENTO
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
         
         with c2:
-            # El label "☰" es el icono estándar de hamburguesa
+            # Tu popover integrado
             with st.popover("☰", use_container_width=True):
-                st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px; letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
-                if st.button("TRACKING", use_container_width=True, key="h_aac"):
-                    st.session_state.pagina = "principal"
-                    st.rerun()
-                    
-                if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
-                    st.session_state.pagina = "KPIs"
-                    st.rerun()
-                    
-                if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
-                    st.session_state.pagina = "Reporte"
-                    st.rerun()
-
-                if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
-                    st.session_state.pagina = "HubLogistico"
-                    st.rerun() 
-
-                if st.button("OTD", use_container_width=True, key="h_radar"):
-                    st.session_state.pagina = "RadarRastreo"
-                    st.rerun()
-                                       
-        st.divider()   
+                # Botones de navegación
+                paginas = {
+                    "TRACKING": ("principal", "h_aac"),
+                    "SEGUIMIENTO": ("KPIs", "h_kpi"),
+                    "REPORTE OPS": ("Reporte", "h_rep"),
+                    "HUB LOGISTIC": ("HubLogistico", "h_hub"),
+                    "OTD": ("RadarRastreo", "h_radar")
+                }
+        
+                for nombre, (v_state, v_key) in paginas.items():
+                    if st.button(nombre, use_container_width=True, key=v_key):
+                        st.session_state.pagina = v_state
+                        st.rerun()
+        
+        # Línea divisoria minimalista
+        st.markdown("<hr style='margin: 8px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
+        # =========================================================
+        # ARRIBA - MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
+        # =========================================================
+        
+        
         # 1. FUNCIÓN DE LIMPIEZA
         def limpiar_filtros():
             st.session_state.filtro_cliente_actual = ""
@@ -3389,6 +3344,7 @@ else:
         
    
         
+
 
 
 
