@@ -1474,45 +1474,39 @@ else:
     elif st.session_state.pagina == "KPIs":
         # 1. Fuerza el scroll hacia arriba
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)                
-        # --- 1. ESTILO CSS PARA REPLICAR LA IMAGEN ---
+        # --- 1. ESTILO CSS PARA ENCABEZADO Y POPOVER ---
         st.markdown("""
             <style>
-                /* Eliminamos el espacio superior de Streamlit */
-                .block-container {
-                    padding-top: 1.5rem !important;
-                    padding-bottom: 0rem !important;
-                }
-        
                 /* Contenedor principal alineado a la izquierda */
                 .header-container {
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
                     padding: 10px 0;
-                    
                     margin-bottom: 20px;
                 }
         
-                /* Estilo de texto: TRACKING INDICATOR | LOGÍSTICA... */
                 .brand-text {
-                    font-family: 'Inter', -apple-system, sans-serif;
+                    font-family: 'Inter', sans-serif;
                     display: flex;
-                    align-items: center;
-                    gap: 15px;
+                    align-items: baseline;
+                    gap: 12px;
                 }
         
+                /* TRACKING en Gris Oscuro */
                 .main-brand {
-                    color: ##4b5563; /* Gris para TRACKING */
-                    font-size: 12px;
-                    font-weight: 500;
-                    letter-spacing: 1px;
+                    color: #4b5563 !important; 
+                    font-size: 22px;
+                    font-weight: 800;
+                    letter-spacing: -0.8px;
                     text-transform: uppercase;
                 }
         
+                /* INDICATOR / SECUNDARIO en Blanco */
                 .secondary-brand {
-                    color: #e5e7eb; /* Blanco/Gris claro para INDICATOR */
+                    color: #ffffff !important;
                     font-size: 14px;
-                    font-weight: 600;
+                    font-weight: 300;
                     letter-spacing: 1px;
                     text-transform: uppercase;
                 }
@@ -1521,47 +1515,36 @@ else:
                     color: #374151;
                     font-weight: 200;
                     font-size: 18px;
+                    margin: 0 5px;
                 }
         
                 .tagline {
-                    font-family: 'JetBrains Mono', monospace; /* Fuente de datos */
-                    color: #00ffa2; /* El verde neón */
+                    font-family: 'JetBrains Mono', monospace;
+                    color: #00ffa2;
                     font-size: 11px;
-                    font-weight: 400;
-                    letter-spacing: 0.5px;
+                    opacity: 0.7;
                     text-transform: uppercase;
                 }
         
-                /* TU ESTILO: Botón de menú minimalista (Cuadrado y negro) */
+                /* Estilo del Botón de Menú (Hamburguesa) */
                 div[data-testid="stPopover"] > button {
-                    background-color: #0d1117 !important;
-                    border: 1px solid #1f2937 !important;
-                    padding: 0px 12px !important;
+                    background-color: transparent !important;
+                    border: 1px solid rgba(0, 255, 162, 0.3) !important;
                     border-radius: 6px !important;
                     height: 32px !important;
-                    color: white !important;
                 }
                 
                 div[data-testid="stPopover"] > button:hover {
-                    border-color: #00ffa2 !important;
-                }
-        
-                /* Estilo de los botones dentro del popover */
-                div[data-testid="stPopoverContent"] button {
-                    text-align: left !important;
-                    justify-content: flex-start !important;
-                    border: none !important;
-                    background: transparent !important;
-                    font-size: 13px !important;
+                    border: 1px solid #00ffa2 !important;
+                    box-shadow: 0 0 10px rgba(0, 255, 162, 0.2);
                 }
             </style>
         """, unsafe_allow_html=True)
         
-        # --- 2. ESTRUCTURA (Layout) ---
+        # --- 2. RENDERIZADO DEL ENCABEZADO ---
         col_t, col_m = st.columns([0.88, 0.12], vertical_alignment="center")
         
         with col_t:
-            # Replicamos el texto de la imagen: TRACKING  INDICATOR | LOGÍSTICA...
             st.markdown("""
                 <div class="brand-text">
                     <span class="main-brand">Shipment Monitoring</span>
@@ -1572,28 +1555,22 @@ else:
             """, unsafe_allow_html=True)
         
         with col_m:
-            # Menú de navegación integrado a la derecha
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
-                if st.button("TRACKING", use_container_width=True, key="h_aac"):
-                    st.session_state.pagina = "principal"
-                    st.rerun()
-                    
-                if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
-                    st.session_state.pagina = "KPIs"
-                    st.rerun()
-                    
-                if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
-                    st.session_state.pagina = "Reporte"
-                    st.rerun()
-        
-                if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
-                    st.session_state.pagina = "HubLogistico"
-                    st.rerun()
-        
-              
-                      
+                opciones = {
+                    "TRACKING": "principal",
+                    "SEGUIMIENTO": "KPIs",
+                    "REPORTE OPS": "Reporte",
+                    "HUB LOGISTIC": "HubLogistico",
+                    "OTD": "RadarRastreo"
+                }
+                
+                for nombre, estado in opciones.items():
+                    if st.button(nombre, use_container_width=True, key=f"btn_{estado}"):
+                        st.session_state.pagina = estado
+                        st.rerun()
+
         # Línea divisoria minimalista
         st.markdown("<hr style='margin: 8px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
        
@@ -3388,6 +3365,7 @@ else:
         
    
         
+
 
 
 
