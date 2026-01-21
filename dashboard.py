@@ -1503,7 +1503,7 @@ else:
         
                 .main-brand {
                     color: ##4b5563; /* Gris para TRACKING */
-                    font-size: 14px;
+                    font-size: 12px;
                     font-weight: 500;
                     letter-spacing: 1px;
                     text-transform: uppercase;
@@ -3388,6 +3388,7 @@ else:
         
    
         
+
 
 
 
