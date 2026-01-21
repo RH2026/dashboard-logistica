@@ -1475,67 +1475,112 @@ else:
         # 1. Fuerza el scroll hacia arriba
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
-        st.markdown("""
-            <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>
-                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>RASTREO &<span style='color:#00FFAA;'> SEGUIMIENTO</span></h1>
-                <p style='color:#94a3b8; font-size:16px; margin:10px 0 15px 0; font-weight:400;'>Logística & Rendimiento de Paqueterías</p>
-                <div style='height:3px; width:60px; background:#00FFAA; margin:0 auto; border-radius:10px;'></div>
-            </div>
-        """, unsafe_allow_html=True)    
-
-        #=========================================================
-        #     MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
-        # =========================================================
-        
-        # 1. ESTILO PARA QUE EL BOTÓN PAREZCA UN MENÚ DE APP
+        # --- 1. ESTILOS CSS UNIFICADOS (Limpieza y Espacio) ---
         st.markdown("""
             <style>
-                /* Estilizar el botón del menú para que sea cuadrado y discreto */
+                /* Elimina el espacio superior muerto de Streamlit */
+                .block-container {
+                    padding-top: 1rem !important;
+                    padding-bottom: 0rem !important;
+                }
+        
+                /* Contenedor del Título */
+                .data-header-container {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 12px;
+                    font-family: 'Inter', sans-serif;
+                }
+        
+                .main-title {
+                    font-size: 24px !important;
+                    font-weight: 800;
+                    margin: 0;
+                    color: #ffffff;
+                    letter-spacing: -1px;
+                }
+        
+                .highlight {
+                    color: #00FFAA;
+                }
+        
+                .subtitle-tech {
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 11px;
+                    color: #94a3b8;
+                    letter-spacing: 0.5px;
+                    border-left: 1px solid #334155;
+                    padding-left: 12px;
+                    margin-left: 5px;
+                }
+        
+                /* TU ESTILO: Botón de menú (Mejorado para minimalismo) */
                 div[data-testid="stPopover"] > button {
                     background-color: #0d1117 !important;
-                    border: 1px solid #00ffa2 !important;
-                    padding: 5px 15px !important;
-                    border-radius: 8px !important;
-                    width: auto !important;
+                    border: 1px solid rgba(0, 255, 170, 0.4) !important;
+                    padding: 2px 15px !important;
+                    border-radius: 6px !important;
+                    height: 35px !important;
+                    width: 100% !important;
+                    transition: all 0.3s ease;
                 }
-                /* Ajustar el texto dentro del menú desplegado */
+                
+                div[data-testid="stPopover"] > button:hover {
+                    border: 1px solid #00FFAA !important;
+                    box-shadow: 0 0 12px rgba(0, 255, 170, 0.15);
+                }
+        
+                /* Estilo botones internos del Menú */
                 div[data-testid="stPopoverContent"] button {
                     text-align: left !important;
                     justify-content: flex-start !important;
                     border: none !important;
                     background: transparent !important;
-                    font-size: 14px !important;
+                    font-size: 13px !important;
+                    padding: 8px 12px !important;
                 }
+        
                 div[data-testid="stPopoverContent"] button:hover {
-                    color: #00ffa2 !important;
-                    background: rgba(0, 255, 162, 0.1) !important;
+                    color: #00FFAA !important;
+                    background: rgba(0, 255, 170, 0.08) !important;
                 }
             </style>
         """, unsafe_allow_html=True)
         
-        # 2. POSICIONAMIENTO DEL MENÚ (Alineado a la derecha del título)
-        c1, c2 = st.columns([0.85, 0.15]) # El 0.15 es el espacio para el cuadro del menú
+        # --- 2. ESTRUCTURA EN COLUMNAS (Para ahorrar espacio vertical) ---
+        c1, c2 = st.columns([0.82, 0.18], vertical_alignment="center")
+        
+        with c1:
+            st.markdown("""
+                <div class="data-header-container">
+                    <h1 class="main-title">RASTREO <span class="highlight">& SEGUIMIENTO</span></h1>
+                    <div class="subtitle-tech">
+                        LOGÍSTICA & RENDIMIENTO
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
         
         with c2:
-            # El label "☰" es el icono estándar de hamburguesa
+            # Tu menú de navegación integrado
             with st.popover("☰", use_container_width=True):
-                st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:8px; letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
-                if st.button("TRACKING", use_container_width=True, key="h_aac"):
-                    st.session_state.pagina = "principal"
-                    st.rerun()
-                    
-                if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
-                    st.session_state.pagina = "KPIs"
-                    st.rerun()
-                    
-                if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
-                    st.session_state.pagina = "Reporte"
-                    st.rerun()
-
-                if st.button("HUB LOGISITC", use_container_width=True, key="h_hub"):
-                    st.session_state.pagina = "HubLogistico"
-                    st.rerun()
+                # Diccionario para gestionar la navegación limpiamente
+                nav_options = {
+                    "TRACKING": "principal",
+                    "SEGUIMIENTO": "KPIs",
+                    "REPORTE OPS": "Reporte",
+                    "HUB LOGISTIC": "HubLogistico",
+                    "OTD": "RadarRastreo"
+                }
+        
+                for label, page in nav_options.items():
+                    if st.button(label, use_container_width=True, key=f"nav_{page}"):
+                        st.session_state.pagina = page
+                        st.rerun()
+        
+        # Línea de cierre sutil
+        st.markdown("<hr style='margin: 10px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
         
               
                       
@@ -3344,6 +3389,7 @@ else:
         
    
         
+
 
 
 
