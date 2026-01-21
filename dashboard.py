@@ -479,7 +479,7 @@ else:
                 <div class="header-wrapper">
                     <h1>TRACKING</h1>
                     <span>Indicator</span>
-                    <div style="font-family: 'JetBrains Mono'; font-size: 10px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
+                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
                         LOGÍSTICA & RENDIMIENTO
                     </div>
                 </div>
@@ -3388,6 +3388,7 @@ else:
         
    
         
+
 
 
 
