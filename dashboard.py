@@ -426,7 +426,7 @@ else:
                     font-size: 22px !important;
                     font-weight: 800;
                     margin: 0;
-                    color: #ffffff;
+                    color: #4b5563;
                     letter-spacing: -0.8px;
                 }
         
@@ -3388,6 +3388,7 @@ else:
         
    
         
+
 
 
 
