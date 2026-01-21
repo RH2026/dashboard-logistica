@@ -2289,7 +2289,7 @@ else:
             st.markdown("""
                 <style>
                 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;800&display=swap');
-                .premium-header { font-family: 'Orbitron', sans-serif; color: #f8fafc; 'font-size:10px;' letter-spacing: 2px; text-transform: uppercase; border-bottom: 2px solid #38bdf8; padding-bottom: 8px; margin: 25px 0; }
+                .premium-header { font-family: 'Orbitron', sans-serif; color: #f8fafc; letter-spacing: 2px; text-transform: uppercase; border-bottom: 2px solid #38bdf8; padding-bottom: 8px; margin: 25px 0; }
                 .card-container { background-color: #0d1117; border-radius: 10px; padding: 15px; border: 1px solid #30363d; height: 125px; margin-bottom: 10px; transition: all 0.3s; margin-top: 10px;}
                 .card-label { color: #8b949e; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
                 .card-value { font-size: 1.6rem; font-weight: 800; margin: 4px 0; font-family: 'Inter', sans-serif; }
@@ -2307,21 +2307,22 @@ else:
 
             # Aplicamos un reseteo total de bordes, sombras y elementos decorativos internos
             st.markdown(f"""
-                <style>
-                    .premium-header {{
-                        border: none !important;
-                        border-bottom: none !important;
-                        box-shadow: none !important;
-                    }}
-                    .premium-header::after, .premium-header::before {{
-                        content: none !important;
-                        display: none !important;
-                    }}
-                </style>
-                <h4 class='premium-header' style='border:none !important; box-shadow:none !important;'>
-                    {header_txt}
-                </h4>
-            """, unsafe_allow_html=True)
+            <style>
+            .premium-header {{
+                font-size: 12px !important;   /* 👈 AQUÍ */
+                font-weight: 600;
+                letter-spacing: 0.4px;
+                margin-top: 4px;
+                margin-bottom: 8px;
+                border: none !important;
+                box-shadow: none !important;
+            }}
+        </style>
+        
+        <h4 class="premium-header">
+            {header_txt}
+        </h4>
+        """, unsafe_allow_html=True)
 
                 
             
@@ -3428,6 +3429,7 @@ else:
         
    
         
+
 
 
 
