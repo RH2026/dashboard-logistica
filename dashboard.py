@@ -3222,12 +3222,25 @@ else:
                 .border-blue { border-left: 5px solid #38bdf8; }
                 .border-purple { border-left: 5px solid #a78bfa; }
                 
-                .card-label { color: #8b949e; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
+                .card-label { color: #8b949e; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
                 .card-value { font-size: 1.6rem; font-weight: 800; margin: 4px 0; font-family: 'Inter', sans-serif; }
                 .card-footer { color: #FFFFFF; font-size: 0.6rem; font-weight: 600; }
             </style>
         """, unsafe_allow_html=True)
 
+        st.markdown("""
+        <style>
+        .premium-header {
+            font-size: 0.75rem;      /* 👈 MÁS PEQUEÑO */
+            font-weight: 600;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: #e5e7eb;
+            margin-bottom: 8px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         # --- 2. ENCABEZADO MINIMALISTA Y NAVEGACIÓN ---
         c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
 
@@ -3440,6 +3453,7 @@ else:
         
    
         
+
 
 
 
