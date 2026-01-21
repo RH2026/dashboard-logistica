@@ -1649,63 +1649,80 @@ else:
             
             if not df_gantt.empty:
                 df_gantt['FECHA'] = pd.to_datetime(df_gantt['FECHA'])
-                # Si no hay FECHA_FIN, le damos 1 día de duración para que se vea la barra
                 df_gantt['FECHA_FIN'] = df_gantt['FECHA'] + pd.Timedelta(days=1)
-                
-                # Ordenar por fecha para que el flujo sea lógico
-                df_gantt = df_gantt.sort_values(by="FECHA", ascending=True)
+                df_gantt = df_gantt.sort_values(by="FECHA", ascending=False) # Tareas nuevas arriba
         
-                # Crear el gráfico
-                fig = px.timeline(
-                    df_gantt, 
-                    x_start="FECHA", 
-                    x_end="FECHA_FIN", 
-                    y="TAREA", 
-                    color="IMPORTANCIA",
-                    hover_name="TAREA",
-                    hover_data={"IMPORTANCIA": True, "ULTIMO ACCION": True, "FECHA": "|%d %b, %Y", "FECHA_FIN": False},
-                    color_discrete_map={
-                        "Urgente": "#EB0000", # Rojo vibrante
-                        "Alta": "#FF8C00",    # Naranja oscuro
-                        "Media": "#00CC96",   # Esmeralda
-                        "Baja": "#1f77b4"     # Azul corporativo
-                    },
-                    opacity=0.9
-                )
+                # Definir colores Élite
+                colores = {
+                    "Urgente": "#FF2B2B", 
+                    "Alta": "#FF9D00",    
+                    "Media": "#20C997",   
+                    "Baja": "#007BFF"     
+                }
         
-                # --- ESTILOS ÉLITE ---
-                fig.update_layout(
-                    plot_bgcolor="rgba(0,0,0,0)", # Fondo transparente
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    modebar_remove=["zoom", "pan", "select", "lasso2d"], # Limpiar menú superior
-                    showlegend=True,
-                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title=None),
-                    margin=dict(l=0, r=10, t=50, b=0),
-                    height=450,
-                    font=dict(family="Inter, sans-serif", size=12),
-                    xaxis=dict(
-                        showgrid=True,
-                        gridcolor="#333333", # Rejilla sutil
-                        type='date',
-                        tickformat="%d %b", # Formato: 21 Jan
-                        dtick="D1" # Una marca por día
-                    )
-                )
+                fig = go.Figure()
         
-                # Hacer las barras más delgadas y estéticas
-                fig.update_traces(marker_line_width=1, marker_line_color="white", width=0.6)
+                for i, row in df_gantt.iterrows():
+                    color = colores.get(row['IMPORTANCIA'], "#6c757d")
+                    
+                    # Añadimos cada tarea como un "Trace" para controlar el diseño individual
+                    fig.add_trace(go.Bar(
+                        x=[pd.Timedelta(days=1)], # Duración de la barra
+                        base=row['FECHA'],
+                        y=[row['TAREA']],
+                        orientation='h',
+                        marker=dict(
+                            color=color,
+                            line=dict(color="rgba(255,255,255,0.2)", width=1)
+                        ),
+                        text=f" {row['IMPORTANCIA']} | {row['ULTIMO ACCION']}",
+                        textposition='inside',
+                        insidetextanchor='start',
+                        textfont=dict(color="white", size=11),
+                        hovertemplate=(
+                            f"<b>Tarea:</b> {row['TAREA']}<br>" +
+                            f"<b>Estatus:</b> {row['ULTIMO ACCION']}<br>" +
+                            f"<b>Fecha:</b> %{{base|%d %b}}<br>" +
+                            "<extra></extra>"
+                        )
+                    ))
         
-                # Invertir eje Y para que la primera tarea esté arriba
-                fig.update_yaxes(autorange="reversed", gridcolor="#f0f0f0", showgrid=False)
-        
-                # --- AÑADIR LÍNEA DE "HOY" ---
+                # --- DISEÑO DE INTERFAZ ÉLITE ---
                 hoy = obtener_fecha_mexico()
-                fig.add_vline(x=pd.to_datetime(hoy).timestamp() * 1000, line_width=2, line_dash="dash", line_color="#FF4B4B")
-                fig.add_annotation(x=pd.to_datetime(hoy).timestamp() * 1000, y=1, text="HOY", showarrow=False, font=dict(color="#FF4B4B"))
+                
+                fig.update_layout(
+                    showlegend=False,
+                    height=200 + (len(df_gantt) * 35), # Altura dinámica según número de tareas
+                    margin=dict(l=10, r=20, t=40, b=20),
+                    xaxis=dict(
+                        type='date',
+                        side='top', # Línea de tiempo arriba para look moderno
+                        gridcolor="#E1E4E8",
+                        tickfont=dict(color="#4A5568", size=12),
+                        showline=True,
+                        linecolor="#E1E4E8"
+                    ),
+                    yaxis=dict(
+                        tickfont=dict(color="#2D3748", size=13, family="Arial Black"),
+                        gridcolor="#F7FAFC"
+                    ),
+                    plot_bgcolor="white",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    bargap=0.4 # Espacio elegante entre barras
+                )
+        
+                # Línea de "HOY" estilizada
+                fig.add_vline(
+                    x=pd.to_datetime(hoy).timestamp() * 1000, 
+                    line_width=3, 
+                    line_dash="solid", 
+                    line_color="#FF2B2B",
+                    opacity=0.5
+                )
         
                 st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
             else:
-                st.info("Aún no hay datos para generar el cronograma.")
+                st.info("No hay tareas para mostrar.")
         
         # --- 4. INICIALIZACIÓN DEL ESTADO ---
         if 'df_tareas' not in st.session_state:
@@ -3463,6 +3480,7 @@ else:
         
    
         
+
 
 
 
