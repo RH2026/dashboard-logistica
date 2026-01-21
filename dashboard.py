@@ -3222,7 +3222,7 @@ else:
                 .border-blue { border-left: 5px solid #38bdf8; }
                 .border-purple { border-left: 5px solid #a78bfa; }
                 
-                .card-label { color: #8b949e; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
+                .card-label { color: #8b949e; font-size: 0.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
                 .card-value { font-size: 1.6rem; font-weight: 800; margin: 4px 0; font-family: 'Inter', sans-serif; }
                 .card-footer { color: #FFFFFF; font-size: 0.6rem; font-weight: 600; }
             </style>
@@ -3296,9 +3296,9 @@ else:
         
             if not df_matriz.empty:
                 with st.sidebar:
-                    st.markdown("<h3 style='color:#50C878;'>🛰️ CONTROL FLETERA</h3>", unsafe_allow_html=True)
-                    fletera_f = st.selectbox("FLETERA (MANDO ÚNICO)", sorted(df_matriz['FLETERA'].unique()))
-                    mes_f = st.selectbox("MES DE ANÁLISIS", df_matriz['MES_TX'].unique())
+                    st.markdown("<h3 style='color:#50C878;'> </h3>", unsafe_allow_html=True)
+                    fletera_f = st.selectbox("Seleccionar Fletera", sorted(df_matriz['FLETERA'].unique()))
+                    mes_f = st.selectbox("Mes de analisis", df_matriz['MES_TX'].unique())
         
                 # Filtrado reactivo por Mes y Fletera
                 df_f = df_matriz[(df_matriz['MES_TX'] == mes_f) & (df_matriz['FLETERA'] == fletera_f)]
@@ -3440,6 +3440,7 @@ else:
         
    
         
+
 
 
 
