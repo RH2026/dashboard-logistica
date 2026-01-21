@@ -1728,9 +1728,7 @@ else:
                 ventana_pendientes()
         
                 
-        # --- CONTENIDO PRINCIPAL ---
-        st.header("Área de Trabajo")
-        st.write("Aquí puedes poner tus gráficas, tablas o lo que necesites.")    
+         
         
         # =========================================================
         # --- 2. LÓGICA DE DATOS FILTRADA (POR FECHA) ---
@@ -3390,6 +3388,7 @@ else:
         
    
         
+
 
 
 
