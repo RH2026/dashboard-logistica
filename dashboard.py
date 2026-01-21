@@ -1470,8 +1470,8 @@ else:
     elif st.session_state.pagina == "KPIs":
         # 1. Fuerza el scroll hacia arriba
          st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
-        # --- 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS (Sube el contenido y estiliza el menú) ---
-        st.markdown("""
+         # --- 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS (Sube el contenido y estiliza el menú) ---
+         st.markdown("""
             <style>
                 .block-container {
                     padding-top: 1rem !important;
@@ -3360,6 +3360,7 @@ else:
         
    
         
+
 
 
 
