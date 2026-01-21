@@ -2195,8 +2195,8 @@ else:
         with c1:
             st.markdown("""
                 <div class="header-wrapper">
-                    <h1>REPORTE</h1>
-                    <span>OPS</span>
+                    <h1>Operations </h1>
+                    <span>Report</span>
                     <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
                         LOGÍSTICA & RENDIMIENTO
                     </div>
@@ -3445,6 +3445,7 @@ else:
         
    
         
+
 
 
 
