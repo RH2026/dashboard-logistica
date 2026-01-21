@@ -407,38 +407,38 @@ else:
         # --- 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS (Sube el contenido y estiliza el menú) ---
         st.markdown("""
             <style>
-                /* Reducir márgenes de Streamlit al mínimo */
                 .block-container {
                     padding-top: 1rem !important;
                     padding-bottom: 0rem !important;
                     max-width: 95% !important;
                 }
-        
-                /* Estilo para el contenedor del título */
+
                 .header-wrapper {
                     display: flex;
                     align-items: baseline;
                     gap: 12px;
                     font-family: 'Inter', sans-serif;
                 }
-        
+
+                /* TITULO PRINCIPAL: Gris Oscuro */
                 .header-wrapper h1 {
                     font-size: 22px !important;
                     font-weight: 800;
                     margin: 0;
-                    color: #4b5563;
+                    color: #4b5563; /* Gris oscuro */
                     letter-spacing: -0.8px;
                 }
-        
+
+                /* INDICADOR: Blanco */
                 .header-wrapper span {
                     font-size: 14px;
                     font-weight: 300;
-                    color: #ffffff;
+                    color: #ffffff; /* Blanco */
                     text-transform: uppercase;
                     letter-spacing: 1px;
                 }
-        
-                /* TU ESTILO: Botón de menú minimalista */
+
+                /* BOTÓN DE MENÚ MINIMALISTA */
                 div[data-testid="stPopover"] > button {
                     background-color: transparent !important;
                     border: 1px solid rgba(0, 255, 162, 0.3) !important;
@@ -452,8 +452,7 @@ else:
                     border: 1px solid #00ffa2 !important;
                     box-shadow: 0 0 10px rgba(0, 255, 162, 0.2);
                 }
-        
-                /* Ajustes de los botones dentro del menú desplegable */
+
                 div[data-testid="stPopoverContent"] button {
                     text-align: left !important;
                     justify-content: flex-start !important;
@@ -462,49 +461,46 @@ else:
                     font-size: 13px !important;
                     padding: 8px 10px !important;
                 }
-        
+
                 div[data-testid="stPopoverContent"] button:hover {
                     color: #00ffa2 !important;
                     background: rgba(0, 255, 162, 0.05) !important;
                 }
             </style>
         """, unsafe_allow_html=True)
-        
-        # --- 2. POSICIONAMIENTO (Header + Navegación) ---
-        # Usamos columnas para que el botón esté a la derecha del título
+
+        # --- 2. POSICIONAMIENTO DEL ENCABEZADO ---
         c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
-        
+
         with c1:
             st.markdown("""
                 <div class="header-wrapper">
-                    <h1>TRACKING</h1>
-                    <span>Indicator</span>
+                    <h1>SHIPMENT MONITORING</h1>
+                    <span>& Delays</span>
                     <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
                         LOGÍSTICA & RENDIMIENTO
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-        
+
         with c2:
-            # Tu popover integrado
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px; letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
-                # Botones de navegación
                 paginas = {
-                    "TRACKING": ("principal", "h_aac"),
-                    "SEGUIMIENTO": ("KPIs", "h_kpi"),
-                    "REPORTE OPS": ("Reporte", "h_rep"),
-                    "HUB LOGISTIC": ("HubLogistico", "h_hub"),
-                    "OTD": ("RadarRastreo", "h_radar")
+                    "TRACKING": ("principal", "kpi_btn_aac"),
+                    "SEGUIMIENTO": ("KPIs", "kpi_btn_kpi"),
+                    "REPORTE OPS": ("Reporte", "kpi_btn_rep"),
+                    "HUB LOGISTIC": ("HubLogistico", "kpi_btn_hub"),
+                    "OTD": ("RadarRastreo", "kpi_btn_radar")
                 }
-        
+
                 for nombre, (v_state, v_key) in paginas.items():
                     if st.button(nombre, use_container_width=True, key=v_key):
                         st.session_state.pagina = v_state
                         st.rerun()
-        
-        # Línea divisoria minimalista
+
+        # Línea divisoria
         st.markdown("<hr style='margin: 8px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
         # =========================================================
         # ARRIBA - MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
@@ -3365,6 +3361,7 @@ else:
         
    
         
+
 
 
 
