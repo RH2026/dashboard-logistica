@@ -1469,9 +1469,9 @@ else:
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "KPIs":
         # 1. Fuerza el scroll hacia arriba
-         st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
-         # --- 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS ---
-         st.markdown("""
+        st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
+        # --- 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS ---
+        st.markdown("""
             <style>
                 .block-container {
                     padding-top: 1rem !important;
@@ -1573,9 +1573,7 @@ else:
             "<hr style='margin:8px 0 20px 0; border:none; "
             "border-top:1px solid rgba(148,163,184,0.1);'>",
             unsafe_allow_html=True
-    )
-       
-
+        )
         # =========================================================
         # --- 1. FILTRO DE FECHAS EN LA SIDEBAR (CONTROL MAESTRO) ---
         # =========================================================
@@ -3366,6 +3364,7 @@ else:
         
    
         
+
 
 
 
