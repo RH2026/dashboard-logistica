@@ -2324,17 +2324,7 @@ else:
             """, unsafe_allow_html=True)
 
                 
-            st.markdown("""
-            <hr style="
-                border: 0;
-                height: 2px;
-                background: #00D4FF;
-                box-shadow: 0px 0px 15px 2px rgba(0, 212, 255, 0.7);
-                margin-top: 20px;
-                margin-bottom: 20px;
-                border-radius: 10px;
-            ">
-            """, unsafe_allow_html=True)
+            
                         
             if not modo_comp:
                 # --- VISTA NORMAL 9 TARJETAS ---
@@ -3438,6 +3428,7 @@ else:
         
    
         
+
 
 
 
