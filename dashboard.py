@@ -1648,37 +1648,64 @@ else:
             df_gantt = st.session_state.df_tareas.copy()
             
             if not df_gantt.empty:
-                # Convertir fechas para Plotly
                 df_gantt['FECHA'] = pd.to_datetime(df_gantt['FECHA'])
-                # Creamos una fecha de fin (1 día después) para dar longitud a la barra
+                # Si no hay FECHA_FIN, le damos 1 día de duración para que se vea la barra
                 df_gantt['FECHA_FIN'] = df_gantt['FECHA'] + pd.Timedelta(days=1)
                 
+                # Ordenar por fecha para que el flujo sea lógico
+                df_gantt = df_gantt.sort_values(by="FECHA", ascending=True)
+        
+                # Crear el gráfico
                 fig = px.timeline(
                     df_gantt, 
                     x_start="FECHA", 
                     x_end="FECHA_FIN", 
                     y="TAREA", 
                     color="IMPORTANCIA",
-                    title="📅 Cronograma de Actividades",
+                    hover_name="TAREA",
+                    hover_data={"IMPORTANCIA": True, "ULTIMO ACCION": True, "FECHA": "|%d %b, %Y", "FECHA_FIN": False},
                     color_discrete_map={
-                        "Urgente": "#FF4B4B", 
-                        "Alta": "#FFAA00", 
-                        "Media": "#00CC96", 
-                        "Baja": "#636EFA"
+                        "Urgente": "#EB0000", # Rojo vibrante
+                        "Alta": "#FF8C00",    # Naranja oscuro
+                        "Media": "#00CC96",   # Esmeralda
+                        "Baja": "#1f77b4"     # Azul corporativo
                     },
-                    hover_data=["ULTIMO ACCION"]
+                    opacity=0.9
                 )
-                
-                fig.update_yaxes(autorange="reversed")  # Tareas nuevas arriba
+        
+                # --- ESTILOS ÉLITE ---
                 fig.update_layout(
-                    height=400,
-                    xaxis_title="Línea de Tiempo",
-                    yaxis_title=None,
-                    margin=dict(l=0, r=0, t=40, b=0)
+                    plot_bgcolor="rgba(0,0,0,0)", # Fondo transparente
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    modebar_remove=["zoom", "pan", "select", "lasso2d"], # Limpiar menú superior
+                    showlegend=True,
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title=None),
+                    margin=dict(l=0, r=10, t=50, b=0),
+                    height=450,
+                    font=dict(family="Inter, sans-serif", size=12),
+                    xaxis=dict(
+                        showgrid=True,
+                        gridcolor="#333333", # Rejilla sutil
+                        type='date',
+                        tickformat="%d %b", # Formato: 21 Jan
+                        dtick="D1" # Una marca por día
+                    )
                 )
-                st.plotly_chart(fig, use_container_width=True)
+        
+                # Hacer las barras más delgadas y estéticas
+                fig.update_traces(marker_line_width=1, marker_line_color="white", width=0.6)
+        
+                # Invertir eje Y para que la primera tarea esté arriba
+                fig.update_yaxes(autorange="reversed", gridcolor="#f0f0f0", showgrid=False)
+        
+                # --- AÑADIR LÍNEA DE "HOY" ---
+                hoy = obtener_fecha_mexico()
+                fig.add_vline(x=pd.to_datetime(hoy).timestamp() * 1000, line_width=2, line_dash="dash", line_color="#FF4B4B")
+                fig.add_annotation(x=pd.to_datetime(hoy).timestamp() * 1000, y=1, text="HOY", showarrow=False, font=dict(color="#FF4B4B"))
+        
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
             else:
-                st.info("No hay tareas para mostrar en el cronograma.")
+                st.info("Aún no hay datos para generar el cronograma.")
         
         # --- 4. INICIALIZACIÓN DEL ESTADO ---
         if 'df_tareas' not in st.session_state:
@@ -3436,6 +3463,7 @@ else:
         
    
         
+
 
 
 
