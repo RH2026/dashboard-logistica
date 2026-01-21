@@ -1651,79 +1651,82 @@ else:
             if not df_gantt.empty:
                 df_gantt['FECHA'] = pd.to_datetime(df_gantt['FECHA'])
                 df_gantt['FECHA_FIN'] = df_gantt['FECHA'] + pd.Timedelta(days=1)
-                df_gantt = df_gantt.sort_values(by="FECHA", ascending=False) # Tareas nuevas arriba
+                # Ordenamos para que las más recientes queden arriba
+                df_gantt = df_gantt.sort_values(by="FECHA", ascending=True)
         
-                # Definir colores Élite
+                # Paleta Neon-Dark
                 colores = {
-                    "Urgente": "#FF2B2B", 
-                    "Alta": "#FF9D00",    
-                    "Media": "#20C997",   
-                    "Baja": "#007BFF"     
+                    "Urgente": "#FF3131", # Neón Red
+                    "Alta": "#FF914D",    # Bright Orange
+                    "Media": "#00BF63",   # Emerald Green
+                    "Baja": "#5271FF"     # Neon Blue
                 }
         
                 fig = go.Figure()
         
                 for i, row in df_gantt.iterrows():
-                    color = colores.get(row['IMPORTANCIA'], "#6c757d")
+                    color = colores.get(row['IMPORTANCIA'], "#8C8C8C")
                     
-                    # Añadimos cada tarea como un "Trace" para controlar el diseño individual
                     fig.add_trace(go.Bar(
-                        x=[pd.Timedelta(days=1)], # Duración de la barra
+                        x=[pd.Timedelta(days=1)],
                         base=row['FECHA'],
                         y=[row['TAREA']],
                         orientation='h',
                         marker=dict(
                             color=color,
-                            line=dict(color="rgba(255,255,255,0.2)", width=1)
+                            line=dict(color=color, width=2) # Borde del mismo color para efecto neón
                         ),
-                        text=f" {row['IMPORTANCIA']} | {row['ULTIMO ACCION']}",
+                        # Texto principal dentro de la barra
+                        text=f"<b>{row['IMPORTANCIA']}</b>", 
                         textposition='inside',
                         insidetextanchor='start',
-                        textfont=dict(color="white", size=11),
+                        textfont=dict(color="white", size=12),
+                        # Tooltip Pro
                         hovertemplate=(
-                            f"<b>Tarea:</b> {row['TAREA']}<br>" +
-                            f"<b>Estatus:</b> {row['ULTIMO ACCION']}<br>" +
-                            f"<b>Fecha:</b> %{{base|%d %b}}<br>" +
+                            f"<b>{row['TAREA']}</b><br>" +
+                            f"<i>{row['ULTIMO ACCION']}</i><br>" +
+                            f"Fecha: %{{base|%d %b}}<br>" +
                             "<extra></extra>"
                         )
                     ))
         
-                # --- DISEÑO DE INTERFAZ ÉLITE ---
+                # --- DISEÑO DARK ELITE ---
                 hoy = obtener_fecha_mexico()
                 
                 fig.update_layout(
                     showlegend=False,
-                    height=200 + (len(df_gantt) * 35), # Altura dinámica según número de tareas
-                    margin=dict(l=10, r=20, t=40, b=20),
+                    height=150 + (len(df_gantt) * 40),
+                    margin=dict(l=20, r=20, t=60, b=20),
+                    # Fondo totalmente transparente para que use el de Streamlit
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
                     xaxis=dict(
                         type='date',
-                        side='top', # Línea de tiempo arriba para look moderno
-                        gridcolor="#E1E4E8",
-                        tickfont=dict(color="#4A5568", size=12),
-                        showline=True,
-                        linecolor="#E1E4E8"
+                        side='top',
+                        gridcolor="#262730", # Gris muy oscuro
+                        tickfont=dict(color="#E0E0E0", size=12),
+                        showline=False,
+                        dtick="D1" # Un tick por día
                     ),
                     yaxis=dict(
-                        tickfont=dict(color="#2D3748", size=13, family="Arial Black"),
-                        gridcolor="#F7FAFC"
+                        tickfont=dict(color="#FFFFFF", size=13, family="sans-serif"),
+                        gridcolor="#262730",
+                        fixedrange=True
                     ),
-                    plot_bgcolor="white",
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    bargap=0.4 # Espacio elegante entre barras
+                    bargap=0.5
                 )
         
-                # Línea de "HOY" estilizada
+                # Línea de "Hoy" con efecto neón
                 fig.add_vline(
                     x=pd.to_datetime(hoy).timestamp() * 1000, 
-                    line_width=3, 
-                    line_dash="solid", 
-                    line_color="#FF2B2B",
-                    opacity=0.5
+                    line_width=2, 
+                    line_dash="dash", 
+                    line_color="#FF3131"
                 )
         
                 st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
             else:
-                st.info("No hay tareas para mostrar.")
+                st.info("Registra una tarea para visualizar el cronograma.")
         
         # --- 4. INICIALIZACIÓN DEL ESTADO ---
         if 'df_tareas' not in st.session_state:
@@ -3481,6 +3484,7 @@ else:
         
    
         
+
 
 
 
