@@ -3262,8 +3262,9 @@ else:
                         st.session_state.pagina = v_state
                         st.rerun()
 
-        # Línea de Poder Azul (Resplandor)
-        st.markdown('<hr style="border:0; height:2px; background:#00D4FF; box-shadow:0px 0px 15px 3px rgba(0,212,255,0.7); margin: 10px 0 30px 0; border-radius:10px; opacity:0.8;">', unsafe_allow_html=True)
+        # Línea divisoria
+        st.markdown("<hr style='margin: 8px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
+        
         # 3. Función de Renderizado Interna (Blindada)====
         # ============================================================================================
         def render_card(label, value, footer, target_val=None, actual_val=None, inverse=False, border_base="border-blue"):
@@ -3444,6 +3445,7 @@ else:
         
    
         
+
 
 
 
