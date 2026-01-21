@@ -2826,39 +2826,7 @@ else:
             else:
                 st.session_state.db_acumulada = pd.DataFrame()
 
-        # --- ESTILOS PERSONALIZADOS ---
-        st.markdown("""
-            <style>
-            .main { background-color: #0e1117; }
-            .stButton>button { border-radius: 5px; height: 3em; transition: 0.3s; }
-            .stDataFrame { border: 1px solid #30363d; border-radius: 10px; }
-            footer {visibility: hidden;}
-            .footer-minimal {
-                position: fixed; left: 0; bottom: 0; width: 100%;
-                background-color: transparent; color: #555;
-                text-align: center; font-size: 08px; padding: 10px; letter-spacing: 1px;
-            }
-            /* Estilo del botón Popover (Menú) */
-            div[data-testid="stPopover"] > button {
-                background-color: #0d1117 !important;
-                border: 1px solid #00ffa2 !important;
-                padding: 5px 15px !important;
-                border-radius: 8px !important;
-                width: auto !important;
-            }
-            div[data-testid="stPopoverContent"] button {
-                text-align: left !important;
-                justify-content: flex-start !important;
-                border: none !important;
-                background: transparent !important;
-                font-size: 12px !important;
-            }
-            div[data-testid="stPopoverContent"] button:hover {
-                color: #00ffa2 !important;
-                background: rgba(0, 255, 162, 0.1) !important;
-            }
-            </style>
-            """, unsafe_allow_html=True)
+        
 
         # --- ENCABEZADO MINIMALISTA (ESTILO PRO) ---
         # --- 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS (Sube el contenido y estiliza el menú) ---
@@ -3429,6 +3397,7 @@ else:
         
    
         
+
 
 
 
