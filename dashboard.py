@@ -404,67 +404,99 @@ else:
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
         st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
-        # Inyectamos CSS para reducir el margen superior nativo de Streamlit y dar estilo
+        # 1. Configuración de estilo para maximizar área de trabajo
         st.markdown("""
             <style>
-            /* Reduce el espacio superior de Streamlit */
+            /* Sube todo el contenido hacia arriba */
             .block-container {
-                padding-top: 1.5rem !important;
+                padding-top: 1rem !important;
                 padding-bottom: 0rem !important;
             }
             
-            .minimal-header {
+            /* Estilo para el título y subtítulo */
+            .header-text-container {
                 display: flex;
-                justify-content: space-between;
                 align-items: baseline;
-                padding: 0 0 10px 0;
-                border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-                margin-bottom: 20px;
+                gap: 10px;
                 font-family: 'Inter', sans-serif;
             }
         
-            .brand-tech {
-                display: flex;
-                align-items: baseline;
-                gap: 8px;
-            }
-        
-            .brand-tech h1 {
-                font-size: 18px !important;
+            .main-title {
+                font-size: 20px !important;
                 font-weight: 800;
                 margin: 0;
                 color: #ffffff;
                 letter-spacing: -0.5px;
             }
         
-            .brand-tech span {
+            .sub-title {
                 font-size: 14px;
                 font-weight: 300;
                 color: #94a3b8;
                 text-transform: uppercase;
             }
         
-            .data-label {
+            .tech-tag {
                 font-family: 'JetBrains Mono', monospace;
-                font-size: 11px;
+                font-size: 10px;
                 color: #00FFAA;
-                opacity: 0.8;
+                border-left: 1px solid #334155;
+                padding-left: 10px;
+                margin-left: 5px;
+            }
+        
+            /* Estilo específico para que el botón popover sea minimalista */
+            div[data-testid="stPopover"] > button {
+                border: 1px solid rgba(148, 163, 184, 0.2) !important;
+                background-color: transparent !important;
+                color: #00FFAA !important;
+                padding: 0px 10px !important;
+                height: 32px !important;
+                width: 50px !important;
             }
             </style>
-        
-            <div class="minimal-header">
-                <div class="brand-tech">
-                    <h1>TRACKING</h1>
-                    <span>Indicator</span>
-                    <div class="data-label" style="margin-left: 15px; border-left: 1px solid #334155; padding-left: 15px;">
-                        LOGÍSTICA & RENDIMIENTO
-                    </div>
-                </div>
-                <div class="data-label">
-                    V1.0 • SYSTEM_ACTIVE
-                </div>
-            </div>
             """, unsafe_allow_html=True)
+        
+        # 2. Estructura de la Cabecera (Header)
+        # Creamos dos columnas: una ancha para el título y una pequeña para el botón
+        col1, col2 = st.columns([0.85, 0.15], vertical_alignment="center")
+        
+        with col1:
+            st.markdown("""
+                <div class="header-text-container">
+                    <h1 class="main-title">TRACKING</h1>
+                    <span class="sub-title">Indicator</span>
+                    <span class="tech-tag">LOGÍSTICA & RENDIMIENTO</span>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            # Tu botón popover integrado en la misma línea
+            with st.popover("☰", use_container_width=True):
+                st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700; margin-bottom:10px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                
+                if st.button("TRACKING", use_container_width=True, key="h_aac"):
+                    st.session_state.pagina = "principal"
+                    st.rerun()
+                    
+                if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
+                    st.session_state.pagina = "KPIs"
+                    st.rerun()
+                    
+                if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
+                    st.session_state.pagina = "Reporte"
+                    st.rerun()
+        
+                if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
+                    st.session_state.pagina = "HubLogistico"
+                    st.rerun() 
+        
+                if st.button("OTD", use_container_width=True, key="h_radar"):
+                    st.session_state.pagina = "RadarRastreo"
+                    st.rerun()
+        
+        # Línea divisoria sutil para cerrar el encabezado
+        st.markdown("<hr style='margin: 10px 0 25px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
         # =========================================================
         #MENÚ DE NAVEGACIÓN FLOTANTE (ESTILO HAMBURGUESA)
         # =========================================================
@@ -3357,6 +3389,7 @@ else:
         
    
         
+
 
 
 
