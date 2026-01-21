@@ -1502,7 +1502,7 @@ else:
                 }
         
                 .main-brand {
-                    color: #4b5563; /* Gris para TRACKING */
+                    color: ##4b5563; /* Gris para TRACKING */
                     font-size: 14px;
                     font-weight: 500;
                     letter-spacing: 1px;
@@ -1564,8 +1564,8 @@ else:
             # Replicamos el texto de la imagen: TRACKING  INDICATOR | LOGÍSTICA...
             st.markdown("""
                 <div class="brand-text">
-                    <span class="main-brand">TRACKING</span>
-                    <span class="secondary-brand">INDICATOR</span>
+                    <span class="main-brand">Shipment Monitoring</span>
+                    <span class="secondary-brand">& Delays</span>
                     <span class="divider">|</span>
                     <span class="tagline">LOGÍSTICA & RENDIMIENTO</span>
                 </div>
@@ -3388,6 +3388,7 @@ else:
         
    
         
+
 
 
 
