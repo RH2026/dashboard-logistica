@@ -1609,7 +1609,7 @@ else:
             f_inicio_default = df["FECHA DE ENVÍO"].min().date()
             f_fin_default = df["FECHA DE ENVÍO"].max().date()
             
-            
+            st.divider()
             
             # El filtro de calendario
             rango_fechas = st.date_input(
@@ -1721,7 +1721,7 @@ else:
                         st.warning("Escribe una tarea.")
         
         # --- 6. INTERFAZ EN LA BARRA LATERAL (SIDEBAR) ---
-        st.divider()
+        
         with st.sidebar:
             if st.button("Pendientes", use_container_width=True):
                 ventana_pendientes()
@@ -3387,6 +3387,7 @@ else:
         
    
         
+
 
 
 
