@@ -3385,77 +3385,11 @@ else:
             st.error(f"Error crítico en el motor de datos: {e}")
       
         # --- 5. RADAR DE DESTINOS (MOSAICO DE GRISES CON GLOW LATERAL) ---
-        st.markdown("<h4 class='premium-header'>COBERTURA: MOSAICO DE DESTINOS</h4>", unsafe_allow_html=True)
         
-        # Procesamiento y limpieza de Ciudades
-        ciudades_raw = df_f['DESTINO'].unique()
-        ciudades_limpias = [str(c).split(',')[0].split('-')[0].strip().upper() for c in ciudades_raw]
-        ciudades_final = sorted(list(set(ciudades_limpias)))
-        
-        # CSS para el efecto mosaico con la barra de luz lateral
-        st.markdown("""
-            <style>
-                .mosaico-container {
-                    background-color: #0d1117;
-                    border: 1px solid #30363d;
-                    border-radius: 12px;
-                    padding: 30px 30px 30px 40px; /* Ajuste de padding para el glow */
-                    text-align: justify;
-                    line-height: 1.2;
-                    word-break: break-all;
-                    position: relative;
-                    overflow: hidden;
-                }
-                
-                /* El "Glow" Lateral Esmeralda para el Mosaico */
-                .mosaico-glow {
-                    position: absolute;
-                    left: 0;
-                    top: 10%;
-                    height: 80%;
-                    width: 5px;
-                    background-color: #00ffa2;
-                    box-shadow: 0px 0px 15px #00ffa2;
-                    border-radius: 0 4px 4px 0;
-                }
-        
-                .mosaico-tag {
-                    display: inline;
-                    font-family: 'Inter', sans-serif;
-                    font-weight: 800;
-                    font-size: 26px;
-                    letter-spacing: -1.5px;
-                    transition: all 0.3s ease;
-                    cursor: crosshair;
-                }
-                
-                .mosaico-tag:hover {
-                    color: #00FFAA !important;
-                    text-shadow: 0px 0px 8px rgba(0, 255, 170, 0.5);
-                }
-            </style>
-        """, unsafe_allow_html=True)
-        
-        # Definición de la escala de grises tácticos
-        grises_elite = ["#30363d", "#484f58", "#6e7681", "#8b949e", "#21262d"]
-        
-        # Construcción del Mosaico con su barra de luz
-        html_mosaico = f"""
-        <div class='mosaico-container'>
-            <div class='mosaico-glow'></div>
-        """
-        
-        for i, ciudad in enumerate(ciudades_final):
-            color_gris = grises_elite[i % len(grises_elite)]
-            ciudad_pegada = ciudad.replace(" ", "")
-            html_mosaico += f"<span class='mosaico-tag' style='color: {color_gris};'>{ciudad_pegada}</span>"
-        
-        html_mosaico += "</div>"
-        
-        st.markdown(html_mosaico, unsafe_allow_html=True)
         
    
         
+
 
 
 
