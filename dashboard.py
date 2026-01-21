@@ -3159,27 +3159,61 @@ else:
     elif st.session_state.pagina == "RadarRastreo":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
-        # 1. Título y Estilos CSS (Aquí estaba el error, ya está blindado)
+        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
         st.markdown("""
             <style>
-                /* Título y Contenedores */
-                .header-container { text-align: center; padding: 10px 0px; }
-                .main-title { color: white; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 42px; margin-bottom: 5px; letter-spacing: -1px; }
+                .block-container {
+                    padding-top: 1rem !important;
+                    padding-bottom: 0rem !important;
+                    max-width: 95% !important;
+                }
                 
-                /* Botón Popover Navegación */
-                div[data-testid="stPopover"] > button {
-                    background-color: #0d1117 !important;
-                    border: 1px solid #00ffa2 !important;
-                    border-radius: 8px !important;
+                /* Estilo del Header Minimalista */
+                .header-wrapper {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 12px;
+                    font-family: 'Inter', sans-serif;
                 }
 
-                /* --- EL PARCHE ESMERALDA (CORREGIDO) --- */
+                .header-wrapper h1 {
+                    font-size: 22px !important;
+                    font-weight: 800;
+                    margin: 0;
+                    color: #4b5563; /* Gris oscuro */
+                    letter-spacing: -0.8px;
+                }
+
+                .header-wrapper span {
+                    font-size: 14px;
+                    font-weight: 300;
+                    color: #ffffff; /* Blanco */
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
+
+                /* Botón Popover Navegación */
+                div[data-testid="stPopover"] > button {
+                    background-color: transparent !important;
+                    border: 1px solid rgba(0, 255, 162, 0.3) !important;
+                    padding: 2px 10px !important;
+                    border-radius: 6px !important;
+                    height: 32px !important;
+                    transition: all 0.3s ease;
+                }
+                
+                div[data-testid="stPopover"] > button:hover {
+                    border: 1px solid #00ffa2 !important;
+                    box-shadow: 0 0 10px rgba(0, 255, 162, 0.2);
+                }
+
+                /* Parche Esmeralda para Selectbox */
                 div[data-testid="stSelectbox"] div[data-baseweb="select"] {
                     border: 1px solid #50C878 !important;
                     border-radius: 8px;
                 }
 
-                /* Tarjetas de Reporte */
+                /* Estilo de Tarjetas de Reporte */
                 .card-container { 
                     background-color: #0d1117; 
                     border-radius: 10px; 
@@ -3197,26 +3231,39 @@ else:
                 .card-value { font-size: 1.6rem; font-weight: 800; margin: 4px 0; font-family: 'Inter', sans-serif; }
                 .card-footer { color: #FFFFFF; font-size: 0.6rem; font-weight: 600; }
             </style>
-            
-            <div class='header-container'>
-                <h1 class='main-title'>REPORTE MENSUAL<span style='color: #00FFAA;'>OPS</span></h1>
-                <p style='color: #94a3b8; font-size: 16px; font-weight: 400;'>Análisis de Eficiencia Logística y Rentabilidad</p>
-            </div>
         """, unsafe_allow_html=True)
 
-        # 2. Menú de Navegación
-        c1, c2 = st.columns([0.85, 0.15])
+        # --- 2. ENCABEZADO MINIMALISTA Y NAVEGACIÓN ---
+        c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
+
+        with c1:
+            st.markdown("""
+                <div class="header-wrapper">
+                    <h1>REPORTE MENSUAL</h1>
+                    <span>OPS</span>
+                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
+                        ANÁLISIS DE EFICIENCIA & RENTABILIDAD
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
         with c2:
             with st.popover("☰", use_container_width=True):
-                st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                if st.button("TRACKING", use_container_width=True): st.session_state.pagina = "principal"; st.rerun()
-                if st.button("SEGUIMIENTO", use_container_width=True): st.session_state.pagina = "KPIs"; st.rerun()
-                if st.button("REPORTE OPS", use_container_width=True): st.session_state.pagina = "Reporte"; st.rerun()
-                if st.button("HUB LOGISTIC", use_container_width=True): st.session_state.pagina = "HubLogistico"; st.rerun()
-                if st.button("OTD", use_container_width=True): st.session_state.pagina = "RadarRastreo"; st.rerun()
-        
-        st.markdown('<hr style="border:0; height:2px; background:#00D4FF; box-shadow:0px 0px 15px 3px rgba(0,212,255,0.7); margin-bottom:30px; border-radius:10px; opacity:0.8;">', unsafe_allow_html=True)
+                st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px; letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                paginas = {
+                    "TRACKING": ("principal", "radar_btn_aac"),
+                    "SEGUIMIENTO": ("KPIs", "radar_btn_kpi"),
+                    "REPORTE OPS": ("Reporte", "radar_btn_rep"),
+                    "HUB LOGISTIC": ("HubLogistico", "radar_btn_hub"),
+                    "OTD": ("RadarRastreo", "radar_btn_radar")
+                }
+                for nombre, (v_state, v_key) in paginas.items():
+                    if st.button(nombre, use_container_width=True, key=v_key):
+                        st.session_state.pagina = v_state
+                        st.rerun()
 
+        # Línea de Poder Azul (Resplandor)
+        st.markdown('<hr style="border:0; height:2px; background:#00D4FF; box-shadow:0px 0px 15px 3px rgba(0,212,255,0.7); margin: 10px 0 30px 0; border-radius:10px; opacity:0.8;">', unsafe_allow_html=True)
         # 3. Función de Renderizado Interna (Blindada)====
         # ============================================================================================
         def render_card(label, value, footer, target_val=None, actual_val=None, inverse=False, border_base="border-blue"):
