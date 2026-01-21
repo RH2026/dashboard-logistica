@@ -1474,106 +1474,123 @@ else:
     elif st.session_state.pagina == "KPIs":
         # 1. Fuerza el scroll hacia arriba
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)                
-        # --- 1. CSS PARA MINIMIZAR ESPACIO Y ESTILIZAR ---
+        # --- 1. ESTILO CSS PARA REPLICAR LA IMAGEN ---
         st.markdown("""
             <style>
-                /* Sube el contenido al límite superior */
+                /* Eliminamos el espacio superior de Streamlit */
                 .block-container {
-                    padding-top: 1rem !important;
+                    padding-top: 1.5rem !important;
                     padding-bottom: 0rem !important;
                 }
         
-                /* Contenedor Flex para Título + Subtítulo */
-                .header-tech {
+                /* Contenedor principal alineado a la izquierda */
+                .header-container {
                     display: flex;
-                    align-items: baseline;
-                    gap: 12px;
-                    font-family: 'Inter', sans-serif;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 10px 0;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Línea divisoria muy tenue */
+                    margin-bottom: 20px;
                 }
         
-                .header-tech h1 {
-                    font-size: 22px !important;
-                    font-weight: 800;
-                    margin: 0;
-                    color: #ffffff;
-                    letter-spacing: -0.8px;
+                /* Estilo de texto: TRACKING INDICATOR | LOGÍSTICA... */
+                .brand-text {
+                    font-family: 'Inter', -apple-system, sans-serif;
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                }
+        
+                .main-brand {
+                    color: #4b5563; /* Gris para TRACKING */
+                    font-size: 14px;
+                    font-weight: 500;
+                    letter-spacing: 1px;
                     text-transform: uppercase;
                 }
         
-                /* El "& SEGUIMIENTO" con estilo minimalista */
-                .header-tech h1 span {
-                    font-weight: 300;
-                    color: #94a3b8;
-                }
-        
-                /* Etiqueta técnica lateral */
-                .label-tech {
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 10px;
-                    color: #00FFAA;
-                    border-left: 1px solid #334155;
-                    padding-left: 12px;
-                    margin-left: 5px;
+                .secondary-brand {
+                    color: #e5e7eb; /* Blanco/Gris claro para INDICATOR */
+                    font-size: 14px;
+                    font-weight: 600;
                     letter-spacing: 1px;
-                    opacity: 0.8;
+                    text-transform: uppercase;
                 }
         
-                /* TU ESTILO: Botón de menú minimalista (Igual al anterior) */
+                .divider {
+                    color: #374151;
+                    font-weight: 200;
+                    font-size: 18px;
+                }
+        
+                .tagline {
+                    font-family: 'JetBrains Mono', monospace; /* Fuente de datos */
+                    color: #00ffa2; /* El verde neón */
+                    font-size: 11px;
+                    font-weight: 400;
+                    letter-spacing: 0.5px;
+                    text-transform: uppercase;
+                }
+        
+                /* TU ESTILO: Botón de menú minimalista (Cuadrado y negro) */
                 div[data-testid="stPopover"] > button {
-                    background-color: transparent !important;
-                    border: 1px solid rgba(0, 255, 170, 0.3) !important;
-                    padding: 2px 10px !important;
+                    background-color: #0d1117 !important;
+                    border: 1px solid #1f2937 !important;
+                    padding: 0px 12px !important;
                     border-radius: 6px !important;
                     height: 32px !important;
+                    color: white !important;
                 }
                 
                 div[data-testid="stPopover"] > button:hover {
-                    border: 1px solid #00FFAA !important;
-                    background-color: rgba(0, 255, 170, 0.05) !important;
+                    border-color: #00ffa2 !important;
                 }
         
+                /* Estilo de los botones dentro del popover */
                 div[data-testid="stPopoverContent"] button {
                     text-align: left !important;
                     justify-content: flex-start !important;
                     border: none !important;
+                    background: transparent !important;
                     font-size: 13px !important;
                 }
             </style>
         """, unsafe_allow_html=True)
         
-        # --- 2. ESTRUCTURA (Header + Menú) ---
-        c1, c2 = st.columns([0.85, 0.15], vertical_alignment="bottom")
+        # --- 2. ESTRUCTURA (Layout) ---
+        col_t, col_m = st.columns([0.88, 0.12], vertical_alignment="center")
         
-        with c1:
+        with col_t:
+            # Replicamos el texto de la imagen: TRACKING  INDICATOR | LOGÍSTICA...
             st.markdown("""
-                <div class="header-tech">
-                    <h1>RASTREO <span>& SEGUIMIENTO</span></h1>
-                    <div class="label-tech">
-                        LOGÍSTICA & RENDIMIENTO
-                    </div>
+                <div class="brand-text">
+                    <span class="main-brand">TRACKING</span>
+                    <span class="secondary-brand">INDICATOR</span>
+                    <span class="divider">|</span>
+                    <span class="tagline">LOGÍSTICA & RENDIMIENTO</span>
                 </div>
             """, unsafe_allow_html=True)
         
-        with c2:
+        with col_m:
+            # Menú de navegación integrado a la derecha
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
-                # Botones de navegación
-                if st.button("TRACKING", use_container_width=True, key="nav_1"):
+                if st.button("TRACKING", use_container_width=True, key="h_aac"):
                     st.session_state.pagina = "principal"
                     st.rerun()
-                if st.button("SEGUIMIENTO", use_container_width=True, key="nav_2"):
+                    
+                if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
                     st.session_state.pagina = "KPIs"
                     st.rerun()
-                if st.button("REPORTE OPS", use_container_width=True, key="nav_3"):
+                    
+                if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
                     st.session_state.pagina = "Reporte"
                     st.rerun()
-                if st.button("HUB LOGISTIC", use_container_width=True, key="nav_4"):
+        
+                if st.button("HUB LOGISTIC", use_container_width=True, key="h_hub"):
                     st.session_state.pagina = "HubLogistico"
                     st.rerun()
-        
-        # Línea divisoria muy fina
-        st.markdown("<hr style='margin: 8px 0 25px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
         
               
                       
@@ -3382,6 +3399,7 @@ else:
         
    
         
+
 
 
 
