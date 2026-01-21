@@ -3288,7 +3288,6 @@ else:
             df_matriz = pd.read_csv("Matriz_Excel_Dashboard.csv", encoding="utf-8")
             df_matriz.columns = [str(c).strip().upper() for c in df_matriz.columns]
             
-            # Conversión de fechas con protocolo de seguridad
             cols_f = ['FECHA DE ENVÍO', 'PROMESA DE ENTREGA', 'FECHA DE ENTREGA REAL']
             for col in cols_f:
                 df_matriz[col] = pd.to_datetime(df_matriz[col], dayfirst=True, errors='coerce')
@@ -3302,12 +3301,12 @@ else:
                     fletera_f = st.selectbox("Seleccionar Fletera", sorted(df_matriz['FLETERA'].unique()))
                     mes_f = st.selectbox("Mes de analisis", df_matriz['MES_TX'].unique())
         
-                # Filtrado reactivo por Mes y Fletera
+                # Filtrado reactivo
                 df_f = df_matriz[(df_matriz['MES_TX'] == mes_f) & (df_matriz['FLETERA'] == fletera_f)]
                 df_mes_global = df_matriz[df_matriz['MES_TX'] == mes_f]
         
                 if not df_f.empty:
-                    # --- CÁLCULOS DE PRECISIÓN QUIRÚRGICA ---
+                    # --- CÁLCULOS ---
                     total_enviados = len(df_f)
                     pedidos_mes_global = len(df_mes_global)
                     participacion = (total_enviados / pedidos_mes_global * 100) if pedidos_mes_global > 0 else 0
@@ -3326,81 +3325,64 @@ else:
                     destinos = df_f.groupby('DESTINO')['COSTO DE LA GUÍA'].sum()
                     g_total = df_f['COSTO DE LA GUÍA'].sum()
         
-                    # --- INYECCIÓN DE ESTILOS DE ANIMACIÓN ---
-                    st.markdown("""
-                        <style>
-                            @keyframes slideUpFade {
-                                from { opacity: 0; transform: translateY(30px); }
-                                to { opacity: 1; transform: translateY(0); }
-                            }
-                            .animated-card { 
-                                animation: slideUpFade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
-                            }
-                        </style>
-                    """, unsafe_allow_html=True)
-        
-                    # --- CONTENEDOR CON KEY DINÁMICA (ACTIVA LA ANIMACIÓN AL CAMBIAR FLETERA) ---
-                    # --- CONTENEDOR CON KEY DINÁMICA ---
+                    # --- INICIO DE INTERFAZ DENTRO DEL CONTENEDOR ---
                     with st.container(key=f"kpi_sector_{fletera_f}_{mes_f}"):
+                        # 1. ESTILOS UNIFICADOS (Fuentes y Animaciones)
+                        st.markdown("""
+                            <style>
+                                .premium-header { color: #94a3b8; font-size: 16px !important; font-weight: 700; letter-spacing: 1.2px; margin: 30px 0 15px 0; text-transform: uppercase; }
+                                .card-value { font-size: 28px !important; }
+                                .card-label { font-size: 11px !important; }
+                                .mosaico-container { background-color: #0d1117; border: 1px solid #30363d; border-radius: 12px; padding: 30px 30px 30px 40px; text-align: justify; position: relative; overflow: hidden; }
+                                .mosaico-glow { position: absolute; left: 0; top: 10%; height: 80%; width: 5px; background-color: #00ffa2; box-shadow: 0px 0px 15px #00ffa2; border-radius: 0 4px 4px 0; }
+                                .mosaico-tag { display: inline; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 26px; letter-spacing: -1.5px; transition: all 0.3s ease; cursor: crosshair; }
+                                .mosaico-tag:hover { color: #00FFAA !important; text-shadow: 0px 0px 8px rgba(0, 255, 170, 0.5); }
+                            </style>
+                        """, unsafe_allow_html=True)
+
+                        # FILA 1: NEGOCIO
+                        st.markdown("<h4 class='premium-header'>NEGOCIO Y PARTICIPACIÓN</h4>", unsafe_allow_html=True)
+                        n1, n2, n3 = st.columns(3)
+                        with n1: render_card("COSTO TOTAL INVERSIÓN", f"${g_total:,.0f}", f"Promedio: ${costo_por_caja_prom:,.2f}")
+                        with n2: render_card("% PARTICIPACIÓN", f"{participacion:.1f}%", "Cuota de Mercado", border_base="border-purple")
+                        with n3: render_card("% EFICIENCIA", f"{eficiencia_val:.1f}%", "Entregas Reales", 95, eficiencia_val, True)
+
+                        # FILA 2: CUMPLIMIENTO
+                        st.markdown("<h4 class='premium-header'>CUMPLIMIENTO Y SERVICIO</h4>", unsafe_allow_html=True)
+                        c1, c2, c3 = st.columns(3)
+                        with c1: render_card("OTD (PUNTUALIDAD)", f"{eficiencia_val:.1f}%", "Cumplimiento", 95, eficiencia_val, True)
+                        with c2: render_card("CON RETRASO", f"{num_retrasos}", "Pedidos tarde", 0, num_retrasos)
+                        with c3: render_card("RETRASO PROM.", f"{dias_retraso_prom:.1f} DÍAS", "Severidad", 1.5, dias_retraso_prom)
+
+                        # FILA 3: OPERACIÓN
+                        st.markdown("<h4 class='premium-header'>VOLUMEN Y VELOCIDAD</h4>", unsafe_allow_html=True)
+                        o1, o2, o3 = st.columns(3)
+                        with o1: render_card("PEDIDOS ENVIADOS", f"{total_enviados}", "Total guías")
+                        with o2: render_card("LEAD TIME", f"{lead_time_prom:.1f} DÍAS", "Promedio", border_base="border-green")
+                        with o3: 
+                            top_dest = destinos.idxmax() if not destinos.empty else "N/A"
+                            render_card("DESTINO TOP", f"{top_dest}", f"Gasto: ${destinos.max() if not destinos.empty else 0:,.0f}", border_base="border-red")
+
+                        # --- 5. RADAR DE DESTINOS (INTEGRADO CORRECTAMENTE) ---
+                        st.markdown("<h4 class='premium-header'>COBERTURA: MOSAICO DE DESTINOS</h4>", unsafe_allow_html=True)
                         
-                        try:
-                            if not df_f.empty:
-                                # 1. CSS PARA CONTROLAR FUENTES
-                                st.markdown("""
-                                    <style>
-                                        .premium-header {
-                                            color: #94a3b8;
-                                            font-size: 16px !important; 
-                                            font-weight: 700;
-                                            letter-spacing: 1.2px;
-                                            margin-top: 30px;
-                                            margin-bottom: 15px;
-                                            text-transform: uppercase;
-                                        }
-                                        .card-value { font-size: 28px !important; }
-                                        .card-label { font-size: 11px !important; }
-                                    </style>
-                                """, unsafe_allow_html=True)
-                
-                                # --- FILA 1: NEGOCIO ---
-                                st.markdown("<h4 class='premium-header'>NEGOCIO Y PARTICIPACIÓN</h4>", unsafe_allow_html=True)
-                                n1, n2, n3 = st.columns(3)
-                                with n1: render_card("COSTO TOTAL INVERSIÓN", f"${g_total:,.0f}", f"Promedio: ${costo_por_caja_prom:,.2f}")
-                                with n2: render_card("% PARTICIPACIÓN", f"{participacion:.1f}%", "Cuota de Mercado", border_base="border-purple")
-                                with n3: render_card("% EFICIENCIA", f"{eficiencia_val:.1f}%", "Basado en Entregas", 95, eficiencia_val, True)
-                
-                                # --- FILA 2: CUMPLIMIENTO ---
-                                st.markdown("<h4 class='premium-header'>CUMPLIMIENTO Y SERVICIO</h4>", unsafe_allow_html=True)
-                                c1, c2, c3 = st.columns(3)
-                                with c1: render_card("OTD (PUNTUALIDAD)", f"{eficiencia_val:.1f}%", "Promesa", 95, eficiencia_val, True)
-                                with c2: render_card("CON RETRASO", f"{num_retrasos}", "Pedidos tarde", 0, num_retrasos)
-                                with c3: render_card("RETRASO PROM.", f"{dias_retraso_prom:.1f} DÍAS", "Desvío", 1.5, dias_retraso_prom)
-                
-                                # --- FILA 3: OPERACIÓN ---
-                                st.markdown("<h4 class='premium-header'>VOLUMEN Y VELOCIDAD</h4>", unsafe_allow_html=True)
-                                o1, o2, o3 = st.columns(3)
-                                with o1: render_card("PEDIDOS ENVIADOS", f"{total_enviados}", "Guías generadas")
-                                with o2: render_card("LEAD TIME", f"{lead_time_prom:.1f} DÍAS", "Envío-Entrega", border_base="border-green")
-                                with o3: 
-                                    top_dest = destinos.idxmax() if not destinos.empty else "N/A"
-                                    render_card("DESTINO TOP", f"{top_dest}", f"Gasto: ${destinos.max() if not destinos.empty else 0:,.0f}", border_base="border-red")
-                
-                                # --- FILA 4: RADAR DE DESTINOS (INTEGRADO AQUÍ ADENTRO) ---
-                                st.markdown("<h4 class='premium-header'>COBERTURA: MOSAICO DE DESTINOS</h4>", unsafe_allow_html=True)
-                                
-                                # Procesamiento de ciudades (Movemos la lógica aquí adentro para que sea segura)
-                                ciudades_raw = df_f['DESTINO'].unique()
-                                ciudades_limpias = [str(c).split(',')[0].split('-')[0].strip().upper() for c in ciudades_raw]
-                                ciudades_final = sorted(list(set(ciudades_limpias)))
-                                
-                                # AQUÍ PUEDES PONER TU BUCLE DE CIUDADES/MOSAICO...
-                                st.write(f"Ciudades cubiertas: {len(ciudades_final)}")
-            
-                            else:
-                                st.info(f"Sin registros para la fletera seleccionada.")
-                
-                        except Exception as e:
-                            st.error(f"Error crítico en el renderizado de KPIs: {e}")
+                        ciudades_raw = df_f['DESTINO'].unique()
+                        ciudades_final = sorted(list(set([str(c).split(',')[0].split('-')[0].strip().upper() for c in ciudades_raw])))
+                        
+                        grises_elite = ["#30363d", "#484f58", "#6e7681", "#8b949e", "#21262d"]
+                        html_mosaico = "<div class='mosaico-container'><div class='mosaico-glow'></div>"
+                        for i, ciudad in enumerate(ciudades_final):
+                            color_gris = grises_elite[i % len(grises_elite)]
+                            html_mosaico += f"<span class='mosaico-tag' style='color: {color_gris};'>{ciudad.replace(' ', '')}</span> "
+                        html_mosaico += "</div>"
+                        
+                        st.markdown(html_mosaico, unsafe_allow_html=True)
+
+                else:
+                    st.info(f"Sin registros para {fletera_f} en {mes_f}.")
+        
+        except Exception as e:
+            st.error(f"Error crítico en el motor de datos: {e}")
       
         # --- 5. RADAR DE DESTINOS (MOSAICO DE GRISES CON GLOW LATERAL) ---
         st.markdown("<h4 class='premium-header'>COBERTURA: MOSAICO DE DESTINOS</h4>", unsafe_allow_html=True)
@@ -3474,6 +3456,7 @@ else:
         
    
         
+
 
 
 
