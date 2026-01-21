@@ -3231,7 +3231,7 @@ else:
         st.markdown("""
         <style>
         .premium-header {
-            font-size: 0.75rem;      /* 👈 MÁS PEQUEÑO */
+            font-size: 0.5rem;      /* 👈 MÁS PEQUEÑO */
             font-weight: 600;
             letter-spacing: 0.6px;
             text-transform: uppercase;
@@ -3453,6 +3453,7 @@ else:
         
    
         
+
 
 
 
