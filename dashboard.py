@@ -2870,52 +2870,104 @@ else:
             """, unsafe_allow_html=True)
 
         # --- ENCABEZADO MINIMALISTA (ESTILO PRO) ---
+        # --- 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS (Sube el contenido y estiliza el menú) ---
         st.markdown("""
-            <div style='text-align:center; font-family:"Inter",sans-serif; padding:5px 0;'>                
-                <h1 style='color:white; font-weight:800; font-size:42px; margin:0; letter-spacing:-1.5px; line-height:1;'>
-                    ASIGNACIÓN DE <span style='color:#00FFAA;'>PAQUETERIAS</span>
-                </h1>                
-                <p style='color:#94a3b8; font-size:12px; margin:10px 0 5px 0; font-weight:400;'>
-                    Logistics Intelligence Hub
-                </p>
-            </div>
-        """, unsafe_allow_html=True)                    
+            <style>
+                .block-container {
+                    padding-top: 1rem !important;
+                    padding-bottom: 0rem !important;
+                    max-width: 95% !important;
+                }
 
-        # =========================================================
-        # MENÚ DE NAVEGACIÓN Y LÍNEA DE PODER
-        # =========================================================
-        c1, c2 = st.columns([0.85, 0.15]) 
-        
+                .header-wrapper {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 12px;
+                    font-family: 'Inter', sans-serif;
+                }
+
+                /* TITULO PRINCIPAL: Gris Oscuro */
+                .header-wrapper h1 {
+                    font-size: 22px !important;
+                    font-weight: 800;
+                    margin: 0;
+                    color: #4b5563; /* Gris oscuro */
+                    letter-spacing: -0.8px;
+                }
+
+                /* INDICADOR: Blanco */
+                .header-wrapper span {
+                    font-size: 14px;
+                    font-weight: 300;
+                    color: #ffffff; /* Blanco */
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
+
+                /* BOTÓN DE MENÚ MINIMALISTA */
+                div[data-testid="stPopover"] > button {
+                    background-color: transparent !important;
+                    border: 1px solid rgba(0, 255, 162, 0.3) !important;
+                    padding: 2px 10px !important;
+                    border-radius: 6px !important;
+                    height: 32px !important;
+                    transition: all 0.3s ease;
+                }
+                
+                div[data-testid="stPopover"] > button:hover {
+                    border: 1px solid #00ffa2 !important;
+                    box-shadow: 0 0 10px rgba(0, 255, 162, 0.2);
+                }
+
+                div[data-testid="stPopoverContent"] button {
+                    text-align: left !important;
+                    justify-content: flex-start !important;
+                    border: none !important;
+                    background: transparent !important;
+                    font-size: 13px !important;
+                    padding: 8px 10px !important;
+                }
+
+                div[data-testid="stPopoverContent"] button:hover {
+                    color: #00ffa2 !important;
+                    background: rgba(0, 255, 162, 0.05) !important;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
+        # --- 2. POSICIONAMIENTO DEL ENCABEZADO ---
+        c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
+
+        with c1:
+            st.markdown("""
+                <div class="header-wrapper">
+                    <h1>LOGISTIC</h1>
+                    <span>HUB</span>
+                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
+                        LOGÍSTICA & RENDIMIENTO
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
         with c2:
             with st.popover("☰", use_container_width=True):
-                st.markdown("<p style='color:#94a3b8; font-size:11px; font-weight:700;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px; letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
-                if st.button("TRACKING", use_container_width=True, key="h_aac"):
-                    st.session_state.pagina = "principal"
-                    st.rerun()
-                if st.button("SEGUIMIENTO", use_container_width=True, key="h_kpi"):
-                    st.session_state.pagina = "KPIs"
-                    st.rerun()
-                if st.button("REPORTE OPS", use_container_width=True, key="h_rep"):
-                    st.session_state.pagina = "Reporte"
-                    st.rerun()
-                if st.button("HUB LOGISTICS", use_container_width=True, key="h_hub"):
-                    st.session_state.pagina = "HubLogistico"
-                    st.rerun()
-        
-        # LÍNEA AZUL CON RESPLANDOR (REEMPLAZA AL DIVIDER GRIS)
-        st.markdown("""
-            <hr style="
-                border: 0;
-                height: 2px;
-                background: #00D4FF;
-                box-shadow: 0px 0px 15px 3px rgba(0, 212, 255, 0.7);
-                margin-top: 25px;
-                margin-bottom: 25px;
-                border-radius: 10px;
-                opacity: 0.8;
-            ">
-        """, unsafe_allow_html=True)           
+                paginas = {
+                    "TRACKING": ("principal", "kpi_btn_aac"),
+                    "SEGUIMIENTO": ("KPIs", "kpi_btn_kpi"),
+                    "REPORTE OPS": ("Reporte", "kpi_btn_rep"),
+                    "HUB LOGISTIC": ("HubLogistico", "kpi_btn_hub"),
+                    "OTD": ("RadarRastreo", "kpi_btn_radar")
+                }
+
+                for nombre, (v_state, v_key) in paginas.items():
+                    if st.button(nombre, use_container_width=True, key=v_key):
+                        st.session_state.pagina = v_state
+                        st.rerun()
+
+        # Línea divisoria
+        st.markdown("<hr style='margin: 8px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)       
         
         # --- FUNCIONES TÉCNICAS (SELLADO) ---
         # --- RANGOS DE CÓDIGOS POSTALES DE LA ZMG (PERÍMETROS DE SEGURIDAD) ---
@@ -3386,6 +3438,7 @@ else:
         
    
         
+
 
 
 
