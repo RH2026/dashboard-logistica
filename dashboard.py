@@ -404,64 +404,64 @@ else:
         # TÍTULO Y ENCABEZADO
         # --------------------------------------------------
         st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
-        # Estilo Minimalista de Datos
+        # Inyectamos CSS para reducir el margen superior nativo de Streamlit y dar estilo
         st.markdown("""
             <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=JetBrains+Mono:wght@400&display=swap');
-        
-            .header-container {
+            /* Reduce el espacio superior de Streamlit */
+            .block-container {
+                padding-top: 1.5rem !important;
+                padding-bottom: 0rem !important;
+            }
+            
+            .minimal-header {
                 display: flex;
-                align-items: center;
                 justify-content: space-between;
-                padding: 10px 0 20px 0;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                margin-bottom: 30px;
+                align-items: baseline;
+                padding: 0 0 10px 0;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+                margin-bottom: 20px;
                 font-family: 'Inter', sans-serif;
             }
         
-            .title-section h1 {
-                color: #ffffff;
-                font-weight: 700;
-                font-size: 24px;
-                margin: 0;
-                letter-spacing: -0.5px;
+            .brand-tech {
                 display: flex;
-                align-items: center;
-                gap: 10px;
+                align-items: baseline;
+                gap: 8px;
             }
         
-            .title-section span {
+            .brand-tech h1 {
+                font-size: 18px !important;
+                font-weight: 800;
+                margin: 0;
+                color: #ffffff;
+                letter-spacing: -0.5px;
+            }
+        
+            .brand-tech span {
+                font-size: 14px;
                 font-weight: 300;
                 color: #94a3b8;
-            }
-        
-            .subtitle {
-                font-family: 'JetBrains Mono', monospace;
-                color: #00FFAA;
-                font-size: 12px;
                 text-transform: uppercase;
-                letter-spacing: 1px;
-                margin-top: 4px;
             }
         
-            .status-badge {
-                background: rgba(0, 255, 170, 0.1);
-                color: #00FFAA;
-                padding: 4px 12px;
-                border-radius: 20px;
+            .data-label {
+                font-family: 'JetBrains Mono', monospace;
                 font-size: 11px;
-                font-weight: 600;
-                border: 1px solid rgba(0, 255, 170, 0.2);
+                color: #00FFAA;
+                opacity: 0.8;
             }
             </style>
         
-            <div class="header-container">
-                <div class="title-section">
-                    <h1>TRACKING <span>INDICATOR</span></h1>
-                    <div class="subtitle">Logística & Rendimiento de Paqueterías</div>
+            <div class="minimal-header">
+                <div class="brand-tech">
+                    <h1>TRACKING</h1>
+                    <span>Indicator</span>
+                    <div class="data-label" style="margin-left: 15px; border-left: 1px solid #334155; padding-left: 15px;">
+                        LOGÍSTICA & RENDIMIENTO
+                    </div>
                 </div>
-                <div class="status-badge">
-                    ● LIVE DATA
+                <div class="data-label">
+                    V1.0 • SYSTEM_ACTIVE
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -3357,6 +3357,7 @@ else:
         
    
         
+
 
 
 
