@@ -1606,12 +1606,13 @@ else:
         FILE_PATH = "tareas.csv"
         CSV_URL = f"https://raw.githubusercontent.com/{REPO_NAME}/main/tareas.csv"
         
-        # --- 2. FUNCIONES DE APOYO ---
+        # --- 2. AJUSTE DE ZONA HORARIA MÉXICO ---
         def obtener_fecha_mexico():
             utc_ahora = datetime.datetime.now(datetime.timezone.utc)
-            mexico_ahora = utc_ahora - datetime.timedelta(hours=6) 
+            mexico_ahora = utc_ahora - datetime.timedelta(hours=6)
             return mexico_ahora.date()
         
+        # --- 3. FUNCIONES DE DATOS (LECTURA Y ESCRITURA) ---
         def obtener_datos_github():
             try:
                 response = requests.get(CSV_URL)
@@ -1644,99 +1645,57 @@ else:
             except Exception as e:
                 st.error(f"❌ Error al sincronizar: {e}")
         
-        # --- 3. FUNCIÓN DEL DIAGRAMA DE GANTT ---
+        # --- 4. FUNCIÓN GANTT (ESTILO ÉLITE DARK) ---
         def mostrar_gantt():
             df_gantt = st.session_state.df_tareas.copy()
-            
             if not df_gantt.empty:
                 df_gantt['FECHA'] = pd.to_datetime(df_gantt['FECHA'])
                 df_gantt['FECHA_FIN'] = df_gantt['FECHA'] + pd.Timedelta(days=1)
-                # Ordenamos para que las más recientes queden arriba
                 df_gantt = df_gantt.sort_values(by="FECHA", ascending=True)
         
-                # Paleta Neon-Dark
-                colores = {
-                    "Urgente": "#FF3131", # Neón Red
-                    "Alta": "#FF914D",    # Bright Orange
-                    "Media": "#00BF63",   # Emerald Green
-                    "Baja": "#5271FF"     # Neon Blue
-                }
-        
+                colores = {"Urgente": "#FF3131", "Alta": "#FF914D", "Media": "#00BF63", "Baja": "#5271FF"}
                 fig = go.Figure()
         
                 for i, row in df_gantt.iterrows():
                     color = colores.get(row['IMPORTANCIA'], "#8C8C8C")
-                    
                     fig.add_trace(go.Bar(
                         x=[pd.Timedelta(days=1)],
                         base=row['FECHA'],
                         y=[row['TAREA']],
                         orientation='h',
-                        marker=dict(
-                            color=color,
-                            line=dict(color=color, width=2) # Borde del mismo color para efecto neón
-                        ),
-                        # Texto principal dentro de la barra
-                        text=f"<b>{row['IMPORTANCIA']}</b>", 
+                        marker=dict(color=color, line=dict(color=color, width=2)),
+                        text=f"<b>{row['IMPORTANCIA']}</b>",
                         textposition='inside',
                         insidetextanchor='start',
                         textfont=dict(color="white", size=12),
-                        # Tooltip Pro
-                        hovertemplate=(
-                            f"<b>{row['TAREA']}</b><br>" +
-                            f"<i>{row['ULTIMO ACCION']}</i><br>" +
-                            f"Fecha: %{{base|%d %b}}<br>" +
-                            "<extra></extra>"
-                        )
+                        hovertemplate=f"<b>{row['TAREA']}</b><br><i>{row['ULTIMO ACCION']}</i><br>Fecha: %{{base|%d %b}}<extra></extra>"
                     ))
         
-                # --- DISEÑO DARK ELITE ---
-                hoy = obtener_fecha_mexico()
-                
                 fig.update_layout(
                     showlegend=False,
                     height=150 + (len(df_gantt) * 40),
-                    margin=dict(l=20, r=20, t=60, b=20),
-                    # Fondo totalmente transparente para que use el de Streamlit
                     paper_bgcolor='rgba(0,0,0,0)',
                     plot_bgcolor='rgba(0,0,0,0)',
-                    xaxis=dict(
-                        type='date',
-                        side='top',
-                        gridcolor="#262730", # Gris muy oscuro
-                        tickfont=dict(color="#E0E0E0", size=12),
-                        showline=False,
-                        dtick="D1" # Un tick por día
-                    ),
-                    yaxis=dict(
-                        tickfont=dict(color="#FFFFFF", size=13, family="sans-serif"),
-                        gridcolor="#262730",
-                        fixedrange=True
-                    ),
+                    margin=dict(l=20, r=20, t=60, b=20),
+                    xaxis=dict(type='date', side='top', gridcolor="#262730", tickfont=dict(color="#E0E0E0")),
+                    yaxis=dict(tickfont=dict(color="#FFFFFF", size=13), gridcolor="#262730", fixedrange=True),
                     bargap=0.5
                 )
-        
-                # Línea de "Hoy" con efecto neón
-                fig.add_vline(
-                    x=pd.to_datetime(hoy).timestamp() * 1000, 
-                    line_width=2, 
-                    line_dash="dash", 
-                    line_color="#FF3131"
-                )
-        
+                
+                # Línea de HOY
+                hoy = obtener_fecha_mexico()
+                fig.add_vline(x=pd.to_datetime(hoy).timestamp() * 1000, line_width=2, line_dash="dash", line_color="#FF3131")
+                
                 st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-            else:
-                st.info("Registra una tarea para visualizar el cronograma.")
         
-        # --- 4. INICIALIZACIÓN DEL ESTADO ---
+        # --- 5. INICIALIZACIÓN DEL ESTADO ---
         if 'df_tareas' not in st.session_state:
             st.session_state.df_tareas = obtener_datos_github()
         
-        # --- 5. VENTANA EMERGENTE (DIALOG) ---
+        # --- 6. VENTANA EMERGENTE (DIALOG) ---
         @st.dialog("Pendientes", width="large")
         def ventana_pendientes():
             st.write("### Bitácora de Operaciones")
-            
             df_pro = st.session_state.df_tareas.copy()
             if not df_pro.empty:
                 df_pro['FECHA'] = pd.to_datetime(df_pro['FECHA']).dt.date
@@ -1771,34 +1730,23 @@ else:
                 with c2:
                     t_nueva = st.text_input("¿Qué hay que hacer?")
                     a_nueva = st.text_input("Última acción tomada")
-                
+        
                 if st.form_submit_button("Añadir y Sincronizar", use_container_width=True):
                     if t_nueva:
-                        nueva_fila = pd.DataFrame([{
-                            'FECHA': str(f_nueva), 
-                            'IMPORTANCIA': i_nueva, 
-                            'TAREA': t_nueva.replace(",", "-"), 
-                            'ULTIMO ACCION': a_nueva.replace(",", "-")
-                        }])
+                        nueva_fila = pd.DataFrame([{'FECHA': str(f_nueva), 'IMPORTANCIA': i_nueva, 'TAREA': t_nueva.replace(",", "-"), 'ULTIMO ACCION': a_nueva.replace(",", "-")}])
                         st.session_state.df_tareas = pd.concat([st.session_state.df_tareas, nueva_fila], ignore_index=True)
                         guardar_en_github(st.session_state.df_tareas)
                         st.rerun()
                     else:
                         st.warning("Escribe una tarea.")
         
-        # --- 6. CUERPO PRINCIPAL DEL DASHBOARD ---
+        # --- 7. INTERFAZ PRINCIPAL ---
         st.title("🚀 Gestión de Logística")
-        
-        # Aquí mostramos el gráfico de Gantt
         mostrar_gantt()
         
-        # --- 7. BARRA LATERAL (SIDEBAR) ---
         with st.sidebar:
-            st.header("Menú")
-            if st.button("📝 Abrir Gestor de Pendientes", use_container_width=True):
+            if st.button("Pendientes", use_container_width=True):
                 ventana_pendientes()
-        
-                
          
         
         # =========================================================
@@ -3484,6 +3432,7 @@ else:
         
    
         
+
 
 
 
