@@ -3330,7 +3330,7 @@ else:
                         # 1. ESTILOS UNIFICADOS (Fuentes y Animaciones)
                         st.markdown("""
                             <style>
-                                .premium-header { color: #94a3b8; font-size: 16px !important; font-weight: 700; letter-spacing: 1.2px; margin: 30px 0 15px 0; text-transform: uppercase; }
+                                .premium-header { color: #94a3b8; font-size: 14px !important; font-weight: 700; letter-spacing: 1.2px; margin: 30px 0 15px 0; text-transform: uppercase; }
                                 .card-value { font-size: 28px !important; }
                                 .card-label { font-size: 11px !important; }
                                 .mosaico-container { background-color: #0d1117; border: 1px solid #30363d; border-radius: 12px; padding: 30px 30px 30px 40px; text-align: justify; position: relative; overflow: hidden; }
@@ -3389,6 +3389,7 @@ else:
         
    
         
+
 
 
 
