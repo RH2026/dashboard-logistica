@@ -3228,18 +3228,7 @@ else:
             </style>
         """, unsafe_allow_html=True)
 
-        st.markdown("""
-        <style>
-        .premium-header {
-            font-size: 0.5rem;      /* 👈 MÁS PEQUEÑO */
-            font-weight: 600;
-            letter-spacing: 0.6px;
-            text-transform: uppercase;
-            color: #e5e7eb;
-            margin-bottom: 8px;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+       
         
         # --- 2. ENCABEZADO MINIMALISTA Y NAVEGACIÓN ---
         c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
@@ -3353,33 +3342,69 @@ else:
                     # --- CONTENEDOR CON KEY DINÁMICA (ACTIVA LA ANIMACIÓN AL CAMBIAR FLETERA) ---
                     with st.container(key=f"kpi_sector_{fletera_f}_{mes_f}"):
                         
-                        # FILA 1: NEGOCIO
-                        st.markdown("<h4 class='premium-header'>NEGOCIO Y PARTICIPACIÓN</h4>", unsafe_allow_html=True)
-                        n1, n2, n3 = st.columns(3)
-                        with n1: render_card("COSTO TOTAL INVERSIÓN", f"${g_total:,.0f}", f"Promedio: ${costo_por_caja_prom:,.2f} por caja")
-                        with n2: render_card("% PARTICIPACIÓN", f"{participacion:.1f}%", f"Cuota de Mercado", border_base="border-purple")
-                        with n3: render_card("% EFICIENCIA", f"{eficiencia_val:.1f}%", "Basado en Entregas Reales", 95, eficiencia_val, True)
-        
-                        # FILA 2: CUMPLIMIENTO
-                        st.markdown("<h4 class='premium-header'>CUMPLIMIENTO Y SERVICIO</h4>", unsafe_allow_html=True)
-                        c1, c2, c3 = st.columns(3)
-                        with c1: render_card("OTD (PUNTUALIDAD)", f"{eficiencia_val:.1f}%", "Cumplimiento de Promesa", 95, eficiencia_val, True)
-                        with c2: render_card("CON RETRASO", f"{num_retrasos}", "Pedidos entregados tarde", 0, num_retrasos)
-                        with c3: render_card("RETRASO PROM.", f"{dias_retraso_prom:.1f} DÍAS", "Severidad del desvío", 1.5, dias_retraso_prom)
-        
-                        # FILA 3: OPERACIÓN
-                        st.markdown("<h4 class='premium-header'>VOLUMEN Y VELOCIDAD</h4>", unsafe_allow_html=True)
-                        o1, o2, o3 = st.columns(3)
-                        with o1: render_card("PEDIDOS ENVIADOS", f"{total_enviados}", "Total de guías generadas")
-                        with o2: render_card("LEAD TIME", f"{lead_time_prom:.1f} DÍAS", "Promedio Envío-Entrega", border_base="border-green")
-                        with o3: 
-                            top_dest = destinos.idxmax() if not destinos.empty else "N/A"
-                            render_card("DESTINO TOP", f"{top_dest}", f"Gasto: ${destinos.max() if not destinos.empty else 0:,.0f}", border_base="border-red")
+                        # --- 1. BLOQUE DE ESTILOS CSS (Ajusta los tamaños aquí) ---
+                        st.markdown("""
+                            <style>
+                                /* Tamaño del encabezado de cada fila (NEGOCIO, CUMPLIMIENTO, etc.) */
+                                .premium-header {
+                                    color: #94a3b8;
+                                    font-size: 14px !important; /* <--- AJUSTA ESTE TAMAÑO */
+                                    font-weight: 700;
+                                    letter-spacing: 1.5px;
+                                    margin: 25px 0 15px 0;
+                                    text-transform: uppercase;
+                                }
+                
+                                /* Ajustes internos de las tarjetas (Render Card) */
+                                .card-label { 
+                                    font-size: 10px !important; /* <--- TAMAÑO DE LA ETIQUETA (Título tarjeta) */
+                                    font-weight: 700;
+                                }
+                
+                                .card-value { 
+                                    font-size: 24px !important; /* <--- TAMAÑO DEL NÚMERO PRINCIPAL */
+                                    font-weight: 800;
+                                    margin: 5px 0;
+                                }
+                
+                                .card-footer { 
+                                    font-size: 10px !important; /* <--- TAMAÑO DEL TEXTO PEQUEÑO INFERIOR */
+                                    opacity: 0.8;
+                                }
+                            </style>
+                        """, unsafe_allow_html=True)
+                
+                        # --- 2. ESTRUCTURA DE FILAS ---
+                        try:
+                            if not df_f.empty:
+                                # FILA 1: NEGOCIO
+                                st.markdown("<h4 class='premium-header'>NEGOCIO Y PARTICIPACIÓN</h4>", unsafe_allow_html=True)
+                                n1, n2, n3 = st.columns(3)
+                                with n1: render_card("COSTO TOTAL INVERSIÓN", f"${g_total:,.0f}", f"Promedio: ${costo_por_caja_prom:,.2f} por caja")
+                                with n2: render_card("% PARTICIPACIÓN", f"{participacion:.1f}%", "Cuota de Mercado", border_base="border-purple")
+                                with n3: render_card("% EFICIENCIA", f"{eficiencia_val:.1f}%", "Basado en Entregas Reales", 95, eficiencia_val, True)
+                
+                                # FILA 2: CUMPLIMIENTO
+                                st.markdown("<h4 class='premium-header'>CUMPLIMIENTO Y SERVICIO</h4>", unsafe_allow_html=True)
+                                c1, c2, c3 = st.columns(3)
+                                with c1: render_card("OTD (PUNTUALIDAD)", f"{eficiencia_val:.1f}%", "Cumplimiento de Promesa", 95, eficiencia_val, True)
+                                with c2: render_card("CON RETRASO", f"{num_retrasos}", "Pedidos entregados tarde", 0, num_retrasos)
+                                with c3: render_card("RETRASO PROM.", f"{dias_retraso_prom:.1f} DÍAS", "Severidad del desvío", 1.5, dias_retraso_prom)
+                
+                                # FILA 3: OPERACIÓN
+                                st.markdown("<h4 class='premium-header'>VOLUMEN Y VELOCIDAD</h4>", unsafe_allow_html=True)
+                                o1, o2, o3 = st.columns(3)
+                                with o1: render_card("PEDIDOS ENVIADOS", f"{total_enviados}", "Total de guías generadas")
+                                with o2: render_card("LEAD TIME", f"{lead_time_prom:.1f} DÍAS", "Promedio Envío-Entrega", border_base="border-green")
+                                with o3: 
+                                    top_dest = destinos.idxmax() if not destinos.empty else "N/A"
+                                    render_card("DESTINO TOP", f"{top_dest}", f"Gasto: ${destinos.max() if not destinos.empty else 0:,.0f}", border_base="border-red")
                             
-                else:
-                    st.info(f"Sin registros para {fletera_f} en {mes_f}.")
-        except Exception as e:
-            st.error(f"Error crítico en el casco: {e}")
+                            else:
+                                st.info(f"Sin registros para la fletera seleccionada en este periodo.")
+                
+                        except Exception as e:
+                            st.error(f"Error crítico en la visualización: {e}")
       
         # --- 5. RADAR DE DESTINOS (MOSAICO DE GRISES CON GLOW LATERAL) ---
         st.markdown("<h4 class='premium-header'>COBERTURA: MOSAICO DE DESTINOS</h4>", unsafe_allow_html=True)
@@ -3453,6 +3478,7 @@ else:
         
    
         
+
 
 
 
