@@ -1808,7 +1808,7 @@ else:
         a2.markdown(f"<div class='card-alerta' style='border-left: 6px solid #f97316;'><div style='color:#9CA3AF; font-size:11px;'>2-4 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a2_val}</div></div>", unsafe_allow_html=True)
         a3.markdown(f"<div class='card-alerta' style='border-left: 6px solid #FF4B4B;'><div style='color:#9CA3AF; font-size:11px;'>+5 Días Retraso</div><div style='color:white; font-size:36px; font-weight:bold;'>{a5_val}</div></div>", unsafe_allow_html=True)
 
-        st.divider()
+        
         
         # =========================================================
         # --- 3. SECCIÓN DE ALERTAS (FILTROS DE MANDO SIMPLIFICADOS) ---
@@ -3388,6 +3388,7 @@ else:
         
    
         
+
 
 
 
