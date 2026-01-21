@@ -1489,7 +1489,7 @@ else:
                     align-items: center;
                     justify-content: space-between;
                     padding: 10px 0;
-                    border-bottom: none; /* Línea divisoria muy tenue */
+                    
                     margin-bottom: 20px;
                 }
         
@@ -1593,8 +1593,7 @@ else:
                     st.rerun()
         
               
-        # Línea divisoria minimalista
-        st.markdown("<hr style='margin: 8px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)                    
+                      
         
        
 
@@ -3388,6 +3387,7 @@ else:
         
    
         
+
 
 
 
