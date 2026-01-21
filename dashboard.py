@@ -3340,59 +3340,62 @@ else:
                     """, unsafe_allow_html=True)
         
                     # --- CONTENEDOR CON KEY DINÁMICA (ACTIVA LA ANIMACIÓN AL CAMBIAR FLETERA) ---
+                    # --- CONTENEDOR CON KEY DINÁMICA ---
                     with st.container(key=f"kpi_sector_{fletera_f}_{mes_f}"):
                         
-                        # --- ESTRUCTURA PROTEGIDA Y OPTIMIZADA ---
                         try:
                             if not df_f.empty:
-                                # 1. CSS PARA CONTROLAR FUENTES (Modifica los px a tu gusto)
+                                # 1. CSS PARA CONTROLAR FUENTES
                                 st.markdown("""
                                     <style>
                                         .premium-header {
                                             color: #94a3b8;
-                                            font-size: 16px !important;  /* Tamaño títulos de sección */
+                                            font-size: 16px !important; 
                                             font-weight: 700;
                                             letter-spacing: 1.2px;
                                             margin-top: 30px;
                                             margin-bottom: 15px;
                                             text-transform: uppercase;
                                         }
-                                        .card-value { 
-                                            font-size: 28px !important; /* Tamaño números grandes tarjetas */
-                                        }
-                                        .card-label { 
-                                            font-size: 11px !important; /* Tamaño etiquetas tarjetas */
-                                        }
+                                        .card-value { font-size: 28px !important; }
+                                        .card-label { font-size: 11px !important; }
                                     </style>
                                 """, unsafe_allow_html=True)
                 
                                 # --- FILA 1: NEGOCIO ---
                                 st.markdown("<h4 class='premium-header'>NEGOCIO Y PARTICIPACIÓN</h4>", unsafe_allow_html=True)
                                 n1, n2, n3 = st.columns(3)
-                                with n1: render_card("COSTO TOTAL INVERSIÓN", f"${g_total:,.0f}", f"Promedio: ${costo_por_caja_prom:,.2f} por caja")
+                                with n1: render_card("COSTO TOTAL INVERSIÓN", f"${g_total:,.0f}", f"Promedio: ${costo_por_caja_prom:,.2f}")
                                 with n2: render_card("% PARTICIPACIÓN", f"{participacion:.1f}%", "Cuota de Mercado", border_base="border-purple")
-                                with n3: render_card("% EFICIENCIA", f"{eficiencia_val:.1f}%", "Basado en Entregas Reales", 95, eficiencia_val, True)
+                                with n3: render_card("% EFICIENCIA", f"{eficiencia_val:.1f}%", "Basado en Entregas", 95, eficiencia_val, True)
                 
                                 # --- FILA 2: CUMPLIMIENTO ---
                                 st.markdown("<h4 class='premium-header'>CUMPLIMIENTO Y SERVICIO</h4>", unsafe_allow_html=True)
                                 c1, c2, c3 = st.columns(3)
-                                with c1: render_card("OTD (PUNTUALIDAD)", f"{eficiencia_val:.1f}%", "Cumplimiento de Promesa", 95, eficiencia_val, True)
-                                with c2: render_card("CON RETRASO", f"{num_retrasos}", "Pedidos entregados tarde", 0, num_retrasos)
-                                with c3: render_card("RETRASO PROM.", f"{dias_retraso_prom:.1f} DÍAS", "Severidad del desvío", 1.5, dias_retraso_prom)
+                                with c1: render_card("OTD (PUNTUALIDAD)", f"{eficiencia_val:.1f}%", "Promesa", 95, eficiencia_val, True)
+                                with c2: render_card("CON RETRASO", f"{num_retrasos}", "Pedidos tarde", 0, num_retrasos)
+                                with c3: render_card("RETRASO PROM.", f"{dias_retraso_prom:.1f} DÍAS", "Desvío", 1.5, dias_retraso_prom)
                 
                                 # --- FILA 3: OPERACIÓN ---
                                 st.markdown("<h4 class='premium-header'>VOLUMEN Y VELOCIDAD</h4>", unsafe_allow_html=True)
                                 o1, o2, o3 = st.columns(3)
-                                with o1: render_card("PEDIDOS ENVIADOS", f"{total_enviados}", "Total de guías generadas")
-                                with o2: render_card("LEAD TIME", f"{lead_time_prom:.1f} DÍAS", "Promedio Envío-Entrega", border_base="border-green")
+                                with o1: render_card("PEDIDOS ENVIADOS", f"{total_enviados}", "Guías generadas")
+                                with o2: render_card("LEAD TIME", f"{lead_time_prom:.1f} DÍAS", "Envío-Entrega", border_base="border-green")
                                 with o3: 
                                     top_dest = destinos.idxmax() if not destinos.empty else "N/A"
                                     render_card("DESTINO TOP", f"{top_dest}", f"Gasto: ${destinos.max() if not destinos.empty else 0:,.0f}", border_base="border-red")
                 
-                                # --- FILA 4: RADAR DE DESTINOS (Donde tenías el error) ---
+                                # --- FILA 4: RADAR DE DESTINOS (INTEGRADO AQUÍ ADENTRO) ---
                                 st.markdown("<h4 class='premium-header'>COBERTURA: MOSAICO DE DESTINOS</h4>", unsafe_allow_html=True)
-                                # Aquí iría el código de tu mosaico...
-                
+                                
+                                # Procesamiento de ciudades (Movemos la lógica aquí adentro para que sea segura)
+                                ciudades_raw = df_f['DESTINO'].unique()
+                                ciudades_limpias = [str(c).split(',')[0].split('-')[0].strip().upper() for c in ciudades_raw]
+                                ciudades_final = sorted(list(set(ciudades_limpias)))
+                                
+                                # AQUÍ PUEDES PONER TU BUCLE DE CIUDADES/MOSAICO...
+                                st.write(f"Ciudades cubiertas: {len(ciudades_final)}")
+            
                             else:
                                 st.info(f"Sin registros para la fletera seleccionada.")
                 
@@ -3471,6 +3474,7 @@ else:
         
    
         
+
 
 
 
