@@ -433,7 +433,7 @@ else:
                 .header-wrapper span {
                     font-size: 14px;
                     font-weight: 300;
-                    color: #94a3b8;
+                    color: #ffffff;
                     text-transform: uppercase;
                     letter-spacing: 1px;
                 }
@@ -3388,6 +3388,7 @@ else:
         
    
         
+
 
 
 
