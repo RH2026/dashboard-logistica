@@ -1469,105 +1469,104 @@ else:
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "KPIs":
         # 1. Fuerza el scroll hacia arriba
-        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)                
-        # --- 1. ESTILO CSS PARA ENCABEZADO Y POPOVER ---
+         st.markdown("<style>@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>", unsafe_allow_html=True)
+        # --- 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS (Sube el contenido y estiliza el menú) ---
         st.markdown("""
             <style>
-                /* Contenedor principal alineado a la izquierda */
-                .header-container {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 10px 0;
-                    margin-bottom: 20px;
+                .block-container {
+                    padding-top: 1rem !important;
+                    padding-bottom: 0rem !important;
+                    max-width: 95% !important;
                 }
-        
-                .brand-text {
-                    font-family: 'Inter', sans-serif;
+
+                .header-wrapper {
                     display: flex;
                     align-items: baseline;
                     gap: 12px;
+                    font-family: 'Inter', sans-serif;
                 }
-        
-                /* TRACKING en Gris Oscuro */
-                .main-brand {
-                    color: #4b5563 !important; 
-                    font-size: 22px;
+
+                /* TITULO PRINCIPAL: Gris Oscuro */
+                .header-wrapper h1 {
+                    font-size: 22px !important;
                     font-weight: 800;
+                    margin: 0;
+                    color: #4b5563; /* Gris oscuro */
                     letter-spacing: -0.8px;
-                    text-transform: uppercase;
                 }
-        
-                /* INDICATOR / SECUNDARIO en Blanco */
-                .secondary-brand {
-                    color: #ffffff !important;
+
+                /* INDICADOR: Blanco */
+                .header-wrapper span {
                     font-size: 14px;
                     font-weight: 300;
+                    color: #ffffff; /* Blanco */
+                    text-transform: uppercase;
                     letter-spacing: 1px;
-                    text-transform: uppercase;
                 }
-        
-                .divider {
-                    color: #374151;
-                    font-weight: 200;
-                    font-size: 18px;
-                    margin: 0 5px;
-                }
-        
-                .tagline {
-                    font-family: 'JetBrains Mono', monospace;
-                    color: #00ffa2;
-                    font-size: 11px;
-                    opacity: 0.7;
-                    text-transform: uppercase;
-                }
-        
-                /* Estilo del Botón de Menú (Hamburguesa) */
+
+                /* BOTÓN DE MENÚ MINIMALISTA */
                 div[data-testid="stPopover"] > button {
                     background-color: transparent !important;
                     border: 1px solid rgba(0, 255, 162, 0.3) !important;
+                    padding: 2px 10px !important;
                     border-radius: 6px !important;
                     height: 32px !important;
+                    transition: all 0.3s ease;
                 }
                 
                 div[data-testid="stPopover"] > button:hover {
                     border: 1px solid #00ffa2 !important;
                     box-shadow: 0 0 10px rgba(0, 255, 162, 0.2);
                 }
+
+                div[data-testid="stPopoverContent"] button {
+                    text-align: left !important;
+                    justify-content: flex-start !important;
+                    border: none !important;
+                    background: transparent !important;
+                    font-size: 13px !important;
+                    padding: 8px 10px !important;
+                }
+
+                div[data-testid="stPopoverContent"] button:hover {
+                    color: #00ffa2 !important;
+                    background: rgba(0, 255, 162, 0.05) !important;
+                }
             </style>
         """, unsafe_allow_html=True)
-        
-        # --- 2. RENDERIZADO DEL ENCABEZADO ---
-        col_t, col_m = st.columns([0.88, 0.12], vertical_alignment="center")
-        
-        with col_t:
+
+        # --- 2. POSICIONAMIENTO DEL ENCABEZADO ---
+        c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
+
+        with c1:
             st.markdown("""
-                <div class="brand-text">
-                    <span class="main-brand">Shipment Monitoring</span>
-                    <span class="secondary-brand">& Delays</span>
-                    <span class="divider">|</span>
-                    <span class="tagline">LOGÍSTICA & RENDIMIENTO</span>
+                <div class="header-wrapper">
+                    <h1>SHIPMENT MONITORING</h1>
+                    <span>& Delays</span>
+                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
+                        LOGÍSTICA & RENDIMIENTO
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
-        
-        with col_m:
+
+        with c2:
             with st.popover("☰", use_container_width=True):
-                st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px; letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
-                opciones = {
-                    "TRACKING": "principal",
-                    "SEGUIMIENTO": "KPIs",
-                    "REPORTE OPS": "Reporte",
-                    "HUB LOGISTIC": "HubLogistico",
-                    "OTD": "RadarRastreo"
+                paginas = {
+                    "TRACKING": ("principal", "kpi_btn_aac"),
+                    "SEGUIMIENTO": ("KPIs", "kpi_btn_kpi"),
+                    "REPORTE OPS": ("Reporte", "kpi_btn_rep"),
+                    "HUB LOGISTIC": ("HubLogistico", "kpi_btn_hub"),
+                    "OTD": ("RadarRastreo", "kpi_btn_radar")
                 }
-                
-                for nombre, estado in opciones.items():
-                    if st.button(nombre, use_container_width=True, key=f"btn_{estado}"):
-                        st.session_state.pagina = estado
+
+                for nombre, (v_state, v_key) in paginas.items():
+                    if st.button(nombre, use_container_width=True, key=v_key):
+                        st.session_state.pagina = v_state
                         st.rerun()
 
-        # Línea divisoria minimalista
+        # Línea divisoria
         st.markdown("<hr style='margin: 8px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
        
 
@@ -3361,6 +3360,7 @@ else:
         
    
         
+
 
 
 
