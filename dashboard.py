@@ -3205,12 +3205,7 @@ else:
                 div[data-testid="stPopover"] > button:hover {
                     border: 1px solid #00ffa2 !important;
                     box-shadow: 0 0 10px rgba(0, 255, 162, 0.2);
-                }
-
-                /* Parche Esmeralda para Selectbox */
-                div[data-testid="stSelectbox"] div[data-baseweb="select"] {
-                    border: 1px solid #50C878 !important;
-                    border-radius: 8px;
+               
                 }
 
                 /* Estilo de Tarjetas de Reporte */
@@ -3445,6 +3440,7 @@ else:
         
    
         
+
 
 
 
