@@ -1798,7 +1798,7 @@ else:
             color_ef = "#00FFAA" if eficiencia_p >= 95 else "#f97316"
             st.markdown(f"<div class='main-card-kpi' style='border-left-color: {color_ef};'><div class='kpi-label'>% de entregas</div><div class='kpi-value' style='color:{color_ef};'>{eficiencia_p:.1f}%</div></div>", unsafe_allow_html=True)
         
-        st.divider()
+       
         
         # --- DIBUJAR FILA DE ATRASOS (ACTUALIZADO CON RANGOS) ---
         st.markdown("<p style='color:#9CA3AF; font-size:13px; font-weight:bold; letter-spacing:1px; margin-bottom:20px;'>⚠️ MONITOREO DE ATRASOS (PERIODO ACTUAL)</p>", unsafe_allow_html=True)
@@ -3388,6 +3388,7 @@ else:
         
    
         
+
 
 
 
