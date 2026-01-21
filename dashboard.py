@@ -1598,19 +1598,18 @@ else:
             )
         
         
-        # AGENDA--- 1. CONFIGURACIÓN DE CRÉDENCIALES Y REPO ---
+        # --- 1. CONFIGURACIÓN DE CREDENCIALES Y REPO ---
         TOKEN = st.secrets.get("GITHUB_TOKEN", None)
         REPO_NAME = "RH2026/dashboard-logistica"
         FILE_PATH = "tareas.csv"
         CSV_URL = f"https://raw.githubusercontent.com/{REPO_NAME}/main/tareas.csv"
         
-        # --- 2. AJUSTE DE ZONA HORARIA MÉXICO ---
+        # --- 2. FUNCIONES DE APOYO ---
         def obtener_fecha_mexico():
             utc_ahora = datetime.datetime.now(datetime.timezone.utc)
             mexico_ahora = utc_ahora - datetime.timedelta(hours=6) 
             return mexico_ahora.date()
         
-        # --- 3. FUNCIONES DE DATOS (LECTURA Y ESCRITURA) ---
         def obtener_datos_github():
             try:
                 response = requests.get(CSV_URL)
@@ -1643,12 +1642,49 @@ else:
             except Exception as e:
                 st.error(f"❌ Error al sincronizar: {e}")
         
+        # --- 3. FUNCIÓN DEL DIAGRAMA DE GANTT ---
+        def mostrar_gantt():
+            df_gantt = st.session_state.df_tareas.copy()
+            
+            if not df_gantt.empty:
+                # Convertir fechas para Plotly
+                df_gantt['FECHA'] = pd.to_datetime(df_gantt['FECHA'])
+                # Creamos una fecha de fin (1 día después) para dar longitud a la barra
+                df_gantt['FECHA_FIN'] = df_gantt['FECHA'] + pd.Timedelta(days=1)
+                
+                fig = px.timeline(
+                    df_gantt, 
+                    x_start="FECHA", 
+                    x_end="FECHA_FIN", 
+                    y="TAREA", 
+                    color="IMPORTANCIA",
+                    title="📅 Cronograma de Actividades",
+                    color_discrete_map={
+                        "Urgente": "#FF4B4B", 
+                        "Alta": "#FFAA00", 
+                        "Media": "#00CC96", 
+                        "Baja": "#636EFA"
+                    },
+                    hover_data=["ULTIMO ACCION"]
+                )
+                
+                fig.update_yaxes(autorange="reversed")  # Tareas nuevas arriba
+                fig.update_layout(
+                    height=400,
+                    xaxis_title="Línea de Tiempo",
+                    yaxis_title=None,
+                    margin=dict(l=0, r=0, t=40, b=0)
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("No hay tareas para mostrar en el cronograma.")
+        
         # --- 4. INICIALIZACIÓN DEL ESTADO ---
         if 'df_tareas' not in st.session_state:
             st.session_state.df_tareas = obtener_datos_github()
         
         # --- 5. VENTANA EMERGENTE (DIALOG) ---
-        @st.dialog(" Pendientes", width="large")
+        @st.dialog("Pendientes", width="large")
         def ventana_pendientes():
             st.write("### Bitácora de Operaciones")
             
@@ -1673,6 +1709,7 @@ else:
             if st.button("Guardar cambios manuales realizados en la tabla", use_container_width=True):
                 st.session_state.df_tareas = edited_df
                 guardar_en_github(st.session_state.df_tareas)
+                st.rerun()
         
             st.divider()
         
@@ -1688,19 +1725,28 @@ else:
                 
                 if st.form_submit_button("Añadir y Sincronizar", use_container_width=True):
                     if t_nueva:
-                        t_limpia = t_nueva.replace(",", "-")
-                        a_limpia = a_nueva.replace(",", "-")
-                        nueva_fila = pd.DataFrame([{'FECHA': str(f_nueva), 'IMPORTANCIA': i_nueva, 'TAREA': t_limpia, 'ULTIMO ACCION': a_limpia}])
+                        nueva_fila = pd.DataFrame([{
+                            'FECHA': str(f_nueva), 
+                            'IMPORTANCIA': i_nueva, 
+                            'TAREA': t_nueva.replace(",", "-"), 
+                            'ULTIMO ACCION': a_nueva.replace(",", "-")
+                        }])
                         st.session_state.df_tareas = pd.concat([st.session_state.df_tareas, nueva_fila], ignore_index=True)
                         guardar_en_github(st.session_state.df_tareas)
                         st.rerun()
                     else:
                         st.warning("Escribe una tarea.")
         
-        # --- 6. INTERFAZ EN LA BARRA LATERAL (SIDEBAR) ---
+        # --- 6. CUERPO PRINCIPAL DEL DASHBOARD ---
+        st.title("🚀 Gestión de Logística")
         
+        # Aquí mostramos el gráfico de Gantt
+        mostrar_gantt()
+        
+        # --- 7. BARRA LATERAL (SIDEBAR) ---
         with st.sidebar:
-            if st.button("Pendientes", use_container_width=True):
+            st.header("Menú")
+            if st.button("📝 Abrir Gestor de Pendientes", use_container_width=True):
                 ventana_pendientes()
         
                 
@@ -3389,6 +3435,7 @@ else:
         
    
         
+
 
 
 
