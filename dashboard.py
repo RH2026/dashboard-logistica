@@ -491,13 +491,13 @@ else:
                 st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px; letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 
                 paginas = {
-                    "TRACKING": ("principal", "kpi_btn_aac"),
-                    "SEGUIMIENTO": ("KPIs", "kpi_btn_kpi"),
-                    "REPORTE OPS": ("Reporte", "kpi_btn_rep"),
-                    "HUB LOGISTIC": ("HubLogistico", "kpi_btn_hub"),
-                    "OTD": ("RadarRastreo", "kpi_btn_radar")
-                    "MCONTROL": ("MControl", "radar_btn_mcontrol") # <-- NUEVA SECCIÓN
-                }
+                "TRACKING": ("principal", "radar_btn_aac"),
+                "SEGUIMIENTO": ("KPIs", "radar_btn_kpi"),
+                "REPORTE OPS": ("Reporte", "radar_btn_rep"),
+                "HUB LOGISTIC": ("HubLogistico", "radar_btn_hub"),
+                "OTD": ("RadarRastreo", "radar_btn_radar"), # <--- ASEGÚRATE DE QUE ESTA COMA ESTÉ AQUÍ
+                "MCONTROL": ("MControl", "radar_btn_mcontrol")
+            }
 
                 for nombre, (v_state, v_key) in paginas.items():
                     if st.button(nombre, use_container_width=True, key=v_key):
@@ -3557,6 +3557,7 @@ else:
     
    
         
+
 
 
 
