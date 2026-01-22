@@ -496,6 +496,7 @@ else:
                     "REPORTE OPS": ("Reporte", "kpi_btn_rep"),
                     "HUB LOGISTIC": ("HubLogistico", "kpi_btn_hub"),
                     "OTD": ("RadarRastreo", "kpi_btn_radar")
+                    "MCONTROL": ("MControl", "radar_btn_mcontrol") # <-- NUEVA SECCIÓN
                 }
 
                 for nombre, (v_state, v_key) in paginas.items():
@@ -3556,6 +3557,7 @@ else:
     
    
         
+
 
 
 
