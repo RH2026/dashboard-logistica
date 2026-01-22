@@ -3382,64 +3382,38 @@ else:
             st.error(f"Error crítico en el motor de datos: {e}")
       
         
-        # Configuración profesional de la página
-        st.set_page_config(page_title="NEXION - Logística SAP", layout="wide")
-        
-        # Conexión con el libro de Google Drive
+        #Conexión maestra
         conn = st.connection("gsheets", type=GSheetsConnection)
         
-        def cargar_datos():
-            # 1. Jalar datos de SAP (lo que subes desde tu PC)
+        def cargar_y_unificar():
+            # Leemos la pestaña que alimenta tu PC
             df_sap = conn.read(worksheet="DATOS_SAP")
             
-            # 2. Jalar tu bitácora de control (lo que editas en la web)
+            # Leemos tu bitácora de la web (si no existe, la creamos vacía)
             try:
                 df_control = conn.read(worksheet="CONTROL_NEXION")
             except:
-                # Si la pestaña está vacía o no existe aún, creamos un DataFrame base
-                df_control = pd.DataFrame(columns=["ID Pedido", "Fletera", "Surtidor", "Estatus", "Observaciones"])
+                df_control = pd.DataFrame(columns=["ID Pedido", "Fletera", "Surtidor", "Estatus"])
             
-            # 3. UNIÓN MAESTRA (Left Join)
-            # Usamos 'ID Pedido' como la llave. Si no se llama exactamente así en tu Excel, 
-            # cambia "ID Pedido" por el nombre exacto de la columna en SAP.
-            df_unificado = pd.merge(df_sap, df_control, on="ID Pedido", how="left")
-            
-            return df_unificado
+            # Cruzamos los datos: SAP + Tus anotaciones
+            # IMPORTANTE: La columna en tu Excel debe llamarse exactamente "ID Pedido"
+            return pd.merge(df_sap, df_control, on="ID Pedido", how="left")
         
-        # --- INTERFAZ ---
-        st.title("📦 NEXION - Control de Surtido y Fletes")
-        st.info("Los datos de SAP se actualizan desde tu PC. La información de Fleteras y Surtidores se guarda aquí.")
+        st.title("🚀 NEXION - Logística SAP")
         
-        # Cargar y mostrar
-        df_para_editar = cargar_datos()
+        # Mostrar la tabla unificada
+        df_trabajo = cargar_y_unificar()
+        df_editado = st.data_editor(df_trabajo, use_container_width=True, key="editor_nexion")
         
-        # Editor interactivo
-        # Nota: Puedes agregar más columnas aquí si las necesitas
-        df_final = st.data_editor(
-            df_para_editar,
-            use_container_width=True,
-            num_rows="dynamic",
-            key="nexion_editor"
-        )
-        
-        # Botón de Guardado
-        if st.button("💾 Guardar Cambios en Bitácora"):
-            with st.spinner("Sincronizando con Drive..."):
-                try:
-                    # Filtramos solo las columnas que queremos mantener a salvo de SAP
-                    # Es vital que 'ID Pedido' esté aquí para poder unirlos mañana
-                    columnas_bitacora = ["ID Pedido", "Fletera", "Surtidor", "Estatus", "Observaciones"]
-                    
-                    # Solo guardamos las filas que tengan un ID de pedido
-                    datos_a_guardar = df_final[columnas_bitacora].dropna(subset=["ID Pedido"])
-                    
-                    # Guardamos en la pestaña de CONTROL_NEXION
-                    conn.update(worksheet="CONTROL_NEXION", data=datos_a_guardar)
-                    
-                    st.success("¡Bitácora actualizada! Los datos están protegidos aunque SAP actualice su pestaña.")
-                    st.cache_data.clear()
-                except Exception as e:
-                    st.error(f"Error al guardar: {e}. Revisa que los nombres de las columnas coincidan.")
+        if st.button("💾 Guardar Cambios en Drive"):
+            with st.spinner("Sincronizando..."):
+                # Solo guardamos las columnas de control para no duplicar datos de SAP
+                columnas_bitacora = ["ID Pedido", "Fletera", "Surtidor", "Estatus"]
+                datos_control = df_editado[columnas_bitacora].dropna(subset=["ID Pedido"])
+                
+                conn.update(worksheet="CONTROL_NEXION", data=datos_control)
+                st.success("¡Información guardada! Ya puedes cerrar la app.")
+                st.cache_data.clear()
         
         # --- PIE DE PAGINA------------------------------------------- ---
                    
@@ -3449,6 +3423,7 @@ else:
     
    
         
+
 
 
 
