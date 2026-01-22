@@ -2823,35 +2823,7 @@ else:
             if os.path.exists(archivo_log):
                 st.session_state.db_acumulada = pd.read_csv(archivo_log)
             else:
-                st.session_state.db_acumulada = pd.DataFrame()
-
-        
-        st.markdown("""
-            <style>
-                /* 1. Ajustar el contenedor principal para que ocupe todo el alto disponible */
-                .main .block-container {
-                    display: flex;
-                    flex-direction: column;
-                    min-height: 85vh; /* Ajusta este valor según necesites */
-                }
-        
-                /* 2. Crear un espacio flexible que empuje el contenido hacia abajo */
-                .spacer {
-                    flex-grow: 1;
-                }
-        
-                /* 3. Estilo de tu footer */
-                .footer {
-                    text-align: center;
-                    font-size: 12px;
-                    color: #555;
-                    padding: 20px 0;
-                    width: 100%;
-                }
-            </style>
-            """, unsafe_allow_code=True)
-        
-        
+                st.session_state.db_acumulada = pd.DataFrame()     
         
         # --- ENCABEZADO MINIMALISTA (ESTILO PRO) ---
         # --- 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS (Sube el contenido y estiliza el menú) ---
@@ -3419,6 +3391,7 @@ else:
         
    
         
+
 
 
 
