@@ -2826,7 +2826,33 @@ else:
                 st.session_state.db_acumulada = pd.DataFrame()
 
         
-
+        st.markdown("""
+            <style>
+                /* 1. Ajustar el contenedor principal para que ocupe todo el alto disponible */
+                .main .block-container {
+                    display: flex;
+                    flex-direction: column;
+                    min-height: 85vh; /* Ajusta este valor según necesites */
+                }
+        
+                /* 2. Crear un espacio flexible que empuje el contenido hacia abajo */
+                .spacer {
+                    flex-grow: 1;
+                }
+        
+                /* 3. Estilo de tu footer */
+                .footer {
+                    text-align: center;
+                    font-size: 12px;
+                    color: #555;
+                    padding: 20px 0;
+                    width: 100%;
+                }
+            </style>
+            """, unsafe_allow_code=True)
+        
+        
+        
         # --- ENCABEZADO MINIMALISTA (ESTILO PRO) ---
         # --- 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS (Sube el contenido y estiliza el menú) ---
         st.markdown("""
@@ -3148,10 +3174,11 @@ else:
                     st.session_state.db_acumulada = pd.DataFrame()
                     st.rerun()
         
-        # --- PIE DE PAGINA------------------------------------------- ---
-               
-        st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)    
+        # --- EL TRUCO DEL FOOTER ---
+        # Este div vacío con la clase 'spacer' empujará todo lo que esté debajo al final
+        st.markdown('<div class="spacer"></div>', unsafe_allow_code=True)
+        
+        st.markdown('<div class="footer">LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>', unsafe_allow_code=True)
     # ------------------------------------------------------------------
     # MAIN 05: SEGUIMIENTO 2 (RadarRastreo)
     # ------------------------------------------------------------------
@@ -3392,6 +3419,7 @@ else:
         
    
         
+
 
 
 
