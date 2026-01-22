@@ -3151,10 +3151,7 @@ else:
         # --- PIE DE PAGINA------------------------------------------- ---
                
         st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
-
-        
-
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)    
     # ------------------------------------------------------------------
     # MAIN 05: SEGUIMIENTO 2 (RadarRastreo)
     # ------------------------------------------------------------------
