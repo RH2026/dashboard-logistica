@@ -3382,38 +3382,76 @@ else:
             st.error(f"Error crítico en el motor de datos: {e}")
       
         
-        #Conexión maestra
+        # Configuración de la página
+        st.set_page_config(page_title="NEXION - Logística SAP", layout="wide")
+        
+        # Conexión con Google Sheets
         conn = st.connection("gsheets", type=GSheetsConnection)
         
         def cargar_y_unificar():
-            # Leemos la pestaña que alimenta tu PC
+            # 1. Leer datos de SAP (lo que viene de tu PC)
             df_sap = conn.read(worksheet="DATOS_SAP")
+            # Limpiamos espacios en blanco en los nombres de columnas por seguridad
+            df_sap.columns = df_sap.columns.str.strip()
             
-            # Leemos tu bitácora de la web (si no existe, la creamos vacía)
+            # 2. Leer bitácora de control (lo que editas en Streamlit)
             try:
                 df_control = conn.read(worksheet="CONTROL_NEXION")
+                df_control.columns = df_control.columns.str.strip()
             except:
-                df_control = pd.DataFrame(columns=["ID Pedido", "Fletera", "Surtidor", "Estatus"])
+                # Si la pestaña está vacía o no existe, creamos la estructura base
+                df_control = pd.DataFrame(columns=["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"])
             
-            # Cruzamos los datos: SAP + Tus anotaciones
-            # IMPORTANTE: La columna en tu Excel debe llamarse exactamente "ID Pedido"
-            return pd.merge(df_sap, df_control, on="ID Pedido", how="left")
-        
-        st.title("🚀 NEXION - Logística SAP")
-        
-        # Mostrar la tabla unificada
-        df_trabajo = cargar_y_unificar()
-        df_editado = st.data_editor(df_trabajo, use_container_width=True, key="editor_nexion")
-        
-        if st.button("💾 Guardar Cambios en Drive"):
-            with st.spinner("Sincronizando..."):
-                # Solo guardamos las columnas de control para no duplicar datos de SAP
-                columnas_bitacora = ["ID Pedido", "Fletera", "Surtidor", "Estatus"]
-                datos_control = df_editado[columnas_bitacora].dropna(subset=["ID Pedido"])
+            # 3. UNIÓN MAESTRA usando 'DocNum'
+            # Esto mantiene todos los pedidos de SAP y les pega lo que anotes en la web
+            if "DocNum" in df_sap.columns:
+                # Aseguramos que DocNum sea tratado como texto para evitar errores de unión
+                df_sap["DocNum"] = df_sap["DocNum"].astype(str)
+                df_control["DocNum"] = df_control["DocNum"].astype(str)
                 
-                conn.update(worksheet="CONTROL_NEXION", data=datos_control)
-                st.success("¡Información guardada! Ya puedes cerrar la app.")
-                st.cache_data.clear()
+                df_unificado = pd.merge(df_sap, df_control, on="DocNum", how="left")
+            else:
+                st.error(f"No encontré la columna 'DocNum' en DATOS_SAP. Columnas actuales: {list(df_sap.columns)}")
+                st.stop()
+                
+            return df_unificado
+        
+        st.title("🚀 NEXION - Panel Logístico")
+        st.markdown(f"**Conectado al documento:** {st.secrets['connections']['gsheets']['spreadsheet'].split('/')[-2]}")
+        
+        # Cargar los datos combinados
+        with st.spinner("Cargando matriz de logística..."):
+            df_trabajo = cargar_y_unificar()
+        
+        st.subheader("Edición de Embarques y Surtido")
+        # El editor de datos mostrará las columnas de SAP + tus columnas de control
+        df_editado = st.data_editor(
+            df_trabajo, 
+            use_container_width=True, 
+            num_rows="dynamic",
+            key="nexion_grid"
+        )
+        
+        # Botón para guardar
+        if st.button("💾 Guardar Cambios en Bitácora"):
+            with st.spinner("Sincronizando con Drive..."):
+                try:
+                    # Definimos qué columnas queremos que se queden guardadas en la pestaña de CONTROL
+                    columnas_a_preservar = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
+                    
+                    # Filtramos el DataFrame editado y quitamos filas sin número de documento
+                    datos_para_bitacora = df_editado[columnas_a_preservar].dropna(subset=["DocNum"])
+                    
+                    # Guardamos SOLO en la pestaña de CONTROL_NEXION
+                    conn.update(worksheet="CONTROL_NEXION", data=datos_para_bitacora)
+                    
+                    st.success("¡Bitácora actualizada con éxito!")
+                    st.cache_data.clear() # Limpiamos caché para ver los cambios reflejados
+                except Exception as e:
+                    st.error(f"Error al guardar en CONTROL_NEXION: {e}")
+        
+        st.markdown("---")
+        st.caption("NEXION SYSTEM v1.0 | Coordinación de Logística")
         
         # --- PIE DE PAGINA------------------------------------------- ---
                    
@@ -3423,6 +3461,7 @@ else:
     
    
         
+
 
 
 
