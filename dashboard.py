@@ -3380,7 +3380,50 @@ else:
         except Exception as e:
             st.error(f"Error crítico en el motor de datos: {e}")
       
-        # --- 5. RADAR DE DESTINOS (MOSAICO DE GRISES CON GLOW LATERAL) ---
+        # --- 5. RADAR DE DESTINOS (MOSAICO DE GRISES CON GLOW LATERAL) ----
+        # 1. Conexión con Google Sheets--------------------------------------
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        
+        # 2. Leer los datos actuales
+        try:
+            df = conn.read()
+            
+            # --- AGREGAR COLUMNA DE PRUEBAS SI NO EXISTE ---
+            if "Pruebas de Edición" not in df.columns:
+                df["Pruebas de Edición"] = "" # Crea la columna vacía al final
+            # -----------------------------------------------
+        
+        except Exception as e:
+            st.error(f"Error al conectar con Sheets: {e}")
+            st.stop()
+        
+        st.title("📦 NEXION - Panel de Control Logístico")
+        st.markdown("---")
+        
+        st.subheader("Matriz de Datos")
+        st.info("Utiliza la última columna para realizar tus pruebas de escritura.")
+        
+        # 3. Interfaz de Edición
+        # He habilitado 'num_rows="dynamic"' para que también puedas agregar filas nuevas
+        df_editado = st.data_editor(
+            df, 
+            num_rows="dynamic",
+            use_container_width=True,
+            key="editor_nexion"
+        )
+        
+        # 4. Botón para Guardar
+        if st.button("💾 Guardar Cambios en Google Sheets"):
+            with st.spinner("Sincronizando con Drive..."):
+                try:
+                    # Guardamos el DataFrame editado (que ya incluye la nueva columna)
+                    conn.update(data=df_editado)
+                    st.success("¡Datos actualizados con éxito!")
+                    # Limpiamos caché para que al recargar se vea la nueva columna ya en Sheets
+                    st.cache_data.clear()
+                except Exception as e:
+                    st.error(f"Error al guardar: {e}")
+        
         # --- PIE DE PAGINA------------------------------------------- ---
                    
         st.markdown('</div>', unsafe_allow_html=True)
@@ -3389,6 +3432,7 @@ else:
     
    
         
+
 
 
 
