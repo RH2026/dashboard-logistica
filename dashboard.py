@@ -3379,115 +3379,184 @@ else:
                     st.info(f"Sin registros para {fletera_f} en {mes_f}.")
         
         except Exception as e:
-            st.error(f"Error crítico en el motor de datos: {e}")
-      
-        
-        # 2. CONEXIÓN MAESTRA
-        # Streamlit usa los Secrets: [connections.gsheets]
-        conn = st.connection("gsheets", type=GSheetsConnection)
-        
-        def cargar_y_unificar():
-            # --- LEER DATOS DE SAP ---
-            try:
-                df_sap = conn.read(worksheet="DATOS_SAP")
-                # Limpieza de nombres de columnas
-                df_sap.columns = df_sap.columns.str.strip()
-            except Exception as e:
-                st.error(f"Error al leer la pestaña 'DATOS_SAP': {e}")
-                st.stop()
-            
-            # Verificar que DocNum exista en lo que viene de la PC
-            if "DocNum" not in df_sap.columns:
-                st.error(f"No encontré la columna 'DocNum' en DATOS_SAP. Columnas detectadas: {list(df_sap.columns)}")
-                st.stop()
-        
-            # --- LEER BITÁCORA DE CONTROL (LO QUE EDITA STREAMLIT) ---
-            try:
-                df_control = conn.read(worksheet="CONTROL_NEXION")
-                df_control.columns = df_control.columns.str.strip()
-            except:
-                # Si la pestaña no existe o está vacía, creamos la estructura base
-                df_control = pd.DataFrame(columns=["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"])
-        
-            # --- PROTECCIÓN CONTRA TABLAS VACÍAS ---
-            # Si la hoja de control existe pero no tiene las columnas, las creamos
-            columnas_necesarias = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
-            for col in columnas_necesarias:
-                if col not in df_control.columns:
-                    df_control[col] = None
-        
-            # --- PREPARACIÓN PARA LA UNIÓN (MERGE) ---
-            # Convertimos DocNum a texto en ambas tablas para evitar errores de formato (int vs str)
-            df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.strip()
-            df_control["DocNum"] = df_control["DocNum"].astype(str).str.strip()
-        
-            # Eliminamos duplicados en la bitácora de control por si acaso
-            df_control = df_control.drop_duplicates(subset=["DocNum"], keep="last")
-        
-            # --- UNIÓN MAESTRA (LEFT JOIN) ---
-            # Mantenemos todo lo de SAP y le pegamos lo que ya anotamos en la web
-            df_unificado = pd.merge(
-                df_sap, 
-                df_control[["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]], 
-                on="DocNum", 
-                how="left"
-            )
-            
-            return df_unificado
-        
-        # 3. INTERFAZ DE USUARIO
-        st.title("🚀 NEXION - Sistema de Control Logístico")
-        st.subheader("Coordinación de Embarques SAP")
-        
-        # Cargar los datos combinados
-        with st.spinner("Sincronizando datos con Google Drive..."):
-            df_matriz = cargar_y_unificar()
-        
-        st.info("💡 Instrucciones: Edita las columnas de Fletera, Surtidor o Estatus y haz clic en el botón Guardar al finalizar.")
-        
-        # 4. EDITOR DE DATOS
-        # Mostramos la tabla unificada. 'DocNum' se vuelve la llave de referencia.
-        df_editado = st.data_editor(
-            df_matriz,
-            use_container_width=True,
-            num_rows="dynamic",
-            key="editor_principal"
-        )
-        
-        # 5. BOTÓN DE GUARDADO
-        st.markdown("---")
-        col1, col2, col3 = st.columns([1, 1, 1])
-        
-        with col2:
-            if st.button("💾 GUARDAR CAMBIOS EN BITÁCORA"):
-                with st.spinner("Guardando en CONTROL_NEXION..."):
-                    try:
-                        # Extraemos solo las columnas que pertenecen a la bitácora de control
-                        columnas_bitacora = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
-                        
-                        # Filtrar: Solo guardar filas que tengan un DocNum válido
-                        datos_para_guardar = df_editado[columnas_bitacora].dropna(subset=["DocNum"])
-                        # Limpiar filas donde DocNum esté vacío o sea 'nan'
-                        datos_para_guardar = datos_para_guardar[datos_para_guardar["DocNum"] != "nan"]
-                        
-                        # Guardar en la pestaña de CONTROL_NEXION
-                        conn.update(worksheet="CONTROL_NEXION", data=datos_para_guardar)
-                        
-                        st.success("¡Sincronización exitosa! Los datos están a salvo.")
-                        # Limpiar caché para forzar recarga de datos frescos
-                        st.cache_data.clear()
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Error al guardar: {e}")
+            st.error(f"Error crítico en el motor de datos: {e}")      
         
         # --- PIE DE PAGINA------------------------------------------- ---
                    
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
-
+    # --- -----------------------------------------*-------------------------
+    # MAIN 06: MATRIZ DE CONTROL (MControl)
+    # ------------------------------------------------------------------
+    if st.session_state.pagina == "MControl":
+        # Script para resetear el scroll al cambiar de sección
+        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
+        
+        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
+        st.markdown("""
+            <style>
+                .block-container {
+                    padding-top: 1rem !important;
+                    padding-bottom: 0rem !important;
+                    max-width: 95% !important;
+                }
+                
+                /* Estilo del Header Minimalista */
+                .header-wrapper {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 12px;
+                    font-family: 'Inter', sans-serif;
+                }
+    
+                .header-wrapper h1 {
+                    font-size: 22px !important;
+                    font-weight: 800;
+                    margin: 0;
+                    color: #4b5563;
+                    letter-spacing: -0.8px;
+                }
+    
+                .header-wrapper span {
+                    font-size: 14px;
+                    font-weight: 300;
+                    color: #ffffff;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
+    
+                /* Botón Popover Navegación */
+                div[data-testid="stPopover"] > button {
+                    background-color: transparent !important;
+                    border: 1px solid rgba(0, 255, 162, 0.3) !important;
+                    padding: 2px 10px !important;
+                    border-radius: 6px !important;
+                    height: 32px !important;
+                    transition: all 0.3s ease;
+                }
+                
+                div[data-testid="stPopover"] > button:hover {
+                    border: 1px solid #00ffa2 !important;
+                    box-shadow: 0 0 10px rgba(0, 255, 162, 0.2);
+                }
+    
+                /* Estilo del Editor de Datos */
+                div[data-testid="stDataEditor"] {
+                    border: 1px solid #30363d !important;
+                    border-radius: 10px !important;
+                    background-color: #0d1117 !important;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+    
+        # --- 2. ENCABEZADO Y NAVEGACIÓN ---
+        c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
+    
+        with c1:
+            st.markdown("""
+                <div class="header-wrapper">
+                    <h1>Matriz de Control</h1>
+                    <span> NEXION</span>
+                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
+                        GESTIÓN DE SURTIDO & ASIGNACIÓN DE FLETES (SAP LIVE)
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+    
+        with c2:
+            with st.popover("☰", use_container_width=True):
+                st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px; letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                # Diccionario de navegación unificado
+                paginas = {
+                    "TRACKING": "principal",
+                    "SEGUIMIENTO": "KPIs",
+                    "REPORTE OPS": "Reporte",
+                    "HUB LOGISTIC": "HubLogistico",
+                    "OTD": "RadarRastreo",
+                    "MCONTROL": "MControl"
+                }
+                for nombre, v_state in paginas.items():
+                    if st.button(nombre, use_container_width=True, key=f"nav_{nombre.lower()}"):
+                        st.session_state.pagina = v_state
+                        st.rerun()
+    
+        # Línea divisoria
+        st.markdown("<hr style='margin: 8px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
+    
+        # --- 3. MOTOR DE DATOS (CONEXIÓN GOOGLE SHEETS) ---
+        try:
+            conn = st.connection("gsheets", type=GSheetsConnection)
+    
+            # Cargar Datos desde SAP (lo que subes de tu PC)
+            df_sap = conn.read(worksheet="DATOS_SAP")
+            df_sap.columns = df_sap.columns.str.strip()
+            
+            # Cargar Bitácora de Control (lo que editas en Streamlit)
+            try:
+                df_control = conn.read(worksheet="CONTROL_NEXION")
+                df_control.columns = df_control.columns.str.strip()
+            except:
+                # Si no existe, creamos la estructura
+                df_control = pd.DataFrame(columns=["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"])
+    
+            # Asegurar columnas necesarias en el DF de Control
+            cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
+            for col in cols_control:
+                if col not in df_control.columns:
+                    df_control[col] = None
+    
+            # --- UNIFICACIÓN DE TABLAS ---
+            # Convertimos DocNum a String para evitar errores de tipo al cruzar
+            df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.strip()
+            df_control["DocNum"] = df_control["DocNum"].astype(str).str.strip()
+    
+            # Unimos lo de SAP con lo que ya tenemos anotado en Control
+            df_master = pd.merge(df_sap, df_control[cols_control], on="DocNum", how="left")
+    
+            # --- 4. INTERFAZ DE EDICIÓN ---
+            st.markdown("<p style='color:#8b949e; font-size:12px; font-weight:600; letter-spacing:0.5px;'>MATRIZ DE OPERACIONES ACTIVAS</p>", unsafe_allow_html=True)
+            
+            # Editor interactivo
+            df_editado = st.data_editor(
+                df_master,
+                use_container_width=True,
+                num_rows="dynamic",
+                key="editor_mcontrol_final",
+                hide_index=True
+            )
+    
+            # Espacio para el botón de acción
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            if st.button("💾 SINCRONIZAR CAMBIOS A GOOGLE SHEETS", use_container_width=True):
+                with st.spinner("Guardando en CONTROL_NEXION..."):
+                    try:
+                        # Filtramos solo las columnas que queremos guardar en la bitácora
+                        datos_save = df_editado[cols_control].dropna(subset=["DocNum"])
+                        datos_save = datos_save[datos_save["DocNum"] != "nan"]
+                        
+                        # Actualización en Drive
+                        conn.update(worksheet="CONTROL_NEXION", data=datos_save)
+                        
+                        st.toast("Base de datos actualizada", icon="✅")
+                        st.cache_data.clear()
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error al sincronizar: {e}")
+    
+        except Exception as e:
+            st.error(f"Error de conexión con la base de datos: {e}")
+    
+        # --- 5. PIE DE PÁGINA ---
+        st.markdown("""
+            <div style='text-align:center; color:#475569; font-size:10px; margin-top:40px; border-top: 1px solid rgba(148, 163, 184, 0.1); padding-top:10px;'>
+                LOGISTICS INTELLIGENCE UNIT - NEXION CONTROL CENTER | RIGOBERTO HERNANDEZ 2026
+            </div>
+        """, unsafe_allow_html=True)
     
    
         
+
 
 
 
