@@ -3381,49 +3381,65 @@ else:
         except Exception as e:
             st.error(f"Error crítico en el motor de datos: {e}")
       
-        # --- 5. RADAR DE DESTINOS (MOSAICO DE GRISES CON GLOW LATERAL) ----
-        # 1. Conexión con Google Sheets--------------------------------------
+        
+        # Configuración profesional de la página
+        st.set_page_config(page_title="NEXION - Logística SAP", layout="wide")
+        
+        # Conexión con el libro de Google Drive
         conn = st.connection("gsheets", type=GSheetsConnection)
         
-        # 2. Leer los datos actuales
-        try:
-            df = conn.read()
+        def cargar_datos():
+            # 1. Jalar datos de SAP (lo que subes desde tu PC)
+            df_sap = conn.read(worksheet="DATOS_SAP")
             
-            # --- AGREGAR COLUMNA DE PRUEBAS SI NO EXISTE ---
-            if "Pruebas de Edición" not in df.columns:
-                df["Pruebas de Edición"] = "" # Crea la columna vacía al final
-            # -----------------------------------------------
+            # 2. Jalar tu bitácora de control (lo que editas en la web)
+            try:
+                df_control = conn.read(worksheet="CONTROL_NEXION")
+            except:
+                # Si la pestaña está vacía o no existe aún, creamos un DataFrame base
+                df_control = pd.DataFrame(columns=["ID Pedido", "Fletera", "Surtidor", "Estatus", "Observaciones"])
+            
+            # 3. UNIÓN MAESTRA (Left Join)
+            # Usamos 'ID Pedido' como la llave. Si no se llama exactamente así en tu Excel, 
+            # cambia "ID Pedido" por el nombre exacto de la columna en SAP.
+            df_unificado = pd.merge(df_sap, df_control, on="ID Pedido", how="left")
+            
+            return df_unificado
         
-        except Exception as e:
-            st.error(f"Error al conectar con Sheets: {e}")
-            st.stop()
+        # --- INTERFAZ ---
+        st.title("📦 NEXION - Control de Surtido y Fletes")
+        st.info("Los datos de SAP se actualizan desde tu PC. La información de Fleteras y Surtidores se guarda aquí.")
         
-        st.title("📦 NEXION - Panel de Control Logístico")
-        st.markdown("---")
+        # Cargar y mostrar
+        df_para_editar = cargar_datos()
         
-        st.subheader("Matriz de Datos")
-        st.info("Utiliza la última columna para realizar tus pruebas de escritura.")
-        
-        # 3. Interfaz de Edición
-        # He habilitado 'num_rows="dynamic"' para que también puedas agregar filas nuevas
-        df_editado = st.data_editor(
-            df, 
-            num_rows="dynamic",
+        # Editor interactivo
+        # Nota: Puedes agregar más columnas aquí si las necesitas
+        df_final = st.data_editor(
+            df_para_editar,
             use_container_width=True,
-            key="editor_nexion"
+            num_rows="dynamic",
+            key="nexion_editor"
         )
         
-        # 4. Botón para Guardar
-        if st.button("💾 Guardar Cambios en Google Sheets"):
+        # Botón de Guardado
+        if st.button("💾 Guardar Cambios en Bitácora"):
             with st.spinner("Sincronizando con Drive..."):
                 try:
-                    # Guardamos el DataFrame editado (que ya incluye la nueva columna)
-                    conn.update(data=df_editado)
-                    st.success("¡Datos actualizados con éxito!")
-                    # Limpiamos caché para que al recargar se vea la nueva columna ya en Sheets
+                    # Filtramos solo las columnas que queremos mantener a salvo de SAP
+                    # Es vital que 'ID Pedido' esté aquí para poder unirlos mañana
+                    columnas_bitacora = ["ID Pedido", "Fletera", "Surtidor", "Estatus", "Observaciones"]
+                    
+                    # Solo guardamos las filas que tengan un ID de pedido
+                    datos_a_guardar = df_final[columnas_bitacora].dropna(subset=["ID Pedido"])
+                    
+                    # Guardamos en la pestaña de CONTROL_NEXION
+                    conn.update(worksheet="CONTROL_NEXION", data=datos_a_guardar)
+                    
+                    st.success("¡Bitácora actualizada! Los datos están protegidos aunque SAP actualice su pestaña.")
                     st.cache_data.clear()
                 except Exception as e:
-                    st.error(f"Error al guardar: {e}")
+                    st.error(f"Error al guardar: {e}. Revisa que los nombres de las columnas coincidan.")
         
         # --- PIE DE PAGINA------------------------------------------- ---
                    
@@ -3433,6 +3449,7 @@ else:
     
    
         
+
 
 
 
