@@ -3146,11 +3146,9 @@ else:
                     st.session_state.db_acumulada = pd.DataFrame()
                     st.rerun()
         
-        # --- EL TRUCO DEL FOOTER ---
-        # Este div vacío con la clase 'spacer' empujará todo lo que esté debajo al final
-        st.markdown('<div class="spacer"></div>', unsafe_allow_code=True)
-        
-        st.markdown('<div class="footer">LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>', unsafe_allow_code=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
     # ------------------------------------------------------------------
     # MAIN 05: SEGUIMIENTO 2 (RadarRastreo)
     # ------------------------------------------------------------------
@@ -3385,12 +3383,13 @@ else:
         # --- 5. RADAR DE DESTINOS (MOSAICO DE GRISES CON GLOW LATERAL) ---
         # --- PIE DE PAGINA------------------------------------------- ---
                    
-            st.markdown('</div>', unsafe_allow_html=True)
-            st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
     
-        
    
         
+
 
 
 
