@@ -3389,7 +3389,7 @@ else:
     # --- -----------------------------------------*-------------------------
     # MAIN 06: MATRIZ DE CONTROL (MControl)
     # ------------------------------------------------------------------
-    if st.session_state.pagina == "MControl":
+    elif st.session_state.pagina == "MControl":
         # Script para resetear el scroll al cambiar de sección
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
         
@@ -3467,7 +3467,8 @@ else:
         with c2:
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px; letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                # Diccionario de navegación unificado
+                
+                # Diccionario de navegación unificado (CON COMAS CORREGIDAS)
                 paginas = {
                     "TRACKING": "principal",
                     "SEGUIMIENTO": "KPIs",
@@ -3476,8 +3477,9 @@ else:
                     "OTD": "RadarRastreo",
                     "MCONTROL": "MControl"
                 }
+                
                 for nombre, v_state in paginas.items():
-                    if st.button(nombre, use_container_width=True, key=f"nav_{nombre.lower()}"):
+                    if st.button(nombre, use_container_width=True, key=f"nav_mc_{nombre.lower()}"):
                         st.session_state.pagina = v_state
                         st.rerun()
     
@@ -3488,13 +3490,13 @@ else:
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
     
-            # Cargar Datos desde SAP (lo que subes de tu PC)
-            df_sap = conn.read(worksheet="DATOS_SAP")
+            # Cargar Datos desde SAP (Leemos como Excel directamente)
+            df_sap = conn.read(worksheet="DATOS_SAP", spreadsheet_type="EXCEL")
             df_sap.columns = df_sap.columns.str.strip()
             
-            # Cargar Bitácora de Control (lo que editas en Streamlit)
+            # Cargar Bitácora de Control
             try:
-                df_control = conn.read(worksheet="CONTROL_NEXION")
+                df_control = conn.read(worksheet="CONTROL_NEXION", spreadsheet_type="EXCEL")
                 df_control.columns = df_control.columns.str.strip()
             except:
                 # Si no existe, creamos la estructura
@@ -3507,7 +3509,7 @@ else:
                     df_control[col] = None
     
             # --- UNIFICACIÓN DE TABLAS ---
-            # Convertimos DocNum a String para evitar errores de tipo al cruzar
+            # Forzamos DocNum a String para que el cruce sea exacto
             df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.strip()
             df_control["DocNum"] = df_control["DocNum"].astype(str).str.strip()
     
@@ -3529,14 +3531,14 @@ else:
             # Espacio para el botón de acción
             st.markdown("<br>", unsafe_allow_html=True)
             
-            if st.button("💾 SINCRONIZAR CAMBIOS A GOOGLE SHEETS", use_container_width=True):
+            if st.button("💾 SINCRONIZAR CAMBIOS A GOOGLE DRIVE", use_container_width=True):
                 with st.spinner("Guardando en CONTROL_NEXION..."):
                     try:
-                        # Filtramos solo las columnas que queremos guardar en la bitácora
+                        # Extraemos solo las columnas de control para guardar
                         datos_save = df_editado[cols_control].dropna(subset=["DocNum"])
                         datos_save = datos_save[datos_save["DocNum"] != "nan"]
                         
-                        # Actualización en Drive
+                        # Actualización en Drive (Mantenemos formato Excel)
                         conn.update(worksheet="CONTROL_NEXION", data=datos_save)
                         
                         st.toast("Base de datos actualizada", icon="✅")
@@ -3546,7 +3548,7 @@ else:
                         st.error(f"Error al sincronizar: {e}")
     
         except Exception as e:
-            st.error(f"Error de conexión con la base de datos: {e}")
+            st.error(f"Falla de conexión o formato: {e}")
     
         # --- 5. PIE DE PÁGINA ---
         st.markdown("""
@@ -3557,6 +3559,7 @@ else:
     
    
         
+
 
 
 
