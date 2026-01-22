@@ -3148,8 +3148,11 @@ else:
                     st.session_state.db_acumulada = pd.DataFrame()
                     st.rerun()
         
-        st.markdown('<div class="footer-minimal">LOGISTIC HUB v3.7 | MANDO TOTAL</div>', unsafe_allow_html=True)
-                
+        # --- PIE DE PAGINA------------------------------------------- ---
+               
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+
         
 
     # ------------------------------------------------------------------
@@ -3384,10 +3387,15 @@ else:
             st.error(f"Error crítico en el motor de datos: {e}")
       
         # --- 5. RADAR DE DESTINOS (MOSAICO DE GRISES CON GLOW LATERAL) ---
-        
+        # --- PIE DE PAGINA------------------------------------------- ---
+                   
+            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
+    
         
    
         
+
 
 
 
