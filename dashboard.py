@@ -258,7 +258,7 @@ elif not st.session_state.splash_completado:
 
                     /* --- CÍRCULO DE CARGA (SPINNER) --- */
                     .loader-circle {{
-                        border: 3px solid rgba(255, 255, 255, 0.1);
+                        border: 6px solid rgba(255, 255, 255, 0.1);
                         border-top: 3px solid {color_neon};
                         border-radius: 50%;
                         width: 90px;
@@ -3606,6 +3606,7 @@ else:
     
    
         
+
 
 
 
