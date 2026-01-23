@@ -3394,8 +3394,8 @@ else:
         # Reset de scroll al entrar a la sección
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
-        # --- 1. CONFIGURACIÓN DE ESTILOS (CEBRA Y BOTONES) ---
-        st.markdown("""           
+        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
+        st.markdown("""
             <style>
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
                 
@@ -3432,7 +3432,7 @@ else:
                     font-weight: 800 !important;
                     border: none !important;
                     height: 45px !important;
-                    border-radius: 10px !important; /* Bordes suaves */
+                    border-radius: 10px !important;
                     transition: all 0.3s ease !important;
                 }
                 div.stButton > button[kind="primary"]:hover {
@@ -3445,7 +3445,7 @@ else:
                     border: 1px solid #fb7185 !important;
                     color: #fb7185 !important;
                     height: 45px !important;
-                    border-radius: 10px !important; /* Bordes suaves */
+                    border-radius: 10px !important;
                     background-color: transparent !important;
                     transition: all 0.3s ease !important;
                 }
@@ -3453,20 +3453,39 @@ else:
                     background-color: rgba(251, 113, 133, 0.05) !important;
                 }
             
+                /* --- ESTILO MENÚ HAMBURGUESA GRIS (POPOVER) --- */
+                div[data-testid="stPopover"] > button {
+                    background-color: #1e293b !important; /* Gris oscuro */
+                    border: 1px solid #334155 !important;
+                    border-radius: 8px !important;
+                    color: white !important;
+                    height: 38px !important;
+                }
+                
+                /* Botones internos del Menú de Navegación */
+                div[data-testid="stPopoverContent"] button {
+                    background-color: rgba(255, 255, 255, 0.05) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    border-radius: 8px !important;
+                    color: white !important;
+                    margin-bottom: 5px !important;
+                    text-transform: uppercase;
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                }
+
                 div[data-testid="stDataEditor"] {
                     border: 1px solid #30363d !important;
-                    border-radius: 12px !important; /* Redondeado en la tabla */
+                    border-radius: 12px !important;
                     background-color: #0d1117 !important;
                 }
             
-                /* Estilo para los campos de texto (Opcional, para redondearlos también) */
                 .stTextInput input, .stDateInput input {
                     border-radius: 8px !important;
                 }
             </style>
             """, unsafe_allow_html=True)
 
-        # Generador de Versión para Reset de Inputs
         if "filtros_version" not in st.session_state:
             st.session_state.filtros_version = 0
 
@@ -3600,6 +3619,7 @@ else:
     
    
         
+
 
 
 
