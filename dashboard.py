@@ -3600,38 +3600,44 @@ else:
             )
     
             
-            # --- 7. ACCIÓN DE GUARDADO (MEJORADA) ---
+            # --- 7. ACCIÓN DE GUARDADO (TOTALMENTE CORREGIDO) ---
             if btn_save:
-                with st.spinner("Escribiendo en Google Sheets..."):
+                with st.spinner("Sincronizando con Google Sheets..."):
                     try:
-                        # Limpiamos datos antes de mandar
-                        datos_save = df_editado[cols_control].dropna(subset=["DocNum"])
+                        # 1. Extraer solo las columnas de la bitácora
+                        datos_save = df_editado[cols_control].copy()
                         
-                        # MANDAR A GOOGLE SHEETS
+                        # 2. Limpiar filas vacías para no saturar el Sheet
+                        datos_save = datos_save.dropna(subset=["DocNum"])
+                        datos_save = datos_save[datos_save["DocNum"] != "nan"]
+                        
+                        # 3. Mandar a la nube
                         conn.update(worksheet="CONTROL_NEXION", data=datos_save)
                         
-                        # CONFIRMACIÓN VISUAL FUERTE
-                        st.success("¡Cambios guardados con éxito en la nube!")
-                        st.balloons() 
+                        # 4. Avisos visuales (Si llegamos aquí, sí se guardó)
+                        st.balloons()
+                        st.success("✅ ¡CAMBIOS GUARDADOS EN LA NUBE CON ÉXITO!")
                         
-                        # LIMPIAR CACHÉ Y RECARGAR
+                        # 5. Limpiar memoria y refrescar
                         st.cache_data.clear()
                         st.rerun()
                     except Exception as e:
-                        st.error(f"¡Cuidado! No se pudo guardar: {e}")
+                        st.error(f"❌ Error al guardar: {e}")
 
         except Exception as e:
-            st.error(f"Error general en la página: {e}")
-    
-        # --- 5. PIE DE PÁGINA ---
+            st.error(f"⚠️ Error general en el motor de datos: {e}")
+
+        # --- 8. PIE DE PÁGINA (Alineado al borde izquierdo para que siempre se vea) ---
+        st.markdown("<br><br>", unsafe_allow_html=True)
         st.markdown("""
-            <div style='text-align:center; color:#475569; font-size:10px; margin-top:40px; border-top: 1px solid rgba(148, 163, 184, 0.1); padding-top:10px;'>
+            <div style='text-align:center; color:#475569; font-size:10px; border-top: 1px solid rgba(148, 163, 184, 0.1); padding-top:10px;'>
                 LOGISTICS INTELLIGENCE UNIT - NEXION CONTROL CENTER | RIGOBERTO HERNANDEZ 2026
             </div>
         """, unsafe_allow_html=True)
     
    
         
+
 
 
 
