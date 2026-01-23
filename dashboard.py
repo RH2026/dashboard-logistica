@@ -3386,34 +3386,28 @@ else:
                    
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
-    # --- -----------------------------------------*-------------------------
-    # MAIN 06: MATRIZ DE CONTROL (MControl)
+    
     # ------------------------------------------------------------------
-    if st.session_state.pagina == "MControl":
-
+    # MAIN 06: MATRIZ DE CONTROL (MControl) - VERSIÓN PRO CON FILTROS
+    # ------------------------------------------------------------------
+    elif st.session_state.pagina == "MControl":
         # Reset de scroll al entrar a la sección
-        st.components.v1.html(
-            "<script>parent.window.scrollTo(0,0);</script>",
-            height=0
-        )
+        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
         # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
-        st.markdown(
-            """
+        st.markdown("""
             <style>
                 .block-container {
                     padding-top: 1rem !important;
                     padding-bottom: 0rem !important;
                     max-width: 95% !important;
                 }
-    
                 .header-wrapper {
                     display: flex;
                     align-items: baseline;
                     gap: 12px;
                     font-family: 'Inter', sans-serif;
                 }
-    
                 .header-wrapper h1 {
                     font-size: 22px !important;
                     font-weight: 800;
@@ -3421,7 +3415,6 @@ else:
                     color: #4b5563;
                     letter-spacing: -0.8px;
                 }
-    
                 .header-wrapper span {
                     font-size: 14px;
                     font-weight: 300;
@@ -3429,63 +3422,43 @@ else:
                     text-transform: uppercase;
                     letter-spacing: 1px;
                 }
-    
-                div[data-testid="stPopover"] > button {
-                    background-color: transparent !important;
-                    border: 1px solid rgba(0, 255, 162, 0.3) !important;
-                    padding: 2px 10px !important;
-                    border-radius: 6px !important;
-                    height: 32px !important;
-                    transition: all 0.3s ease;
+                /* Botón Guardar (Primario) */
+                div.stButton > button[kind="primary"] {
+                    background-color: #00ffa2 !important;
+                    color: #0d1117 !important;
+                    font-weight: 800 !important;
+                    border: none !important;
                 }
-    
-                div[data-testid="stPopover"] > button:hover {
-                    border: 1px solid #00ffa2 !important;
-                    box-shadow: 0 0 10px rgba(0, 255, 162, 0.2);
+                /* Botón Borrar */
+                div.stButton > button[kind="secondary"] {
+                    border: 1px solid #fb7185 !important;
+                    color: #fb7185 !important;
                 }
-    
                 div[data-testid="stDataEditor"] {
                     border: 1px solid #30363d !important;
                     border-radius: 10px !important;
                     background-color: #0d1117 !important;
                 }
             </style>
-            """,
-            unsafe_allow_html=True
-        )
+            """, unsafe_allow_html=True)
     
         # --- 2. ENCABEZADO Y NAVEGACIÓN ---
         c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
     
         with c1:
-            st.markdown(
-                """
+            st.markdown("""
                 <div class="header-wrapper">
                     <h1>Matriz de Control</h1>
                     <span>NEXION</span>
-                    <div style="
-                        font-family: 'JetBrains Mono';
-                        font-size: 11px;
-                        color: #00ffa2;
-                        opacity: 0.7;
-                        margin-left: 10px;
-                        padding-left: 10px;
-                        border-left: 1px solid #334155;
-                    ">
+                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
                         GESTIÓN DE SURTIDO & ASIGNACIÓN DE FLETES (SAP LIVE)
                     </div>
                 </div>
-                """,
-                unsafe_allow_html=True
-            )
+                """, unsafe_allow_html=True)
     
         with c2:
             with st.popover("☰", use_container_width=True):
-                st.markdown(
-                    "<p style='color:#64748b;font-size:10px;font-weight:700;margin-bottom:10px;letter-spacing:1px;'>NAVEGACIÓN</p>",
-                    unsafe_allow_html=True
-                )
-    
+                st.markdown("<p style='color:#64748b;font-size:10px;font-weight:700;margin-bottom:10px;letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
                 paginas = {
                     "TRACKING": "principal",
                     "SEGUIMIENTO": "KPIs",
@@ -3494,21 +3467,16 @@ else:
                     "OTD": "RadarRastreo",
                     "MCONTROL": "MControl"
                 }
-    
                 for nombre, v_state in paginas.items():
                     if st.button(nombre, use_container_width=True, key=f"nav_{nombre.lower()}"):
                         st.session_state.pagina = v_state
                         st.rerun()
     
-        st.markdown(
-            "<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>",
-            unsafe_allow_html=True
-        )
+        st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>", unsafe_allow_html=True)
     
         # --- 3. MOTOR DE DATOS ---
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
-    
             df_sap = conn.read(worksheet="DATOS_SAP")
             df_sap.columns = df_sap.columns.str.strip()
     
@@ -3516,12 +3484,9 @@ else:
                 df_control = conn.read(worksheet="CONTROL_NEXION")
                 df_control.columns = df_control.columns.str.strip()
             except:
-                df_control = pd.DataFrame(
-                    columns=["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
-                )
+                df_control = pd.DataFrame(columns=["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"])
     
             cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
-    
             for col in cols_control:
                 if col not in df_control.columns:
                     df_control[col] = None
@@ -3529,39 +3494,71 @@ else:
             df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.strip()
             df_control["DocNum"] = df_control["DocNum"].astype(str).str.strip()
     
-            df_master = pd.merge(
-                df_sap,
-                df_control[cols_control],
-                on="DocNum",
-                how="left"
-            )
+            # UNIFICACIÓN
+            df_master = pd.merge(df_sap, df_control[cols_control], on="DocNum", how="left")
+            
+            # REORDENAMIENTO: Poner columnas de control al inicio (Instrucción de imagen)
+            cols_sap_restantes = [c for c in df_sap.columns if c != "DocNum"]
+            df_master = df_master[cols_control + cols_sap_restantes]
     
-            # --- 4. INTERFAZ ---
-            st.markdown(
-                "<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>MATRIZ DE OPERACIONES ACTIVAS</p>",
-                unsafe_allow_html=True
-            )
-    
+            # --- 4. PANEL DE FILTROS Y BOTONES ---
+            st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
+            
+            # Fila 1: Fechas y Botones de Acción
+            f1, f2, f3, f4 = st.columns([1, 1, 1, 1.5])
+            with f1:
+                f_ini = st.date_input("Fecha Inicial", value=None)
+            with f2:
+                f_fin = st.date_input("Fecha Final", value=None)
+            with f3:
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("BORRAR FILTROS", use_container_width=True, kind="secondary"):
+                    st.cache_data.clear()
+                    st.rerun()
+            with f4:
+                st.markdown("<br>", unsafe_allow_html=True)
+                btn_save = st.button("💾 GUARDAR Y ACTUALIZAR", use_container_width=True, type="primary")
+
+            # Fila 2: Buscadores de Texto
+            s1, s2, s3, s4 = st.columns(4)
+            with s1: search_flet = st.text_input("Filtrar Fletera")
+            with s2: search_doc = st.text_input("Filtrar DocNum")
+            with s3: search_code = st.text_input("Filtrar CardCode")
+            with s4: search_name = st.text_input("Filtrar CardFName")
+
+            # LÓGICA DE FILTRADO
+            df_filtrado = df_master.copy()
+            if search_flet:
+                df_filtrado = df_filtrado[df_filtrado["Fletera"].astype(str).str.contains(search_flet, case=False, na=False)]
+            if search_doc:
+                df_filtrado = df_filtrado[df_filtrado["DocNum"].astype(str).str.contains(search_doc, case=False, na=False)]
+            if search_code and "CardCode" in df_filtrado.columns:
+                df_filtrado = df_filtrado[df_filtrado["CardCode"].astype(str).str.contains(search_code, case=False, na=False)]
+            if search_name:
+                col_name = "CardName" if "CardName" in df_filtrado.columns else "CardFName"
+                if col_name in df_filtrado.columns:
+                    df_filtrado = df_filtrado[df_filtrado[col_name].astype(str).str.contains(search_name, case=False, na=False)]
+
+            # --- 5. EDITOR DE DATOS ---
+            st.markdown("<br>", unsafe_allow_html=True)
             df_editado = st.data_editor(
-                df_master,
+                df_filtrado,
                 use_container_width=True,
                 num_rows="dynamic",
                 key="editor_mcontrol_final",
-                hide_index=True
+                hide_index=True,
+                height=550
             )
     
-            st.markdown("<br>", unsafe_allow_html=True)
-    
-            if st.button("💾 SINCRONIZAR CAMBIOS A GOOGLE SHEETS", use_container_width=True):
+            # --- 6. ACCIÓN DE GUARDADO ---
+            if btn_save:
                 with st.spinner("Guardando en CONTROL_NEXION..."):
                     try:
+                        # Extraer solo las columnas de la bitácora para guardar
                         datos_save = df_editado[cols_control].dropna(subset=["DocNum"])
                         datos_save = datos_save[datos_save["DocNum"] != "nan"]
     
-                        conn.update(
-                            worksheet="CONTROL_NEXION",
-                            data=datos_save
-                        )
+                        conn.update(worksheet="CONTROL_NEXION", data=datos_save)
     
                         st.toast("Base de datos actualizada", icon="✅")
                         st.cache_data.clear()
@@ -3582,6 +3579,7 @@ else:
     
    
         
+
 
 
 
