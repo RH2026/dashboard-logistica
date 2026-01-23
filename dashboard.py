@@ -3394,17 +3394,16 @@ else:
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
         # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
-        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA (INPUTS MÁS CLAROS) ---
         st.markdown("""
             <style>
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
 
-                /* INPUTS: FONDO MÁS CLARO Y BORDE ORIGINAL */
+                /* INPUTS: GRIS OSCURO (MÁS CLARO QUE EL NEGRO) */
                 .stTextInput input, .stDateInput input {
-                    background-color: #f0f2f6 !important; /* Gris claro para resaltar */
-                    color: #31333F !important;           /* Texto oscuro original */
+                    background-color: #2d333b !important; /* Gris oscuro profesional */
+                    color: #ffffff !important;           /* Texto blanco para contraste */
+                    border: 1px solid #444c56 !important; 
                     border-radius: 10px !important;
-                    border: 1px solid #d1d5db !important; /* Borde sutil original */
                 }
 
                 /* EFECTO FOCUS: VERDE NEÓN AL ESCRIBIR */
@@ -3416,27 +3415,21 @@ else:
 
                 /* DISEÑO CEBRA TABLA */
                 div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
-                    background-color: rgba(0, 0, 0, 0.03) !important;
+                    background-color: rgba(255, 255, 255, 0.03) !important;
                 }
 
-                /* ENCABEZADO ORIGINAL */
-                .header-wrapper {
-                    display: flex;
-                    align-items: baseline;
-                    gap: 12px;
-                    font-family: 'Inter', sans-serif;
-                }
+                /* RESTAURACIÓN DE COLORES DE ENCABEZADO */
                 .header-wrapper h1 {
                     font-size: 22px !important;
                     font-weight: 800;
                     margin: 0;
-                    color: #4b5563;
+                    color: #4b5563 !important; /* Gris original restaurado */
                     letter-spacing: -0.8px;
                 }
                 .header-wrapper span {
                     font-size: 14px;
                     font-weight: 300;
-                    color: #31333F; 
+                    color: #ffffff !important; /* Blanco original restaurado */
                     text-transform: uppercase;
                     letter-spacing: 1px;
                 }
@@ -3454,19 +3447,18 @@ else:
                 /* BOTONES ACCIÓN/BORRAR */
                 div.stButton > button:not([kind="primary"]) {
                     border: 1px solid #475569 !important;
-                    color: #475569 !important;
-                    background-color: rgba(71, 85, 105, 0.1) !important;
+                    color: #f1f5f9 !important;
+                    background-color: rgba(71, 85, 105, 0.2) !important;
                     height: 45px !important;
                     border-radius: 10px !important;
                 }
 
-                /* MENÚ HAMBURGUESA GRIS */
+                /* MENÚ HAMBURGUESA GRIS PIZARRA */
                 div[data-testid="stPopover"] > button {
                     background-color: #1e293b !important;
                     border: 1px solid #334155 !important;
                     border-radius: 8px !important;
                     color: white !important;
-                    height: 38px !important;
                 }
             </style>
             """, unsafe_allow_html=True)
@@ -3619,6 +3611,7 @@ else:
     
    
         
+
 
 
 
