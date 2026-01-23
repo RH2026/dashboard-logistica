@@ -3599,7 +3599,7 @@ else:
                 height=550
             )
     
-            # --- 7. ACCIÓN DE GUARDADO ---
+            
             # --- 7. ACCIÓN DE GUARDADO (MEJORADA) ---
             if btn_save:
                 with st.spinner("Escribiendo en Google Sheets..."):
@@ -3612,13 +3612,16 @@ else:
                         
                         # CONFIRMACIÓN VISUAL FUERTE
                         st.success("¡Cambios guardados con éxito en la nube!")
-                        st.balloons() # Tira globos para que no haya duda de que se guardó
+                        st.balloons() 
                         
-                        # LIMPIAR CACHÉ PARA QUE AL RECARGAR VEAS LO NUEVO
+                        # LIMPIAR CACHÉ Y RECARGAR
                         st.cache_data.clear()
                         st.rerun()
                     except Exception as e:
                         st.error(f"¡Cuidado! No se pudo guardar: {e}")
+
+        except Exception as e:
+            st.error(f"Error general en la página: {e}")
     
         # --- 5. PIE DE PÁGINA ---
         st.markdown("""
@@ -3629,6 +3632,7 @@ else:
     
    
         
+
 
 
 
