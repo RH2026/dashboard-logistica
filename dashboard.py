@@ -3391,6 +3391,7 @@ else:
     # MAIN 06: MATRIZ DE CONTROL (MControl) - VERSIÓN PRO CON FILTROS
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "MControl":
+        # Reset de scroll al entrar a la sección
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
         # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
@@ -3402,8 +3403,30 @@ else:
                 div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
                     background-color: rgba(255, 255, 255, 0.03) !important;
                 }
+
+                /* ESTILO DEL ENCABEZADO ORIGINAL */
+                .header-wrapper {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 12px;
+                    font-family: 'Inter', sans-serif;
+                }
+                .header-wrapper h1 {
+                    font-size: 22px !important;
+                    font-weight: 800;
+                    margin: 0;
+                    color: #4b5563; /* Gris original */
+                    letter-spacing: -0.8px;
+                }
+                .header-wrapper span {
+                    font-size: 14px;
+                    font-weight: 300;
+                    color: #ffffff; /* Blanco original */
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
             
-                /* BOTÓN GUARDAR (VERDE NEÓN) */
+                /* BOTÓN GUARDAR (VERDE NEÓN REDONDEADO) */
                 div.stButton > button[kind="primary"] {
                     background-color: #00ffa2 !important;
                     color: #0d1117 !important;
@@ -3411,10 +3434,13 @@ else:
                     border: none !important;
                     height: 45px !important;
                     border-radius: 10px !important;
+                    transition: all 0.3s ease !important;
+                }
+                div.stButton > button[kind="primary"]:hover {
+                    box-shadow: 0 0 15px rgba(0, 255, 162, 0.3) !important;
                 }
             
-                /* BOTÓN BORRAR FILTROS (GRIS CLARO / BORDE SUTIL) */
-                /* Ya no usamos rosa aquí para que no se vea rojo */
+                /* BOTONES DE ACCIÓN Y BORRADO (GRIS PIZARRA REDONDEADO) */
                 div.stButton > button:not([kind="primary"]) {
                     border: 1px solid #475569 !important;
                     color: #f1f5f9 !important;
@@ -3423,18 +3449,16 @@ else:
                     border-radius: 10px !important;
                 }
             
-                /* --- ESTILO MENÚ HAMBURGUESA GRIS (POPOVER) --- */
-                /* Este es el botón que dice ☰ */
+                /* MENÚ HAMBURGUESA GRIS (POPOVER) */
                 div[data-testid="stPopover"] > button {
-                    background-color: #1e293b !important; /* Gris oscuro pizarra */
+                    background-color: #1e293b !important;
                     border: 1px solid #334155 !important;
                     border-radius: 8px !important;
                     color: white !important;
                     height: 38px !important;
                 }
                 
-                /* BOTONES INTERNOS DEL MENÚ DE NAVEGACIÓN */
-                /* Aquí forzamos que sean grises y no rojos/rosas */
+                /* BOTONES INTERNOS DEL MENÚ */
                 div[data-testid="stPopoverContent"] button {
                     background-color: #1e293b !important;
                     border: 1px solid #475569 !important;
@@ -3445,15 +3469,15 @@ else:
                     font-size: 12px !important;
                     font-weight: 600 !important;
                 }
-                div[data-testid="stPopoverContent"] button:hover {
-                    border: 1px solid #00ffa2 !important; /* Brillo verde al pasar el mouse */
-                    color: #00ffa2 !important;
-                }
 
                 div[data-testid="stDataEditor"] {
                     border: 1px solid #30363d !important;
                     border-radius: 12px !important;
                     background-color: #0d1117 !important;
+                }
+            
+                .stTextInput input, .stDateInput input {
+                    border-radius: 8px !important;
                 }
             </style>
             """, unsafe_allow_html=True)
@@ -3591,6 +3615,7 @@ else:
     
    
         
+
 
 
 
