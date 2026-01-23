@@ -203,7 +203,7 @@ if not st.session_state.logueado:
                         st.error("Acceso Denegado")
     st.stop()
 
-# CASO B: SPLASH SCREEN (Versión NEXION Premium - Enfoque en Bienvenida)
+# CASO B: SPLASH SCREEN (Versión NEXION Premium - Con Círculo de Carga)
 elif not st.session_state.splash_completado:
     with placeholder.container():
         # El nombre del usuario resaltado en Blanco
@@ -215,7 +215,6 @@ elif not st.session_state.splash_completado:
         if st.session_state.motivo_splash == "logout":
             mensajes = ["CERRANDO SESIÓN SEGURA", "RESGUARDANDO REGISTROS", "CONEXIÓN FINALIZADA"]
         else:
-            # Aquí inyectamos el HTML para que el nombre sea blanco
             mensajes = [
                 f"BIENVENIDO DE VUELTA, <span style='color:white; font-weight:700;'>{usuario_highlight}</span>",
                 "SINCRONIZANDO MANIFIESTOS NEXION",
@@ -241,7 +240,7 @@ elif not st.session_state.splash_completado:
                     }}
 
                     .branding-box {{
-                        text-align: left;
+                        text-align: center;
                         width: 450px;
                         padding: 20px;
                     }}
@@ -251,18 +250,27 @@ elif not st.session_state.splash_completado:
                         font-size: 11px;
                         letter-spacing: 6px;
                         color: rgba(255, 255, 255, 0.4);
-                        margin-bottom: 15px;
+                        margin-bottom: 30px;
+                        justify-content: center;
                         display: flex;
                         align-items: center;
                     }}
 
-                    .logo-placeholder::before {{
-                        content: '';
-                        width: 25px;
-                        height: 2px;
-                        background: {color_neon};
-                        margin-right: 12px;
-                        box-shadow: 0 0 10px {color_neon};
+                    /* --- CÍRCULO DE CARGA (SPINNER) --- */
+                    .loader-circle {{
+                        border: 3px solid rgba(255, 255, 255, 0.1);
+                        border-top: 3px solid {color_neon};
+                        border-radius: 50%;
+                        width: 50px;
+                        height: 50px;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto 30px auto;
+                        box-shadow: 0 0 15px {color_neon}33;
+                    }}
+
+                    @keyframes spin {{
+                        0% {{ transform: rotate(0deg); }}
+                        100% {{ transform: rotate(360deg); }}
                     }}
 
                     .main-msg {{
@@ -270,48 +278,32 @@ elif not st.session_state.splash_completado:
                         font-size: 1.4rem;
                         font-weight: 300;
                         letter-spacing: 1.5px;
-                        margin-bottom: 35px;
+                        margin-bottom: 25px;
                         min-height: 60px;
                         line-height: 1.4;
                         text-shadow: 0 0 15px {color_neon}33;
                     }}
 
-                    .progress-container {{
-                        width: 100%;
-                        height: 2px;
-                        background-color: rgba(255, 255, 255, 0.1);
-                        border-radius: 1px;
-                        overflow: hidden;
-                    }}
-
-                    .progress-fill {{
-                        width: {progreso}%;
-                        height: 100%;
-                        background-color: {color_neon};
-                        box-shadow: 0 0 15px {color_neon};
-                        transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-                    }}
-
                     .footer-info {{
-                        margin-top: 18px;
+                        margin-top: 30px;
                         display: flex;
                         justify-content: space-between;
                         color: rgba(255, 255, 255, 0.3);
                         font-size: 10px;
                         font-weight: 700;
                         font-family: monospace;
+                        border-top: 1px solid rgba(255,255,255,0.05);
+                        padding-top: 15px;
                     }}
                 </style>
                 
                 <div class="corporate-splash">
                     <div class="branding-box">
                         <div class="logo-placeholder">NEXION LOGISTICS CORE</div>
+                        <div class="loader-circle"></div>
                         <div class="main-msg">{msg}</div>
-                        <div class="progress-container">
-                            <div class="progress-fill"></div>
-                        </div>
                         <div class="footer-info">
-                            <span>SESSION_ID: NX-2024</span>
+                            <span>SESSION_ID: NX-2026</span>
                             <span style="color: {color_neon}">{progreso}%</span>
                         </div>
                     </div>
@@ -320,7 +312,7 @@ elif not st.session_state.splash_completado:
             
             # --- LÓGICA DE TIEMPO PERSONALIZADA ---
             if i == 0 and st.session_state.motivo_splash != "logout":
-                time.sleep(2.5) # Pausa larga en la bienvenida para que se sientan acogidos
+                time.sleep(2.5) 
             else:
                 time.sleep(0.7 if i < len(mensajes)-1 else 1.2)
         
@@ -3614,6 +3606,7 @@ else:
     
    
         
+
 
 
 
