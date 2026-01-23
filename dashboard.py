@@ -3456,36 +3456,48 @@ else:
                     border-radius: 12px !important;
                 }
 
-                /* --- ELIMINACIÓN TOTAL DEL TEXTO "RUNNING" --- */
+                /* --- MODIFICAR EL CARGADOR NATIVO "RUNNING..." --- */
                 
+                /* 1. Ocultar el texto "Running..." y el fondo original */
                 [data-testid="stStatusWidget"] {
                     background-color: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                    visibility: hidden !important; /* Oculta el contenedor */
-                    height: 0px !important;
+                    visibility: hidden;
                 }
 
-                [data-testid="stStatusWidget"] > div {
-                    display: none !important; /* Borra el texto y el circulito mini original */
-                }
-
-                /* --- TU CÍRCULO GENIAL (SE MANTIENE VISIBLE) --- */
+                /* 2. Crear un círculo de carga grande y centrado */
                 [data-testid="stStatusWidget"]::after {
                     content: "";
-                    visibility: visible !important; /* Esto hace que SOLO el círculo se vea */
+                    visibility: visible;
                     position: fixed;
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-                    width: 90px;
-                    height: 90px;
-                    border: 8px solid rgba(255, 255, 255, 0.1);
-                    border-top: 8px solid #00ffa2;
+                    width: 80px;
+                    height: 80px;
+                    border: 6px solid rgba(255, 255, 255, 0.1);
+                    border-top: 6px solid #00ffa2; /* Tu verde neón */
                     border-radius: 50%;
                     animation: spin 1s linear infinite;
                     z-index: 999999;
-                    box-shadow: 0 0 30px rgba(0, 255, 162, 0.5);
+                    box-shadow: 0 0 20px rgba(0, 255, 162, 0.4);
+                }
+
+                /* 3. Oscurecer un poco el fondo mientras carga */
+                [data-testid="stStatusWidget"]::before {
+                    content: "";
+                    visibility: visible;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background-color: rgba(0, 0, 0, 0.4); /* Capa oscura traslúcida */
+                    z-index: 999998;
+                }
+
+                @keyframes spin {
+                    0% { transform: translate(-50%, -50%) rotate(0deg); }
+                    100% { transform: translate(-50%, -50%) rotate(360deg); }
                 }
             </style>
             """, unsafe_allow_html=True)
@@ -3638,6 +3650,7 @@ else:
     
    
         
+
 
 
 
