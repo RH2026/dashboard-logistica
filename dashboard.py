@@ -3389,20 +3389,24 @@ else:
     # --- -----------------------------------------*-------------------------
     # MAIN 06: MATRIZ DE CONTROL (MControl)
     # ------------------------------------------------------------------
-    elif st.session_state.pagina == "MControl":
-        # Script para resetear el scroll al cambiar de sección
-        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
-        
+    if st.session_state.pagina == "MControl":
+
+        # Reset de scroll al entrar a la sección
+        st.components.v1.html(
+            "<script>parent.window.scrollTo(0,0);</script>",
+            height=0
+        )
+    
         # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
-        st.markdown("""
+        st.markdown(
+            """
             <style>
                 .block-container {
                     padding-top: 1rem !important;
                     padding-bottom: 0rem !important;
                     max-width: 95% !important;
                 }
-                
-                /* Estilo del Header Minimalista */
+    
                 .header-wrapper {
                     display: flex;
                     align-items: baseline;
@@ -3426,7 +3430,6 @@ else:
                     letter-spacing: 1px;
                 }
     
-                /* Botón Popover Navegación */
                 div[data-testid="stPopover"] > button {
                     background-color: transparent !important;
                     border: 1px solid rgba(0, 255, 162, 0.3) !important;
@@ -3435,40 +3438,54 @@ else:
                     height: 32px !important;
                     transition: all 0.3s ease;
                 }
-                
+    
                 div[data-testid="stPopover"] > button:hover {
                     border: 1px solid #00ffa2 !important;
                     box-shadow: 0 0 10px rgba(0, 255, 162, 0.2);
                 }
     
-                /* Estilo del Editor de Datos */
                 div[data-testid="stDataEditor"] {
                     border: 1px solid #30363d !important;
                     border-radius: 10px !important;
                     background-color: #0d1117 !important;
                 }
             </style>
-        """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True
+        )
     
         # --- 2. ENCABEZADO Y NAVEGACIÓN ---
         c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
     
         with c1:
-            st.markdown("""
+            st.markdown(
+                """
                 <div class="header-wrapper">
                     <h1>Matriz de Control</h1>
-                    <span> NEXION</span>
-                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
+                    <span>NEXION</span>
+                    <div style="
+                        font-family: 'JetBrains Mono';
+                        font-size: 11px;
+                        color: #00ffa2;
+                        opacity: 0.7;
+                        margin-left: 10px;
+                        padding-left: 10px;
+                        border-left: 1px solid #334155;
+                    ">
                         GESTIÓN DE SURTIDO & ASIGNACIÓN DE FLETES (SAP LIVE)
                     </div>
                 </div>
-            """, unsafe_allow_html=True)
+                """,
+                unsafe_allow_html=True
+            )
     
         with c2:
             with st.popover("☰", use_container_width=True):
-                st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px; letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                
-                # Diccionario de navegación unificado (CON COMAS CORREGIDAS)
+                st.markdown(
+                    "<p style='color:#64748b;font-size:10px;font-weight:700;margin-bottom:10px;letter-spacing:1px;'>NAVEGACIÓN</p>",
+                    unsafe_allow_html=True
+                )
+    
                 paginas = {
                     "TRACKING": "principal",
                     "SEGUIMIENTO": "KPIs",
@@ -3477,49 +3494,54 @@ else:
                     "OTD": "RadarRastreo",
                     "MCONTROL": "MControl"
                 }
-                
+    
                 for nombre, v_state in paginas.items():
-                    if st.button(nombre, use_container_width=True, key=f"nav_mc_{nombre.lower()}"):
+                    if st.button(nombre, use_container_width=True, key=f"nav_{nombre.lower()}"):
                         st.session_state.pagina = v_state
                         st.rerun()
     
-        # Línea divisoria
-        st.markdown("<hr style='margin: 8px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
+        st.markdown(
+            "<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>",
+            unsafe_allow_html=True
+        )
     
-        # --- 3. MOTOR DE DATOS (CONEXIÓN GOOGLE SHEETS) ---
+        # --- 3. MOTOR DE DATOS ---
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
     
-            # Cargar Datos desde SAP (Leemos como Excel directamente)
-            df_sap = conn.read(worksheet="DATOS_SAP", spreadsheet_type="EXCEL")
+            df_sap = conn.read(worksheet="DATOS_SAP")
             df_sap.columns = df_sap.columns.str.strip()
-            
-            # Cargar Bitácora de Control
+    
             try:
-                df_control = conn.read(worksheet="CONTROL_NEXION", spreadsheet_type="EXCEL")
+                df_control = conn.read(worksheet="CONTROL_NEXION")
                 df_control.columns = df_control.columns.str.strip()
             except:
-                # Si no existe, creamos la estructura
-                df_control = pd.DataFrame(columns=["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"])
+                df_control = pd.DataFrame(
+                    columns=["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
+                )
     
-            # Asegurar columnas necesarias en el DF de Control
             cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
+    
             for col in cols_control:
                 if col not in df_control.columns:
                     df_control[col] = None
     
-            # --- UNIFICACIÓN DE TABLAS ---
-            # Forzamos DocNum a String para que el cruce sea exacto
             df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.strip()
             df_control["DocNum"] = df_control["DocNum"].astype(str).str.strip()
     
-            # Unimos lo de SAP con lo que ya tenemos anotado en Control
-            df_master = pd.merge(df_sap, df_control[cols_control], on="DocNum", how="left")
+            df_master = pd.merge(
+                df_sap,
+                df_control[cols_control],
+                on="DocNum",
+                how="left"
+            )
     
-            # --- 4. INTERFAZ DE EDICIÓN ---
-            st.markdown("<p style='color:#8b949e; font-size:12px; font-weight:600; letter-spacing:0.5px;'>MATRIZ DE OPERACIONES ACTIVAS</p>", unsafe_allow_html=True)
-            
-            # Editor interactivo
+            # --- 4. INTERFAZ ---
+            st.markdown(
+                "<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>MATRIZ DE OPERACIONES ACTIVAS</p>",
+                unsafe_allow_html=True
+            )
+    
             df_editado = st.data_editor(
                 df_master,
                 use_container_width=True,
@@ -3528,27 +3550,28 @@ else:
                 hide_index=True
             )
     
-            # Espacio para el botón de acción
             st.markdown("<br>", unsafe_allow_html=True)
-            
-            if st.button("💾 SINCRONIZAR CAMBIOS A GOOGLE DRIVE", use_container_width=True):
+    
+            if st.button("💾 SINCRONIZAR CAMBIOS A GOOGLE SHEETS", use_container_width=True):
                 with st.spinner("Guardando en CONTROL_NEXION..."):
                     try:
-                        # Extraemos solo las columnas de control para guardar
                         datos_save = df_editado[cols_control].dropna(subset=["DocNum"])
                         datos_save = datos_save[datos_save["DocNum"] != "nan"]
-                        
-                        # Actualización en Drive (Mantenemos formato Excel)
-                        conn.update(worksheet="CONTROL_NEXION", data=datos_save)
-                        
+    
+                        conn.update(
+                            worksheet="CONTROL_NEXION",
+                            data=datos_save
+                        )
+    
                         st.toast("Base de datos actualizada", icon="✅")
                         st.cache_data.clear()
                         st.rerun()
+    
                     except Exception as e:
                         st.error(f"Error al sincronizar: {e}")
     
         except Exception as e:
-            st.error(f"Falla de conexión o formato: {e}")
+            st.error(f"Error de conexión con la base de datos: {e}")
     
         # --- 5. PIE DE PÁGINA ---
         st.markdown("""
@@ -3559,6 +3582,7 @@ else:
     
    
         
+
 
 
 
