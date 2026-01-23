@@ -3397,20 +3397,33 @@ else:
         # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
         st.markdown("""
             <style>
-                /* Fondo general */
-                .stApp { background-color: #1e2124 !important; }
-
-                /* Estilo de los Inputs */
+                /*CONFIGURACIÓN DE LOS INPUTS (Buscadores y Fechas) */
                 .stTextInput input, .stDateInput input {
-                    background-color: #161b22 !important;
-                    color: white !important;
-                    border: 1px solid #334155 !important;
-                    border-radius: 8px !important;
+                    background-color: #161b22 !important; /* Fondo oscuro */
+                    color: #ffffff !important;           /* Texto blanco */
+                    border: 1px solid #334155 !important; /* Borde inicial gris azulado */
+                    border-radius: 10px !important;      /* Redondeado ergonómico */
+                    box-shadow: none !important;         /* Quita sombras extrañas */
                 }
-
-                /* Brillo Verde Neón al seleccionar el cuadro */
+            
+                /* ELIMINAR EL BORDE ROJO DE ERROR/VALIDACIÓN */
+                .stTextInput input:invalid, .stTextInput input:out-of-range {
+                    border-color: #334155 !important; 
+                    box-shadow: none !important;
+                }
+            
+                /* EFECTO AL HACER CLIC: SOLO VERDE NEÓN */
                 .stTextInput input:focus {
-                    border-color: #00ffa2 !important;
+                    border-color: #00ffa2 !important;     /* Borde Verde Neón */
+                    box-shadow: 0 0 10px rgba(0, 255, 162, 0.2) !important; /* Brillo suave verde */
+                    outline: none !important;
+                }
+            
+                /* COLOR DE LAS ETIQUETAS (Texto arriba de los cuadros) */
+                .stTextInput label, .stDateInput label {
+                    color: #94a3b8 !important; 
+                    font-size: 13px !important;
+                    font-weight: 600 !important;
                 }
                 
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
@@ -3646,6 +3659,7 @@ else:
     
    
         
+
 
 
 
