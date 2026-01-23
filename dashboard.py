@@ -3519,6 +3519,12 @@ else:
             df_sap = conn.read(worksheet="DATOS_SAP")
             df_sap.columns = df_sap.columns.str.strip()
             
+            # --- CORRECCIÓN DE FECHAS (DE NÚMEROS A DÍA/MES/AÑO) ---
+            if "DocDate" in df_sap.columns:
+                # Primero convertimos a número y luego a fecha real
+                df_sap["DocDate"] = pd.to_numeric(df_sap["DocDate"], errors='coerce')
+                df_sap["DocDate"] = pd.to_datetime(df_sap["DocDate"], unit='D', origin='1899-12-30').dt.date
+
             try:
                 df_control = conn.read(worksheet="CONTROL_NEXION")
                 df_control.columns = df_control.columns.str.strip()
@@ -3527,12 +3533,15 @@ else:
     
             cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
             for col in cols_control:
-                if col not in df_control.columns: df_control[col] = None
+                if col not in df_control.columns: 
+                    df_control[col] = None
     
             df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.strip()
             df_control["DocNum"] = df_control["DocNum"].astype(str).str.strip()
     
             df_master = pd.merge(df_sap, df_control[cols_control], on="DocNum", how="left")
+            
+            # REORDENAMIENTO: Tus columnas de control al principio, luego lo de SAP
             cols_sap_restantes = [c for c in df_sap.columns if c != "DocNum"]
             df_master = df_master[cols_control + cols_sap_restantes]
     
@@ -3615,6 +3624,7 @@ else:
     
    
         
+
 
 
 
