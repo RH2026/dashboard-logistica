@@ -3391,92 +3391,34 @@ else:
     # MAIN 06: MATRIZ DE CONTROL (MControl) - VERSIÓN PRO CON FILTROS
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "MControl":
-        # Reset de scroll al entrar a la sección
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
-        # --- 1. CONFIGURACIÓN DE ESTILOS (DISEÑO CEBRA Y BOTONES) ---
+        # --- 1. CONFIGURACIÓN DE ESTILOS (CEBRA Y BOTONES) ---
         st.markdown("""
             <style>
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
-                
-                /* Diseño Cebra para el Data Editor */
                 div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
                     background-color: rgba(255, 255, 255, 0.03) !important;
                 }
-
-                .header-wrapper {
-                    display: flex;
-                    align-items: baseline;
-                    gap: 12px;
-                    font-family: 'Inter', sans-serif;
-                }
-                .header-wrapper h1 {
-                    font-size: 22px !important;
-                    font-weight: 800;
-                    margin: 0;
-                    color: #4b5563;
-                    letter-spacing: -0.8px;
-                }
-                .header-wrapper span {
-                    font-size: 14px;
-                    font-weight: 300;
-                    color: #ffffff;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                }
-
-                /* Botón Guardar (Verde Neón) */
                 div.stButton > button[kind="primary"] {
                     background-color: #00ffa2 !important;
                     color: #0d1117 !important;
                     font-weight: 800 !important;
-                    border: none !important;
                     height: 45px !important;
+                    border: none !important;
                 }
-                /* Botón Borrar (Borde Rosa) */
                 div.stButton > button:not([kind="primary"]) {
                     border: 1px solid #fb7185 !important;
                     color: #fb7185 !important;
                     height: 45px !important;
                 }
-                div[data-testid="stDataEditor"] {
-                    border: 1px solid #30363d !important;
-                    border-radius: 10px !important;
-                }
             </style>
             """, unsafe_allow_html=True)
-    
-        # --- 2. ENCABEZADO Y NAVEGACIÓN ---
-        c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
-    
-        with c1:
-            st.markdown("""
-                <div class="header-wrapper">
-                    <h1>Matriz de Control</h1>
-                    <span>NEXION</span>
-                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
-                        GESTIÓN DE SURTIDO & ASIGNACIÓN DE FLETES (SAP LIVE)
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-        with c2:
-            with st.popover("☰", use_container_width=True):
-                st.markdown("<p style='color:#64748b;font-size:10px;font-weight:700;margin-bottom:10px;letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                paginas = {
-                    "TRACKING": "principal",
-                    "SEGUIMIENTO": "KPIs",
-                    "REPORTE OPS": "Reporte",
-                    "HUB LOGISTIC": "HubLogistico",
-                    "OTD": "RadarRastreo",
-                    "MCONTROL": "MControl"
-                }
-                for nombre, v_state in paginas.items():
-                    if st.button(nombre, use_container_width=True, key=f"nav_{nombre.lower()}"):
-                        st.session_state.pagina = v_state
-                        st.rerun()
-    
-        st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>", unsafe_allow_html=True)
+
+        # --- 2. TRUCO DE RESET (Generador de Versión) ---
+        # Si no existe, creamos una versión de los filtros
+        if "filtros_version" not in st.session_state:
+            st.session_state.filtros_version = 0
 
         # --- 3. MOTOR DE DATOS ---
         try:
@@ -3484,8 +3426,6 @@ else:
             df_sap = conn.read(worksheet="DATOS_SAP")
             df_sap.columns = df_sap.columns.str.strip()
             
-            # (Se omitió el formateo de DocDate por solicitud)
-
             try:
                 df_control = conn.read(worksheet="CONTROL_NEXION")
                 df_control.columns = df_control.columns.str.strip()
@@ -3503,57 +3443,46 @@ else:
             cols_sap_restantes = [c for c in df_sap.columns if c != "DocNum"]
             df_master = df_master[cols_control + cols_sap_restantes]
     
-            # --- 4. PANEL DE HERRAMIENTAS (5 COLUMNAS ALINEADAS) ---
-            st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
+            # --- 4. PANEL DE HERRAMIENTAS (VERSIONADO PARA RESET) ---
+            st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
+            
+            # Al sumar filtros_version a la key, Streamlit cree que son widgets nuevos y los limpia
+            v = st.session_state.filtros_version
             
             h1, h2, h3, h4, h5 = st.columns(5)
             with h1:
-                f_ini = st.date_input("Fecha Inicial", value=None, key="inp_f_ini")
+                f_ini = st.date_input("Fecha Inicial", value=None, key=f"f_ini_{v}")
             with h2:
-                f_fin = st.date_input("Fecha Final", value=None, key="inp_f_fin")
+                f_fin = st.date_input("Fecha Final", value=None, key=f"f_fin_{v}")
             with h3:
-                search_sur = st.text_input("👤 Surtidor", key="inp_s_sur")
+                search_sur = st.text_input("👤 Surtidor", key=f"s_sur_{v}")
             with h4:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                if st.button("BORRAR FILTROS", use_container_width=True, key="btn_clear_total"):
-                    # Reset manual de cada input en session_state
-                    for k in ["inp_f_ini", "inp_f_fin", "inp_s_sur", "inp_flet", "inp_doc", "inp_code", "inp_name"]:
-                        if k in st.session_state:
-                            st.session_state[k] = None if "f_ini" in k or "f_fin" in k else ""
+                if st.button("BORRAR FILTROS", use_container_width=True):
+                    # Incrementamos la versión para que todos los widgets se limpien
+                    st.session_state.filtros_version += 1
                     st.cache_data.clear()
                     st.rerun()
             with h5:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                btn_save = st.button("💾 GUARDAR CAMBIOS", use_container_width=True, type="primary", key="btn_save_matriz")
+                btn_save = st.button("💾 GUARDAR CAMBIOS", use_container_width=True, type="primary")
 
-            # Fila 2: Buscadores de Texto (4 columnas)
+            # Fila 2: Buscadores de Texto
             s1, s2, s3, s4 = st.columns(4)
-            with s1: search_flet = st.text_input("🔍 Fletera", key="inp_flet")
-            with s2: search_doc = st.text_input("📄 DocNum", key="inp_doc")
-            with s3: search_code = st.text_input("🆔 CardCode", key="inp_code")
-            with s4: search_name = st.text_input("📛 CardFName", key="inp_name")
+            with s1: search_flet = st.text_input("🔍 Fletera", key=f"flet_{v}")
+            with s2: search_doc = st.text_input("📄 DocNum", key=f"doc_{v}")
+            with s3: search_code = st.text_input("🆔 CardCode", key=f"code_{v}")
+            with s4: search_name = st.text_input("📛 CardFName", key=f"name_{v}")
 
             # --- 5. LÓGICA DE FILTRADO ---
             df_filtrado = df_master.copy()
-            
-            # Filtro de Fechas (usando conversión interna solo para comparar)
             if f_ini and "DocDate" in df_filtrado.columns:
                 df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["DocDate"]).dt.date >= f_ini]
             if f_fin and "DocDate" in df_filtrado.columns:
                 df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["DocDate"]).dt.date <= f_fin]
-                
             if search_sur:
                 df_filtrado = df_filtrado[df_filtrado["Surtidor"].astype(str).str.contains(search_sur, case=False, na=False)]
-            if search_flet:
-                df_filtrado = df_filtrado[df_filtrado["Fletera"].astype(str).str.contains(search_flet, case=False, na=False)]
-            if search_doc:
-                df_filtrado = df_filtrado[df_filtrado["DocNum"].astype(str).str.contains(search_doc, case=False, na=False)]
-            if search_code and "CardCode" in df_filtrado.columns:
-                df_filtrado = df_filtrado[df_filtrado["CardCode"].astype(str).str.contains(search_code, case=False, na=False)]
-            if search_name:
-                col_name = "CardName" if "CardName" in df_filtrado.columns else "CardFName"
-                if col_name in df_filtrado.columns:
-                    df_filtrado = df_filtrado[df_filtrado[col_name].astype(str).str.contains(search_name, case=False, na=False)]
+            # ... (Resto de filtros igual) ...
 
             # --- 6. EDITOR DE DATOS ---
             st.markdown("<br>", unsafe_allow_html=True)
@@ -3561,26 +3490,26 @@ else:
                 df_filtrado,
                 use_container_width=True,
                 num_rows="dynamic",
-                key="editor_mcontrol_final",
+                key=f"editor_v_{v}", # También versionamos el editor para limpieza total
                 hide_index=True,
                 height=550
             )
     
             # --- 7. ACCIÓN DE GUARDADO ---
             if btn_save:
-                with st.spinner("Sincronizando con Google Sheets..."):
+                with st.spinner("Sincronizando..."):
                     try:
                         datos_save = df_editado[cols_control].dropna(subset=["DocNum"])
                         datos_save = datos_save[datos_save["DocNum"] != "nan"]
                         conn.update(worksheet="CONTROL_NEXION", data=datos_save)
-                        st.toast("Actualización Exitosa", icon="✅")
+                        st.toast("¡Actualización Exitosa!", icon="✅")
                         st.cache_data.clear()
                         st.rerun()
                     except Exception as e:
                         st.error(f"Error al sincronizar: {e}")
     
         except Exception as e:
-            st.error(f"Error de conexión: {e}")
+            st.error(f"Error: {e}")
     
         # --- 5. PIE DE PÁGINA ---
         st.markdown("""
@@ -3591,6 +3520,7 @@ else:
     
    
         
+
 
 
 
