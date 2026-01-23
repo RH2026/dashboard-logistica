@@ -3395,7 +3395,7 @@ else:
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
         # --- 1. CONFIGURACIÓN DE ESTILOS (CEBRA Y BOTONES) ---
-        st.markdown("""
+        st.markdown("""           
             <style>
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
                 
@@ -3403,7 +3403,7 @@ else:
                 div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
                     background-color: rgba(255, 255, 255, 0.03) !important;
                 }
-
+            
                 .header-wrapper {
                     display: flex;
                     align-items: baseline;
@@ -3424,25 +3424,44 @@ else:
                     text-transform: uppercase;
                     letter-spacing: 1px;
                 }
-
-                /* Botón Guardar (Verde Neón) */
+            
+                /* Botón Guardar (Verde Neón con Bordes Redondeados) */
                 div.stButton > button[kind="primary"] {
                     background-color: #00ffa2 !important;
                     color: #0d1117 !important;
                     font-weight: 800 !important;
                     border: none !important;
                     height: 45px !important;
+                    border-radius: 10px !important; /* Bordes suaves */
+                    transition: all 0.3s ease !important;
                 }
-                /* Botón Borrar (Borde Rosa) */
+                div.stButton > button[kind="primary"]:hover {
+                    box-shadow: 0 0 15px rgba(0, 255, 162, 0.3) !important;
+                    transform: translateY(-1px);
+                }
+            
+                /* Botón Borrar (Borde Rosa con Bordes Redondeados) */
                 div.stButton > button:not([kind="primary"]) {
                     border: 1px solid #fb7185 !important;
                     color: #fb7185 !important;
                     height: 45px !important;
+                    border-radius: 10px !important; /* Bordes suaves */
+                    background-color: transparent !important;
+                    transition: all 0.3s ease !important;
                 }
+                div.stButton > button:not([kind="primary"]):hover {
+                    background-color: rgba(251, 113, 133, 0.05) !important;
+                }
+            
                 div[data-testid="stDataEditor"] {
                     border: 1px solid #30363d !important;
-                    border-radius: 10px !important;
+                    border-radius: 12px !important; /* Redondeado en la tabla */
                     background-color: #0d1117 !important;
+                }
+            
+                /* Estilo para los campos de texto (Opcional, para redondearlos también) */
+                .stTextInput input, .stDateInput input {
+                    border-radius: 8px !important;
                 }
             </style>
             """, unsafe_allow_html=True)
@@ -3581,6 +3600,7 @@ else:
     
    
         
+
 
 
 
