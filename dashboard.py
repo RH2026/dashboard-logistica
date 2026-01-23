@@ -3512,12 +3512,14 @@ else:
                 f_fin = st.date_input("Fecha Final", value=None)
             with f3:
                 st.markdown("<br>", unsafe_allow_html=True)
-                if st.button("BORRAR FILTROS", use_container_width=True, kind="secondary"):
+                # Eliminamos 'kind' para evitar el error de versión
+                if st.button("BORRAR FILTROS", use_container_width=True, key="btn_limpiar_filtros"):
                     st.cache_data.clear()
                     st.rerun()
             with f4:
                 st.markdown("<br>", unsafe_allow_html=True)
-                btn_save = st.button("💾 GUARDAR Y ACTUALIZAR", use_container_width=True, type="primary")
+                # El botón principal se queda con type="primary" que es estándar
+                btn_save = st.button("💾 GUARDAR Y ACTUALIZAR", use_container_width=True, type="primary", key="btn_guardar_nexion")
 
             # Fila 2: Buscadores de Texto
             s1, s2, s3, s4 = st.columns(4)
@@ -3579,6 +3581,7 @@ else:
     
    
         
+
 
 
 
