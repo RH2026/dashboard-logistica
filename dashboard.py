@@ -261,8 +261,8 @@ elif not st.session_state.splash_completado:
                         border: 3px solid rgba(255, 255, 255, 0.1);
                         border-top: 3px solid {color_neon};
                         border-radius: 50%;
-                        width: 50px;
-                        height: 50px;
+                        width: 120px;
+                        height: 120px;
                         animation: spin 1s linear infinite;
                         margin: 0 auto 30px auto;
                         box-shadow: 0 0 15px {color_neon}33;
@@ -3606,6 +3606,7 @@ else:
     
    
         
+
 
 
 
