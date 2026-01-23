@@ -3565,10 +3565,16 @@ else:
                 t_col = "CardFName" if "CardFName" in df_filtrado.columns else "CardName"
                 df_filtrado = df_filtrado[df_filtrado[t_col].astype(str).str.contains(search_name, case=False, na=False)]
 
-            # --- 6. EDITOR DE DATOS ---
+            # --- 1. LIMPIEZA DE DATOS (FORZAR TEXTO EN PYTHON) ---
+            # Esto convierte las columnas a "String" (Texto) antes de pasarlas a la tabla
+            columnas_texto = ["FLETERA", "SURTIDOR", "ESTATUS", "OBSERVACIONES"]
+            for col in columnas_texto:
+                if col in df_filtrado.columns:
+                    df_filtrado[col] = df_filtrado[col].astype(str).replace(['None', 'nan', '0', '0.0'], '')
+    
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # --- CONFIGURACIÓN PARA DESBLOQUEAR ESCRITURA DE LETRAS ---
+            # --- 2. CONFIGURACIÓN DEL EDITOR ---
             df_editado = st.data_editor(
                 df_filtrado,
                 use_container_width=True,
@@ -3577,13 +3583,10 @@ else:
                 hide_index=True,
                 height=550,
                 column_config={
-                    # Forzamos estas columnas a aceptar texto (letras y números)
                     "FLETERA": st.column_config.TextColumn("FLETERA"),
                     "SURTIDOR": st.column_config.TextColumn("SURTIDOR"),
                     "ESTATUS": st.column_config.TextColumn("ESTATUS"),
                     "OBSERVACIONES": st.column_config.TextColumn("OBSERVACIONES"),
-                    
-                    # Opcional: Bloqueamos DocNum para que no se altere la referencia
                     "DocNum": st.column_config.Column(disabled=True)
                 }
             )
@@ -3619,6 +3622,7 @@ else:
     
    
         
+
 
 
 
