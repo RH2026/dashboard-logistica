@@ -3601,31 +3601,27 @@ else:
     
             
             # --- 7. ACCIÓN DE GUARDADO (TOTALMENTE CORREGIDO) ---
+            # --- 7. ACCIÓN DE GUARDADO (CONFIRMACIÓN GARANTIZADA) ---
             if btn_save:
                 with st.spinner("Sincronizando con Google Sheets..."):
                     try:
-                        # 1. Extraer solo las columnas de la bitácora
+                        # 1. Preparamos los datos
                         datos_save = df_editado[cols_control].copy()
-                        
-                        # 2. Limpiar filas vacías para no saturar el Sheet
                         datos_save = datos_save.dropna(subset=["DocNum"])
                         datos_save = datos_save[datos_save["DocNum"] != "nan"]
                         
-                        # 3. Mandar a la nube
+                        # 2. Mandamos a la nube
                         conn.update(worksheet="CONTROL_NEXION", data=datos_save)
                         
-                        # 4. Avisos visuales (Si llegamos aquí, sí se guardó)
-                        st.balloons()
-                        st.success("✅ ¡CAMBIOS GUARDADOS EN LA NUBE CON ÉXITO!")
+                        # 3. NOTIFICACIÓN TOAST (Esta sí se queda visible al recargar)
+                        st.toast("✅ ¡CAMBIOS GUARDADOS EN LA NUBE!", icon="💾")
                         
-                        # 5. Limpiar memoria y refrescar
+                        # 4. Limpiar memoria y refrescar
                         st.cache_data.clear()
                         st.rerun()
+                        
                     except Exception as e:
                         st.error(f"❌ Error al guardar: {e}")
-
-        except Exception as e:
-            st.error(f"⚠️ Error general en el motor de datos: {e}")
 
         # --- 8. PIE DE PÁGINA (Alineado al borde izquierdo para que siempre se vea) ---
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -3637,6 +3633,7 @@ else:
     
    
         
+
 
 
 
