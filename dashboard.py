@@ -3601,29 +3601,26 @@ else:
     
             
             # --- 7. ACCIÓN DE GUARDADO (TOTALMENTE CORREGIDO) ---
-            # --- 7. ACCIÓN DE GUARDADO (CONFIRMACIÓN GARANTIZADA) ---
             if btn_save:
                 with st.spinner("Sincronizando con Google Sheets..."):
                     try:
-                        # 1. Preparamos los datos
                         datos_save = df_editado[cols_control].copy()
                         datos_save = datos_save.dropna(subset=["DocNum"])
                         datos_save = datos_save[datos_save["DocNum"] != "nan"]
                         
-                        # 2. Mandamos a la nube
                         conn.update(worksheet="CONTROL_NEXION", data=datos_save)
                         
-                        # 3. NOTIFICACIÓN TOAST (Esta sí se queda visible al recargar)
                         st.toast("✅ ¡CAMBIOS GUARDADOS EN LA NUBE!", icon="💾")
-                        
-                        # 4. Limpiar memoria y refrescar
                         st.cache_data.clear()
                         st.rerun()
-                        
                     except Exception as e:
                         st.error(f"❌ Error al guardar: {e}")
 
-        # --- 8. PIE DE PÁGINA (Alineado al borde izquierdo para que siempre se vea) ---
+        except Exception as e:
+            # ESTA LÍNEA ES LA QUE CIERRA EL BLOQUE PRINCIPAL DEL MOTOR
+            st.error(f"⚠️ Error en el motor de datos: {e}")
+
+        # --- 8. PIE DE PÁGINA (FUERA DEL BLOQUE TRY) ---
         st.markdown("<br><br>", unsafe_allow_html=True)
         st.markdown("""
             <div style='text-align:center; color:#475569; font-size:10px; border-top: 1px solid rgba(148, 163, 184, 0.1); padding-top:10px;'>
@@ -3633,6 +3630,7 @@ else:
     
    
         
+
 
 
 
