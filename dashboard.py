@@ -3574,21 +3574,26 @@ else:
     
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # --- 2. CONFIGURACIÓN DEL EDITOR ---
+           # --- SOLUCIÓN DE FUERZA BRUTA PARA DESBLOQUEAR ESCRITURA ---
+            # 1. Creamos una copia limpia para no afectar otros procesos
+            df_para_editar = df_filtrado.copy()
+    
+            # 2. Forzamos a que TODO sea texto y limpiamos valores basura
+            for col in df_para_editar.columns:
+                df_para_editar[col] = df_para_editar[col].astype(str).replace(['None', 'nan', '0', '0.0', 'NaN'], '')
+    
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # 3. Editor con configuración mínima (Sin restricciones)
             df_editado = st.data_editor(
-                df_filtrado,
+                df_para_editar,
                 use_container_width=True,
                 num_rows="dynamic",
-                key=f"ed_v_{v}",
+                key=f"ed_v_{v}_{st.session_state.get('usuario_actual', 'user')}", # Llave dinámica única
                 hide_index=True,
                 height=550,
-                column_config={
-                    "FLETERA": st.column_config.TextColumn("FLETERA"),
-                    "SURTIDOR": st.column_config.TextColumn("SURTIDOR"),
-                    "ESTATUS": st.column_config.TextColumn("ESTATUS"),
-                    "OBSERVACIONES": st.column_config.TextColumn("OBSERVACIONES"),
-                    "DocNum": st.column_config.Column(disabled=True)
-                }
+                # Quitamos el column_config por un momento para ver si eso está bloqueando
+                # y dejamos que Streamlit lo trate todo como texto libre
             )
         
             
@@ -3622,6 +3627,7 @@ else:
     
    
         
+
 
 
 
