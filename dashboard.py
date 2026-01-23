@@ -3403,10 +3403,12 @@ else:
                     background-color: rgba(255, 255, 255, 0.03) !important;
                 }
 
-                /* 2. INPUTS: FONDO NATURAL Y BORDES ORIGINALES */
+                /* 2. INPUTS: FONDO GRIS MÁS CLARO Y BORDES ORIGINALES */
                 .stTextInput input, .stDateInput input {
+                    background-color: #2d333b !important; /* Gris más claro que el fondo general */
+                    color: #ffffff !important;           /* Texto blanco para legibilidad */
                     border-radius: 8px !important;
-                    /* Quitamos fondo oscuro y forzado de bordes neón */
+                    border: 1px solid #444c56 !important; /* Borde sutil que permite ver alertas */
                 }
                 
                 /* 3. ENCABEZADO ORIGINAL RIGOBERTO */
@@ -3431,7 +3433,7 @@ else:
                     letter-spacing: 1px;
                 }
 
-                /* 4. BOTONES: MANTENEMOS ESTILO REDONDEADO PERO LIMPIO */
+                /* 4. BOTONES: ESTILO REDONDEADO LIMPIO */
                 div.stButton > button[kind="primary"] {
                     background-color: #00ffa2 !important;
                     color: #0d1117 !important;
@@ -3612,6 +3614,7 @@ else:
     
    
         
+
 
 
 
