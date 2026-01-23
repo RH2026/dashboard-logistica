@@ -3567,15 +3567,27 @@ else:
 
             # --- 6. EDITOR DE DATOS ---
             st.markdown("<br>", unsafe_allow_html=True)
+            
+            # --- CONFIGURACIÓN PARA DESBLOQUEAR ESCRITURA DE LETRAS ---
             df_editado = st.data_editor(
                 df_filtrado,
                 use_container_width=True,
                 num_rows="dynamic",
                 key=f"ed_v_{v}",
                 hide_index=True,
-                height=550
+                height=550,
+                column_config={
+                    # Forzamos estas columnas a aceptar texto (letras y números)
+                    "FLETERA": st.column_config.TextColumn("FLETERA"),
+                    "SURTIDOR": st.column_config.TextColumn("SURTIDOR"),
+                    "ESTATUS": st.column_config.TextColumn("ESTATUS"),
+                    "OBSERVACIONES": st.column_config.TextColumn("OBSERVACIONES"),
+                    
+                    # Opcional: Bloqueamos DocNum para que no se altere la referencia
+                    "DocNum": st.column_config.Column(disabled=True)
+                }
             )
-    
+        
             
             # --- 7. ACCIÓN DE GUARDADO (TOTALMENTE CORREGIDO) ---
             if btn_save:
@@ -3607,6 +3619,7 @@ else:
     
    
         
+
 
 
 
