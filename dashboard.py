@@ -3564,7 +3564,7 @@ else:
                     st.rerun()
             with h5:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                btn_save = st.button("💾 GUARDAR CAMBIOS", use_container_width=True, type="primary", key=f"save_{v}")
+                btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary", key=f"save_{v}")
 
             # Fila 2: Buscadores de Texto (4 columnas)
             s1, s2, s3, s4 = st.columns(4)
@@ -3624,6 +3624,7 @@ else:
     
    
         
+
 
 
 
