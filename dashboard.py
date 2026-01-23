@@ -3394,14 +3394,16 @@ else:
         # Reset de scroll al entrar a la sección
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
-        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
+        # --- 1. CONFIGURACIÓN DE ESTILOS (DISEÑO CEBRA Y BOTONES) ---
         st.markdown("""
             <style>
-                .block-container {
-                    padding-top: 1rem !important;
-                    padding-bottom: 0rem !important;
-                    max-width: 95% !important;
+                .block-container { padding-top: 1rem !important; max-width: 95% !important; }
+                
+                /* Diseño Cebra para el Data Editor */
+                div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
+                    background-color: rgba(255, 255, 255, 0.03) !important;
                 }
+
                 .header-wrapper {
                     display: flex;
                     align-items: baseline;
@@ -3422,7 +3424,8 @@ else:
                     text-transform: uppercase;
                     letter-spacing: 1px;
                 }
-                /* Botón Guardar (Primario) */
+
+                /* Botón Guardar (Verde Neón) */
                 div.stButton > button[kind="primary"] {
                     background-color: #00ffa2 !important;
                     color: #0d1117 !important;
@@ -3430,7 +3433,7 @@ else:
                     border: none !important;
                     height: 45px !important;
                 }
-                /* Botón Borrar (Estilo manual para evitar error de versión) */
+                /* Botón Borrar (Borde Rosa) */
                 div.stButton > button:not([kind="primary"]) {
                     border: 1px solid #fb7185 !important;
                     color: #fb7185 !important;
@@ -3439,7 +3442,6 @@ else:
                 div[data-testid="stDataEditor"] {
                     border: 1px solid #30363d !important;
                     border-radius: 10px !important;
-                    background-color: #0d1117 !important;
                 }
             </style>
             """, unsafe_allow_html=True)
@@ -3475,17 +3477,15 @@ else:
                         st.rerun()
     
         st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>", unsafe_allow_html=True)
-    
+
         # --- 3. MOTOR DE DATOS ---
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
             df_sap = conn.read(worksheet="DATOS_SAP")
             df_sap.columns = df_sap.columns.str.strip()
             
-            # FORMATO DE FECHA PARA DocDate
-            if "DocDate" in df_sap.columns:
-                df_sap["DocDate"] = pd.to_datetime(df_sap["DocDate"]).dt.date
-    
+            # (Se omitió el formateo de DocDate por solicitud)
+
             try:
                 df_control = conn.read(worksheet="CONTROL_NEXION")
                 df_control.columns = df_control.columns.str.strip()
@@ -3494,13 +3494,11 @@ else:
     
             cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
             for col in cols_control:
-                if col not in df_control.columns:
-                    df_control[col] = None
+                if col not in df_control.columns: df_control[col] = None
     
             df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.strip()
             df_control["DocNum"] = df_control["DocNum"].astype(str).str.strip()
     
-            # UNIFICACIÓN Y REORDENAMIENTO
             df_master = pd.merge(df_sap, df_control[cols_control], on="DocNum", how="left")
             cols_sap_restantes = [c for c in df_sap.columns if c != "DocNum"]
             df_master = df_master[cols_control + cols_sap_restantes]
@@ -3508,40 +3506,42 @@ else:
             # --- 4. PANEL DE HERRAMIENTAS (5 COLUMNAS ALINEADAS) ---
             st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
             
-            # Fila 1: Los 5 elementos del mismo tamaño
             h1, h2, h3, h4, h5 = st.columns(5)
             with h1:
-                f_ini = st.date_input("Fecha Inicial", value=None, key="fini")
+                f_ini = st.date_input("Fecha Inicial", value=None, key="inp_f_ini")
             with h2:
-                f_fin = st.date_input("Fecha Final", value=None, key="ffin")
+                f_fin = st.date_input("Fecha Final", value=None, key="inp_f_fin")
             with h3:
-                search_sur = st.text_input("Filtrar Surtidor", key="s_sur")
+                search_sur = st.text_input("👤 Surtidor", key="inp_s_sur")
             with h4:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                if st.button("BORRAR FILTROS", use_container_width=True, key="btn_clear"):
+                if st.button("BORRAR FILTROS", use_container_width=True, key="btn_clear_total"):
+                    # Reset manual de cada input en session_state
+                    for k in ["inp_f_ini", "inp_f_fin", "inp_s_sur", "inp_flet", "inp_doc", "inp_code", "inp_name"]:
+                        if k in st.session_state:
+                            st.session_state[k] = None if "f_ini" in k or "f_fin" in k else ""
                     st.cache_data.clear()
                     st.rerun()
             with h5:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                btn_save = st.button("💾 GUARDAR Y ACTUALIZAR", use_container_width=True, type="primary", key="btn_save")
+                btn_save = st.button("💾 GUARDAR CAMBIOS", use_container_width=True, type="primary", key="btn_save_matriz")
 
-            # Fila 2: Buscadores de Texto (4 columnas abajo)
+            # Fila 2: Buscadores de Texto (4 columnas)
             s1, s2, s3, s4 = st.columns(4)
-            with s1: search_flet = st.text_input("Filtrar Fletera")
-            with s2: search_doc = st.text_input("Filtrar DocNum")
-            with s3: search_code = st.text_input("Filtrar CardCode")
-            with s4: search_name = st.text_input("Filtrar CardFName")
+            with s1: search_flet = st.text_input("🔍 Fletera", key="inp_flet")
+            with s2: search_doc = st.text_input("📄 DocNum", key="inp_doc")
+            with s3: search_code = st.text_input("🆔 CardCode", key="inp_code")
+            with s4: search_name = st.text_input("📛 CardFName", key="inp_name")
 
             # --- 5. LÓGICA DE FILTRADO ---
             df_filtrado = df_master.copy()
             
-            # Filtro de Fechas
+            # Filtro de Fechas (usando conversión interna solo para comparar)
             if f_ini and "DocDate" in df_filtrado.columns:
-                df_filtrado = df_filtrado[df_filtrado["DocDate"] >= f_ini]
+                df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["DocDate"]).dt.date >= f_ini]
             if f_fin and "DocDate" in df_filtrado.columns:
-                df_filtrado = df_filtrado[df_filtrado["DocDate"] <= f_fin]
+                df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["DocDate"]).dt.date <= f_fin]
                 
-            # Filtros de Texto
             if search_sur:
                 df_filtrado = df_filtrado[df_filtrado["Surtidor"].astype(str).str.contains(search_sur, case=False, na=False)]
             if search_flet:
@@ -3568,19 +3568,19 @@ else:
     
             # --- 7. ACCIÓN DE GUARDADO ---
             if btn_save:
-                with st.spinner("Guardando en CONTROL_NEXION..."):
+                with st.spinner("Sincronizando con Google Sheets..."):
                     try:
                         datos_save = df_editado[cols_control].dropna(subset=["DocNum"])
                         datos_save = datos_save[datos_save["DocNum"] != "nan"]
                         conn.update(worksheet="CONTROL_NEXION", data=datos_save)
-                        st.toast("Base de datos actualizada", icon="✅")
+                        st.toast("Actualización Exitosa", icon="✅")
                         st.cache_data.clear()
                         st.rerun()
                     except Exception as e:
                         st.error(f"Error al sincronizar: {e}")
     
         except Exception as e:
-            st.error(f"Error de conexión con la base de datos: {e}")
+            st.error(f"Error de conexión: {e}")
     
         # --- 5. PIE DE PÁGINA ---
         st.markdown("""
@@ -3591,6 +3591,7 @@ else:
     
    
         
+
 
 
 
