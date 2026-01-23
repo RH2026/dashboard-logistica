@@ -3391,31 +3391,38 @@ else:
     # MAIN 06: MATRIZ DE CONTROL (MControl) - VERSIÓN PRO CON FILTROS
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "MControl":
-        # Reset de scroll al entrar a la sección
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
         # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
         st.markdown("""
             <style>
-                /*CONFIGURACIÓN DE LOS INPUTS (Buscadores y Fechas) */
+                /* FONDO GENERAL DE LA APP (Gris Oxford) */
+                .stApp { 
+                    background-color: #1e2124 !important; 
+                }
+                
+                .block-container { padding-top: 1rem !important; max-width: 95% !important; }
+
+                /* CONFIGURACIÓN DE LOS INPUTS (FONDO OSCURO Y BORDE VERDE) */
                 .stTextInput input, .stDateInput input {
-                    background-color: #161b22 !important; /* Fondo oscuro */
-                    color: #ffffff !important;           /* Texto blanco */
-                    border: 1px solid #334155 !important; /* Borde inicial gris azulado */
-                    border-radius: 10px !important;      /* Redondeado ergonómico */
-                    box-shadow: none !important;         /* Quita sombras extrañas */
+                    background-color: #161b22 !important; 
+                    color: #ffffff !important;           
+                    border: 1px solid #334155 !important; 
+                    border-radius: 10px !important;      
+                    box-shadow: none !important;         
                 }
             
-                /* ELIMINAR EL BORDE ROJO DE ERROR/VALIDACIÓN */
-                .stTextInput input:invalid, .stTextInput input:out-of-range {
+                /* ELIMINAR CUALQUIER BORDE ROJO DE ERROR/VALIDACIÓN */
+                .stTextInput input:invalid, .stTextInput input:out-of-range,
+                .stTextInput input:focus:invalid {
                     border-color: #334155 !important; 
                     box-shadow: none !important;
                 }
             
-                /* EFECTO AL HACER CLIC: SOLO VERDE NEÓN */
+                /* EFECTO FOCUS: SOLO VERDE NEÓN AL ESCRIBIR */
                 .stTextInput input:focus {
-                    border-color: #00ffa2 !important;     /* Borde Verde Neón */
-                    box-shadow: 0 0 10px rgba(0, 255, 162, 0.2) !important; /* Brillo suave verde */
+                    border-color: #00ffa2 !important;     
+                    box-shadow: 0 0 10px rgba(0, 255, 162, 0.2) !important; 
                     outline: none !important;
                 }
             
@@ -3426,14 +3433,12 @@ else:
                     font-weight: 600 !important;
                 }
                 
-                .block-container { padding-top: 1rem !important; max-width: 95% !important; }
-                
-                /* Diseño Cebra para la Tabla */
+                /* DISEÑO CEBRA TABLA */
                 div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
                     background-color: rgba(255, 255, 255, 0.03) !important;
                 }
-                                
-                /* ESTILO DEL ENCABEZADO ORIGINAL */
+            
+                /* ENCABEZADO */
                 .header-wrapper {
                     display: flex;
                     align-items: baseline;
@@ -3444,18 +3449,18 @@ else:
                     font-size: 22px !important;
                     font-weight: 800;
                     margin: 0;
-                    color: #4b5563; /* Gris original */
+                    color: #4b5563; 
                     letter-spacing: -0.8px;
                 }
                 .header-wrapper span {
                     font-size: 14px;
                     font-weight: 300;
-                    color: #ffffff; /* Blanco original */
+                    color: #ffffff; 
                     text-transform: uppercase;
                     letter-spacing: 1px;
                 }
             
-                /* BOTÓN GUARDAR (VERDE NEÓN REDONDEADO) */
+                /* BOTÓN GUARDAR */
                 div.stButton > button[kind="primary"] {
                     background-color: #00ffa2 !important;
                     color: #0d1117 !important;
@@ -3469,7 +3474,7 @@ else:
                     box-shadow: 0 0 15px rgba(0, 255, 162, 0.3) !important;
                 }
             
-                /* BOTONES DE ACCIÓN Y BORRADO (GRIS PIZARRA REDONDEADO) */
+                /* BOTONES ACCIÓN/BORRAR */
                 div.stButton > button:not([kind="primary"]) {
                     border: 1px solid #475569 !important;
                     color: #f1f5f9 !important;
@@ -3478,7 +3483,7 @@ else:
                     border-radius: 10px !important;
                 }
             
-                /* MENÚ HAMBURGUESA GRIS (POPOVER) */
+                /* MENÚ HAMBURGUESA */
                 div[data-testid="stPopover"] > button {
                     background-color: #1e293b !important;
                     border: 1px solid #334155 !important;
@@ -3487,26 +3492,11 @@ else:
                     height: 38px !important;
                 }
                 
-                /* BOTONES INTERNOS DEL MENÚ */
-                div[data-testid="stPopoverContent"] button {
-                    background-color: #1e293b !important;
-                    border: 1px solid #475569 !important;
-                    border-radius: 8px !important;
-                    color: #f1f5f9 !important;
-                    margin-bottom: 5px !important;
-                    text-transform: uppercase;
-                    font-size: 12px !important;
-                    font-weight: 600 !important;
-                }
-
+                /* DISEÑO EDITOR DE DATOS */
                 div[data-testid="stDataEditor"] {
                     border: 1px solid #30363d !important;
                     border-radius: 12px !important;
                     background-color: #0d1117 !important;
-                }
-            
-                .stTextInput input, .stDateInput input {
-                    border-radius: 8px !important;
                 }
             </style>
             """, unsafe_allow_html=True)
@@ -3659,6 +3649,7 @@ else:
     
    
         
+
 
 
 
