@@ -3610,7 +3610,7 @@ else:
                         
                         conn.update(worksheet="CONTROL_NEXION", data=datos_save)
                         
-                        st.toast("✅ ¡CAMBIOS GUARDADOS EN LA NUBE!", icon="💾")
+                        st.toast("✅ ¡CAMBIOS GUARDADOS EN LA NUBE!")
                         st.cache_data.clear()
                         st.rerun()
                     except Exception as e:
@@ -3630,6 +3630,7 @@ else:
     
    
         
+
 
 
 
