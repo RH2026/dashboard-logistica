@@ -3404,6 +3404,17 @@ else:
                     background-color: rgba(255, 255, 255, 0.03) !important;
                 }
 
+                /* CAMBIAR EL FONDO DE LA APLICACIÓN COMPLETAMENTE */
+                .stApp {
+                    background-color: #1e2124 !important; /* Un gris oscuro muy elegante, menos pesado que el negro */
+                    /* Si prefieres un azul muy oscuro, usa: #0f172a */
+                }
+            
+                /* ASEGURAR QUE EL TEXTO DE LOS ENCABEZADOS SIGA SIENDO LEGIBLE */
+                .header-wrapper h1 {
+                    color: #e2e8f0 !important; /* Gris muy claro para que resalte en el fondo nuevo */
+                }
+                
                 /* ESTILO DEL ENCABEZADO ORIGINAL */
                 .header-wrapper {
                     display: flex;
@@ -3630,6 +3641,7 @@ else:
     
    
         
+
 
 
 
