@@ -3455,42 +3455,7 @@ else:
                     border: 1px solid #30363d !important;
                     border-radius: 12px !important;
                 }
-
-                /* --- CARGADOR NATIVO CORREGIDO (SIN BLOQUEO DE CLICS) --- */
                 
-                [data-testid="stStatusWidget"] {
-                    background-color: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                    visibility: hidden !important;
-                    height: 0px !important;
-                    /* EVITA QUE BLOQUEE LA PANTALLA SI NO ESTÁ ACTIVO */
-                    pointer-events: none !important; 
-                }
-
-                [data-testid="stStatusWidget"] > div {
-                    display: none !important;
-                }
-
-                /* --- TU CÍRCULO GENIAL (SOLO ACTIVO AL CARGAR) --- */
-                [data-testid="stStatusWidget"]::after {
-                    content: "";
-                    visibility: visible !important;
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    width: 90px;
-                    height: 90px;
-                    border: 8px solid rgba(255, 255, 255, 0.1);
-                    border-top: 8px solid #00ffa2;
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                    z-index: 999999;
-                    box-shadow: 0 0 30px rgba(0, 255, 162, 0.5);
-                    /* Permite que los clics pasen a través si por alguna razón se queda pegado */
-                    pointer-events: none !important; 
-                }
             </style>
             """, unsafe_allow_html=True)
 
@@ -3642,6 +3607,7 @@ else:
     
    
         
+
 
 
 
