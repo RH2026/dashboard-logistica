@@ -3394,6 +3394,7 @@ else:
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
         # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
+        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA (INPUTS MÁS CLAROS) ---
         st.markdown("""
             <style>
                 /* FONDO GENERAL DE LA APP (Gris Oxford) */
@@ -3403,19 +3404,20 @@ else:
                 
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
 
-                /* CONFIGURACIÓN DE LOS INPUTS (FONDO OSCURO Y BORDE VERDE) */
+                /* CONFIGURACIÓN DE LOS INPUTS (FONDO GRIS MEDIO Y BORDE VERDE) */
                 .stTextInput input, .stDateInput input {
-                    background-color: #161b22 !important; 
+                    background-color: #2d333b !important; /* Un poco más claro para mejor visibilidad */
                     color: #ffffff !important;           
-                    border: 1px solid #334155 !important; 
+                    border: 1px solid #444c56 !important; /* Borde sutil */
                     border-radius: 10px !important;      
                     box-shadow: none !important;         
+                    transition: all 0.2s ease-in-out !important;
                 }
             
                 /* ELIMINAR CUALQUIER BORDE ROJO DE ERROR/VALIDACIÓN */
                 .stTextInput input:invalid, .stTextInput input:out-of-range,
                 .stTextInput input:focus:invalid {
-                    border-color: #334155 !important; 
+                    border-color: #444c56 !important; 
                     box-shadow: none !important;
                 }
             
@@ -3423,12 +3425,13 @@ else:
                 .stTextInput input:focus {
                     border-color: #00ffa2 !important;     
                     box-shadow: 0 0 10px rgba(0, 255, 162, 0.2) !important; 
+                    background-color: #22272e !important; /* Se oscurece ligeramente al escribir */
                     outline: none !important;
                 }
             
                 /* COLOR DE LAS ETIQUETAS (Texto arriba de los cuadros) */
                 .stTextInput label, .stDateInput label {
-                    color: #94a3b8 !important; 
+                    color: #adb5bd !important; 
                     font-size: 13px !important;
                     font-weight: 600 !important;
                 }
@@ -3438,7 +3441,7 @@ else:
                     background-color: rgba(255, 255, 255, 0.03) !important;
                 }
             
-                /* ENCABEZADO */
+                /* ENCABEZADO ORIGINAL */
                 .header-wrapper {
                     display: flex;
                     align-items: baseline;
@@ -3468,10 +3471,6 @@ else:
                     border: none !important;
                     height: 45px !important;
                     border-radius: 10px !important;
-                    transition: all 0.3s ease !important;
-                }
-                div.stButton > button[kind="primary"]:hover {
-                    box-shadow: 0 0 15px rgba(0, 255, 162, 0.3) !important;
                 }
             
                 /* BOTONES ACCIÓN/BORRAR */
@@ -3649,6 +3648,7 @@ else:
     
    
         
+
 
 
 
