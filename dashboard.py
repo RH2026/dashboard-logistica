@@ -3396,45 +3396,42 @@ else:
         # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
         st.markdown("""
             <style>
+                /* 1. CONFIGURACIÓN DE CONTENEDOR Y TABLA */
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
-
-                /* INPUTS: GRIS OSCURO (MÁS CLARO QUE EL NEGRO) */
-                .stTextInput input, .stDateInput input {
-                    background-color: #2d333b !important; /* Gris oscuro profesional */
-                    color: #ffffff !important;           /* Texto blanco para contraste */
-                    border: 1px solid #444c56 !important; 
-                    border-radius: 10px !important;
-                }
-
-                /* EFECTO FOCUS: VERDE NEÓN AL ESCRIBIR */
-                .stTextInput input:focus {
-                    border-color: #00ffa2 !important;
-                    box-shadow: 0 0 5px rgba(0, 255, 162, 0.3) !important;
-                    outline: none !important;
-                }
-
-                /* DISEÑO CEBRA TABLA */
+                
                 div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
                     background-color: rgba(255, 255, 255, 0.03) !important;
                 }
 
-                /* RESTAURACIÓN DE COLORES DE ENCABEZADO */
+                /* 2. INPUTS: FONDO NATURAL Y BORDES ORIGINALES */
+                .stTextInput input, .stDateInput input {
+                    border-radius: 8px !important;
+                    /* Quitamos fondo oscuro y forzado de bordes neón */
+                }
+                
+                /* 3. ENCABEZADO ORIGINAL RIGOBERTO */
+                .header-wrapper {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 12px;
+                    font-family: 'Inter', sans-serif;
+                }
                 .header-wrapper h1 {
                     font-size: 22px !important;
                     font-weight: 800;
                     margin: 0;
-                    color: #4b5563 !important; /* Gris original restaurado */
+                    color: #4b5563; /* Gris original */
                     letter-spacing: -0.8px;
                 }
                 .header-wrapper span {
                     font-size: 14px;
                     font-weight: 300;
-                    color: #ffffff !important; /* Blanco original restaurado */
+                    color: #ffffff; /* Blanco original */
                     text-transform: uppercase;
                     letter-spacing: 1px;
                 }
 
-                /* BOTÓN GUARDAR (VERDE NEÓN) */
+                /* 4. BOTONES: MANTENEMOS ESTILO REDONDEADO PERO LIMPIO */
                 div.stButton > button[kind="primary"] {
                     background-color: #00ffa2 !important;
                     color: #0d1117 !important;
@@ -3444,7 +3441,6 @@ else:
                     border-radius: 10px !important;
                 }
 
-                /* BOTONES ACCIÓN/BORRAR */
                 div.stButton > button:not([kind="primary"]) {
                     border: 1px solid #475569 !important;
                     color: #f1f5f9 !important;
@@ -3453,12 +3449,17 @@ else:
                     border-radius: 10px !important;
                 }
 
-                /* MENÚ HAMBURGUESA GRIS PIZARRA */
+                /* 5. MENÚ NAVEGACIÓN (POPOVER) */
                 div[data-testid="stPopover"] > button {
                     background-color: #1e293b !important;
                     border: 1px solid #334155 !important;
                     border-radius: 8px !important;
                     color: white !important;
+                }
+
+                div[data-testid="stDataEditor"] {
+                    border: 1px solid #30363d !important;
+                    border-radius: 12px !important;
                 }
             </style>
             """, unsafe_allow_html=True)
@@ -3611,6 +3612,7 @@ else:
     
    
         
+
 
 
 
