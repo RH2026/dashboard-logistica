@@ -216,7 +216,7 @@ elif not st.session_state.splash_completado:
             mensajes = ["CERRANDO SESIÓN SEGURA", "RESGUARDANDO REGISTROS", "CONEXIÓN FINALIZADA"]
         else:
             mensajes = [
-                f"BIENVENIDO DE VUELTA, <span style='color:white; font-weight:700;'>{usuario_highlight}</span>",
+                f"BIENVENIDO DE VUELTA, <span style='color:white; font-weight:500;'>{usuario_highlight}</span>",
                 "SINCRONIZANDO MANIFIESTOS NEXION",
                 "ACTUALIZANDO ESTATUS DE ENVÍOS",
                 "AUTENTICACIÓN COMPLETADA"
@@ -3606,6 +3606,7 @@ else:
     
    
         
+
 
 
 
