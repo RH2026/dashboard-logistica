@@ -3491,14 +3491,14 @@ else:
         st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>", unsafe_allow_html=True)
 
         # --- 3. MOTOR DE DATOS ---
+        # --- 3. MOTOR DE DATOS ---
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
             df_sap = conn.read(worksheet="DATOS_SAP")
             df_sap.columns = df_sap.columns.str.strip()
             
-            # --- CORRECCIÓN DE FECHAS (DE NÚMEROS A DÍA/MES/AÑO) ---
+            # --- CORRECCIÓN DE FECHAS ---
             if "DocDate" in df_sap.columns:
-                # Primero convertimos a número y luego a fecha real
                 df_sap["DocDate"] = pd.to_numeric(df_sap["DocDate"], errors='coerce')
                 df_sap["DocDate"] = pd.to_datetime(df_sap["DocDate"], unit='D', origin='1899-12-30').dt.date
 
@@ -3518,11 +3518,11 @@ else:
     
             df_master = pd.merge(df_sap, df_control[cols_control], on="DocNum", how="left")
             
-            # REORDENAMIENTO: Tus columnas de control al principio, luego lo de SAP
+            # REORDENAMIENTO
             cols_sap_restantes = [c for c in df_sap.columns if c != "DocNum"]
             df_master = df_master[cols_control + cols_sap_restantes]
     
-            # --- 4. PANEL DE HERRAMIENTAS (5 COLUMNAS ALINEADAS) ---
+            # --- 4. PANEL DE HERRAMIENTAS ---
             v = st.session_state.filtros_version
             st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
             
@@ -3532,7 +3532,7 @@ else:
             with h2:
                 f_fin = st.date_input("Periodo Fin", value=None, key=f"f_b_{v}")
             with h3:
-                search_sur = st.text_input("Operador Log.", key=f"inp_s_{v}", autocomplete="new-password")
+                search_sur = st.text_input("Operador Log.", key=f"inp_s_{v}")
             with h4:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
                 if st.button("BORRAR FILTROS", use_container_width=True, key=f"reset_{v}"):
@@ -3543,67 +3543,57 @@ else:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
                 btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary", key=f"save_{v}")
 
-            # Fila 2: Buscadores de Texto (4 columnas)
             s1, s2, s3, s4 = st.columns(4)
-            with s1: search_flet = st.text_input("Transporte", key=f"inp_f_{v}", autocomplete="new-password")
-            with s2: search_doc = st.text_input("Referencia SAP", key=f"inp_d_{v}", autocomplete="new-password")
-            with s3: search_code = st.text_input("Cod. Cliente", key=f"inp_c_{v}", autocomplete="new-password")
-            with s4: search_name = st.text_input("Razón Social", key=f"inp_n_{v}", autocomplete="new-password")
+            with s1: search_flet = st.text_input("Transporte", key=f"inp_f_{v}")
+            with s2: search_doc = st.text_input("Referencia SAP", key=f"inp_d_{v}")
+            with s3: search_code = st.text_input("Cod. Cliente", key=f"inp_c_{v}")
+            with s4: search_name = st.text_input("Razón Social", key=f"inp_n_{v}")
 
-            # --- 5. LÓGICA DE FILTRADO ---
+            # --- 5. LÓGICA DE FILTRADO CORREGIDA (NOMBRES DE COLUMNAS) ---
             df_filtrado = df_master.copy()
+            
             if f_ini and "DocDate" in df_filtrado.columns:
                 df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["DocDate"]).dt.date >= f_ini]
             if f_fin and "DocDate" in df_filtrado.columns:
                 df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["DocDate"]).dt.date <= f_fin]
                 
-            if search_sur: df_filtrado = df_filtrado[df_filtrado["Surtidor"].astype(str).str.contains(search_sur, case=False, na=False)]
-            if search_flet: df_filtrado = df_filtrado[df_filtrado["Fletera"].astype(str).str.contains(search_flet, case=False, na=False)]
-            if search_doc: df_filtrado = df_filtrado[df_filtrado["DocNum"].astype(str).str.contains(search_doc, case=False, na=False)]
-            if search_code: df_filtrado = df_filtrado[df_filtrado["CardCode"].astype(str).str.contains(search_code, case=False, na=False)]
+            # Filtramos usando los nombres correctos: "Surtidor" y "Fletera"
+            if search_sur: 
+                df_filtrado = df_filtrado[df_filtrado["Surtidor"].astype(str).str.contains(search_sur, case=False, na=False)]
+            if search_flet: 
+                df_filtrado = df_filtrado[df_filtrado["Fletera"].astype(str).str.contains(search_flet, case=False, na=False)]
+            if search_doc: 
+                df_filtrado = df_filtrado[df_filtrado["DocNum"].astype(str).str.contains(search_doc, case=False, na=False)]
+            if search_code: 
+                df_filtrado = df_filtrado[df_filtrado["CardCode"].astype(str).str.contains(search_code, case=False, na=False)]
             if search_name:
                 t_col = "CardFName" if "CardFName" in df_filtrado.columns else "CardName"
                 df_filtrado = df_filtrado[df_filtrado[t_col].astype(str).str.contains(search_name, case=False, na=False)]
 
-            # --- 1. LIMPIEZA DE DATOS (FORZAR TEXTO EN PYTHON) ---
-            # Esto convierte las columnas a "String" (Texto) antes de pasarlas a la tabla
-            columnas_texto = ["FLETERA", "SURTIDOR", "ESTATUS", "OBSERVACIONES"]
-            for col in columnas_texto:
+            # --- 6. FORZAR TEXTO PARA EVITAR BLOQUEO DE NÚMEROS ---
+            for col in cols_control:
                 if col in df_filtrado.columns:
-                    df_filtrado[col] = df_filtrado[col].astype(str).replace(['None', 'nan', '0', '0.0'], '')
-    
+                    df_filtrado[col] = df_filtrado[col].astype(str).replace(['None', 'nan', '0', '0.0', 'NaN'], '')
+
             st.markdown("<br>", unsafe_allow_html=True)
             
-           # --- SOLUCIÓN DE FUERZA BRUTA PARA DESBLOQUEAR ESCRITURA ---
-            # 1. Creamos una copia limpia para no afectar otros procesos
-            df_para_editar = df_filtrado.copy()
-    
-            # 2. Forzamos a que TODO sea texto y limpiamos valores basura
-            for col in df_para_editar.columns:
-                df_para_editar[col] = df_para_editar[col].astype(str).replace(['None', 'nan', '0', '0.0', 'NaN'], '')
-    
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            # 3. Editor con configuración mínima (Sin restricciones)
+            # --- 7. EDITOR DE DATOS ---
             df_editado = st.data_editor(
-                df_para_editar,
+                df_filtrado,
                 use_container_width=True,
                 num_rows="dynamic",
-                key=f"ed_v_{v}_{st.session_state.get('usuario_actual', 'user')}", # Llave dinámica única
+                key=f"ed_v_{v}_{st.session_state.get('usuario_actual', 'user')}",
                 hide_index=True,
-                height=550,
-                # Quitamos el column_config por un momento para ver si eso está bloqueando
-                # y dejamos que Streamlit lo trate todo como texto libre
+                height=550
             )
-        
             
-            # --- 7. ACCIÓN DE GUARDADO (TOTALMENTE CORREGIDO) ---
+            # --- 8. ACCIÓN DE GUARDADO ---
             if btn_save:
                 with st.spinner("Sincronizando con Google Sheets..."):
                     try:
                         datos_save = df_editado[cols_control].copy()
                         datos_save = datos_save.dropna(subset=["DocNum"])
-                        datos_save = datos_save[datos_save["DocNum"] != "nan"]
+                        datos_save = datos_save[datos_save["DocNum"] != ""]
                         
                         conn.update(worksheet="CONTROL_NEXION", data=datos_save)
                         
@@ -3614,7 +3604,6 @@ else:
                         st.error(f"❌ Error al guardar: {e}")
 
         except Exception as e:
-            # ESTA LÍNEA ES LA QUE CIERRA EL BLOQUE PRINCIPAL DEL MOTOR
             st.error(f"⚠️ Error en el motor de datos: {e}")
 
         # --- 8. PIE DE PÁGINA (FUERA DEL BLOQUE TRY) ---
@@ -3627,6 +3616,7 @@ else:
     
    
         
+
 
 
 
