@@ -3600,20 +3600,25 @@ else:
             )
     
             # --- 7. ACCIÓN DE GUARDADO ---
+            # --- 7. ACCIÓN DE GUARDADO (MEJORADA) ---
             if btn_save:
-                with st.spinner("Sincronizando..."):
+                with st.spinner("Escribiendo en Google Sheets..."):
                     try:
+                        # Limpiamos datos antes de mandar
                         datos_save = df_editado[cols_control].dropna(subset=["DocNum"])
-                        datos_save = datos_save[datos_save["DocNum"] != "nan"]
+                        
+                        # MANDAR A GOOGLE SHEETS
                         conn.update(worksheet="CONTROL_NEXION", data=datos_save)
-                        st.toast("Actualización Exitosa", icon="✅")
+                        
+                        # CONFIRMACIÓN VISUAL FUERTE
+                        st.success("¡Cambios guardados con éxito en la nube!")
+                        st.balloons() # Tira globos para que no haya duda de que se guardó
+                        
+                        # LIMPIAR CACHÉ PARA QUE AL RECARGAR VEAS LO NUEVO
                         st.cache_data.clear()
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Error: {e}")
-    
-        except Exception as e:
-            st.error(f"Error: {e}")
+                        st.error(f"¡Cuidado! No se pudo guardar: {e}")
     
         # --- 5. PIE DE PÁGINA ---
         st.markdown("""
@@ -3624,6 +3629,7 @@ else:
     
    
         
+
 
 
 
