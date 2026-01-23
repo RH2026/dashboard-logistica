@@ -256,30 +256,16 @@ elif not st.session_state.splash_completado:
                         align-items: center;
                     }}
 
-                    /* --- CÍRCULO DE CARGA NEXION PREMIUM (NEÓN GRUESO) --- */
+                    /* --- CÍRCULO DE CARGA (SPINNER) --- */
                     .loader-circle {{
-                        position: relative;
-                        width: 80px;
-                        height: 80px;
+                        border: 3px solid rgba(255, 255, 255, 0.1);
+                        border-top: 3px solid {color_neon};
                         border-radius: 50%;
-                        /* El fondo del círculo con brillo */
-                        background: radial-gradient(farthest-side, {color_fondo_st} 90%, transparent 100%),
-                                    conic-gradient(transparent 30%, {color_neon});
-                        animation: spin 0.8s linear infinite;
+                        width: 50px;
+                        height: 50px;
+                        animation: spin 1s linear infinite;
                         margin: 0 auto 30px auto;
-                        box-shadow: 0 0 25px 5px {color_neon}44;
-                    }}
-
-                    /* Efecto de máscara para que solo se vea el borde grueso */
-                    .loader-circle::before {{
-                        content: "";
-                        position: absolute;
-                        top: 8px;   /* Aquí controlas el grosor (más bajo = más grueso) */
-                        left: 8px;
-                        right: 8px;
-                        bottom: 8px;
-                        background: {color_fondo_st};
-                        border-radius: 50%;
+                        box-shadow: 0 0 15px {color_neon}33;
                     }}
 
                     @keyframes spin {{
@@ -3620,6 +3606,7 @@ else:
     
    
         
+
 
 
 
