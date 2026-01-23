@@ -3397,24 +3397,29 @@ else:
         # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
         st.markdown("""
             <style>
+                /* Fondo general */
+                .stApp { background-color: #1e2124 !important; }
+
+                /* Estilo de los Inputs */
+                .stTextInput input, .stDateInput input {
+                    background-color: #161b22 !important;
+                    color: white !important;
+                    border: 1px solid #334155 !important;
+                    border-radius: 8px !important;
+                }
+
+                /* Brillo Verde Neón al seleccionar el cuadro */
+                .stTextInput input:focus {
+                    border-color: #00ffa2 !important;
+                }
+                
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
                 
                 /* Diseño Cebra para la Tabla */
                 div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
                     background-color: rgba(255, 255, 255, 0.03) !important;
                 }
-
-                /* CAMBIAR EL FONDO DE LA APLICACIÓN COMPLETAMENTE */
-                .stApp {
-                    background-color: #1e2124 !important; /* Un gris oscuro muy elegante, menos pesado que el negro */
-                    /* Si prefieres un azul muy oscuro, usa: #0f172a */
-                }
-            
-                /* ASEGURAR QUE EL TEXTO DE LOS ENCABEZADOS SIGA SIENDO LEGIBLE */
-                .header-wrapper h1 {
-                    color: #e2e8f0 !important; /* Gris muy claro para que resalte en el fondo nuevo */
-                }
-                
+                                
                 /* ESTILO DEL ENCABEZADO ORIGINAL */
                 .header-wrapper {
                     display: flex;
@@ -3641,6 +3646,7 @@ else:
     
    
         
+
 
 
 
