@@ -2793,352 +2793,134 @@ else:
     # MAIN 4: LOGISTICS INTELLIGENCE HUB (MOTOR DE RECOMENDACIÓN
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "HubLogistico":
-        import streamlit as st
-        import pandas as pd
-        import datetime
-        import os
-        import io
-        import zipfile
-        from pypdf import PdfReader, PdfWriter
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.pagesizes import letter
+    import streamlit as st
+    import pandas as pd
+    import datetime
+    import os
+    import io
+    import zipfile
+    import re
+    import unicodedata
+    from pypdf import PdfReader, PdfWriter
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+    from streamlit_gsheets import GSheetsConnection
 
-        # --- FUNCIÓN DE LIMPIEZA TÁCTICA (Evita fallos de recomendación) ---
-        def limpiar_texto(texto):
-            if not isinstance(texto, str): return str(texto)
-            # Quita acentos, convierte a mayúsculas y limpia espacios
-            texto = unicodedata.normalize('NFKD', texto).encode('ascii', 'ignore').decode('utf-8')
-            return texto.upper().strip()
-        
-        # --- RUTAS Y ESTILOS ---
-        archivo_log = "log_maestro_acumulado.csv"
-        
-        if 'db_acumulada' not in st.session_state:
-            if os.path.exists(archivo_log):
-                st.session_state.db_acumulada = pd.read_csv(archivo_log)
-            else:
-                st.session_state.db_acumulada = pd.DataFrame()     
-        
-        # --- ENCABEZADO MINIMALISTA (ESTILO PRO) ---
-        # --- 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS (Sube el contenido y estiliza el menú) ---
-        st.markdown("""
-            <style>
-                .block-container {
-                    padding-top: 1rem !important;
-                    padding-bottom: 0rem !important;
-                    max-width: 95% !important;
-                }
+    # --- FUNCIÓN DE LIMPIEZA TÁCTICA ---
+    def limpiar_texto(texto):
+        if not isinstance(texto, str): return str(texto)
+        texto = unicodedata.normalize('NFKD', texto).encode('ascii', 'ignore').decode('utf-8')
+        return texto.upper().strip()
 
-                .header-wrapper {
-                    display: flex;
-                    align-items: baseline;
-                    gap: 12px;
-                    font-family: 'Inter', sans-serif;
-                }
+    # --- CONEXIÓN A DATOS_SAP (Google Sheets) ---
+    conn = st.connection("gsheets", type=GSheetsConnection)
 
-                /* TITULO PRINCIPAL: Gris Oscuro */
-                .header-wrapper h1 {
-                    font-size: 22px !important;
-                    font-weight: 800;
-                    margin: 0;
-                    color: #4b5563; /* Gris oscuro */
-                    letter-spacing: -0.8px;
-                }
-
-                /* INDICADOR: Blanco */
-                .header-wrapper span {
-                    font-size: 14px;
-                    font-weight: 300;
-                    color: #ffffff; /* Blanco */
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                }
-
-                /* BOTÓN DE MENÚ MINIMALISTA */
-                div[data-testid="stPopover"] > button {
-                    background-color: transparent !important;
-                    border: 1px solid rgba(0, 255, 162, 0.3) !important;
-                    padding: 2px 10px !important;
-                    border-radius: 6px !important;
-                    height: 32px !important;
-                    transition: all 0.3s ease;
-                }
-                
-                div[data-testid="stPopover"] > button:hover {
-                    border: 1px solid #00ffa2 !important;
-                    box-shadow: 0 0 10px rgba(0, 255, 162, 0.2);
-                }
-
-                div[data-testid="stPopoverContent"] button {
-                    text-align: left !important;
-                    justify-content: flex-start !important;
-                    border: none !important;
-                    background: transparent !important;
-                    font-size: 13px !important;
-                    padding: 8px 10px !important;
-                }
-
-                div[data-testid="stPopoverContent"] button:hover {
-                    color: #00ffa2 !important;
-                    background: rgba(0, 255, 162, 0.05) !important;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-
-        # --- 2. POSICIONAMIENTO DEL ENCABEZADO ---
-        c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
-
-        with c1:
-            st.markdown("""
-                <div class="header-wrapper">
-                    <h1>LOGISTIC</h1>
-                    <span>HUB</span>
-                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
-                        LOGÍSTICA & RENDIMIENTO
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-
-        with c2:
-            with st.popover("☰", use_container_width=True):
-                st.markdown("<p style='color:#64748b; font-size:10px; font-weight:700; margin-bottom:10px; letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                
-                paginas = {
-                    "TRACKING": ("principal", "kpi_btn_aac"),
-                    "SEGUIMIENTO": ("KPIs", "kpi_btn_kpi"),
-                    "REPORTE OPS": ("Reporte", "kpi_btn_rep"),
-                    "HUB LOGISTIC": ("HubLogistico", "kpi_btn_hub"),
-                    "OTD": ("RadarRastreo", "kpi_btn_radar")
-                }
-
-                for nombre, (v_state, v_key) in paginas.items():
-                    if st.button(nombre, use_container_width=True, key=v_key):
-                        st.session_state.pagina = v_state
-                        st.rerun()
-
-        # Línea divisoria
-        st.markdown("<hr style='margin: 8px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)       
-        
-        # --- FUNCIONES TÉCNICAS (SELLADO) ---
-        # --- RANGOS DE CÓDIGOS POSTALES DE LA ZMG (PERÍMETROS DE SEGURIDAD) ---
-        RANGOS_CP_AMG = [
-            (44100, 44990),  # Guadalajara
-            (45010, 45245),  # Zapopan
-            (45400, 45429),  # Tonalá
-            (45500, 45595)   # Tlaquepaque
-        ]
-        
-        archivo_log = "log_maestro_acumulado.csv"
-        
-        # --- FUNCIONES TÉCNICAS (SELLADO CON CALIBRACIÓN) ---
-        def generar_sellos_fisicos(lista_textos, x, y):
-            output = PdfWriter()
-            for texto in lista_textos:
-                packet = io.BytesIO()
-                can = canvas.Canvas(packet, pagesize=letter)
-                can.setFont("Helvetica-Bold", 11)
-                # Posicionamiento dinámico basado en sliders
-                can.drawString(x, y, f"{str(texto).upper()}")
-                can.save()
-                packet.seek(0)
-                output.add_page(PdfReader(packet).pages[0])
-            out_io = io.BytesIO()
-            output.write(out_io)
-            return out_io.getvalue()
-        
-        def marcar_pdf_digital(pdf_file, texto_sello, x, y):
-            packet = io.BytesIO()
-            can = canvas.Canvas(packet, pagesize=letter)
-            can.setFont("Helvetica-Bold", 11)
-            can.drawString(x, y, f"{str(texto_sello).upper()}")
-            can.save()
-            packet.seek(0)
-            new_pdf = PdfReader(packet)
-            existing_pdf = PdfReader(pdf_file)
-            output = PdfWriter()
-            page = existing_pdf.pages[0]
-            page.merge_page(new_pdf.pages[0])
-            output.add_page(page)
-            for i in range(1, len(existing_pdf.pages)):
-                output.add_page(existing_pdf.pages[i])
-            out_io = io.BytesIO()
-            output.write(out_io)
-            return out_io.getvalue()
-        
-        # --- RADAR DE DETECCIÓN LOCAL ---
-        def detectar_local(direccion):
-            dir_str = str(direccion)
-            cps_encontrados = re.findall(r'\b\d{5}\b', dir_str)
-            for cp_str in cps_encontrados:
-                try:
-                    cp_num = int(cp_str)
-                    for inicio, fin in RANGOS_CP_AMG:
-                        if inicio <= cp_num <= fin:
-                            return "LOCAL"
-                except:
-                    continue
-            return None
-        
-        # --- MOTOR DE RECOMENDACIÓN ---
-        @st.cache_data
-        def motor_logistico_central():
-            try:
-                if os.path.exists("matriz_historial.csv"):
-                    h = pd.read_csv("matriz_historial.csv", encoding='utf-8-sig')
-                    h.columns = h.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
-                    c_pre = [c for c in h.columns if 'PRECIO' in c][0]
-                    c_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
-                    c_dir = [c for c in h.columns if 'DIRECCION' in c][0]
-                    h[c_pre] = pd.to_numeric(h[c_pre], errors='coerce').fillna(0)
-                    mejores = h.loc[h.groupby(c_dir)[c_pre].idxmin()]
-                    return mejores.set_index(c_dir)[c_flet].to_dict(), mejores.set_index(c_dir)[c_pre].to_dict()
-            except Exception as e:
-                st.error(f"Error en matriz: {e}")
+    # --- MOTOR DE RECOMENDACIÓN (Pestaña HISTORIAL) ---
+    @st.cache_data(ttl=300)
+    def motor_logistico_gsheets():
+        try:
+            h = conn.read(spreadsheet="DATOS_SAP", worksheet="HISTORIAL")
+            h.columns = h.columns.str.strip().str.upper()
+            h['ADDRESS2'] = h['ADDRESS2'].apply(limpiar_texto)
+            c_pre = [c for c in h.columns if 'PRECIO' in c][0]
+            c_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
+            h[c_pre] = pd.to_numeric(h[c_pre], errors='coerce').fillna(0)
+            mejores = h.loc[h.groupby('ADDRESS2')[c_pre].idxmin()]
+            return mejores.set_index('ADDRESS2')[c_flet].to_dict(), mejores.set_index('ADDRESS2')[c_pre].to_dict()
+        except Exception as e:
+            st.error(f"Error en matriz historial: {e}")
             return {}, {}
+
+    d_flet, d_price = motor_logistico_gsheets()
+
+    # --- ESTILOS CSS (Tu diseño original) ---
+    st.markdown("""
+        <style>
+            .block-container { padding-top: 1rem !important; max-width: 95% !important; }
+            .header-wrapper { display: flex; align-items: baseline; gap: 12px; font-family: 'Inter', sans-serif; }
+            .header-wrapper h1 { font-size: 22px !important; font-weight: 800; color: #4b5563; }
+            .header-wrapper span { font-size: 14px; font-weight: 300; color: #ffffff; text-transform: uppercase; }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # --- ENCABEZADO Y NAVEGACIÓN ---
+    c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
+    with c1:
+        st.markdown('<div class="header-wrapper"><h1>LOGISTIC</h1><span>HUB</span></div>', unsafe_allow_html=True)
+    with c2:
+        with st.popover("☰", use_container_width=True):
+            if st.button("TRACKING", use_container_width=True): st.session_state.pagina = "principal"; st.rerun()
+            if st.button("HUB LOGISTIC", use_container_width=True): st.session_state.pagina = "HubLogistico"; st.rerun()
+
+    st.markdown("<hr style='margin: 8px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
+
+    # --- FILTRADO DE DOCUMENTOS SAP ---
+    with st.spinner("Leyendo DATOS_SAP..."):
+        df_sap = conn.read(spreadsheet="DATOS_SAP", worksheet="DATOS_SAP")
+        df_sap.columns = df_sap.columns.str.strip().str.upper()
+        df_sap['DOCNUM'] = pd.to_numeric(df_sap['DOCNUM'], errors='coerce')
+
+    st.markdown("### 🔍 Rango de Folios")
+    f1, f2 = st.columns(2)
+    with f1:
+        doc_inicio = st.number_input("Desde DocNum:", value=int(df_sap['DOCNUM'].min()))
+    with f2:
+        doc_fin = st.number_input("Hasta DocNum:", value=int(df_sap['DOCNUM'].max()))
+
+    # --- PROCESAMIENTO MINIMALISTA ---
+    # Solo renderizamos las columnas clave que pediste
+    columnas_base = ['DOCNUM', 'CARDNAME', 'ADDRESS2']
+    df_mini = df_sap[(df_sap['DOCNUM'] >= doc_inicio) & (df_sap['DOCNUM'] <= doc_fin)][columnas_base].copy()
+
+    if not df_mini.empty:
+        df_mini['RECOMENDACION'] = df_mini['ADDRESS2'].apply(lambda x: d_flet.get(limpiar_texto(x), "SIN HISTORIAL"))
+        df_mini['COSTO'] = df_mini['ADDRESS2'].apply(lambda x: d_price.get(limpiar_texto(x), 0.0))
+        df_mini['FECHA_HORA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+
+        modo_edicion = st.toggle("🔓 Activar modo edición")
         
-        d_flet, d_price = motor_logistico_central()
-        
-        # --- ESTILOS PERSONALIZADOS ---
-        st.markdown("""
-            <style>
-            .main { background-color: #0e1117; }
-            div[data-testid="stPopover"] > button {
-                background-color: #0d1117 !important; border: 1px solid #00ffa2 !important;
-                padding: 5px 15px !important; border-radius: 8px !important;
-            }
-            .footer-minimal {
-                position: fixed; left: 0; bottom: 0; width: 100%;
-                color: #555; text-align: center; font-size: 8px; padding: 10px;
-            }
-            </style>
-            """, unsafe_allow_html=True)
-        
-        # TÍTULO Y LÍNEA DE PODER
-        
-        
-        if 'db_acumulada' not in st.session_state:
-            st.session_state.db_acumulada = pd.read_csv(archivo_log) if os.path.exists(archivo_log) else pd.DataFrame()
-        
-        # --- CARGA Y PROCESAMIENTO ---
-        file_p = st.file_uploader("1. SUBIR ARCHIVO ERP (CSV)", type="csv")
-        
-        if file_p:
-            if "archivo_actual" not in st.session_state or st.session_state.archivo_actual != file_p.name:
-                if "df_analisis" in st.session_state: del st.session_state["df_analisis"]
-                st.session_state.archivo_actual = file_p.name
-                st.rerun()
-        
-            try:
-                if "df_analisis" not in st.session_state:
-                    p = pd.read_csv(file_p, encoding='utf-8-sig')
-                    p.columns = p.columns.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.strip().str.upper()
-                    col_id = 'FACTURA' if 'FACTURA' in p.columns else ('DOCNUM' if 'DOCNUM' in p.columns else p.columns[0])
-                    
-                    if 'DIRECCION' in p.columns:
-                        def motor_prioridad(row):
-                            es_local = detectar_local(row['DIRECCION'])
-                            if es_local: return "LOCAL"
-                            return d_flet.get(row['DIRECCION'], "SIN HISTORIAL")
-        
-                        p['RECOMENDACION'] = p.apply(motor_prioridad, axis=1)
-                        p['COSTO'] = p.apply(lambda r: 0.0 if r['RECOMENDACION'] == "LOCAL" else d_price.get(r['DIRECCION'], 0.0), axis=1)
-                        p['FECHA_HORA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                        
-                        cols_sistema = [col_id, 'RECOMENDACION', 'COSTO', 'FECHA_HORA']
-                        otras = [c for c in p.columns if c not in cols_sistema]
-                        st.session_state.df_analisis = p[cols_sistema + otras]
-                
-                st.markdown("### Revisar tabla con recomendaciones")
-                modo_edicion = st.toggle("🔓 Activar modo edición")
-                
-                p_editado = st.data_editor(
-                    st.session_state.df_analisis,
-                    use_container_width=True,
-                    num_rows="fixed",
-                    column_config={
-                        "RECOMENDACION": st.column_config.TextColumn("🚚 RECOMENDACION", disabled=not modo_edicion),
-                        "COSTO": st.column_config.NumberColumn("💰 COSTO", format="$%.2f", disabled=not modo_edicion),
-                    },
-                    key="editor_pro_v11"
-                )
-        
-                c1, c2, c3 = st.columns(3)
-                with c1:
-                    csv_out = p_editado.to_csv(index=False).encode('utf-8-sig')
-                    # AGREGUE: use_container_width=True
-                    st.download_button("Descargar Analisis", csv_out, "Analisis.csv", use_container_width=True)
-                with c2:
-                    # ESTE YA DEBE TENER: use_container_width=True
-                    if st.button("Fijar cambios en la tabla", use_container_width=True):
-                        st.session_state.df_analisis = p_editado
-                        st.toast("Cambios fijados", icon="📌")
-                with c3:
-                    id_guardado = f"guardado_{st.session_state.archivo_actual}"
-                    if st.session_state.get(id_guardado, False):
-                        # PARA EL BOTÓN DESHABILITADO TAMBIÉN: use_container_width=True
-                        st.button("✅ Registros Asegurados", use_container_width=True, disabled=True)
-                    else:
-                        if st.button("Guardar registros", use_container_width=True):
-                            ant = pd.read_csv(archivo_log) if os.path.exists(archivo_log) else pd.DataFrame()
-                            acum = pd.concat([ant, p_editado], ignore_index=True)
-                            acum.to_csv(archivo_log, index=False, encoding='utf-8-sig')
-                            st.session_state.db_acumulada = acum
-                            st.session_state[id_guardado] = True
-                            st.snow()
-                            st.rerun()
-        
-            except Exception as e:
-                st.error(f"Error en procesamiento: {e}")
-        
-        # --- SECCIÓN DE SELLADO (ORDEN VERTICAL POR BLOQUES) ---
+        p_editado = st.data_editor(
+            df_mini,
+            use_container_width=True,
+            column_config={
+                "DOCNUM": st.column_config.NumberColumn("Folio", disabled=True),
+                "CARDNAME": st.column_config.TextColumn("Cliente", disabled=True),
+                "ADDRESS2": st.column_config.TextColumn("Dirección", disabled=True),
+                "RECOMENDACION": st.column_config.TextColumn("🚚 RECOMENDACION", disabled=not modo_edicion),
+                "COSTO": st.column_config.NumberColumn("💰 COSTO", format="$%.2f", disabled=not modo_edicion),
+            },
+            key="editor_gsheets_v1"
+        )
+
+        # --- SECCIÓN DE SELLADO ---
         st.markdown("---")
-        st.markdown("<h3 style='font-size: 16px; color: white; margin-bottom: 10px;'> Sistema de impresión de fleteras en factura</h3>", unsafe_allow_html=True)
-        
-        # PANEL DE CALIBRACIÓN DE POSICIÓN
         with st.expander("⚙️ PANEL DE CALIBRACIÓN DEL SELLO"):
             col_x, col_y = st.columns(2)
-            with col_x:
-                ajuste_x = st.slider("Eje X (Izquierda - Derecha)", 0, 612, 510, help="Eje horizontal: 0 es izquierda total.")
-            with col_y:
-                ajuste_y = st.slider("Eje Y (Abajo - Arriba)", 0, 792, 760, help="Eje vertical: 792 es el tope superior.")
-        
-        if not st.session_state.db_acumulada.empty:
-            # --- SOBREIMPRESIÓN ---
-            st.markdown("<p style='font-size: 16px; font-weight: bold; color: #FFFFFF; margin-bottom: 0px;'>Sobreimpresión (FÍSICA)</p>", unsafe_allow_html=True)
-            st.info("Genera sellos para imprimir sobre papel físico.")
+            ajuste_x = col_x.slider("Eje X", 0, 612, 510)
+            ajuste_y = col_y.slider("Eje Y", 0, 792, 760)
+
+        c1, c2 = st.columns(2)
+        with c1:
             if st.button("Generar PDF con fletera", use_container_width=True):
-                sellos = p_editado['RECOMENDACION'].tolist() if 'p_editado' in locals() else st.session_state.db_acumulada['RECOMENDACION'].tolist()
+                sellos = p_editado['RECOMENDACION'].tolist()
                 pdf_out = generar_sellos_fisicos(sellos, ajuste_x, ajuste_y)
-                st.download_button("Descargar PDF para Impresora", pdf_out, "Sellos_Fisicos.pdf", "application/pdf", use_container_width=True)
-            
-            st.markdown("<br>", unsafe_allow_html=True) 
+                st.download_button("Descargar Sellos", pdf_out, "Sellos.pdf", "application/pdf", use_container_width=True)
         
-            # --- SELLADO DIGITAL ---
-            st.markdown("<p style='font-size: 16px; font-weight: bold; color: #FFFFFF; margin-bottom: 0px;'>Sellado Digital (PDF)</p>", unsafe_allow_html=True)
-            st.info("Estampa la fletera en sus archivos PDF digitales.")
-            pdfs = st.file_uploader("Suba Facturas en PDF para sellado digital", type="pdf", accept_multiple_files=True)
-            
-            if pdfs:
-                if st.button("Ejecutar Sellado Digital en PDFs", use_container_width=True):
-                    df_referencia = p_editado if 'p_editado' in locals() else st.session_state.db_acumulada
-                    col_fac = df_referencia.columns[0]
-                    mapa = pd.Series(df_referencia.RECOMENDACION.values, index=df_referencia[col_fac].astype(str)).to_dict()
-                    
-                    z_buf = io.BytesIO()
-                    with zipfile.ZipFile(z_buf, "a", zipfile.ZIP_DEFLATED) as zf:
-                        for pdf in pdfs:
-                            f_id = next((f for f in mapa.keys() if f in pdf.name.upper()), None)
-                            if f_id:
-                                zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id], ajuste_x, ajuste_y))
-                    st.download_button("Descargar Facturas Selladas (ZIP)", z_buf.getvalue(), "Facturas_Digitalizadas.zip", use_container_width=True)
-        
-        with st.expander("Ver historial acumulado"):
-            if not st.session_state.db_acumulada.empty:
-                st.dataframe(st.session_state.db_acumulada, use_container_width=True)
-                if st.button("Borrar registros"):
-                    if os.path.exists(archivo_log): os.remove(archivo_log)
-                    st.session_state.db_acumulada = pd.DataFrame()
-                    st.rerun()
+        with c2:
+            pdfs = st.file_uploader("Suba Facturas en PDF", type="pdf", accept_multiple_files=True)
+            if pdfs and st.button("Ejecutar Sellado Digital", use_container_width=True):
+                mapa = pd.Series(p_editado.RECOMENDACION.values, index=p_editado.DOCNUM.astype(str)).to_dict()
+                z_buf = io.BytesIO()
+                with zipfile.ZipFile(z_buf, "a", zipfile.ZIP_DEFLATED) as zf:
+                    for pdf in pdfs:
+                        f_id = next((f for f in mapa.keys() if f in pdf.name), None)
+                        if f_id: zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id], ajuste_x, ajuste_y))
+                st.download_button("Descargar ZIP", z_buf.getvalue(), "Facturas_Selladas.zip", use_container_width=True)
+
+    else:
+        st.warning("No hay datos en el rango seleccionado.")
+
+    st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS HUB - GOOGLE SHEETS LIVE</div>", unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("<div style='text-align:center; color:#475569; font-size:10px; margin-top:20px;'>LOGISTICS INTELLIGENCE UNIT - CONFIDENTIAL</div>", unsafe_allow_html=True)
@@ -3627,6 +3409,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
