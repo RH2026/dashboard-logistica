@@ -3494,34 +3494,41 @@ else:
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
             
-            # Carga de datos con limpieza de columnas inmediata
+            # Carga y Limpieza Preventiva de Columnas
             df_sap = conn.read(worksheet="DATOS_SAP").copy()
-            df_sap.columns = df_sap.columns.str.strip()
+            df_sap.columns = df_sap.columns.astype(str).str.strip() # Limpia espacios en nombres de columnas
             
             df_control = conn.read(worksheet="CONTROL_NEXION").copy()
-            df_control.columns = df_control.columns.str.strip()
+            df_control.columns = df_control.columns.astype(str).str.strip()
 
-            # --- CORRECCIÓN CRÍTICA DE FECHAS ---
+            # --- CORRECCIÓN DE FECHAS ---
             if "DocDate" in df_sap.columns:
-                df_sap["DocDate"] = pd.to_numeric(df_sap["DocDate"], errors='coerce')
-                df_sap["DocDate"] = pd.to_datetime(df_sap["DocDate"], unit='D', origin='1899-12-30').dt.date
+                # Intentar convertir si vienen como números de Excel o strings
+                df_sap["DocDate"] = pd.to_datetime(df_sap["DocDate"], errors='coerce').dt.date
 
-            # --- FORMATEO DE LLAVES (Para que el Merge nunca falle) ---
-            # Convertimos a string, quitamos decimales (.0) y espacios
+            # --- FORMATEO ROBUSTO DE DocNum ---
+            # Verificamos si la columna existe antes de procesarla para evitar el error DocNum
+            if "DocNum" not in df_sap.columns:
+                st.error("❌ La columna 'DocNum' no se encontró en la hoja DATOS_SAP. Verifica el nombre en el Excel.")
+                st.stop()
+            
+            if "DocNum" not in df_control.columns:
+                df_control["DocNum"] = "" # Crear si no existe en la hoja de control
+
+            # Convertimos a string y limpiamos formatos numéricos (.0)
             df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
             df_control["DocNum"] = df_control["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
 
-            # Asegurar que las columnas de control existan en df_control
+            # Asegurar que las columnas de control existan
             cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
             for col in cols_control:
                 if col not in df_control.columns:
                     df_control[col] = ""
 
             # --- UNIÓN DE DATOS (Merge) ---
-            # Usamos 'left' para mantener siempre lo de SAP y traer lo de Control
             df_master = pd.merge(df_sap, df_control[cols_control], on="DocNum", how="left")
             
-            # Rellenar vacíos para que no aparezcan como 'NaN' al filtrar
+            # Rellenar vacíos
             for col in ["Fletera", "Surtidor", "Estatus", "Observaciones"]:
                 df_master[col] = df_master[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
 
@@ -3564,7 +3571,8 @@ else:
             if search_code: df_filtrado = df_filtrado[df_filtrado["CardCode"].astype(str).str.contains(search_code, case=False, na=False)]
             if search_name:
                 t_col = "CardFName" if "CardFName" in df_filtrado.columns else "CardName"
-                df_filtrado = df_filtrado[df_filtrado[t_col].astype(str).str.contains(search_name, case=False, na=False)]
+                if t_col in df_filtrado.columns:
+                    df_filtrado = df_filtrado[df_filtrado[t_col].astype(str).str.contains(search_name, case=False, na=False)]
 
             # --- 6. EDITOR ---
             df_editado = st.data_editor(
@@ -3579,11 +3587,14 @@ else:
             # --- 7. GUARDADO ---
             if btn_save:
                 with st.spinner("Sincronizando..."):
+                    # Solo guardamos las columnas que pertenecen a la matriz de control
                     datos_save = df_editado[cols_control].copy()
-                    datos_save = datos_save[datos_save["DocNum"] != ""]
+                    # Limpiamos filas vacías de DocNum para evitar basura en el Excel
+                    datos_save = datos_save[datos_save["DocNum"].str.strip() != ""]
                     conn.update(worksheet="CONTROL_NEXION", data=datos_save)
                     st.toast("✅ GUARDADO CORRECTO")
                     st.cache_data.clear()
+                    st.session_state.filtros_version += 1
                     st.rerun()
 
         except Exception as e:
@@ -3599,6 +3610,7 @@ else:
     
    
         
+
 
 
 
