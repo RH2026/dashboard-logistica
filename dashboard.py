@@ -3383,133 +3383,212 @@ else:
     # MAIN 06: MATRIZ DE CONTROL (MControl) - VERSIÓN PRO CON FILTROS
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "MControl":
+
     st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
 
-    # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA (SIN CAMBIOS) ---
+    # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA (TU DISEÑO ORIGINAL) ---
     st.markdown("""
         <style>
             .block-container { padding-top: 1rem !important; max-width: 95% !important; }
+
             div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
                 background-color: rgba(255, 255, 255, 0.03) !important;
             }
+
             .stTextInput input, .stDateInput input {
                 background-color: #2d333b !important;
                 color: #ffffff !important;
                 border-radius: 8px !important;
                 border: 1px solid #444c56 !important;
             }
+
             .header-wrapper {
-                display: flex; align-items: baseline; gap: 12px;
+                display: flex;
+                align-items: baseline;
+                gap: 12px;
                 font-family: 'Inter', sans-serif;
             }
+
             .header-wrapper h1 {
-                font-size: 22px !important; font-weight: 800; margin: 0;
-                color: #4b5563; letter-spacing: -0.8px;
+                font-size: 22px !important;
+                font-weight: 800;
+                margin: 0;
+                color: #4b5563;
+                letter-spacing: -0.8px;
             }
+
             .header-wrapper span {
-                font-size: 14px; font-weight: 300; color: #ffffff;
-                text-transform: uppercase; letter-spacing: 1px;
+                font-size: 14px;
+                font-weight: 300;
+                color: #ffffff;
+                text-transform: uppercase;
+                letter-spacing: 1px;
             }
+
             div.stButton > button[kind="primary"] {
-                background-color: #00ffa2 !important; color: #0d1117 !important;
-                font-weight: 800 !important; border: none !important;
-                height: 45px !important; border-radius: 10px !important;
+                background-color: #00ffa2 !important;
+                color: #0d1117 !important;
+                font-weight: 800 !important;
+                border: none !important;
+                height: 45px !important;
+                border-radius: 10px !important;
             }
+
             div.stButton > button:not([kind="primary"]) {
-                border: 1px solid #475569 !important; color: #f1f5f9 !important;
+                border: 1px solid #475569 !important;
+                color: #f1f5f9 !important;
                 background-color: rgba(71, 85, 105, 0.2) !important;
-                height: 45px !important; border-radius: 10px !important;
+                height: 45px !important;
+                border-radius: 10px !important;
             }
+
             div[data-testid="stPopover"] > button {
-                background-color: #1e293b !important; border: 1px solid #334155 !important;
-                border-radius: 8px !important; color: white !important;
+                background-color: #1e293b !important;
+                border: 1px solid #334155 !important;
+                border-radius: 8px !important;
+                color: white !important;
             }
+
             div[data-testid="stDataEditor"] {
-                border: 1px solid #30363d !important; border-radius: 12px !important;
+                border: 1px solid #30363d !important;
+                border-radius: 12px !important;
             }
         </style>
     """, unsafe_allow_html=True)
 
-    # --- 2. DATOS (SE CARGAN UNA SOLA VEZ) ---
-    if "df_master" not in st.session_state:
+    # --- 2. CARGA DE DATOS (UNA SOLA VEZ, SIN AUTOGUARDADO) ---
+    if "df_master_mcontrol" not in st.session_state:
         conn = st.connection("gsheets", type=GSheetsConnection)
 
-        df_sap = conn.read(worksheet="FACTURACION", ttl=0).copy()
-        df_ctrl = conn.read(worksheet="CONTROL_NEXION", ttl=0).copy()
+        df_sap_raw = conn.read(worksheet="FACTURACION", ttl=0).copy()
+        df_control = conn.read(worksheet="CONTROL_NEXION", ttl=0).copy()
 
-        df_sap.columns = df_sap.columns.astype(str).str.strip()
-        df_ctrl.columns = df_ctrl.columns.astype(str).str.strip()
+        df_sap_raw.columns = df_sap_raw.columns.astype(str).str.strip()
+        df_control.columns = df_control.columns.astype(str).str.strip()
 
-        df_sap["Factura"] = df_sap["Factura"].astype(str).str.replace(r'\.0$', '', regex=True)
-        df_ctrl["Factura"] = df_ctrl["Factura"].astype(str).str.replace(r'\.0$', '', regex=True)
+        df_sap_raw["Factura"] = df_sap_raw["Factura"].astype(str).str.replace(r'\.0$', '', regex=True)
+        df_control["Factura"] = df_control["Factura"].astype(str).str.replace(r'\.0$', '', regex=True)
 
-        cols_ctrl = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
-        for c in cols_ctrl:
-            if c not in df_ctrl.columns:
-                df_ctrl[c] = ""
+        cols_sap_render = [
+            "Factura", "Almacen", "Fecha_Conta", "Cliente",
+            "Nombre_Cliente", "Domicilio", "Colonia",
+            "Cuidad", "Estado", "CP", "Transporte"
+        ]
 
-        df_master = pd.merge(df_sap, df_ctrl[cols_ctrl], on="Factura", how="left")
-        df_master[cols_ctrl] = df_master[cols_ctrl].fillna("")
+        if "Quantity" in df_sap_raw.columns:
+            df_sap_raw["Quantity"] = pd.to_numeric(df_sap_raw["Quantity"], errors="coerce").fillna(0)
+            agg_dict = {c: "first" for c in cols_sap_render if c != "Factura"}
+            agg_dict["Quantity"] = "sum"
+            df_sap_grouped = df_sap_raw.groupby("Factura", as_index=False).agg(agg_dict)
+        else:
+            df_sap_grouped = df_sap_raw[cols_sap_render].drop_duplicates("Factura")
+            df_sap_grouped["Quantity"] = 0
+
+        cols_control = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
+        for c in cols_control:
+            if c not in df_control.columns:
+                df_control[c] = ""
+
+        df_master = pd.merge(
+            df_sap_grouped,
+            df_control[cols_control],
+            on="Factura",
+            how="left"
+        )
+
+        df_master[cols_control] = df_master[cols_control].fillna("")
 
         if "Fecha_Conta" in df_master.columns:
-            df_master["Fecha_Conta"] = pd.to_datetime(df_master["Fecha_Conta"], errors="coerce").dt.date
+            df_master["Fecha_Conta"] = pd.to_datetime(
+                df_master["Fecha_Conta"], errors="coerce"
+            ).dt.date
 
-        st.session_state.df_master = df_master
+        cols_finales = cols_control + ["Quantity"] + [
+            c for c in cols_sap_render if c not in cols_control
+        ]
 
-    df_base = st.session_state.df_master.copy()
+        st.session_state.df_master_mcontrol = df_master[cols_finales]
 
-    # --- 3. FILTROS ---
+    df_base = st.session_state.df_master_mcontrol.copy()
+
+    # --- 3. PANEL DE FILTROS ---
     h1, h2, h3, h4, h5 = st.columns(5)
-    with h1: f_ini = st.date_input("Inicio", value=None)
-    with h2: f_fin = st.date_input("Fin", value=None)
-    with h3: search_sur = st.text_input("Surtidor (Filtro)")
+
+    with h1:
+        f_ini = st.date_input("Inicio", value=None)
+    with h2:
+        f_fin = st.date_input("Fin", value=None)
+    with h3:
+        search_sur = st.text_input("Surtidor (Filtro)")
     with h4:
         st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-        if st.button("BORRAR FILTROS"):
+        if st.button("BORRAR FILTROS", use_container_width=True):
             st.rerun()
     with h5:
         st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-        btn_save = st.button("GUARDAR CAMBIOS", type="primary")
+        btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
 
     s1, s2, s3, s4 = st.columns(4)
-    with s1: search_ext = st.text_input("Nombre_Extran")
-    with s2: search_cli = st.text_input("Cliente")
-    with s3: search_fac = st.text_input("Factura")
-    with s4: search_flet = st.text_input("Fletera (Filtro)")
+    with s1:
+        search_ext = st.text_input("Nombre_Extran")
+    with s2:
+        search_cli = st.text_input("Cliente")
+    with s3:
+        search_fac = st.text_input("Factura")
+    with s4:
+        search_flet = st.text_input("Fletera (Filtro)")
 
+    # --- 4. FILTRADO (NO TOCA EL EDITOR) ---
     df_f = df_base.copy()
-    if f_ini: df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
-    if f_fin: df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
-    if search_sur: df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
-    if search_flet: df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
-    if search_fac: df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
+
+    if f_ini:
+        df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
+    if f_fin:
+        df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
+    if search_sur:
+        df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
+    if search_flet:
+        df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
+    if search_fac:
+        df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
     if search_ext and "Nombre_Extran" in df_f.columns:
         df_f = df_f[df_f["Nombre_Extran"].str.contains(search_ext, case=False, na=False)]
     if search_cli and "Nombre_Cliente" in df_f.columns:
         df_f = df_f[df_f["Nombre_Cliente"].str.contains(search_cli, case=False, na=False)]
 
-    # --- 4. EDITOR (KEY FIJA, SIN AUTOGUARDADO) ---
+    # --- 5. EDITOR (KEY FIJA, SIN AUTOGUARDADO) ---
     df_editado = st.data_editor(
         df_f,
-        key="editor_mcontrol",
+        key="editor_mcontrol_fijo",
         use_container_width=True,
         hide_index=True,
         height=550,
         column_config={
-            "Fecha": st.column_config.TextColumn("Fecha", help="DD/MM/AAAA")
+            "Fecha": st.column_config.TextColumn(
+                "Fecha", help="Captura manual DD/MM/AAAA"
+            )
         }
     )
 
-    # --- 5. GUARDAR SOLO CON BOTÓN ---
+    # --- 6. GUARDAR SOLO AL PRESIONAR BOTÓN ---
     if btn_save:
         with st.spinner("Sincronizando..."):
-            datos = df_editado[["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]]
-            conn.update(worksheet="CONTROL_NEXION", data=datos)
+            datos_save = df_editado[
+                ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
+            ].copy()
+
+            conn = st.connection("gsheets", type=GSheetsConnection)
+            conn.update(worksheet="CONTROL_NEXION", data=datos_save)
+
             st.toast("✅ GUARDADO EXITOSO")
-            st.session_state.pop("df_master")
+            st.session_state.pop("df_master_mcontrol")
             st.rerun()
 
-    st.markdown("<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>", unsafe_allow_html=True)
+    st.markdown(
+        "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
+        unsafe_allow_html=True
+    )
+
 
 
 
