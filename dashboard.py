@@ -3455,37 +3455,48 @@ else:
                 }
             </style>
         """, unsafe_allow_html=True)
-
-    # --- 2. ENCABEZADO Y NAVEGACIÓN ---
-    c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
-
-    with c1:
-        st.markdown("""
-            <div class="header-wrapper">
-                <h1>Matriz de Control</h1>
-                <span>NEXION</span>
-                <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
-                    GESTIÓN DE SURTIDO & ASIGNACIÓN DE FLETES (SAP LIVE)
+    
+        # --- 2. ENCABEZADO Y NAVEGACIÓN ---
+        c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
+    
+        with c1:
+            st.markdown("""
+                <div class="header-wrapper">
+                    <h1>Matriz de Control</h1>
+                    <span>NEXION</span>
+                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
+                        GESTIÓN DE SURTIDO & ASIGNACIÓN DE FLETES (SAP LIVE)
+                    </div>
                 </div>
-            </div>
             """, unsafe_allow_html=True)
-
-    with c2:
-        with st.popover("☰", use_container_width=True):
-            st.markdown("<p style='color:#64748b;font-size:10px;font-weight:700;margin-bottom:10px;letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-            paginas = {
-                "TRACKING": "principal", "SEGUIMIENTO": "KPIs", "REPORTE OPS": "Reporte",
-                "HUB LOGISTIC": "HubLogistico", "OTD": "RadarRastreo", "MCONTROL": "MControl"
-            }
-            for nombre, v_state in paginas.items():
-                if st.button(nombre, use_container_width=True, key=f"nav_{nombre.lower()}"):
-                    st.session_state.pagina = v_state
-                    st.rerun()
-
-    st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>", unsafe_allow_html=True)
-        
-        
-        # --- 2. CARGA DE DATOS (UNA SOLA VEZ, SIN AUTOGUARDADO) ---
+    
+        with c2:
+            with st.popover("☰", use_container_width=True):
+                st.markdown(
+                    "<p style='color:#64748b;font-size:10px;font-weight:700;margin-bottom:10px;letter-spacing:1px;'>NAVEGACIÓN</p>",
+                    unsafe_allow_html=True
+                )
+    
+                paginas = {
+                    "TRACKING": "principal",
+                    "SEGUIMIENTO": "KPIs",
+                    "REPORTE OPS": "Reporte",
+                    "HUB LOGISTIC": "HubLogistico",
+                    "OTD": "RadarRastreo",
+                    "MCONTROL": "MControl"
+                }
+    
+                for nombre, v_state in paginas.items():
+                    if st.button(nombre, use_container_width=True, key=f"nav_{nombre.lower()}"):
+                        st.session_state.pagina = v_state
+                        st.rerun()
+    
+        st.markdown(
+            "<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>",
+            unsafe_allow_html=True
+        )
+    
+        # --- 3. CARGA DE DATOS (UNA SOLA VEZ, SIN AUTOGUARDADO) ---
         if "df_master_mcontrol" not in st.session_state:
             conn = st.connection("gsheets", type=GSheetsConnection)
     
@@ -3540,7 +3551,7 @@ else:
     
         df_base = st.session_state.df_master_mcontrol.copy()
     
-        # --- 3. PANEL DE FILTROS ---
+        # --- 4. PANEL DE FILTROS ---
         h1, h2, h3, h4, h5 = st.columns(5)
     
         with h1:
@@ -3567,7 +3578,7 @@ else:
         with s4:
             search_flet = st.text_input("Fletera (Filtro)")
     
-        # --- 4. FILTRADO (NO TOCA EL EDITOR) ---
+        # --- 5. FILTRADO (NO TOCA EL EDITOR) ---
         df_f = df_base.copy()
     
         if f_ini:
@@ -3585,7 +3596,7 @@ else:
         if search_cli and "Cliente" in df_f.columns:
             df_f = df_f[df_f["Cliente"].str.contains(search_cli, case=False, na=False)]
     
-        # --- 5. EDITOR (KEY FIJA, SIN AUTOGUARDADO) ---
+        # --- 6. EDITOR (KEY FIJA, SIN AUTOGUARDADO) ---
         df_editado = st.data_editor(
             df_f,
             key="editor_mcontrol_fijo",
@@ -3599,7 +3610,7 @@ else:
             }
         )
     
-        # --- 6. GUARDAR SOLO AL PRESIONAR BOTÓN ---
+        # --- 7. GUARDAR SOLO AL PRESIONAR BOTÓN ---
         if btn_save:
             with st.spinner("Sincronizando..."):
                 datos_save = df_editado[
@@ -3617,6 +3628,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
