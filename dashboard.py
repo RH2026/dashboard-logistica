@@ -3553,30 +3553,29 @@ else:
     
         # --- 4. PANEL DE FILTROS ---
         h1, h2, h3, h4, h5 = st.columns(5)
-    
-        with h1:
-            f_ini = st.date_input("Inicio", value=None)
-        with h2:
-            f_fin = st.date_input("Fin", value=None)
-        with h3:
-            search_sur = st.text_input("Surtidor (Filtro)")
-        with h4:
-            st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-            if st.button("BORRAR FILTROS", use_container_width=True):
-                st.rerun()
-        with h5:
-            st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-            btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
-    
+        
+        f_ini = h1.date_input("Inicio", key="f_ini", value=st.session_state.get("f_ini"))
+        f_fin = h2.date_input("Fin", key="f_fin", value=st.session_state.get("f_fin"))
+        search_sur = h3.text_input("Surtidor (Filtro)", key="f_sur")
+        
+        h4.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+        if h4.button("BORRAR FILTROS", use_container_width=True):
+            for k, v in {
+                "f_ini": None, "f_fin": None,
+                "f_sur": "", "f_ext": "",
+                "f_cli": "", "f_fac": "", "f_flet": ""
+            }.items():
+                st.session_state[k] = v
+            st.rerun()
+        
+        h5.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+        btn_save = h5.button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
+        
         s1, s2, s3, s4 = st.columns(4)
-        with s1:
-            search_ext = st.text_input("Nombre_Extran")
-        with s2:
-            search_cli = st.text_input("Cliente")
-        with s3:
-            search_fac = st.text_input("Factura")
-        with s4:
-            search_flet = st.text_input("Fletera (Filtro)")
+        search_ext  = s1.text_input("Nombre_Extran", key="f_ext")
+        search_cli  = s2.text_input("Cliente", key="f_cli")
+        search_fac  = s3.text_input("Factura", key="f_fac")
+        search_flet = s4.text_input("Fletera (Filtro)", key="f_flet")
     
         # --- 5. FILTRADO (NO TOCA EL EDITOR) ---
         df_f = df_base.copy()
@@ -3585,8 +3584,8 @@ else:
             df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
         if f_fin:
             df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
-        if search_sur and search_sur.strip() != "":
-            df_f = df_f[df_f["Surtidor"].fillna("").str.contains(search_sur, case=False)]
+        if search_sur:
+            df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
         if search_flet:
             df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
         if search_fac:
@@ -3628,6 +3627,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
