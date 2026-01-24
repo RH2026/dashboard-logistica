@@ -3436,7 +3436,6 @@ else:
                     border: 1px solid #30363d !important; border-radius: 12px !important;
                 }
                 
-                /* ELIMINAR BORDE DEL FORMULARIO PARA QUE NO SE VEA */
                 [data-testid="stForm"] {
                     border: none !important;
                     padding: 0 !important;
@@ -3451,23 +3450,11 @@ else:
         c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
     
         with c1:
-            st.markdown("""
-                <div class="header-wrapper">
-                    <h1>Matriz de Control</h1>
-                    <span>NEXION</span>
-                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
-                        GESTIÓN DE SURTIDO & ASIGNACIÓN DE FLETES (SAP LIVE)
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+            st.markdown("""<div class="header-wrapper"><h1>Matriz de Control</h1><span>NEXION</span></div>""", unsafe_allow_html=True)
     
         with c2:
             with st.popover("☰", use_container_width=True):
-                st.markdown("<p style='color:#64748b;font-size:10px;font-weight:700;margin-bottom:10px;letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                paginas = {
-                    "TRACKING": "principal", "SEGUIMIENTO": "KPIs", "REPORTE OPS": "Reporte",
-                    "HUB LOGISTIC": "HubLogistico", "OTD": "RadarRastreo", "MCONTROL": "MControl"
-                }
+                paginas = {"TRACKING": "principal", "SEGUIMIENTO": "KPIs", "MCONTROL": "MControl"}
                 for nombre, v_state in paginas.items():
                     if st.button(nombre, use_container_width=True, key=f"nav_{nombre.lower()}"):
                         st.session_state.pagina = v_state
@@ -3511,51 +3498,52 @@ else:
             cols_finales = cols_control + ["Quantity"] + [c for c in cols_sap_render if c not in cols_control]
             df_master = df_master[cols_finales]
 
-            # --- 4. PANEL DE HERRAMIENTAS Y EDITOR (DENTRO DE UN FORMULARIO INVISIBLE) ---
+            # --- 4. PANEL DE HERRAMIENTAS (FILTROS FUERA DEL FORMULARIO PARA TIEMPO REAL) ---
             v = st.session_state.filtros_version
             st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
             
-            # EL FORMULARIO BLOQUEA EL AUTO-GUARDADO
-            with st.form("form_matriz", border=False):
-                h1, h2, h3, h4, h5 = st.columns(5)
-                with h1: f_ini = st.date_input("Inicio", value=None, key=f"f_a_{v}")
-                with h2: f_fin = st.date_input("Fin", value=None, key=f"f_b_{v}")
-                with h3: search_sur = st.text_input("Surtidor (Filtro)", key=f"inp_s_{v}")
-                with h4: 
-                    st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                    # Usamos form_submit_button para que funcionen los botones dentro del form
-                    btn_borrar = st.form_submit_button("BORRAR FILTROS", use_container_width=True)
+            h1, h2, h3, h4, h5 = st.columns(5)
+            with h1: f_ini = st.date_input("Inicio", value=None, key=f"f_a_{v}")
+            with h2: f_fin = st.date_input("Fin", value=None, key=f"f_b_{v}")
+            with h3: search_sur = st.text_input("Surtidor (Filtro)", key=f"inp_s_{v}")
+            with h4: 
+                st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+                btn_borrar = st.button("BORRAR FILTROS", use_container_width=True)
+            # El botón de GUARDAR ahora es un SUBMIT BUTTON del formulario de abajo
+            
+            s1, s2, s3, s4 = st.columns(4)
+            with s1: search_ext = st.text_input("Nombre_Extran", key=f"ext_{v}")
+            with s2: search_cli = st.text_input("Cliente", key=f"cli_{v}")
+            with s3: search_fac = st.text_input("Factura", key=f"fac_{v}")
+            with s4: search_flet = st.text_input("Fletera (Filtro)", key=f"flet_{v}")
+
+            # --- 5. LÓGICA DE FILTRADO ---
+            df_f = df_master.copy()
+            if f_ini and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
+            if f_fin and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
+            if search_sur: df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
+            if search_flet: df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
+            if search_fac: df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
+            if search_ext: 
+                col_e = "FrgnName" if "FrgnName" in df_f.columns else "Nombre_Extran"
+                if col_e in df_f.columns: df_f = df_f[df_f[col_e].astype(str).str.contains(search_ext, case=False, na=False)]
+            if search_cli:
+                col_c = "Nombre_Cliente" if "Nombre_Cliente" in df_f.columns else "Cliente"
+                if col_c in df_f.columns: df_f = df_f[df_f[col_c].astype(str).str.contains(search_cli, case=False, na=False)]
+
+            # --- 6. EDITOR (DENTRO DEL FORMULARIO PARA EVITAR EL PARPADEO) ---
+            with st.form("matriz_form", border=False):
+                # Colocamos el botón de guardar en la posición h5 usando CSS o una columna flotante
+                # Para mantener tu diseño, el botón h5 dispara este form
                 with h5:
                     st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
                     btn_save = st.form_submit_button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
 
-                # PANEL DE 4 FILTROS (ABAJO)
-                s1, s2, s3, s4 = st.columns(4)
-                with s1: search_ext = st.text_input("Nombre_Extran", key=f"ext_{v}")
-                with s2: search_cli = st.text_input("Cliente", key=f"cli_{v}")
-                with s3: search_fac = st.text_input("Factura", key=f"fac_{v}")
-                with s4: search_flet = st.text_input("Fletera (Filtro)", key=f"flet_{v}")
-
-                # --- 5. FILTRADO (DENTRO DEL FORM) ---
-                df_f = df_master.copy()
-                if f_ini and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
-                if f_fin and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
-                if search_sur: df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
-                if search_flet: df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
-                if search_fac: df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
-                if search_ext: 
-                    col_e = "FrgnName" if "FrgnName" in df_f.columns else "Nombre_Extran"
-                    if col_e in df_f.columns: df_f = df_f[df_f[col_e].astype(str).str.contains(search_ext, case=False, na=False)]
-                if search_cli:
-                    col_c = "Nombre_Cliente" if "Nombre_Cliente" in df_f.columns else "Cliente"
-                    if col_c in df_f.columns: df_f = df_f[df_f[col_c].astype(str).str.contains(search_cli, case=False, na=False)]
-
-                # --- 6. EDITOR (DENTRO DEL FORMULARIO - NO PARPADEA) ---
                 df_editado = st.data_editor(
                     df_f,
                     use_container_width=True,
                     num_rows="dynamic",
-                    key=f"ed_v_{v}_estatico", 
+                    key=f"ed_v_{v}_fix", 
                     hide_index=True,
                     height=550,
                     column_config={
@@ -3563,7 +3551,7 @@ else:
                     }
                 )
 
-            # --- 7. PROCESAMIENTO DE BOTONES (FUERA DEL BLOQUE WITH) ---
+            # --- 7. ACCIONES ---
             if btn_borrar:
                 st.cache_data.clear(); st.session_state.filtros_version += 1; st.rerun()
 
@@ -3580,6 +3568,7 @@ else:
 
         st.markdown("<br><br><p style='text-align: center; color: #4b5563; font-size: 10px;'>SISTEMA DE GESTIÓN LOGÍSTICA v2.3 - NEXION LIVE</p>", unsafe_allow_html=True)
         
+
 
 
 
