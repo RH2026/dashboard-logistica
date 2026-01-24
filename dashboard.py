@@ -3323,75 +3323,65 @@ else:
         if "filtros_v" not in st.session_state:
             st.session_state.filtros_v = 0
         
-       # --- 3. CARGA DE DATOS (FORZANDO ACTUALIZACIÓN DESDE GOOGLE SHEETS) ---
+       # --- 3. CARGA DE DATOS (ESTO NO FALLA PORQUE NO USA EL CONECTOR DE STREAMLIT) ---
         if "df_master_mcontrol" not in st.session_state:
-            # 1. Creamos la conexión
-            conn = st.connection("gsheets", type=GSheetsConnection)
+            import pandas as pd
+            import time
+
+            # ID de tu documento que sacamos del link
+            SHEET_ID = "1olj7u7hICk3c2MlpNbhKgJGr0KTRdf8nWlK54fPNGAg"
             
-            # 2. Forzamos a Streamlit a olvidar cualquier dato guardado anteriormente
-            st.cache_data.clear()
+            # Forzamos a Google a darnos datos nuevos con un número aleatorio al final
+            t = int(time.time())
+            
+            # URLs de exportación directa a Pandas
+            url_sap = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=FACTURACION&v={t}"
+            url_control = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=CONTROL_NEXION&v={t}"
 
-            # 3. Leemos las hojas. 
-            # IMPORTANTE: ttl=0 le dice que no guarde los datos en memoria, 
-            # pero le agregamos .copy() para que Streamlit no bloquee el DataFrame.
-            df_sap_raw = conn.read(worksheet="FACTURACION", ttl=0).copy()
-            df_control = conn.read(worksheet="CONTROL_NEXION", ttl=0).copy()
+            try:
+                # Leemos directo, sin cachés de Streamlit de por medio
+                df_sap_raw = pd.read_csv(url_sap).copy()
+                df_control = pd.read_csv(url_control).copy()
 
-            # Limpiamos nombres de columnas (quitar espacios invisibles)
-            df_sap_raw.columns = df_sap_raw.columns.astype(str).str.strip()
-            df_control.columns = df_control.columns.astype(str).str.strip()
+                # --- LIMPIEZA RÁPIDA ---
+                df_sap_raw.columns = df_sap_raw.columns.astype(str).str.strip()
+                df_control.columns = df_control.columns.astype(str).str.strip()
+                
+                # Convertir facturas a texto limpio
+                for df in [df_sap_raw, df_control]:
+                    if "Factura" in df.columns:
+                        df["Factura"] = df["Factura"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
 
-            # Normalizamos el formato de la columna 'Factura' para que coincidan
-            df_sap_raw["Factura"] = df_sap_raw["Factura"].astype(str).str.replace(r'\.0$', '', regex=True)
-            df_control["Factura"] = df_control["Factura"].astype(str).str.replace(r'\.0$', '', regex=True)
+                cols_sap_render = ["Factura", "Almacen", "Fecha_Conta", "Cliente", "Nombre_Extran", 
+                                   "Domicilio", "Colonia", "Cuidad", "Estado", "CP", "Transporte"]
 
-            cols_sap_render = [
-                "Factura", "Almacen", "Fecha_Conta", "Cliente",
-                "Nombre_Extran", "Domicilio", "Colonia",
-                "Cuidad", "Estado", "CP", "Transporte"
-            ]
+                # Agrupar Quantity (SAP)
+                if "Quantity" in df_sap_raw.columns:
+                    df_sap_raw["Quantity"] = pd.to_numeric(df_sap_raw["Quantity"], errors="coerce").fillna(0)
+                    df_sap_grouped = df_sap_raw.groupby("Factura", as_index=False).first()
+                    df_sum = df_sap_raw.groupby("Factura")["Quantity"].sum().reset_index()
+                    df_sap_grouped = df_sap_grouped.drop(columns=["Quantity"]).merge(df_sum, on="Factura")
+                else:
+                    df_sap_grouped = df_sap_raw.drop_duplicates("Factura")
+                    df_sap_grouped["Quantity"] = 0
 
-            # Procesamos la cantidad (Quantity)
-            if "Quantity" in df_sap_raw.columns:
-                df_sap_raw["Quantity"] = pd.to_numeric(df_sap_raw["Quantity"], errors="coerce").fillna(0)
-                # Agrupamos para no tener facturas repetidas
-                agg_dict = {c: "first" for c in cols_sap_render if c != "Factura"}
-                agg_dict["Quantity"] = "sum"
-                df_sap_grouped = df_sap_raw.groupby("Factura", as_index=False).agg(agg_dict)
-            else:
-                df_sap_grouped = df_sap_raw[cols_sap_render].drop_duplicates("Factura")
-                df_sap_grouped["Quantity"] = 0
+                # Columnas de control
+                cols_control = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
+                for c in cols_control:
+                    if c not in df_control.columns: df_control[c] = ""
 
-            # Preparamos las columnas de la hoja de Control
-            cols_control = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
-            for c in cols_control:
-                if c not in df_control.columns:
-                    df_control[c] = ""
+                # Unir todo
+                df_master = pd.merge(df_sap_grouped, df_control[cols_control], on="Factura", how="left")
+                df_master[cols_control] = df_master[cols_control].fillna("")
 
-            # Cruzamos la información de SAP con lo que ya anotaste en Control
-            df_master = pd.merge(
-                df_sap_grouped,
-                df_control[cols_control],
-                on="Factura",
-                how="left"
-            )
+                # Ordenar
+                cols_finales = cols_control + ["Quantity"] + [c for c in cols_sap_render if c not in cols_control]
+                st.session_state.df_master_mcontrol = df_master[cols_finales]
 
-            df_master[cols_control] = df_master[cols_control].fillna("")
+            except Exception as e:
+                st.error(f"Error cargando datos: {e}")
+                st.stop()
 
-            if "Fecha_Conta" in df_master.columns:
-                df_master["Fecha_Conta"] = pd.to_datetime(
-                    df_master["Fecha_Conta"], errors="coerce"
-                ).dt.date
-
-            # Ordenamos las columnas para el editor
-            cols_finales = cols_control + ["Quantity"] + [
-                c for c in cols_sap_render if c not in cols_control
-            ]
-
-            # Guardamos el resultado final en la sesión
-            st.session_state.df_master_mcontrol = df_master[cols_finales]
-
-        # Esta es la base que usará el resto de tu código
         df_base = st.session_state.df_master_mcontrol.copy()
     
         # --- 4. PANEL DE FILTROS ---
@@ -3472,6 +3462,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
