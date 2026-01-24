@@ -3387,7 +3387,12 @@ else:
         f_fin = h2.date_input("Fin", value=None, key=f"f_fin_{v}")
         search_sur = h3.text_input("Surtidor (Filtro)", key=f"f_sur_{v}")
         
-        h4.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+        # Agregamos un botón para forzar la recarga
+        if h4.button("REFRESCAR DATOS", use_container_width=True):
+            if "df_master_mcontrol" in st.session_state:
+                st.session_state.pop("df_master_mcontrol")
+            st.rerun()
+        
         if h4.button("BORRAR FILTROS", use_container_width=True):
             st.session_state.filtros_v += 1
             st.rerun()
@@ -3451,6 +3456,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
