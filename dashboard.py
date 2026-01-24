@@ -3383,192 +3383,134 @@ else:
     # MAIN 06: MATRIZ DE CONTROL (MControl) - VERSIÓN PRO CON FILTROS
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "MControl":
-        st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
-    
-        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA (TU DISEÑO ORIGINAL) ---
-        st.markdown("""
-            <style>
-                .block-container { padding-top: 1rem !important; max-width: 95% !important; }
-                
-                div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
-                    background-color: rgba(255, 255, 255, 0.03) !important;
-                }
+    st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
 
-                .stTextInput input, .stDateInput input {
-                    background-color: #2d333b !important;
-                    color: #ffffff !important;
-                    border-radius: 8px !important;
-                    border: 1px solid #444c56 !important;
-                }
-                
-                .header-wrapper {
-                    display: flex;
-                    align-items: baseline; gap: 12px;
-                    font-family: 'Inter', sans-serif;
-                }
-                .header-wrapper h1 {
-                    font-size: 22px !important; font-weight: 800; margin: 0;
-                    color: #4b5563; letter-spacing: -0.8px;
-                }
-                .header-wrapper span {
-                    font-size: 14px; font-weight: 300; color: #ffffff;
-                    text-transform: uppercase; letter-spacing: 1px;
-                }
+    # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA (SIN CAMBIOS) ---
+    st.markdown("""
+        <style>
+            .block-container { padding-top: 1rem !important; max-width: 95% !important; }
+            div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
+                background-color: rgba(255, 255, 255, 0.03) !important;
+            }
+            .stTextInput input, .stDateInput input {
+                background-color: #2d333b !important;
+                color: #ffffff !important;
+                border-radius: 8px !important;
+                border: 1px solid #444c56 !important;
+            }
+            .header-wrapper {
+                display: flex; align-items: baseline; gap: 12px;
+                font-family: 'Inter', sans-serif;
+            }
+            .header-wrapper h1 {
+                font-size: 22px !important; font-weight: 800; margin: 0;
+                color: #4b5563; letter-spacing: -0.8px;
+            }
+            .header-wrapper span {
+                font-size: 14px; font-weight: 300; color: #ffffff;
+                text-transform: uppercase; letter-spacing: 1px;
+            }
+            div.stButton > button[kind="primary"] {
+                background-color: #00ffa2 !important; color: #0d1117 !important;
+                font-weight: 800 !important; border: none !important;
+                height: 45px !important; border-radius: 10px !important;
+            }
+            div.stButton > button:not([kind="primary"]) {
+                border: 1px solid #475569 !important; color: #f1f5f9 !important;
+                background-color: rgba(71, 85, 105, 0.2) !important;
+                height: 45px !important; border-radius: 10px !important;
+            }
+            div[data-testid="stPopover"] > button {
+                background-color: #1e293b !important; border: 1px solid #334155 !important;
+                border-radius: 8px !important; color: white !important;
+            }
+            div[data-testid="stDataEditor"] {
+                border: 1px solid #30363d !important; border-radius: 12px !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
-                div.stButton > button[kind="primary"] {
-                    background-color: #00ffa2 !important; color: #0d1117 !important;
-                    font-weight: 800 !important; border: none !important;
-                    height: 45px !important; border-radius: 10px !important;
-                }
+    # --- 2. DATOS (SE CARGAN UNA SOLA VEZ) ---
+    if "df_master" not in st.session_state:
+        conn = st.connection("gsheets", type=GSheetsConnection)
 
-                div.stButton > button:not([kind="primary"]) {
-                    border: 1px solid #475569 !important; color: #f1f5f9 !important;
-                    background-color: rgba(71, 85, 105, 0.2) !important;
-                    height: 45px !important; border-radius: 10px !important;
-                }
+        df_sap = conn.read(worksheet="FACTURACION", ttl=0).copy()
+        df_ctrl = conn.read(worksheet="CONTROL_NEXION", ttl=0).copy()
 
-                div[data-testid="stPopover"] > button {
-                    background-color: #1e293b !important; border: 1px solid #334155 !important;
-                    border-radius: 8px !important; color: white !important;
-                }
+        df_sap.columns = df_sap.columns.astype(str).str.strip()
+        df_ctrl.columns = df_ctrl.columns.astype(str).str.strip()
 
-                div[data-testid="stDataEditor"] {
-                    border: 1px solid #30363d !important; border-radius: 12px !important;
-                }
-            </style>
-            """, unsafe_allow_html=True)
+        df_sap["Factura"] = df_sap["Factura"].astype(str).str.replace(r'\.0$', '', regex=True)
+        df_ctrl["Factura"] = df_ctrl["Factura"].astype(str).str.replace(r'\.0$', '', regex=True)
 
-        if "filtros_version" not in st.session_state:
-            st.session_state.filtros_version = 0
+        cols_ctrl = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
+        for c in cols_ctrl:
+            if c not in df_ctrl.columns:
+                df_ctrl[c] = ""
 
-        # --- 2. ENCABEZADO Y NAVEGACIÓN ---
-        c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
-    
-        with c1:
-            st.markdown("""
-                <div class="header-wrapper">
-                    <h1>Matriz de Control</h1>
-                    <span>NEXION</span>
-                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
-                        GESTIÓN DE SURTIDO & ASIGNACIÓN DE FLETES (SAP LIVE)
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-        with c2:
-            with st.popover("☰", use_container_width=True):
-                st.markdown("<p style='color:#64748b;font-size:10px;font-weight:700;margin-bottom:10px;letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                paginas = {
-                    "TRACKING": "principal", "SEGUIMIENTO": "KPIs", "REPORTE OPS": "Reporte",
-                    "HUB LOGISTIC": "HubLogistico", "OTD": "RadarRastreo", "MCONTROL": "MControl"
-                }
-                for nombre, v_state in paginas.items():
-                    if st.button(nombre, use_container_width=True, key=f"nav_{nombre.lower()}"):
-                        st.session_state.pagina = v_state
-                        st.rerun()
-    
-        st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>", unsafe_allow_html=True)
+        df_master = pd.merge(df_sap, df_ctrl[cols_ctrl], on="Factura", how="left")
+        df_master[cols_ctrl] = df_master[cols_ctrl].fillna("")
 
-        # --- 3. MOTOR DE DATOS (UNIFICACIÓN) ---
-        try:
-            conn = st.connection("gsheets", type=GSheetsConnection)
-            df_sap_raw = conn.read(worksheet="FACTURACION", ttl=0).copy()
-            df_sap_raw.columns = df_sap_raw.columns.astype(str).str.strip() 
-            df_control = conn.read(worksheet="CONTROL_NEXION", ttl=0).copy()
-            df_control.columns = df_control.columns.astype(str).str.strip()
+        if "Fecha_Conta" in df_master.columns:
+            df_master["Fecha_Conta"] = pd.to_datetime(df_master["Fecha_Conta"], errors="coerce").dt.date
 
-            df_sap_raw["Factura"] = df_sap_raw["Factura"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-            df_control["Factura"] = df_control["Factura"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+        st.session_state.df_master = df_master
 
-            cols_sap_render = ["Factura", "Almacen", "Fecha_Conta", "Cliente", "Nombre_Cliente", "Domicilio", "Colonia", "Cuidad", "Estado", "CP", "Transporte"]
-            
-            if "Quantity" in df_sap_raw.columns:
-                df_sap_raw["Quantity"] = pd.to_numeric(df_sap_raw["Quantity"], errors='coerce').fillna(0)
-                agg_dict = {col: 'first' for col in df_sap_raw.columns if col in cols_sap_render and col != "Factura"}
-                agg_dict["Quantity"] = "sum"
-                df_sap_grouped = df_sap_raw.groupby("Factura", as_index=False).agg(agg_dict)
-            else:
-                df_sap_grouped = df_sap_raw[cols_sap_render].drop_duplicates("Factura")
-                df_sap_grouped["Quantity"] = 0
+    df_base = st.session_state.df_master.copy()
 
-            cols_control = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
-            for col in cols_control:
-                if col not in df_control.columns: df_control[col] = ""
+    # --- 3. FILTROS ---
+    h1, h2, h3, h4, h5 = st.columns(5)
+    with h1: f_ini = st.date_input("Inicio", value=None)
+    with h2: f_fin = st.date_input("Fin", value=None)
+    with h3: search_sur = st.text_input("Surtidor (Filtro)")
+    with h4:
+        st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+        if st.button("BORRAR FILTROS"):
+            st.rerun()
+    with h5:
+        st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+        btn_save = st.button("GUARDAR CAMBIOS", type="primary")
 
-            df_master = pd.merge(df_sap_grouped, df_control[cols_control], on="Factura", how="left")
-            for col in ["Fletera", "Surtidor", "Fecha", "Incidencia"]:
-                df_master[col] = df_master[col].fillna("").astype(str)
+    s1, s2, s3, s4 = st.columns(4)
+    with s1: search_ext = st.text_input("Nombre_Extran")
+    with s2: search_cli = st.text_input("Cliente")
+    with s3: search_fac = st.text_input("Factura")
+    with s4: search_flet = st.text_input("Fletera (Filtro)")
 
-            if "Fecha_Conta" in df_master.columns:
-                df_master["Fecha_Conta"] = pd.to_datetime(df_master["Fecha_Conta"], errors='coerce').dt.date
+    df_f = df_base.copy()
+    if f_ini: df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
+    if f_fin: df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
+    if search_sur: df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
+    if search_flet: df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
+    if search_fac: df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
+    if search_ext and "Nombre_Extran" in df_f.columns:
+        df_f = df_f[df_f["Nombre_Extran"].str.contains(search_ext, case=False, na=False)]
+    if search_cli and "Nombre_Cliente" in df_f.columns:
+        df_f = df_f[df_f["Nombre_Cliente"].str.contains(search_cli, case=False, na=False)]
 
-            cols_finales = cols_control + ["Quantity"] + [c for c in cols_sap_render if c not in cols_control]
-            df_master = df_master[cols_finales]
+    # --- 4. EDITOR (KEY FIJA, SIN AUTOGUARDADO) ---
+    df_editado = st.data_editor(
+        df_f,
+        key="editor_mcontrol",
+        use_container_width=True,
+        hide_index=True,
+        height=550,
+        column_config={
+            "Fecha": st.column_config.TextColumn("Fecha", help="DD/MM/AAAA")
+        }
+    )
 
-            # --- 4. PANEL DE HERRAMIENTAS (5 COLUMNAS ORIGINALES) ---
-            v = st.session_state.filtros_version
-            st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
-            
-            h1, h2, h3, h4, h5 = st.columns(5)
-            with h1: f_ini = st.date_input("Inicio", value=None, key=f"f_a_{v}")
-            with h2: f_fin = st.date_input("Fin", value=None, key=f"f_b_{v}")
-            with h3: search_sur = st.text_input("Surtidor (Filtro)", key=f"inp_s_{v}")
-            with h4: 
-                st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                if st.button("BORRAR FILTROS", use_container_width=True):
-                    st.cache_data.clear(); st.session_state.filtros_version += 1; st.rerun()
-            with h5:
-                st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
+    # --- 5. GUARDAR SOLO CON BOTÓN ---
+    if btn_save:
+        with st.spinner("Sincronizando..."):
+            datos = df_editado[["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]]
+            conn.update(worksheet="CONTROL_NEXION", data=datos)
+            st.toast("✅ GUARDADO EXITOSO")
+            st.session_state.pop("df_master")
+            st.rerun()
 
-            # PANEL DE 4 FILTROS (ABAJO)
-            s1, s2, s3, s4 = st.columns(4)
-            with s1: search_ext = st.text_input("Nombre_Extran", key=f"ext_{v}")
-            with s2: search_cli = st.text_input("Cliente", key=f"cli_{v}")
-            with s3: search_fac = st.text_input("Factura", key=f"fac_{v}")
-            with s4: search_flet = st.text_input("Fletera (Filtro)", key=f"flet_{v}")
+    st.markdown("<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>", unsafe_allow_html=True)
 
-            # --- 5. LÓGICA DE FILTRADO (INSTANTÁNEA) ---
-            df_f = df_master.copy()
-            if f_ini and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
-            if f_fin and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
-            if search_sur: df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
-            if search_flet: df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
-            if search_fac: df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
-            if search_ext: 
-                c_ext = "FrgnName" if "FrgnName" in df_f.columns else "Nombre_Extran"
-                if c_ext in df_f.columns: df_f = df_f[df_f[c_ext].astype(str).str.contains(search_ext, case=False, na=False)]
-            if search_cli:
-                c_cli = "Nombre_Cliente" if "Nombre_Cliente" in df_f.columns else "Cliente"
-                if c_cli in df_f.columns: df_f = df_f[df_f[c_cli].astype(str).str.contains(search_cli, case=False, na=False)]
-
-            # --- 6. EDITOR (CORREGIDO DEFINITIVO: CERO PARPADEO) ---
-            # Para evitar el autoguardado por celda, NO usamos on_change y usamos una key que no cambia con los inputs.
-            df_editado = st.data_editor(
-                df_f,
-                use_container_width=True,
-                num_rows="dynamic",
-                key=f"editor_fijo_{v}", 
-                hide_index=True,
-                height=550,
-                column_config={
-                    "Fecha": st.column_config.TextColumn("Fecha", help="Escribe manual: DD/MM/AAAA")
-                }
-            )
-            
-            # --- 7. GUARDADO (SOLO AL PRESIONAR EL BOTÓN) ---
-            if btn_save:
-                with st.spinner("Sincronizando..."):
-                    datos_save = df_editado[cols_control].copy()
-                    datos_save = datos_save[datos_save["Factura"].astype(str).str.strip() != ""]
-                    conn.update(worksheet="CONTROL_NEXION", data=datos_save)
-                    st.toast("✅ GUARDADO EXITOSO")
-                    st.cache_data.clear(); st.rerun()
-
-        except Exception as e:
-            st.error(f"⚠️ Error: {e}")
-
-        st.markdown("<br><p style='text-align: center; color: #4b5563; font-size: 10px;'>v2.4 - NEXION LIVE</p>", unsafe_allow_html=True)
 
 
 
