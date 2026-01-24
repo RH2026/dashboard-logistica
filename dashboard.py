@@ -3363,9 +3363,7 @@ else:
         
             return df_master
         
-            except Exception as e:
-                st.error(f"❌ Error al cargar Google Sheets: {e}")
-                st.stop()
+            
     
         # --- 5. FILTROS + BOTONES EN LÍNEA ---
         v = st.session_state.filtros_v
@@ -3432,6 +3430,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
