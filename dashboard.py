@@ -3554,18 +3554,14 @@ else:
         # --- 4. PANEL DE FILTROS ---
         h1, h2, h3, h4, h5 = st.columns(5)
         
-        f_ini = h1.date_input("Inicio", key="f_ini", value=st.session_state.get("f_ini"))
-        f_fin = h2.date_input("Fin", key="f_fin", value=st.session_state.get("f_fin"))
+        f_ini = h1.date_input("Inicio", key="f_ini")
+        f_fin = h2.date_input("Fin", key="f_fin")
         search_sur = h3.text_input("Surtidor (Filtro)", key="f_sur")
         
         h4.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
         if h4.button("BORRAR FILTROS", use_container_width=True):
-            for k, v in {
-                "f_ini": None, "f_fin": None,
-                "f_sur": "", "f_ext": "",
-                "f_cli": "", "f_fac": "", "f_flet": ""
-            }.items():
-                st.session_state[k] = v
+            for k in ["f_ini", "f_fin", "f_sur", "f_ext", "f_cli", "f_fac", "f_flet"]:
+                st.session_state.pop(k, None)
             st.rerun()
         
         h5.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
@@ -3627,6 +3623,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
