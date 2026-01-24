@@ -3496,6 +3496,9 @@ else:
             unsafe_allow_html=True
         )
     
+        if "filtros_v" not in st.session_state:
+            st.session_state.filtros_v = 0
+        
         # --- 3. CARGA DE DATOS (UNA SOLA VEZ, SIN AUTOGUARDADO) ---
         if "df_master_mcontrol" not in st.session_state:
             conn = st.connection("gsheets", type=GSheetsConnection)
@@ -3552,27 +3555,27 @@ else:
         df_base = st.session_state.df_master_mcontrol.copy()
     
         # --- 4. PANEL DE FILTROS ---
+        v = st.session_state.filtros_v
+
         h1, h2, h3, h4, h5 = st.columns(5)
         
-        f_ini = h1.date_input("Inicio", key="f_ini")
-        f_fin = h2.date_input("Fin", key="f_fin")
-        search_sur = h3.text_input("Surtidor (Filtro)", key="f_sur")
+        f_ini = h1.date_input("Inicio", value=None, key=f"f_ini_{v}")
+        f_fin = h2.date_input("Fin", value=None, key=f"f_fin_{v}")
+        search_sur = h3.text_input("Surtidor (Filtro)", key=f"f_sur_{v}")
         
         h4.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
         if h4.button("BORRAR FILTROS", use_container_width=True):
-            for k in ["f_ini", "f_fin", "f_sur", "f_ext", "f_cli", "f_fac", "f_flet"]:
-                if k in st.session_state:
-                    st.session_state[k] = None if k in ["f_ini", "f_fin"] else ""
-            st.experimental_rerun()
+            st.session_state.filtros_v += 1
+            st.rerun()
         
         h5.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
         btn_save = h5.button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
         
         s1, s2, s3, s4 = st.columns(4)
-        search_ext  = s1.text_input("Nombre_Extran", key="f_ext")
-        search_cli  = s2.text_input("Cliente", key="f_cli")
-        search_fac  = s3.text_input("Factura", key="f_fac")
-        search_flet = s4.text_input("Fletera (Filtro)", key="f_flet")
+        search_ext  = s1.text_input("Nombre_Extran", key=f"f_ext_{v}")
+        search_cli  = s2.text_input("Cliente", key=f"f_cli_{v}")
+        search_fac  = s3.text_input("Factura", key=f"f_fac_{v}")
+        search_flet = s4.text_input("Fletera (Filtro)", key=f"f_flet_{v}")
     
         # --- 5. FILTRADO (NO TOCA EL EDITOR) ---
         df_f = df_base.copy()
@@ -3624,6 +3627,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
