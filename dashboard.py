@@ -3385,7 +3385,7 @@ else:
     elif st.session_state.pagina == "MControl":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
-        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA (ORIGINAL) ---
+        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA (TU DISEÑO ORIGINAL) ---
         st.markdown("""
             <style>
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
@@ -3453,59 +3453,12 @@ else:
             </style>
             """, unsafe_allow_html=True)
 
-        # --- 2. GESTIÓN DE MEMORIA Y CALLBACK DE EDICIÓN ---
-        def sync_editor_to_master():
-            """Función para salvar ediciones en la memoria global antes de filtrar"""
-            v = st.session_state.filtros_version
-            key = f"editor_act_{v}"
-            if key in st.session_state:
-                state = st.session_state[key]
-                if "edited_rows" in state:
-                    for row_idx, changes in state["edited_rows"].items():
-                        # Obtenemos el índice real del DataFrame para persistir el dato
-                        idx_real = df_filtrado.index[row_idx]
-                        for col, val in changes.items():
-                            st.session_state.df_master.at[idx_real, col] = val
+        if "filtros_version" not in st.session_state:
+            st.session_state.filtros_version = 0
 
-        # Carga inicial de datos
-        if "df_master" not in st.session_state:
-            try:
-                conn = st.connection("gsheets", type=GSheetsConnection)
-                
-                df_sap = conn.read(worksheet="DATOS_SAP").copy()
-                df_sap.columns = df_sap.columns.astype(str).str.strip()
-                
-                df_control = conn.read(worksheet="CONTROL_NEXION").copy()
-                df_control.columns = df_control.columns.astype(str).str.strip()
-
-                # Formateo de DocNum para merge seguro
-                df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-                if "DocNum" not in df_control.columns: df_control["DocNum"] = ""
-                df_control["DocNum"] = df_control["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-
-                # Columnas de Control
-                cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
-                for col in cols_control:
-                    if col not in df_control.columns: df_control[col] = ""
-
-                # Unión de datos
-                df_m = pd.merge(df_sap, df_control[cols_control], on="DocNum", how="left")
-                
-                if "DocDate" in df_m.columns:
-                    df_m["DocDate"] = pd.to_datetime(df_m["DocDate"], errors='coerce').dt.date
-                
-                for col in ["Fletera", "Surtidor", "Estatus", "Observaciones"]:
-                    df_m[col] = df_m[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
-
-                # Guardamos en la mochila (Session State)
-                cols_sap_restantes = [c for c in df_sap.columns if c != "DocNum"]
-                st.session_state.df_master = df_m[cols_control + cols_sap_restantes]
-            except Exception as e:
-                st.error(f"⚠️ Error de carga: {e}")
-                st.stop()
-
-        # --- 3. ENCABEZADO Y NAVEGACIÓN ---
+        # --- 2. ENCABEZADO Y NAVEGACIÓN ---
         c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
+    
         with c1:
             st.markdown("""
                 <div class="header-wrapper">
@@ -3531,70 +3484,108 @@ else:
     
         st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>", unsafe_allow_html=True)
 
-        # --- 4. PANEL DE HERRAMIENTAS Y FILTROS ---
-        if "filtros_version" not in st.session_state: st.session_state.filtros_version = 0
-        v = st.session_state.filtros_version
-        
-        st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
-        
-        h1, h2, h3, h4, h5 = st.columns(5)
-        with h1: f_ini = st.date_input("Inicio", value=None, key=f"f_a_{v}")
-        with h2: f_fin = st.date_input("Fin", value=None, key=f"f_b_{v}")
-        with h3: search_sur = st.text_input("Operador Log.", key=f"inp_s_{v}")
-        with h4: 
-            st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-            if st.button("BORRAR FILTROS", use_container_width=True):
-                st.session_state.filtros_version += 1
-                st.rerun()
-        with h5:
-            st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-            btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
+        # --- 3. MOTOR DE DATOS (CON CORRECCIÓN DE COLUMNAS) ---
+        try:
+            conn = st.connection("gsheets", type=GSheetsConnection)
+            
+            # Carga y Limpieza de nombres de columnas
+            df_sap = conn.read(worksheet="DATOS_SAP").copy()
+            df_sap.columns = df_sap.columns.astype(str).str.strip() 
+            
+            df_control = conn.read(worksheet="CONTROL_NEXION").copy()
+            df_control.columns = df_control.columns.astype(str).str.strip()
 
-        s1, s2, s3, s4 = st.columns(4)
-        with s1: search_flet = st.text_input("Transporte", key=f"inp_f_{v}")
-        with s2: search_doc = st.text_input("Ref. SAP", key=f"inp_d_{v}")
-        with s3: search_code = st.text_input("Cod. Cliente", key=f"inp_c_{v}")
-        with s4: search_name = st.text_input("Razón Social", key=f"inp_n_{v}")
+            # CORRECCIÓN DocNum: Asegurar que existan y sean texto limpio
+            if "DocNum" not in df_sap.columns:
+                st.error("No se encontró la columna 'DocNum' en DATOS_SAP")
+                st.stop()
+            
+            df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+            
+            if "DocNum" not in df_control.columns:
+                df_control["DocNum"] = ""
+            df_control["DocNum"] = df_control["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
 
-        # --- 5. APLICAR FILTROS SOBRE LA MEMORIA ---
-        df_filtrado = st.session_state.df_master.copy()
-        
-        if f_ini: df_filtrado = df_filtrado[df_filtrado["DocDate"] >= f_ini]
-        if f_fin: df_filtrado = df_filtrado[df_filtrado["DocDate"] <= f_fin]
-        if search_sur: df_filtrado = df_filtrado[df_filtrado["Surtidor"].str.contains(search_sur, case=False, na=False)]
-        if search_flet: df_filtrado = df_filtrado[df_filtrado["Fletera"].str.contains(search_flet, case=False, na=False)]
-        if search_doc: df_filtrado = df_filtrado[df_filtrado["DocNum"].str.contains(search_doc, case=False, na=False)]
-        if search_code: df_filtrado = df_filtrado[df_filtrado["CardCode"].astype(str).str.contains(search_code, case=False, na=False)]
-        
-        t_col = "CardFName" if "CardFName" in df_filtrado.columns else "CardName"
-        if search_name and t_col in df_filtrado.columns:
-            df_filtrado = df_filtrado[df_filtrado[t_col].astype(str).str.contains(search_name, case=False, na=False)]
+            # Asegurar columnas de control
+            cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
+            for col in cols_control:
+                if col not in df_control.columns:
+                    df_control[col] = ""
 
-        # --- 6. EDITOR (PERSISTENCIA TOTAL) ---
-        st.data_editor(
-            df_filtrado,
-            use_container_width=True,
-            num_rows="dynamic",
-            key=f"editor_act_{v}",
-            on_change=sync_editor_to_master,
-            hide_index=True,
-            height=550
-        )
+            # Unión de datos (Merge)
+            df_master = pd.merge(df_sap, df_control[cols_control], on="DocNum", how="left")
+            
+            # Formateo de fechas
+            if "DocDate" in df_master.columns:
+                df_master["DocDate"] = pd.to_datetime(df_master["DocDate"], errors='coerce').dt.date
 
-        # --- 7. GUARDADO FINAL ---
-        if btn_save:
-            with st.spinner("Sincronizando con la nube..."):
-                cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
-                datos_save = st.session_state.df_master[cols_control].copy()
-                datos_save = datos_save[datos_save["DocNum"].str.strip() != ""]
-                
-                conn = st.connection("gsheets", type=GSheetsConnection)
-                conn.update(worksheet="CONTROL_NEXION", data=datos_save)
-                
-                st.toast("✅ GUARDADO EXITOSO")
-                st.cache_data.clear()
-                del st.session_state.df_master # Forzamos recarga limpia para la siguiente sesión
-                st.rerun()
+            # Rellenar vacíos
+            for col in ["Fletera", "Surtidor", "Estatus", "Observaciones"]:
+                df_master[col] = df_master[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
+
+            # Reordenar: Control primero
+            cols_sap_restantes = [c for c in df_sap.columns if c != "DocNum"]
+            df_master = df_master[cols_control + cols_sap_restantes]
+
+            # --- 4. PANEL DE HERRAMIENTAS ---
+            v = st.session_state.filtros_version
+            st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
+            
+            h1, h2, h3, h4, h5 = st.columns(5)
+            with h1: f_ini = st.date_input("Inicio", value=None, key=f"f_a_{v}")
+            with h2: f_fin = st.date_input("Fin", value=None, key=f"f_b_{v}")
+            with h3: search_sur = st.text_input("Operador Log.", key=f"inp_s_{v}")
+            with h4: 
+                st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+                if st.button("BORRAR FILTROS", use_container_width=True, key=f"reset_{v}"):
+                    st.cache_data.clear()
+                    st.session_state.filtros_version += 1
+                    st.rerun()
+            with h5:
+                st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+                btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary", key=f"save_{v}")
+
+            s1, s2, s3, s4 = st.columns(4)
+            with s1: search_flet = st.text_input("Transporte", key=f"inp_f_{v}")
+            with s2: search_doc = st.text_input("Ref. SAP", key=f"inp_d_{v}")
+            with s3: search_code = st.text_input("Cod. Cliente", key=f"inp_c_{v}")
+            with s4: search_name = st.text_input("Razón Social", key=f"inp_n_{v}")
+
+            # --- 5. FILTRADO ---
+            df_filtrado = df_master.copy()
+            if f_ini: df_filtrado = df_filtrado[df_filtrado["DocDate"] >= f_ini]
+            if f_fin: df_filtrado = df_filtrado[df_filtrado["DocDate"] <= f_fin]
+            if search_sur: df_filtrado = df_filtrado[df_filtrado["Surtidor"].str.contains(search_sur, case=False, na=False)]
+            if search_flet: df_filtrado = df_filtrado[df_filtrado["Fletera"].str.contains(search_flet, case=False, na=False)]
+            if search_doc: df_filtrado = df_filtrado[df_filtrado["DocNum"].str.contains(search_doc, case=False, na=False)]
+            if search_code: df_filtrado = df_filtrado[df_filtrado["CardCode"].astype(str).str.contains(search_code, case=False, na=False)]
+            
+            t_col = "CardFName" if "CardFName" in df_filtrado.columns else "CardName"
+            if search_name and t_col in df_filtrado.columns:
+                df_filtrado = df_filtrado[df_filtrado[t_col].astype(str).str.contains(search_name, case=False, na=False)]
+
+            # --- 6. EDITOR (TAL CUAL LO TENÍAS) ---
+            df_editado = st.data_editor(
+                df_filtrado,
+                use_container_width=True,
+                num_rows="dynamic",
+                key=f"ed_v_{v}",
+                hide_index=True,
+                height=550
+            )
+            
+            # --- 7. GUARDADO ---
+            if btn_save:
+                with st.spinner("Sincronizando..."):
+                    datos_save = df_editado[cols_control].copy()
+                    datos_save = datos_save[datos_save["DocNum"].str.strip() != ""]
+                    conn.update(worksheet="CONTROL_NEXION", data=datos_save)
+                    st.toast("✅ GUARDADO CORRECTO")
+                    st.cache_data.clear()
+                    st.rerun()
+
+        except Exception as e:
+            st.error(f"⚠️ Error: {e}")
         # --- 8. PIE DE PÁGINA (FUERA DEL BLOQUE TRY) ---
         st.markdown("<br><br>", unsafe_allow_html=True)
         st.markdown("""
@@ -3605,6 +3596,7 @@ else:
     
    
         
+
 
 
 
