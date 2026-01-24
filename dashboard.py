@@ -2822,23 +2822,43 @@ else:
         @st.cache_data(ttl=300)
         def motor_logistico_gsheets():
             try:
-                # Leemos la pestaña de historial usando la URL directa
+                # Leemos la pestaña de historial
                 h = conn.read(spreadsheet=URL_SHEET, worksheet="HISTORIAL")
-                h.columns = h.columns.str.strip().str.upper()
                 
-                # Buscamos las columnas necesarias sin importar variaciones de nombre
-                c_dir = [c for c in h.columns if 'ADDRESS2' in c or 'DIRECCION' in c][0]
-                c_pre = [c for c in h.columns if 'PRECIO' in c][0]
-                c_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
+                # Limpieza de nombres de columnas (quitar espacios extras y pasar a Mayúsculas para comparar)
+                h.columns = h.columns.str.strip()
                 
-                h[c_dir] = h[c_dir].apply(limpiar_texto)
-                h[c_pre] = pd.to_numeric(h[c_pre], errors='coerce').fillna(0)
+                # Definimos los nombres exactos que me proporcionaste
+                COL_DIR = "Address2"
+                COL_FLET = "TrnspName"
+                COL_PRECIO = "Precio por caja"
+    
+                # Validar que las columnas existan en el Excel
+                columnas_reales = h.columns.tolist()
+                if COL_DIR not in columnas_reales or COL_FLET not in columnas_reales or COL_PRECIO not in columnas_reales:
+                    st.error(f"Error: No se encontraron las columnas exactas. Columnas detectadas: {columnas_reales}")
+                    return {}, {}
+    
+                # Limpiar datos para la comparación
+                h[COL_DIR] = h[COL_DIR].fillna("").apply(limpiar_texto)
+                h[COL_PRECIO] = pd.to_numeric(h[COL_PRECIO], errors='coerce').fillna(0)
                 
-                # Filtramos para obtener el flete más barato por dirección
-                mejores = h.loc[h.groupby(c_dir)[c_pre].idxmin()]
-                return mejores.set_index(c_dir)[c_flet].to_dict(), mejores.set_index(c_dir)[c_pre].to_dict()
+                # Lógica: Obtener el transporte (TrnspName) con el "Precio por caja" más bajo por cada "Address2"
+                # Eliminamos filas con dirección vacía
+                h = h[h[COL_DIR] != ""]
+                
+                # Agrupamos y obtenemos el índice del precio mínimo
+                idx_min = h.groupby(COL_DIR)[COL_PRECIO].idxmin()
+                mejores = h.loc[idx_min]
+                
+                # Creamos los diccionarios de búsqueda
+                dict_fletera = mejores.set_index(COL_DIR)[COL_FLET].to_dict()
+                dict_costo = mejores.set_index(COL_DIR)[COL_PRECIO].to_dict()
+                
+                return dict_fletera, dict_costo
+                
             except Exception as e:
-                st.error(f"Error cargando HISTORIAL: {e}")
+                st.error(f"Error procesando los datos de HISTORIAL: {e}")
                 return {}, {}
     
         d_flet, d_price = motor_logistico_gsheets()
@@ -3431,6 +3451,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
