@@ -3484,36 +3484,54 @@ else:
     
         st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>", unsafe_allow_html=True)
 
-        # --- 3. MOTOR DE DATOS (HOJA FACTURACION & AGRUPACIÓN) ---
+        # --- 3. MOTOR DE DATOS ---
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
+            
+            # Carga de hojas
             df_sap = conn.read(worksheet="FACTURACION").copy()
             df_sap.columns = df_sap.columns.astype(str).str.strip() 
+            
             df_control = conn.read(worksheet="CONTROL_NEXION").copy()
             df_control.columns = df_control.columns.astype(str).str.strip()
 
+            # --- CORRECCIÓN DE LLAVES (Mapeo de Factura/DocNum) ---
+            # Si en CONTROL_NEXION todavía dice DocNum, lo renombramos a Factura para que el Merge funcione
+            if "DocNum" in df_control.columns and "Factura" not in df_control.columns:
+                df_control = df_control.rename(columns={"DocNum": "Factura"})
+
             if "Factura" not in df_sap.columns:
-                st.error("⚠️ No se encontró la columna 'Factura' en FACTURACION.")
+                st.error("⚠️ No se encontró la columna 'Factura' en la hoja FACTURACION.")
                 st.stop()
             
+            # Limpieza profunda de la llave 'Factura'
             df_sap["Factura"] = df_sap["Factura"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-            if "Factura" not in df_control.columns: df_control["Factura"] = ""
+            
+            if "Factura" not in df_control.columns:
+                df_control["Factura"] = ""
             df_control["Factura"] = df_control["Factura"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
 
             # --- AGRUPACIÓN Y SUMA DE QUANTITY ---
-            cols_no_sumar = [c for c in df_sap.columns if c not in ["Quantity"]]
-            df_sap_grouped = df_sap.groupby(cols_no_sumar, as_index=False)["Quantity"].sum()
+            if "Quantity" in df_sap.columns:
+                df_sap["Quantity"] = pd.to_numeric(df_sap["Quantity"], errors='coerce').fillna(0)
+                cols_agrupar = [c for c in df_sap.columns if c != "Quantity"]
+                df_sap_grouped = df_sap.groupby(cols_agrupar, as_index=False)["Quantity"].sum()
+            else:
+                df_sap_grouped = df_sap.copy()
+                df_sap_grouped["Quantity"] = 0
 
-            # --- COLUMNAS DE CONTROL SOLICITADAS ---
+            # Columnas de Control que queremos manejar
             cols_control = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
             for col in cols_control:
-                if col not in df_control.columns: df_control[col] = ""
+                if col not in df_control.columns:
+                    df_control[col] = ""
 
-            # Merge
+            # Unión Master (Merge 'left' para que aparezca todo lo de FACTURACION)
             df_master = pd.merge(df_sap_grouped, df_control[cols_control], on="Factura", how="left")
             
-            # Formateo de fechas
-            for f_col in ["DocDate", "Fecha"]:
+            # Formateo de Fechas
+            cols_fechas = ["Fecha", "DocDate", "Fecha_Conta", "Fecha_Venc"]
+            for f_col in cols_fechas:
                 if f_col in df_master.columns:
                     df_master[f_col] = pd.to_datetime(df_master[f_col], errors='coerce').dt.date
 
@@ -3521,9 +3539,9 @@ else:
             for col in ["Fletera", "Surtidor", "Incidencia"]:
                 df_master[col] = df_master[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
 
-            # --- REORDENAR: Control -> Quantity -> Resto ---
-            cols_sap_restantes = [c for c in df_sap_grouped.columns if c not in cols_control and c != "Quantity"]
-            df_master = df_master[cols_control + ["Quantity"] + cols_sap_restantes]
+            # Reordenar: Control -> Quantity -> Resto de SAP
+            cols_sap_finales = [c for c in df_sap_grouped.columns if c not in cols_control and c != "Quantity"]
+            df_master = df_master[cols_control + ["Quantity"] + cols_sap_finales]
 
             # --- 4. PANEL DE HERRAMIENTAS ---
             v = st.session_state.filtros_version
@@ -3535,39 +3553,47 @@ else:
             with h3: search_sur_filtro = st.text_input("Surtidor (Filtro)", key=f"inp_s_{v}")
             with h4: 
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                if st.button("BORRAR FILTROS", use_container_width=True, key=f"res_{v}"):
-                    st.cache_data.clear(); st.session_state.filtros_version += 1; st.rerun()
+                if st.button("BORRAR FILTROS", use_container_width=True, key=f"reset_{v}"):
+                    st.cache_data.clear()
+                    st.session_state.filtros_version += 1
+                    st.rerun()
             with h5:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary", key=f"sav_{v}")
+                btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary", key=f"save_{v}")
 
-            # --- NUEVOS FILTROS ---
+            # Filtros adicionales
             s1, s2, s3, s4 = st.columns(4)
-            with s1: search_name_ext = st.text_input("Nombre_Extran", key=f"ext_{v}")
-            with s2: search_cli = st.text_input("Cliente", key=f"cli_{v}")
-            with s3: search_fac = st.text_input("Factura", key=f"fac_{v}")
-            with s4: search_flet_filtro = st.text_input("Fletera (Filtro)", key=f"flet_{v}")
+            with s1: search_name_ext = st.text_input("Nombre_Extran", key=f"inp_ext_{v}")
+            with s2: search_cli = st.text_input("Cliente", key=f"inp_cli_{v}")
+            with s3: search_fac = st.text_input("Factura", key=f"inp_fac_{v}")
+            with s4: search_flet_filtro = st.text_input("Fletera (Filtro)", key=f"inp_flet_{v}")
 
-            # --- 5. FILTRADO ---
-            df_f = df_master.copy()
-            if f_ini: df_f = df_f[df_f["DocDate"] >= f_ini]
-            if f_fin: df_f = df_f[df_f["DocDate"] <= f_fin]
+            # --- 5. LÓGICA DE FILTRADO ---
+            df_filtrado = df_master.copy()
             
-            if search_sur_filtro: df_f = df_f[df_f["Surtidor"].str.contains(search_sur_filtro, case=False, na=False)]
-            if search_flet_filtro: df_f = df_f[df_f["Fletera"].str.contains(search_flet_filtro, case=False, na=False)]
-            if search_fac: df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
+            # Fecha de referencia para el filtro de calendario
+            fecha_ref = "DocDate" if "DocDate" in df_filtrado.columns else ("Fecha_Conta" if "Fecha_Conta" in df_filtrado.columns else None)
+            if fecha_ref:
+                if f_ini: df_filtrado = df_filtrado[df_filtrado[fecha_ref] >= f_ini]
+                if f_fin: df_filtrado = df_filtrado[df_filtrado[fecha_ref] <= f_fin]
+            
+            if search_sur_filtro: df_filtrado = df_filtrado[df_filtrado["Surtidor"].str.contains(search_sur_filtro, case=False, na=False)]
+            if search_flet_filtro: df_filtrado = df_filtrado[df_filtrado["Fletera"].str.contains(search_flet_filtro, case=False, na=False)]
+            if search_fac: df_filtrado = df_filtrado[df_filtrado["Factura"].str.contains(search_fac, case=False, na=False)]
             
             if search_name_ext:
-                col_n = "Nombre_Extran" if "Nombre_Extran" in df_f.columns else "CardFName"
-                df_f = df_f[df_f[col_n].astype(str).str.contains(search_name_ext, case=False, na=False)]
+                col_n = "Nombre_Extran" if "Nombre_Extran" in df_filtrado.columns else "CardFName"
+                if col_n in df_filtrado.columns:
+                    df_filtrado = df_filtrado[df_filtrado[col_n].astype(str).str.contains(search_name_ext, case=False, na=False)]
             
             if search_cli:
-                col_c = "Cliente" if "Cliente" in df_f.columns else "CardName"
-                df_f = df_f[df_f[col_c].astype(str).str.contains(search_cli, case=False, na=False)]
+                col_c = "Cliente" if "Cliente" in df_filtrado.columns else "CardName"
+                if col_c in df_filtrado.columns:
+                    df_filtrado = df_filtrado[df_filtrado[col_c].astype(str).str.contains(search_cli, case=False, na=False)]
 
-            # --- 6. EDITOR ---
+            # --- 6. EDITOR DE DATOS ---
             df_editado = st.data_editor(
-                df_f,
+                df_filtrado,
                 use_container_width=True,
                 num_rows="dynamic",
                 key=f"ed_v_{v}",
@@ -3575,23 +3601,32 @@ else:
                 height=550
             )
             
-            # --- 7. GUARDADO ---
+            # --- 7. GUARDADO SEGURO ---
             if btn_save:
-                with st.spinner("Sincronizando..."):
+                with st.spinner("Sincronizando con la nube..."):
+                    # Re-mapeo para guardar: Si la hoja física en Google Sheets todavía espera 'DocNum', se lo devolvemos
                     datos_save = df_editado[cols_control].copy()
-                    datos_save = datos_save[datos_save["Factura"].str.strip() != ""]
+                    
+                    # Verificamos los nombres reales de la hoja antes de subir
+                    hoja_control_raw = conn.read(worksheet="CONTROL_NEXION")
+                    if "DocNum" in hoja_control_raw.columns and "Factura" not in hoja_control_raw.columns:
+                        datos_save = datos_save.rename(columns={"Factura": "DocNum"})
+                    
+                    datos_save = datos_save[datos_save.iloc[:,0].astype(str).str.strip() != ""]
                     conn.update(worksheet="CONTROL_NEXION", data=datos_save)
                     st.toast("✅ GUARDADO CORRECTO")
-                    st.cache_data.clear(); st.rerun()
+                    st.cache_data.clear()
+                    st.rerun()
 
         except Exception as e:
-            st.error(f"⚠️ Error: {e}")
+            st.error(f"⚠️ Error en el Motor de Datos: {e}")
 
         st.markdown("<br><br>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #4b5563; font-size: 10px;'>SISTEMA DE GESTIÓN LOGÍSTICA v2.0 - NEXION LIVE</p>", unsafe_allow_html=True)
     
    
         
+
 
 
 
