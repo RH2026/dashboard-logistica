@@ -3436,16 +3436,25 @@ else:
             st.session_state.filtros_v += 1
             st.rerun()
     
-        # --- 6. FILTRADO ---
+        # --- 5. FILTRADO (NO TOCA EL EDITOR) ---
+        df_base = st.session_state.df_master_mcontrol
         df_f = df_base.copy()
-        if f_ini: df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
-        if f_fin: df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
-        if search_sur: df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
-        if search_flet: df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
-        if search_fac: df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
-        if search_ext: df_f = df_f[df_f["Nombre_Extran"].str.contains(search_ext, case=False, na=False)]
-        if search_cli: df_f = df_f[df_f["Cliente"].str.contains(search_cli, case=False, na=False)]
-    
+        
+        if f_ini:
+            df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
+        if f_fin:
+            df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
+        if search_sur:
+            df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
+        if search_flet:
+            df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
+        if search_fac:
+            df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
+        if search_ext and "Nombre_Extran" in df_f.columns:
+            df_f = df_f[df_f["Nombre_Extran"].str.contains(search_ext, case=False, na=False)]
+        if search_cli and "Cliente" in df_f.columns:
+            df_f = df_f[df_f["Cliente"].str.contains(search_cli, case=False, na=False)]
+            
         # --- 7. EDITOR ---
         df_editado = st.data_editor(
             df_f,
@@ -3467,6 +3476,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
