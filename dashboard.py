@@ -3553,8 +3553,8 @@ else:
             df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
         if search_ext and "Nombre_Extran" in df_f.columns:
             df_f = df_f[df_f["Nombre_Extran"].str.contains(search_ext, case=False, na=False)]
-        if search_cli and "Nombre_Cliente" in df_f.columns:
-            df_f = df_f[df_f["Nombre_Cliente"].str.contains(search_cli, case=False, na=False)]
+        if search_cli and "Cliente" in df_f.columns:
+            df_f = df_f[df_f["Cliente"].str.contains(search_cli, case=False, na=False)]
     
         # --- 5. EDITOR (KEY FIJA, SIN AUTOGUARDADO) ---
         df_editado = st.data_editor(
@@ -3588,6 +3588,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
