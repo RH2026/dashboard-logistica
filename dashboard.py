@@ -3385,15 +3385,17 @@ else:
     elif st.session_state.pagina == "MControl":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
-        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA (TU DISEÑO ORIGINAL) ---
+        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA (DISEÑO ORIGINAL) ---
         st.markdown("""
             <style>
+                /* 1. CONFIGURACIÓN DE CONTENEDOR Y TABLA */
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
                 
                 div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
                     background-color: rgba(255, 255, 255, 0.03) !important;
                 }
 
+                /* 2. INPUTS: FONDO GRIS MÁS CLARO Y BORDES ORIGINALES */
                 .stTextInput input, .stDateInput input {
                     background-color: #2d333b !important;
                     color: #ffffff !important;
@@ -3401,6 +3403,7 @@ else:
                     border: 1px solid #444c56 !important;
                 }
                 
+                /* 3. ENCABEZADO ORIGINAL RIGOBERTO */
                 .header-wrapper {
                     display: flex;
                     align-items: baseline;
@@ -3422,6 +3425,7 @@ else:
                     letter-spacing: 1px;
                 }
 
+                /* 4. BOTONES: ESTILO REDONDEADO LIMPIO */
                 div.stButton > button[kind="primary"] {
                     background-color: #00ffa2 !important;
                     color: #0d1117 !important;
@@ -3439,6 +3443,7 @@ else:
                     border-radius: 10px !important;
                 }
 
+                /* 5. MENÚ NAVEGACIÓN (POPOVER) */
                 div[data-testid="stPopover"] > button {
                     background-color: #1e293b !important;
                     border: 1px solid #334155 !important;
@@ -3484,57 +3489,64 @@ else:
     
         st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>", unsafe_allow_html=True)
 
-        # --- 3. MOTOR DE DATOS (CON CORRECCIÓN DE COLUMNAS) ---
+        # --- 3. MOTOR DE DATOS (HOJA FACTURACION & SIMPLIFICACIÓN) ---
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
             
-            # Carga y Limpieza de nombres de columnas
-            df_sap = conn.read(worksheet="DATOS_SAP").copy()
+            # Carga FACTURACION (Antes DATOS_SAP)
+            df_sap = conn.read(worksheet="FACTURACION").copy()
             df_sap.columns = df_sap.columns.astype(str).str.strip() 
             
+            # Carga CONTROL
             df_control = conn.read(worksheet="CONTROL_NEXION").copy()
             df_control.columns = df_control.columns.astype(str).str.strip()
 
-            # CORRECCIÓN DocNum: Asegurar que existan y sean texto limpio
-            if "DocNum" not in df_sap.columns:
-                st.error("No se encontró la columna 'DocNum' en DATOS_SAP")
+            # Validación de Columna 'Factura'
+            if "Factura" not in df_sap.columns:
+                st.error("⚠️ No se encontró la columna 'Factura' en la hoja FACTURACION.")
                 st.stop()
             
-            df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-            
-            if "DocNum" not in df_control.columns:
-                df_control["DocNum"] = ""
-            df_control["DocNum"] = df_control["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+            # Limpieza de Factura
+            df_sap["Factura"] = df_sap["Factura"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+            if "Factura" not in df_control.columns:
+                df_control["Factura"] = ""
+            df_control["Factura"] = df_control["Factura"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
 
-            # Asegurar columnas de control
-            cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
+            # --- AGRUPACIÓN PARA SIMPLIFICAR LÍNEAS (SUMAR QUANTITY) ---
+            # Agrupamos por todo excepto Quantity para colapsar partidas repetidas
+            cols_agrupar = [c for c in df_sap.columns if c != "Quantity"]
+            df_sap_grouped = df_sap.groupby(cols_agrupar, as_index=False)["Quantity"].sum()
+
+            # Columnas de Control solicitadas
+            cols_control = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
             for col in cols_control:
                 if col not in df_control.columns:
                     df_control[col] = ""
 
-            # Unión de datos (Merge)
-            df_master = pd.merge(df_sap, df_control[cols_control], on="DocNum", how="left")
+            # Unión Master (Merge)
+            df_master = pd.merge(df_sap_grouped, df_control[cols_control], on="Factura", how="left")
             
-            # Formateo de fechas
-            if "DocDate" in df_master.columns:
-                df_master["DocDate"] = pd.to_datetime(df_master["DocDate"], errors='coerce').dt.date
+            # Formateo de Fechas (SAP y Control)
+            for f_col in ["DocDate", "Fecha"]:
+                if f_col in df_master.columns:
+                    df_master[f_col] = pd.to_datetime(df_master[f_col], errors='coerce').dt.date
 
-            # Rellenar vacíos
-            for col in ["Fletera", "Surtidor", "Estatus", "Observaciones"]:
+            # Limpieza de vacíos
+            for col in ["Fletera", "Surtidor", "Incidencia"]:
                 df_master[col] = df_master[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
 
-            # Reordenar: Control primero
-            cols_sap_restantes = [c for c in df_sap.columns if c != "DocNum"]
-            df_master = df_master[cols_control + cols_sap_restantes]
+            # Reordenar columnas: Control -> Quantity -> Resto
+            cols_sap_restantes = [c for c in df_sap_grouped.columns if c not in cols_control and c != "Quantity"]
+            df_master = df_master[cols_control + ["Quantity"] + cols_sap_restantes]
 
-            # --- 4. PANEL DE HERRAMIENTAS ---
+            # --- 4. PANEL DE HERRAMIENTAS Y FILTROS ---
             v = st.session_state.filtros_version
             st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
             
             h1, h2, h3, h4, h5 = st.columns(5)
             with h1: f_ini = st.date_input("Inicio", value=None, key=f"f_a_{v}")
             with h2: f_fin = st.date_input("Fin", value=None, key=f"f_b_{v}")
-            with h3: search_sur = st.text_input("Operador Log.", key=f"inp_s_{v}")
+            with h3: search_sur_filtro = st.text_input("Surtidor (Filtro)", key=f"inp_s_{v}")
             with h4: 
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
                 if st.button("BORRAR FILTROS", use_container_width=True, key=f"reset_{v}"):
@@ -3545,50 +3557,58 @@ else:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
                 btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary", key=f"save_{v}")
 
+            # Filtros adicionales por columna de tabla
             s1, s2, s3, s4 = st.columns(4)
-            with s1: search_flet = st.text_input("Transporte", key=f"inp_f_{v}")
-            with s2: search_doc = st.text_input("Ref. SAP", key=f"inp_d_{v}")
-            with s3: search_code = st.text_input("Cod. Cliente", key=f"inp_c_{v}")
-            with s4: search_name = st.text_input("Razón Social", key=f"inp_n_{v}")
+            with s1: search_name_ext = st.text_input("Nombre_Extran", key=f"inp_ext_{v}")
+            with s2: search_cli = st.text_input("Cliente", key=f"inp_cli_{v}")
+            with s3: search_fac = st.text_input("Factura", key=f"inp_fac_{v}")
+            with s4: search_flet_filtro = st.text_input("Fletera (Filtro)", key=f"inp_flet_{v}")
 
-            # --- 5. FILTRADO ---
+            # --- 5. LÓGICA DE FILTRADO ---
             df_filtrado = df_master.copy()
+            
             if f_ini: df_filtrado = df_filtrado[df_filtrado["DocDate"] >= f_ini]
             if f_fin: df_filtrado = df_filtrado[df_filtrado["DocDate"] <= f_fin]
-            if search_sur: df_filtrado = df_filtrado[df_filtrado["Surtidor"].str.contains(search_sur, case=False, na=False)]
-            if search_flet: df_filtrado = df_filtrado[df_filtrado["Fletera"].str.contains(search_flet, case=False, na=False)]
-            if search_doc: df_filtrado = df_filtrado[df_filtrado["DocNum"].str.contains(search_doc, case=False, na=False)]
-            if search_code: df_filtrado = df_filtrado[df_filtrado["CardCode"].astype(str).str.contains(search_code, case=False, na=False)]
             
-            t_col = "CardFName" if "CardFName" in df_filtrado.columns else "CardName"
-            if search_name and t_col in df_filtrado.columns:
-                df_filtrado = df_filtrado[df_filtrado[t_col].astype(str).str.contains(search_name, case=False, na=False)]
+            # Filtros dinámicos basados en tus nombres de tabla
+            if search_sur_filtro: df_filtrado = df_filtrado[df_filtrado["Surtidor"].str.contains(search_sur_filtro, case=False, na=False)]
+            if search_flet_filtro: df_filtrado = df_filtrado[df_filtrado["Fletera"].str.contains(search_flet_filtro, case=False, na=False)]
+            if search_fac: df_filtrado = df_filtrado[df_filtrado["Factura"].str.contains(search_fac, case=False, na=False)]
+            
+            # Búsqueda en Nombre_Extran y Cliente (con nombres alternativos por si acaso)
+            if search_name_ext:
+                col_n = "Nombre_Extran" if "Nombre_Extran" in df_filtrado.columns else "CardFName"
+                df_filtrado = df_filtrado[df_filtrado[col_n].astype(str).str.contains(search_name_ext, case=False, na=False)]
+            
+            if search_cli:
+                col_c = "Cliente" if "Cliente" in df_filtrado.columns else "CardName"
+                df_filtrado = df_filtrado[df_filtrado[col_c].astype(str).str.contains(search_cli, case=False, na=False)]
 
-            # --- 6. EDITOR (TAL CUAL LO TENÍAS) ---
+            # --- 6. EDITOR DE DATOS ---
             df_editado = st.data_editor(
                 df_filtrado,
                 use_container_width=True,
                 num_rows="dynamic",
-                key=f"ed_v_{v}",
+                key=f"ed_v_{v}_{st.session_state.get('usuario_actual', 'u')}",
                 hide_index=True,
                 height=550
             )
             
-            # --- 7. GUARDADO ---
+            # --- 7. GUARDADO SEGURO ---
             if btn_save:
-                with st.spinner("Sincronizando..."):
+                with st.spinner("Sincronizando con la nube..."):
+                    # Solo enviamos las columnas que pertenecen a CONTROL_NEXION
                     datos_save = df_editado[cols_control].copy()
-                    datos_save = datos_save[datos_save["DocNum"].str.strip() != ""]
+                    # Filtramos filas vacías
+                    datos_save = datos_save[datos_save["Factura"].str.strip() != ""]
+                    
                     conn.update(worksheet="CONTROL_NEXION", data=datos_save)
                     st.toast("✅ GUARDADO CORRECTO")
                     st.cache_data.clear()
                     st.rerun()
 
         except Exception as e:
-            st.error(f"⚠️ Error: {e}")
-        # --- 8. PIE DE PÁGINA (FUERA DEL BLOQUE TRY) ---
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("""
+            st.error(f"⚠️ Error en el Motor de Datos: {e}")
             <div style='text-align:center; color:#475569; font-size:10px; border-top: 1px solid rgba(148, 163, 184, 0.1); padding-top:10px;'>
                 LOGISTICS INTELLIGENCE UNIT - NEXION CONTROL CENTER | RIGOBERTO HERNANDEZ 2026
             </div>
@@ -3596,6 +3616,7 @@ else:
     
    
         
+
 
 
 
