@@ -3561,8 +3561,9 @@ else:
         h4.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
         if h4.button("BORRAR FILTROS", use_container_width=True):
             for k in ["f_ini", "f_fin", "f_sur", "f_ext", "f_cli", "f_fac", "f_flet"]:
-                st.session_state.pop(k, None)
-            st.rerun()
+                if k in st.session_state:
+                    st.session_state[k] = None if k in ["f_ini", "f_fin"] else ""
+            st.experimental_rerun()
         
         h5.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
         btn_save = h5.button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
@@ -3623,6 +3624,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
