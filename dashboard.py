@@ -488,7 +488,7 @@ else:
                 "REPORTE OPS": ("Reporte", "radar_btn_rep"),
                 "HUB LOGISTIC": ("HubLogistico", "radar_btn_hub"),
                 "OTD": ("RadarRastreo", "radar_btn_radar"), # <--- ASEGÚRATE DE QUE ESTA COMA ESTÉ AQUÍ
-                "MCONTROL": ("MControl", "radar_btn_mcontrol")
+                
             }
 
                 for nombre, (v_state, v_key) in paginas.items():
@@ -3206,155 +3206,8 @@ else:
     # ------------------------------------------------------------------
     # MAIN 06: MATRIZ DE CONTROL (MControl) - VERSIÓN PRO CON FILTROS
     # ------------------------------------------------------------------
-    # =====================
-    # MCONTROL – BLOQUE ÚNICO
-    # =========================
     
-    import pandas as pd
-    import streamlit as st
-    from streamlit_gsheets import GSheetsConnection
-    from datetime import date
-    
-    SPREADSHEET_ID = "TU_SPREADSHEET_ID_AQUI"  # 👈 OBLIGATORIO
-    
-    # -------------------------
-    # FUNCIÓN DE CARGA REAL
-    # -------------------------
-    def cargar_mcontrol_forzado():
-        conn = st.connection("gsheets", type=GSheetsConnection)
-    
-        df_fact = conn.read(
-            spreadsheet=SPREADSHEET_ID,
-            worksheet="FACTURACION",
-            ttl=0
-        ).copy()
-    
-        df_ctrl = conn.read(
-            spreadsheet=SPREADSHEET_ID,
-            worksheet="CONTROL_NEXION",
-            ttl=0
-        ).copy()
-    
-        df_fact.columns = df_fact.columns.str.strip()
-        df_ctrl.columns = df_ctrl.columns.str.strip()
-    
-        return df_fact, df_ctrl
-    
-    
-    # -------------------------
-    # CARGA INICIAL
-    # -------------------------
-    if "df_fact" not in st.session_state or "df_ctrl" not in st.session_state:
-        st.session_state.df_fact, st.session_state.df_ctrl = cargar_mcontrol_forzado()
-    
-    
-    # =========================
-    # HEADER
-    # =========================
-    st.markdown("## 📊 Módulo de Control Nexion")
-    
-    
-    # =========================
-    # FILTROS + BOTONES (UNA FILA)
-    # =========================
-    c1, c2, c3, c4, c5 = st.columns([2, 2, 1, 1, 1])
-    
-    with c1:
-        f_ini = st.date_input(
-            "Fecha inicio",
-            value=st.session_state.get("f_ini", date.today()),
-            key="f_ini"
-        )
-    
-    with c2:
-        f_fin = st.date_input(
-            "Fecha fin",
-            value=st.session_state.get("f_fin", date.today()),
-            key="f_fin"
-        )
-    
-    with c3:
-        if st.button("🔄 Refrescar", use_container_width=True):
-            st.session_state.df_fact, st.session_state.df_ctrl = cargar_mcontrol_forzado()
-            st.rerun()
-    
-    with c4:
-        if st.button("🧹 Limpiar", use_container_width=True):
-            for k in ["f_ini", "f_fin"]:
-                st.session_state.pop(k, None)
-            st.rerun()
-    
-    with c5:
-        guardar = st.button("💾 Guardar", use_container_width=True)
-    
-    
-    # =========================
-    # NORMALIZACIÓN FECHAS
-    # =========================
-    df_fact = st.session_state.df_fact.copy()
-    df_ctrl = st.session_state.df_ctrl.copy()
-    
-    df_fact["FECHA"] = pd.to_datetime(df_fact["FECHA"], errors="coerce")
-    df_ctrl["FECHA"] = pd.to_datetime(df_ctrl["FECHA"], errors="coerce")
-    
-    
-    # =========================
-    # FILTRO POR FECHA
-    # =========================
-    if f_ini and f_fin:
-        df_fact = df_fact[
-            (df_fact["FECHA"].dt.date >= f_ini) &
-            (df_fact["FECHA"].dt.date <= f_fin)
-        ]
-    
-    
-    # =========================
-    # MERGE LÓGICO (SIN PERDER EDICIÓN)
-    # =========================
-    df_base = df_fact.merge(
-        df_ctrl,
-        how="left",
-        on="FACTURA",
-        suffixes=("", "_CTRL")
-    )
-    
-    
-    # =========================
-    # COLUMNAS EDITABLES (RESPETADAS)
-    # =========================
-    for col in ["OBSERVACIONES", "STATUS", "COMENTARIOS"]:
-        if col not in df_base.columns:
-            df_base[col] = ""
-    
-    
-    # =========================
-    # DATA EDITOR
-    # =========================
-    df_editado = st.data_editor(
-        df_base,
-        use_container_width=True,
-        num_rows="fixed",
-        key="editor_mcontrol"
-    )
-    
-    
-    # =========================
-    # GUARDADO
-    # =========================
-    if guardar:
-        conn = st.connection("gsheets", type=GSheetsConnection)
-    
-        cols_guardar = ["FACTURA", "OBSERVACIONES", "STATUS", "COMENTARIOS"]
-    
-        df_guardar = df_editado[cols_guardar].copy()
-    
-        conn.update(
-            spreadsheet=SPREADSHEET_ID,
-            worksheet="CONTROL_NEXION",
-            data=df_guardar
-        )
-    
-        st.success("Cambios guardados correctamente ✅")
+
 
 
 
