@@ -3385,7 +3385,7 @@ else:
     elif st.session_state.pagina == "MControl":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
-        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
+        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA (TU DISEÑO ORIGINAL) ---
         st.markdown("""
             <style>
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
@@ -3415,7 +3415,7 @@ else:
                     text-transform: uppercase; letter-spacing: 1px;
                 }
 
-                div.stButton > button[kind="primary"], div.stForm submit_button > button {
+                div.stButton > button[kind="primary"] {
                     background-color: #00ffa2 !important; color: #0d1117 !important;
                     font-weight: 800 !important; border: none !important;
                     height: 45px !important; border-radius: 10px !important;
@@ -3435,11 +3435,6 @@ else:
                 div[data-testid="stDataEditor"] {
                     border: 1px solid #30363d !important; border-radius: 12px !important;
                 }
-                
-                [data-testid="stForm"] {
-                    border: none !important;
-                    padding: 0 !important;
-                }
             </style>
             """, unsafe_allow_html=True)
 
@@ -3448,11 +3443,25 @@ else:
 
         # --- 2. ENCABEZADO Y NAVEGACIÓN ---
         c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
+    
         with c1:
-            st.markdown("""<div class="header-wrapper"><h1>Matriz de Control</h1><span>NEXION</span></div>""", unsafe_allow_html=True)
+            st.markdown("""
+                <div class="header-wrapper">
+                    <h1>Matriz de Control</h1>
+                    <span>NEXION</span>
+                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: #00ffa2; opacity: 0.7; margin-left: 10px; padding-left: 10px; border-left: 1px solid #334155;">
+                        GESTIÓN DE SURTIDO & ASIGNACIÓN DE FLETES (SAP LIVE)
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+    
         with c2:
             with st.popover("☰", use_container_width=True):
-                paginas = {"TRACKING": "principal", "SEGUIMIENTO": "KPIs", "REPORTE OPS": "Reporte", "MCONTROL": "MControl"}
+                st.markdown("<p style='color:#64748b;font-size:10px;font-weight:700;margin-bottom:10px;letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
+                paginas = {
+                    "TRACKING": "principal", "SEGUIMIENTO": "KPIs", "REPORTE OPS": "Reporte",
+                    "HUB LOGISTIC": "HubLogistico", "OTD": "RadarRastreo", "MCONTROL": "MControl"
+                }
                 for nombre, v_state in paginas.items():
                     if st.button(nombre, use_container_width=True, key=f"nav_{nombre.lower()}"):
                         st.session_state.pagina = v_state
@@ -3460,7 +3469,7 @@ else:
     
         st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>", unsafe_allow_html=True)
 
-        # --- 3. MOTOR DE DATOS ---
+        # --- 3. MOTOR DE DATOS (UNIFICACIÓN) ---
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
             df_sap_raw = conn.read(worksheet="FACTURACION", ttl=0).copy()
@@ -3487,8 +3496,9 @@ else:
                 if col not in df_control.columns: df_control[col] = ""
 
             df_master = pd.merge(df_sap_grouped, df_control[cols_control], on="Factura", how="left")
+            
             for col in ["Fletera", "Surtidor", "Fecha", "Incidencia"]:
-                df_master[col] = df_master[col].fillna("").astype(str)
+                df_master[col] = df_master[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
 
             if "Fecha_Conta" in df_master.columns:
                 df_master["Fecha_Conta"] = pd.to_datetime(df_master["Fecha_Conta"], errors='coerce').dt.date
@@ -3496,11 +3506,11 @@ else:
             cols_finales = cols_control + ["Quantity"] + [c for c in cols_sap_render if c not in cols_control]
             df_master = df_master[cols_finales]
 
-            # --- 4. PANEL DE FILTROS (FUERA DEL FORMULARIO - TIEMPO REAL) ---
+            # --- 4. PANEL DE HERRAMIENTAS (5 COLUMNAS ORIGINALES) ---
             v = st.session_state.filtros_version
             st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
             
-            h1, h2, h3, h4 = st.columns([1,1,1,1])
+            h1, h2, h3, h4, h5 = st.columns(5)
             with h1: f_ini = st.date_input("Inicio", value=None, key=f"f_a_{v}")
             with h2: f_fin = st.date_input("Fin", value=None, key=f"f_b_{v}")
             with h3: search_sur = st.text_input("Surtidor (Filtro)", key=f"inp_s_{v}")
@@ -3508,14 +3518,18 @@ else:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
                 if st.button("BORRAR FILTROS", use_container_width=True):
                     st.cache_data.clear(); st.session_state.filtros_version += 1; st.rerun()
-            
+            with h5:
+                st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+                btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
+
+            # PANEL DE 4 FILTROS (ABAJO)
             s1, s2, s3, s4 = st.columns(4)
             with s1: search_ext = st.text_input("Nombre_Extran", key=f"ext_{v}")
             with s2: search_cli = st.text_input("Cliente", key=f"cli_{v}")
             with s3: search_fac = st.text_input("Factura", key=f"fac_{v}")
             with s4: search_flet = st.text_input("Fletera (Filtro)", key=f"flet_{v}")
 
-            # --- 5. LÓGICA DE FILTRADO ---
+            # --- 5. LÓGICA DE FILTRADO (INSTANTÁNEA) ---
             df_f = df_master.copy()
             if f_ini and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
             if f_fin and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
@@ -3523,32 +3537,31 @@ else:
             if search_flet: df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
             if search_fac: df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
             if search_ext: 
-                col_e = "FrgnName" if "FrgnName" in df_f.columns else "Nombre_Extran"
-                if col_e in df_f.columns: df_f = df_f[df_f[col_e].astype(str).str.contains(search_ext, case=False, na=False)]
+                c_ext = "FrgnName" if "FrgnName" in df_f.columns else "Nombre_Extran"
+                if c_ext in df_f.columns: df_f = df_f[df_f[c_ext].astype(str).str.contains(search_ext, case=False, na=False)]
             if search_cli:
-                col_c = "Nombre_Cliente" if "Nombre_Cliente" in df_f.columns else "Cliente"
-                if col_c in df_f.columns: df_f = df_f[df_f[col_c].astype(str).str.contains(search_cli, case=False, na=False)]
+                c_cli = "Nombre_Cliente" if "Nombre_Cliente" in df_f.columns else "Cliente"
+                if c_cli in df_f.columns: df_f = df_f[df_f[c_cli].astype(str).str.contains(search_cli, case=False, na=False)]
 
-            # --- 6. FORMULARIO PARA EL EDITOR Y EL BOTÓN DE GUARDADO ---
-            with st.form("matriz_form", border=False):
-                # Botón de Guardar como primera línea del formulario
-                btn_save = st.form_submit_button("💾 GUARDAR CAMBIOS EN LA NUBE", type="primary", use_container_width=True)
-
-                df_editado = st.data_editor(
-                    df_f,
-                    use_container_width=True,
-                    num_rows="dynamic",
-                    key=f"ed_v_{v}_final", 
-                    hide_index=True,
-                    height=550,
-                    column_config={
-                        "Fecha": st.column_config.TextColumn("Fecha", help="Manual: DD/MM/AAAA")
-                    }
-                )
-
-            # --- 7. ACCIÓN DE GUARDADO ---
+            # --- 6. EDITOR (SIN PARPADEO Y CON FECHA MANUAL) ---
+            # Para que NO parpadee y NO guarde solo, NO usamos 'on_change'.
+            # La tabla se queda quieta mientras editas.
+            df_editado = st.data_editor(
+                df_f,
+                use_container_width=True,
+                num_rows="dynamic",
+                key=f"ed_v_{v}_estatico", 
+                hide_index=True,
+                height=550,
+                column_config={
+                    "Fecha": st.column_config.TextColumn("Fecha", help="Formato: DD/MM/AAAA")
+                }
+            )
+            
+            # --- 7. GUARDADO (SOLO AL PRESIONAR BOTÓN) ---
             if btn_save:
-                with st.spinner("Sincronizando..."):
+                with st.spinner("Guardando..."):
+                    # Tomamos los datos del editor
                     datos_save = df_editado[cols_control].copy()
                     datos_save = datos_save[datos_save["Factura"].astype(str).str.strip() != ""]
                     conn.update(worksheet="CONTROL_NEXION", data=datos_save)
@@ -3558,8 +3571,8 @@ else:
         except Exception as e:
             st.error(f"⚠️ Error: {e}")
 
-        st.markdown("<br><p style='text-align: center; color: #4b5563; font-size: 10px;'>v2.4 - NEXION LIVE</p>", unsafe_allow_html=True)
-        
+        st.markdown("<br><br><p style='text-align: center; color: #4b5563; font-size: 10px;'>SISTEMA DE GESTIÓN LOGÍSTICA v2.3 - NEXION LIVE</p>", unsafe_allow_html=True)
+
 
 
 
