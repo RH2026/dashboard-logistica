@@ -3504,7 +3504,7 @@ else:
                 df_sap_grouped = df_sap_raw[cols_sap_render].drop_duplicates("Factura")
                 df_sap_grouped["Quantity"] = 0
 
-            # Columnas de Control
+            # Columnas de Control (FECHA COMO TEXTO LIBRE)
             cols_control = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
             for col in cols_control:
                 if col not in df_control.columns: df_control[col] = ""
@@ -3512,14 +3512,13 @@ else:
             # Merge
             df_master = pd.merge(df_sap_grouped, df_control[cols_control], on="Factura", how="left")
             
-            # Limpieza de nulos
-            for col in ["Fletera", "Surtidor", "Incidencia"]:
+            # Limpieza de nulos y forzar tipo texto para las editables
+            for col in ["Fletera", "Surtidor", "Fecha", "Incidencia"]:
                 df_master[col] = df_master[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
 
-            # Formateo de fechas
-            for f_col in ["Fecha_Conta", "Fecha"]:
-                if f_col in df_master.columns:
-                    df_master[f_col] = pd.to_datetime(df_master[f_col], errors='coerce').dt.date
+            # Solo formateamos la fecha de SAP (Fecha_Conta) como objeto fecha para filtros
+            if "Fecha_Conta" in df_master.columns:
+                df_master["Fecha_Conta"] = pd.to_datetime(df_master["Fecha_Conta"], errors='coerce').dt.date
 
             # ORDEN FINAL: Control -> Quantity -> SAP Render
             cols_finales = cols_control + ["Quantity"] + [c for c in cols_sap_render if c not in cols_control]
@@ -3556,19 +3555,24 @@ else:
             if search_fac: df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
             if search_ext: 
                 col_e = "FrgnName" if "FrgnName" in df_f.columns else "Nombre_Extran"
-                df_f = df_f[df_f[col_e].astype(str).str.contains(search_ext, case=False, na=False)]
+                if col_e in df_f.columns:
+                    df_f = df_f[df_f[col_e].astype(str).str.contains(search_ext, case=False, na=False)]
             if search_cli:
                 col_c = "Nombre_Cliente" if "Nombre_Cliente" in df_f.columns else "Cliente"
-                df_f = df_f[df_f[col_c].astype(str).str.contains(search_cli, case=False, na=False)]
+                if col_c in df_f.columns:
+                    df_f = df_f[df_f[col_c].astype(str).str.contains(search_cli, case=False, na=False)]
 
-            # --- 6. EDITOR (SIN AUTOGUARDADO) ---
+            # --- 6. EDITOR (SIN AUTOGUARDADO Y FECHA COMO TEXTO) ---
             df_editado = st.data_editor(
                 df_f,
                 use_container_width=True,
                 num_rows="dynamic",
                 key=f"ed_v_{v}",
                 hide_index=True,
-                height=550
+                height=550,
+                column_config={
+                    "Fecha": st.column_config.TextColumn("Fecha", help="Formato sugerido: DD/MM/AAAA")
+                }
             )
             
             # --- 7. GUARDADO (SOLO AL PRESIONAR BOTÓN) ---
@@ -3585,6 +3589,7 @@ else:
 
         st.markdown("<br><br><p style='text-align: center; color: #4b5563; font-size: 10px;'>SISTEMA DE GESTIÓN LOGÍSTICA v2.3 - NEXION LIVE</p>", unsafe_allow_html=True)
         
+
 
 
 
