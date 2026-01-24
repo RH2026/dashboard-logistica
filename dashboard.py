@@ -3315,97 +3315,53 @@ else:
         if "filtros_v" not in st.session_state:
             st.session_state.filtros_v = 0
     
-        if "recargar_mcontrol" not in st.session_state:
-            st.session_state.recargar_mcontrol = True
-    
-        # --- 3. CARGA DE DATOS (SIN CACHÉ, CONTROL TOTAL) ---
         if "df_master_mcontrol" not in st.session_state:
-        
-            st.cache_data.clear()
-        
+            st.session_state.df_master_mcontrol = cargar_mcontrol_forzado()
+            
+        # --- 3. CARGA DE DATOS (SIN CACHÉ, CONTROL TOTAL) ---
+        def cargar_mcontrol_forzado():
             conn = st.connection("gsheets", type=GSheetsConnection)
         
-            try:
-                df_sap_raw = conn.read(
-                    worksheet="FACTURACION",
-                    ttl=0
-                ).copy()
+            df_sap_raw = conn.read(worksheet="FACTURACION", ttl=0).copy()
+            df_control = conn.read(worksheet="CONTROL_NEXION", ttl=0).copy()
         
-                df_control = conn.read(
-                    worksheet="CONTROL_NEXION",
-                    ttl=0
-                ).copy()
+            df_sap_raw.columns = df_sap_raw.columns.astype(str).str.strip()
+            df_control.columns = df_control.columns.astype(str).str.strip()
         
-                # Limpieza de columnas
-                df_sap_raw.columns = df_sap_raw.columns.astype(str).str.strip()
-                df_control.columns = df_control.columns.astype(str).str.strip()
+            df_sap_raw["Factura"] = df_sap_raw["Factura"].astype(str).str.replace(r"\.0$", "", regex=True)
+            df_control["Factura"] = df_control["Factura"].astype(str).str.replace(r"\.0$", "", regex=True)
         
-                # Normalizar factura
-                df_sap_raw["Factura"] = (
-                    df_sap_raw["Factura"]
-                    .astype(str)
-                    .str.replace(r"\.0$", "", regex=True)
-                )
+            cols_sap_render = [
+                "Factura", "Almacen", "Fecha_Conta", "Cliente",
+                "Nombre_Extran", "Domicilio", "Colonia",
+                "Cuidad", "Estado", "CP", "Transporte"
+            ]
         
-                df_control["Factura"] = (
-                    df_control["Factura"]
-                    .astype(str)
-                    .str.replace(r"\.0$", "", regex=True)
-                )
+            if "Quantity" in df_sap_raw.columns:
+                df_sap_raw["Quantity"] = pd.to_numeric(df_sap_raw["Quantity"], errors="coerce").fillna(0)
+                agg = {c: "first" for c in cols_sap_render if c != "Factura"}
+                agg["Quantity"] = "sum"
+                df_sap_grouped = df_sap_raw.groupby("Factura", as_index=False).agg(agg)
+            else:
+                df_sap_grouped = df_sap_raw[cols_sap_render].drop_duplicates("Factura")
+                df_sap_grouped["Quantity"] = 0
         
-                cols_sap_render = [
-                    "Factura", "Almacen", "Fecha_Conta", "Cliente",
-                    "Nombre_Extran", "Domicilio", "Colonia",
-                    "Cuidad", "Estado", "CP", "Transporte"
-                ]
+            cols_control = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
+            for c in cols_control:
+                if c not in df_control.columns:
+                    df_control[c] = ""
         
-                if "Quantity" in df_sap_raw.columns:
-                    df_sap_raw["Quantity"] = pd.to_numeric(
-                        df_sap_raw["Quantity"], errors="coerce"
-                    ).fillna(0)
+            df_master = pd.merge(
+                df_sap_grouped,
+                df_control[cols_control],
+                on="Factura",
+                how="left"
+            ).fillna("")
         
-                    agg = {c: "first" for c in cols_sap_render if c != "Factura"}
-                    agg["Quantity"] = "sum"
+            if "Fecha_Conta" in df_master.columns:
+                df_master["Fecha_Conta"] = pd.to_datetime(df_master["Fecha_Conta"], errors="coerce").dt.date
         
-                    df_sap_grouped = (
-                        df_sap_raw
-                        .groupby("Factura", as_index=False)
-                        .agg(agg)
-                    )
-                else:
-                    df_sap_grouped = (
-                        df_sap_raw[cols_sap_render]
-                        .drop_duplicates("Factura")
-                    )
-                    df_sap_grouped["Quantity"] = 0
-        
-                cols_control = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
-                for c in cols_control:
-                    if c not in df_control.columns:
-                        df_control[c] = ""
-        
-                df_master = pd.merge(
-                    df_sap_grouped,
-                    df_control[cols_control],
-                    on="Factura",
-                    how="left"
-                )
-        
-                df_master[cols_control] = df_master[cols_control].fillna("")
-        
-                if "Fecha_Conta" in df_master.columns:
-                    df_master["Fecha_Conta"] = (
-                        pd.to_datetime(df_master["Fecha_Conta"], errors="coerce")
-                        .dt.date
-                    )
-        
-                cols_finales = (
-                    cols_control
-                    + ["Quantity"]
-                    + [c for c in cols_sap_render if c not in cols_control]
-                )
-        
-                st.session_state.df_master_mcontrol = df_master[cols_finales]
+            return df_master
         
             except Exception as e:
                 st.error(f"❌ Error al cargar Google Sheets: {e}")
@@ -3419,9 +3375,9 @@ else:
         f_fin = h2.date_input("Fin", None, key=f"f_fin_{v}")
         search_sur = h3.text_input("Surtidor", key=f"f_sur_{v}")
     
-        if h4.button("REFRESCAR", use_container_width=True):
-            st.session_state.recargar_mcontrol = True
-            st.session_state.pop("editor_mcontrol_fijo", None)
+        if h4.button("REFRESCAR DATOS", use_container_width=True):
+            st.session_state.df_master_mcontrol = cargar_mcontrol_forzado()
+            st.toast("🔄 Datos actualizados desde SAP")
             st.rerun()
     
         btn_save = h5.button("GUARDAR", use_container_width=True, type="primary")
@@ -3476,6 +3432,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
