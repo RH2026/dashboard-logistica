@@ -3327,6 +3327,9 @@ else:
         if "df_master_mcontrol" not in st.session_state:
             conn = st.connection("gsheets", type=GSheetsConnection)
     
+            # Nota: Usamos clear_cache() si sientes que los datos siguen pegados
+            # st.cache_data.clear() 
+
             df_sap_raw = conn.read(worksheet="FACTURACION", ttl=0).copy()
             df_control = conn.read(worksheet="CONTROL_NEXION", ttl=0).copy()
     
@@ -3456,6 +3459,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
