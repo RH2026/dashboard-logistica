@@ -3388,14 +3388,12 @@ else:
         # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
         st.markdown("""
             <style>
-                /* 1. CONFIGURACIÓN DE CONTENEDOR Y TABLA */
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
                 
                 div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
                     background-color: rgba(255, 255, 255, 0.03) !important;
                 }
 
-                /* 2. INPUTS: FONDO GRIS MÁS CLARO Y BORDES ORIGINALES */
                 .stTextInput input, .stDateInput input {
                     background-color: #2d333b !important;
                     color: #ffffff !important;
@@ -3403,7 +3401,6 @@ else:
                     border: 1px solid #444c56 !important;
                 }
                 
-                /* 3. ENCABEZADO ORIGINAL RIGOBERTO */
                 .header-wrapper {
                     display: flex;
                     align-items: baseline;
@@ -3425,7 +3422,6 @@ else:
                     letter-spacing: 1px;
                 }
 
-                /* 4. BOTONES: ESTILO REDONDEADO LIMPIO */
                 div.stButton > button[kind="primary"] {
                     background-color: #00ffa2 !important;
                     color: #0d1117 !important;
@@ -3443,7 +3439,6 @@ else:
                     border-radius: 10px !important;
                 }
 
-                /* 5. MENÚ NAVEGACIÓN (POPOVER) */
                 div[data-testid="stPopover"] > button {
                     background-color: #1e293b !important;
                     border: 1px solid #334155 !important;
@@ -3458,45 +3453,48 @@ else:
             </style>
             """, unsafe_allow_html=True)
 
-        # --- 2. GESTIÓN DE MEMORIA Y CALLBACK DE EDICIÓN ---
-        # Definimos la función que guarda cambios EN EL MOMENTO que sales de la celda
-        def handle_edit():
-            v = st.session_state.filtros_version
-            key = f"editor_act_{v}"
-            if key in st.session_state:
-                changes = st.session_state[key].get("edited_rows", {})
-                for row_idx, col_changes in changes.items():
-                    # Obtenemos el índice real del DataFrame filtrado para actualizar el Master
-                    real_idx = df_filtrado.index[row_idx]
-                    for col_name, new_val in col_changes.items():
-                        st.session_state.df_master.at[real_idx, col_name] = new_val
-
-        # Carga inicial de datos si no existe la mochila en memoria
+        # --- 2. MOTOR DE DATOS Y MEMORIA DE SESIÓN ---
         if "df_master" not in st.session_state:
             try:
                 conn = st.connection("gsheets", type=GSheetsConnection)
+                
+                # Carga de datos con limpieza de nombres de columnas
                 df_sap = conn.read(worksheet="DATOS_SAP").copy()
                 df_sap.columns = df_sap.columns.astype(str).str.strip()
+                
                 df_control = conn.read(worksheet="CONTROL_NEXION").copy()
                 df_control.columns = df_control.columns.astype(str).str.strip()
 
+                # Protección crítica contra error DocNum
+                if "DocNum" not in df_sap.columns:
+                    st.error("❌ No se encontró la columna 'DocNum' en DATOS_SAP.")
+                    st.stop()
+
+                # Formateo de llaves para merge
                 df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
                 if "DocNum" not in df_control.columns: df_control["DocNum"] = ""
                 df_control["DocNum"] = df_control["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
 
+                # Asegurar columnas de la Matriz de Control
                 cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
                 for col in cols_control:
                     if col not in df_control.columns: df_control[col] = ""
 
+                # Unión Master (Merge)
                 df_m = pd.merge(df_sap, df_control[cols_control], on="DocNum", how="left")
+                
+                # Formateo de fechas
                 if "DocDate" in df_m.columns:
                     df_m["DocDate"] = pd.to_datetime(df_m["DocDate"], errors='coerce').dt.date
                 
+                # Limpieza de nulos para que los filtros de texto funcionen bien
                 for col in ["Fletera", "Surtidor", "Estatus", "Observaciones"]:
                     df_m[col] = df_m[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
 
+                # Guardar en memoria de sesión para persistencia total
                 cols_sap_restantes = [c for c in df_sap.columns if c != "DocNum"]
                 st.session_state.df_master = df_m[cols_control + cols_sap_restantes]
+                
             except Exception as e:
                 st.error(f"⚠️ Error de conexión: {e}")
                 st.stop()
@@ -3517,7 +3515,10 @@ else:
         with c2:
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#64748b;font-size:10px;font-weight:700;margin-bottom:10px;letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                paginas = {"TRACKING": "principal", "SEGUIMIENTO": "KPIs", "REPORTE OPS": "Reporte", "HUB LOGISTIC": "HubLogistico", "OTD": "RadarRastreo", "MCONTROL": "MControl"}
+                paginas = {
+                    "TRACKING": "principal", "SEGUIMIENTO": "KPIs", "REPORTE OPS": "Reporte",
+                    "HUB LOGISTIC": "HubLogistico", "OTD": "RadarRastreo", "MCONTROL": "MControl"
+                }
                 for nombre, v_state in paginas.items():
                     if st.button(nombre, use_container_width=True, key=f"nav_{nombre.lower()}"):
                         st.session_state.pagina = v_state
@@ -3550,27 +3551,28 @@ else:
         with s3: search_code = st.text_input("Cod. Cliente", key=f"inp_c_{v}")
         with s4: search_name = st.text_input("Razón Social", key=f"inp_n_{v}")
 
-        # --- 5. APLICAR FILTROS SOBRE EL MASTER ---
-        df_filtrado = st.session_state.df_master.copy()
+        # --- 5. APLICAR FILTROS SOBRE EL MASTER (MEMORIA) ---
+        df_f = st.session_state.df_master.copy()
         
-        if f_ini: df_filtrado = df_filtrado[df_filtrado["DocDate"] >= f_ini]
-        if f_fin: df_filtrado = df_filtrado[df_filtrado["DocDate"] <= f_fin]
-        if search_sur: df_filtrado = df_filtrado[df_filtrado["Surtidor"].str.contains(search_sur, case=False, na=False)]
-        if search_flet: df_filtrado = df_filtrado[df_filtrado["Fletera"].str.contains(search_flet, case=False, na=False)]
-        if search_doc: df_filtrado = df_filtrado[df_filtrado["DocNum"].str.contains(search_doc, case=False, na=False)]
-        if search_code: df_filtrado = df_filtrado[df_filtrado["CardCode"].astype(str).str.contains(search_code, case=False, na=False)]
+        if f_ini: df_f = df_f[df_f["DocDate"] >= f_ini]
+        if f_fin: df_f = df_f[df_f["DocDate"] <= f_fin]
+        if search_sur: df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
+        if search_flet: df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
+        if search_doc: df_f = df_f[df_f["DocNum"].str.contains(search_doc, case=False, na=False)]
+        if search_code: df_f = df_f[df_f["CardCode"].astype(str).str.contains(search_code, case=False, na=False)]
         
-        t_col = "CardFName" if "CardFName" in df_filtrado.columns else "CardName"
-        if search_name and t_col in df_filtrado.columns:
-            df_filtrado = df_filtrado[df_filtrado[t_col].astype(str).str.contains(search_name, case=False, na=False)]
+        t_col = "CardFName" if "CardFName" in df_f.columns else "CardName"
+        if search_name and t_col in df_f.columns:
+            df_f = df_f[df_f[t_col].astype(str).str.contains(search_name, case=False, na=False)]
 
-        # --- 6. EDITOR CON CALLBACK (La solución al borrado de celdas) ---
-        st.data_editor(
-            df_filtrado,
+        # --- 6. EDITOR (SIN PARPADEO AL ESCRIBIR) ---
+        # No usamos on_change aquí para evitar el parpadeo constante. 
+        # Los cambios se capturan al presionar el botón de Guardar.
+        df_editado = st.data_editor(
+            df_f,
             use_container_width=True,
             num_rows="dynamic",
-            key=f"editor_act_{v}",
-            on_change=handle_edit, # Esta función salva la celda al instante
+            key=f"editor_final_{v}",
             hide_index=True,
             height=550
         )
@@ -3578,16 +3580,24 @@ else:
         # --- 7. GUARDADO FINAL ---
         if btn_save:
             with st.spinner("Sincronizando con Google Sheets..."):
+                # 1. Actualizamos la memoria maestra con lo que hay actualmente en el editor
+                st.session_state.df_master.update(df_editado)
+                
+                # 2. Preparamos las columnas específicas que se guardan en el Excel de Control
                 cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
                 datos_save = st.session_state.df_master[cols_control].copy()
+                
+                # 3. Limpieza de filas vacías
                 datos_save = datos_save[datos_save["DocNum"].str.strip() != ""]
                 
+                # 4. Envío a la nube
                 conn = st.connection("gsheets", type=GSheetsConnection)
                 conn.update(worksheet="CONTROL_NEXION", data=datos_save)
                 
-                st.toast("✅ CAMBIOS GUARDADOS EN LA NUBE")
+                st.toast("✅ GUARDADO EXITOSO EN LA NUBE")
                 st.cache_data.clear()
-                del st.session_state.df_master # Forzar recarga limpia en la próxima entrada
+                # Eliminamos la mochila para forzar que la próxima carga sea desde el Excel actualizado
+                del st.session_state.df_master 
                 st.rerun()
         # --- 8. PIE DE PÁGINA (FUERA DEL BLOQUE TRY) ---
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -3599,6 +3609,7 @@ else:
     
    
         
+
 
 
 
