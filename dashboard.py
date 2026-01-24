@@ -3482,10 +3482,8 @@ else:
             df_sap_raw["Factura"] = df_sap_raw["Factura"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
             df_control["Factura"] = df_control["Factura"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
 
-            # Columnas a renderizar
             cols_sap_render = ["Factura", "Almacen", "Fecha_Conta", "Cliente", "Nombre_Cliente", "Domicilio", "Colonia", "Cuidad", "Estado", "CP", "Transporte"]
             
-            # Agrupación por Factura sumando Quantity
             if "Quantity" in df_sap_raw.columns:
                 df_sap_raw["Quantity"] = pd.to_numeric(df_sap_raw["Quantity"], errors='coerce').fillna(0)
                 agg_dict = {col: 'first' for col in df_sap_raw.columns if col in cols_sap_render and col != "Factura"}
@@ -3501,7 +3499,6 @@ else:
 
             df_master = pd.merge(df_sap_grouped, df_control[cols_control], on="Factura", how="left")
             
-            # Limpieza y forzar texto para evitar calendarios en el editor
             for col in ["Fletera", "Surtidor", "Fecha", "Incidencia"]:
                 df_master[col] = df_master[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
 
@@ -3511,7 +3508,7 @@ else:
             cols_finales = cols_control + ["Quantity"] + [c for c in cols_sap_render if c not in cols_control]
             df_master = df_master[cols_finales]
 
-            # --- 4. PANEL DE HERRAMIENTAS (TUS 5 COLUMNAS ORIGINALES) ---
+            # --- 4. PANEL DE HERRAMIENTAS (5 COLUMNAS) ---
             v = st.session_state.filtros_version
             st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
             
@@ -3527,7 +3524,7 @@ else:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
                 btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
 
-            # --- TUS 4 FILTROS DE ABAJO ---
+            # --- 4 FILTROS DE ABAJO ---
             s1, s2, s3, s4 = st.columns(4)
             with s1: search_ext = st.text_input("Nombre_Extran", key=f"ext_{v}")
             with s2: search_cli = st.text_input("Cliente", key=f"cli_{v}")
@@ -3542,11 +3539,11 @@ else:
             if search_flet: df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
             if search_fac: df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
             if search_ext: 
-                col_e = "FrgnName" if "FrgnName" in df_f.columns else "Nombre_Extran"
-                if col_e in df_f.columns: df_f = df_f[df_f[col_e].astype(str).str.contains(search_ext, case=False, na=False)]
+                c_ext = "FrgnName" if "FrgnName" in df_f.columns else "Nombre_Extran"
+                if c_ext in df_f.columns: df_f = df_f[df_f[c_ext].astype(str).str.contains(search_ext, case=False, na=False)]
             if search_cli:
-                col_c = "Nombre_Cliente" if "Nombre_Cliente" in df_f.columns else "Cliente"
-                if col_c in df_f.columns: df_f = df_f[df_f[col_c].astype(str).str.contains(search_cli, case=False, na=False)]
+                c_cli = "Nombre_Cliente" if "Nombre_Cliente" in df_f.columns else "Cliente"
+                if c_cli in df_f.columns: df_f = df_f[df_f[c_cli].astype(str).str.contains(search_cli, case=False, na=False)]
 
             # --- 6. EDITOR (CORREGIDO: CERO PARPADEO Y FECHA MANUAL) ---
             df_editado = st.data_editor(
@@ -3556,14 +3553,12 @@ else:
                 key=f"ed_v_{v}",
                 hide_index=True,
                 height=550,
-                # ESTA LÍNEA QUITA EL PARPADEO AL ESCRIBIR
-                on_change=None, 
                 column_config={
-                    "Fecha": st.column_config.TextColumn("Fecha", help="Formato: DD/MM/AAAA")
+                    "Fecha": st.column_config.TextColumn("Fecha", help="Escribe: DD/MM/AAAA")
                 }
             )
             
-            # --- 7. GUARDADO (SOLO AL PRESIONAR EL BOTÓN QUE YA TENÍAS) ---
+            # --- 7. GUARDADO (BOTÓN ORIGINAL) ---
             if btn_save:
                 with st.spinner("Guardando..."):
                     datos_save = df_editado[cols_control].copy()
@@ -3577,6 +3572,7 @@ else:
 
         st.markdown("<br><br><p style='text-align: center; color: #4b5563; font-size: 10px;'>SISTEMA DE GESTIÓN LOGÍSTICA v2.3 - NEXION LIVE</p>", unsafe_allow_html=True)
         
+
 
 
 
