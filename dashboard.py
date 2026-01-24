@@ -3585,8 +3585,8 @@ else:
             df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
         if f_fin:
             df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
-        if search_sur:
-            df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
+        if search_sur and search_sur.strip() != "":
+            df_f = df_f[df_f["Surtidor"].fillna("").str.contains(search_sur, case=False)]
         if search_flet:
             df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
         if search_fac:
@@ -3628,6 +3628,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
