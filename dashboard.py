@@ -3435,6 +3435,12 @@ else:
                 div[data-testid="stDataEditor"] {
                     border: 1px solid #30363d !important; border-radius: 12px !important;
                 }
+                
+                /* ELIMINAR BORDE DEL FORMULARIO PARA QUE NO SE VEA */
+                [data-testid="stForm"] {
+                    border: none !important;
+                    padding: 0 !important;
+                }
             </style>
             """, unsafe_allow_html=True)
 
@@ -3472,10 +3478,8 @@ else:
         # --- 3. MOTOR DE DATOS (UNIFICACIÓN) ---
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
-            
             df_sap_raw = conn.read(worksheet="FACTURACION", ttl=0).copy()
             df_sap_raw.columns = df_sap_raw.columns.astype(str).str.strip() 
-            
             df_control = conn.read(worksheet="CONTROL_NEXION", ttl=0).copy()
             df_control.columns = df_control.columns.astype(str).str.strip()
 
@@ -3498,9 +3502,8 @@ else:
                 if col not in df_control.columns: df_control[col] = ""
 
             df_master = pd.merge(df_sap_grouped, df_control[cols_control], on="Factura", how="left")
-            
             for col in ["Fletera", "Surtidor", "Fecha", "Incidencia"]:
-                df_master[col] = df_master[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
+                df_master[col] = df_master[col].fillna("").astype(str)
 
             if "Fecha_Conta" in df_master.columns:
                 df_master["Fecha_Conta"] = pd.to_datetime(df_master["Fecha_Conta"], errors='coerce').dt.date
@@ -3508,57 +3511,62 @@ else:
             cols_finales = cols_control + ["Quantity"] + [c for c in cols_sap_render if c not in cols_control]
             df_master = df_master[cols_finales]
 
-            # --- 4. PANEL DE HERRAMIENTAS (5 COLUMNAS ABAJO DEL ENCABEZADO) ---
+            # --- 4. PANEL DE HERRAMIENTAS Y EDITOR (DENTRO DE UN FORMULARIO INVISIBLE) ---
             v = st.session_state.filtros_version
             st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
             
-            h1, h2, h3, h4, h5 = st.columns(5)
-            with h1: f_ini = st.date_input("Inicio", value=None, key=f"f_a_{v}")
-            with h2: f_fin = st.date_input("Fin", value=None, key=f"f_b_{v}")
-            with h3: search_sur = st.text_input("Surtidor (Filtro)", key=f"inp_s_{v}")
-            with h4: 
-                st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                if st.button("BORRAR FILTROS", use_container_width=True):
-                    st.cache_data.clear(); st.session_state.filtros_version += 1; st.rerun()
-            with h5:
-                st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
+            # EL FORMULARIO BLOQUEA EL AUTO-GUARDADO
+            with st.form("form_matriz", border=False):
+                h1, h2, h3, h4, h5 = st.columns(5)
+                with h1: f_ini = st.date_input("Inicio", value=None, key=f"f_a_{v}")
+                with h2: f_fin = st.date_input("Fin", value=None, key=f"f_b_{v}")
+                with h3: search_sur = st.text_input("Surtidor (Filtro)", key=f"inp_s_{v}")
+                with h4: 
+                    st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+                    # Usamos form_submit_button para que funcionen los botones dentro del form
+                    btn_borrar = st.form_submit_button("BORRAR FILTROS", use_container_width=True)
+                with h5:
+                    st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+                    btn_save = st.form_submit_button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
 
-            # PANEL DE 4 FILTROS (ABAJO)
-            s1, s2, s3, s4 = st.columns(4)
-            with s1: search_ext = st.text_input("Nombre_Extran", key=f"ext_{v}")
-            with s2: search_cli = st.text_input("Cliente", key=f"cli_{v}")
-            with s3: search_fac = st.text_input("Factura", key=f"fac_{v}")
-            with s4: search_flet = st.text_input("Fletera (Filtro)", key=f"flet_{v}")
+                # PANEL DE 4 FILTROS (ABAJO)
+                s1, s2, s3, s4 = st.columns(4)
+                with s1: search_ext = st.text_input("Nombre_Extran", key=f"ext_{v}")
+                with s2: search_cli = st.text_input("Cliente", key=f"cli_{v}")
+                with s3: search_fac = st.text_input("Factura", key=f"fac_{v}")
+                with s4: search_flet = st.text_input("Fletera (Filtro)", key=f"flet_{v}")
 
-            # --- 5. FILTRADO ---
-            df_f = df_master.copy()
-            if f_ini and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
-            if f_fin and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
-            if search_sur: df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
-            if search_flet: df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
-            if search_fac: df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
-            if search_ext: 
-                c_ext = "FrgnName" if "FrgnName" in df_f.columns else "Nombre_Extran"
-                if c_ext in df_f.columns: df_f = df_f[df_f[c_ext].astype(str).str.contains(search_ext, case=False, na=False)]
-            if search_cli:
-                c_cli = "Nombre_Cliente" if "Nombre_Cliente" in df_f.columns else "Cliente"
-                if c_cli in df_f.columns: df_f = df_f[df_f[c_cli].astype(str).str.contains(search_cli, case=False, na=False)]
+                # --- 5. FILTRADO (DENTRO DEL FORM) ---
+                df_f = df_master.copy()
+                if f_ini and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
+                if f_fin and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
+                if search_sur: df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
+                if search_flet: df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
+                if search_fac: df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
+                if search_ext: 
+                    col_e = "FrgnName" if "FrgnName" in df_f.columns else "Nombre_Extran"
+                    if col_e in df_f.columns: df_f = df_f[df_f[col_e].astype(str).str.contains(search_ext, case=False, na=False)]
+                if search_cli:
+                    col_c = "Nombre_Cliente" if "Nombre_Cliente" in df_f.columns else "Cliente"
+                    if col_c in df_f.columns: df_f = df_f[df_f[col_c].astype(str).str.contains(search_cli, case=False, na=False)]
 
-            # --- 6. EDITOR (CORREGIDO: CERO PARPADEO Y FECHA MANUAL) ---
-            df_editado = st.data_editor(
-                df_f,
-                use_container_width=True,
-                num_rows="dynamic",
-                key=f"ed_v_{v}_estatico", # Key estática para evitar el refresco por celda
-                hide_index=True,
-                height=550,
-                column_config={
-                    "Fecha": st.column_config.TextColumn("Fecha", help="Escribe manual: DD/MM/AAAA")
-                }
-            )
-            
-            # --- 7. GUARDADO (BOTÓN ORIGINAL) ---
+                # --- 6. EDITOR (DENTRO DEL FORMULARIO - NO PARPADEA) ---
+                df_editado = st.data_editor(
+                    df_f,
+                    use_container_width=True,
+                    num_rows="dynamic",
+                    key=f"ed_v_{v}_estatico", 
+                    hide_index=True,
+                    height=550,
+                    column_config={
+                        "Fecha": st.column_config.TextColumn("Fecha", help="Escribe manual: DD/MM/AAAA")
+                    }
+                )
+
+            # --- 7. PROCESAMIENTO DE BOTONES (FUERA DEL BLOQUE WITH) ---
+            if btn_borrar:
+                st.cache_data.clear(); st.session_state.filtros_version += 1; st.rerun()
+
             if btn_save:
                 with st.spinner("Guardando..."):
                     datos_save = df_editado[cols_control].copy()
@@ -3572,6 +3580,7 @@ else:
 
         st.markdown("<br><br><p style='text-align: center; color: #4b5563; font-size: 10px;'>SISTEMA DE GESTIÓN LOGÍSTICA v2.3 - NEXION LIVE</p>", unsafe_allow_html=True)
         
+
 
 
 
