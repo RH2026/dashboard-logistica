@@ -3508,7 +3508,7 @@ else:
             cols_finales = cols_control + ["Quantity"] + [c for c in cols_sap_render if c not in cols_control]
             df_master = df_master[cols_finales]
 
-            # --- 4. PANEL DE HERRAMIENTAS (5 COLUMNAS) ---
+            # --- 4. PANEL DE HERRAMIENTAS (5 COLUMNAS ABAJO DEL ENCABEZADO) ---
             v = st.session_state.filtros_version
             st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
             
@@ -3524,7 +3524,7 @@ else:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
                 btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
 
-            # --- 4 FILTROS DE ABAJO ---
+            # PANEL DE 4 FILTROS (ABAJO)
             s1, s2, s3, s4 = st.columns(4)
             with s1: search_ext = st.text_input("Nombre_Extran", key=f"ext_{v}")
             with s2: search_cli = st.text_input("Cliente", key=f"cli_{v}")
@@ -3550,11 +3550,11 @@ else:
                 df_f,
                 use_container_width=True,
                 num_rows="dynamic",
-                key=f"ed_v_{v}",
+                key=f"ed_v_{v}_estatico", # Key estática para evitar el refresco por celda
                 hide_index=True,
                 height=550,
                 column_config={
-                    "Fecha": st.column_config.TextColumn("Fecha", help="Escribe: DD/MM/AAAA")
+                    "Fecha": st.column_config.TextColumn("Fecha", help="Escribe manual: DD/MM/AAAA")
                 }
             )
             
@@ -3572,6 +3572,7 @@ else:
 
         st.markdown("<br><br><p style='text-align: center; color: #4b5563; font-size: 10px;'>SISTEMA DE GESTIÓN LOGÍSTICA v2.3 - NEXION LIVE</p>", unsafe_allow_html=True)
         
+
 
 
 
