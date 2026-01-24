@@ -3323,87 +3323,75 @@ else:
         if "filtros_v" not in st.session_state:
             st.session_state.filtros_v = 0
         
-       # --- 3. CARGA DE DATOS (REPARADO PARA REFRESCAR REAL-TIME) ---
-        import time # Asegúrate de tener este import al inicio de tu archivo
-        
-        # Link directo de tu hoja
-        SHEET_URL = "https://docs.google.com/spreadsheets/d/1olj7u7hICk3c2MlpNbhKgJGr0KTRdf8nWlK54fPNGAg/edit?usp=sharing"
-
+       # --- 3. CARGA DE DATOS (FORZANDO ACTUALIZACIÓN DESDE GOOGLE SHEETS) ---
         if "df_master_mcontrol" not in st.session_state:
-            # 1. Limpieza de caché de Streamlit para asegurar datos frescos
-            st.cache_data.clear()
-            
+            # 1. Creamos la conexión
             conn = st.connection("gsheets", type=GSheetsConnection)
+            
+            # 2. Forzamos a Streamlit a olvidar cualquier dato guardado anteriormente
+            st.cache_data.clear()
 
-            try:
-                # 2. Lectura forzada: ttl=0 y URL dinámica para romper el caché de red
-                # Añadimos un timestamp al final de la URL para que Google no mande una versión vieja
-                t_stamp = int(time.time())
-                dynamic_url = f"{SHEET_URL}&v={t_stamp}"
+            # 3. Leemos las hojas. 
+            # IMPORTANTE: ttl=0 le dice que no guarde los datos en memoria, 
+            # pero le agregamos .copy() para que Streamlit no bloquee el DataFrame.
+            df_sap_raw = conn.read(worksheet="FACTURACION", ttl=0).copy()
+            df_control = conn.read(worksheet="CONTROL_NEXION", ttl=0).copy()
 
-                df_sap_raw = conn.read(spreadsheet=dynamic_url, worksheet="FACTURACION", ttl=0).copy()
-                df_control = conn.read(spreadsheet=dynamic_url, worksheet="CONTROL_NEXION", ttl=0).copy()
+            # Limpiamos nombres de columnas (quitar espacios invisibles)
+            df_sap_raw.columns = df_sap_raw.columns.astype(str).str.strip()
+            df_control.columns = df_control.columns.astype(str).str.strip()
 
-                # Limpieza de nombres de columnas
-                df_sap_raw.columns = df_sap_raw.columns.astype(str).str.strip()
-                df_control.columns = df_control.columns.astype(str).str.strip()
+            # Normalizamos el formato de la columna 'Factura' para que coincidan
+            df_sap_raw["Factura"] = df_sap_raw["Factura"].astype(str).str.replace(r'\.0$', '', regex=True)
+            df_control["Factura"] = df_control["Factura"].astype(str).str.replace(r'\.0$', '', regex=True)
 
-                # Normalización de facturas (quitar .0 de números)
-                df_sap_raw["Factura"] = df_sap_raw["Factura"].astype(str).str.replace(r'\.0$', '', regex=True)
-                df_control["Factura"] = df_control["Factura"].astype(str).str.replace(r'\.0$', '', regex=True)
+            cols_sap_render = [
+                "Factura", "Almacen", "Fecha_Conta", "Cliente",
+                "Nombre_Extran", "Domicilio", "Colonia",
+                "Cuidad", "Estado", "CP", "Transporte"
+            ]
 
-                cols_sap_render = [
-                    "Factura", "Almacen", "Fecha_Conta", "Cliente",
-                    "Nombre_Extran", "Domicilio", "Colonia",
-                    "Cuidad", "Estado", "CP", "Transporte"
-                ]
+            # Procesamos la cantidad (Quantity)
+            if "Quantity" in df_sap_raw.columns:
+                df_sap_raw["Quantity"] = pd.to_numeric(df_sap_raw["Quantity"], errors="coerce").fillna(0)
+                # Agrupamos para no tener facturas repetidas
+                agg_dict = {c: "first" for c in cols_sap_render if c != "Factura"}
+                agg_dict["Quantity"] = "sum"
+                df_sap_grouped = df_sap_raw.groupby("Factura", as_index=False).agg(agg_dict)
+            else:
+                df_sap_grouped = df_sap_raw[cols_sap_render].drop_duplicates("Factura")
+                df_sap_grouped["Quantity"] = 0
 
-                # Agrupación por Factura y suma de Quantity
-                if "Quantity" in df_sap_raw.columns:
-                    df_sap_raw["Quantity"] = pd.to_numeric(df_sap_raw["Quantity"], errors="coerce").fillna(0)
-                    # Asegurar que existan todas las columnas antes de agrupar
-                    existentes = [c for c in cols_sap_render if c in df_sap_raw.columns and c != "Factura"]
-                    agg_dict = {c: "first" for c in existentes}
-                    agg_dict["Quantity"] = "sum"
-                    df_sap_grouped = df_sap_raw.groupby("Factura", as_index=False).agg(agg_dict)
-                else:
-                    df_sap_grouped = df_sap_raw.drop_duplicates("Factura")
-                    df_sap_grouped["Quantity"] = 0
+            # Preparamos las columnas de la hoja de Control
+            cols_control = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
+            for c in cols_control:
+                if c not in df_control.columns:
+                    df_control[c] = ""
 
-                # Asegurar columnas en hoja de CONTROL
-                cols_control = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
-                for c in cols_control:
-                    if c not in df_control.columns:
-                        df_control[c] = ""
+            # Cruzamos la información de SAP con lo que ya anotaste en Control
+            df_master = pd.merge(
+                df_sap_grouped,
+                df_control[cols_control],
+                on="Factura",
+                how="left"
+            )
 
-                # MERGE: Unir SAP con los datos de Control guardados
-                df_master = pd.merge(
-                    df_sap_grouped,
-                    df_control[cols_control],
-                    on="Factura",
-                    how="left"
-                )
+            df_master[cols_control] = df_master[cols_control].fillna("")
 
-                # Rellenar vacíos y formatear fecha
-                df_master[cols_control] = df_master[cols_control].fillna("")
+            if "Fecha_Conta" in df_master.columns:
+                df_master["Fecha_Conta"] = pd.to_datetime(
+                    df_master["Fecha_Conta"], errors="coerce"
+                ).dt.date
 
-                if "Fecha_Conta" in df_master.columns:
-                    df_master["Fecha_Conta"] = pd.to_datetime(
-                        df_master["Fecha_Conta"], errors="coerce"
-                    ).dt.date
+            # Ordenamos las columnas para el editor
+            cols_finales = cols_control + ["Quantity"] + [
+                c for c in cols_sap_render if c not in cols_control
+            ]
 
-                # Orden final de columnas (Control primero, luego Info SAP)
-                cols_finales = cols_control + ["Quantity"] + [
-                    c for c in cols_sap_render if c not in cols_control and c in df_master.columns
-                ]
+            # Guardamos el resultado final en la sesión
+            st.session_state.df_master_mcontrol = df_master[cols_finales]
 
-                st.session_state.df_master_mcontrol = df_master[cols_finales]
-                
-            except Exception as e:
-                st.error(f"Error cargando Google Sheets: {e}")
-                st.stop()
-
-        # Usar copia para el editor
+        # Esta es la base que usará el resto de tu código
         df_base = st.session_state.df_master_mcontrol.copy()
     
         # --- 4. PANEL DE FILTROS ---
@@ -3484,6 +3472,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
