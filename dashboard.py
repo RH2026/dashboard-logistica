@@ -3471,7 +3471,7 @@ else:
     
             cols_sap_render = [
                 "Factura", "Almacen", "Fecha_Conta", "Cliente",
-                "Nombre_Cliente", "Domicilio", "Colonia",
+                "Nombre_Extran", "Domicilio", "Colonia",
                 "Cuidad", "Estado", "CP", "Transporte"
             ]
     
@@ -3588,6 +3588,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
