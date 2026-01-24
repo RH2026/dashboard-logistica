@@ -3503,8 +3503,14 @@ else:
 
             # --- CORRECCIÓN CRÍTICA DE FECHAS ---
             if "DocDate" in df_sap.columns:
-                df_sap["DocDate"] = pd.to_numeric(df_sap["DocDate"], errors='coerce')
-                df_sap["DocDate"] = pd.to_datetime(df_sap["DocDate"], unit='D', origin='1899-12-30').dt.date
+                # 1. Convertir a datetime de forma flexible (maneja texto y números automáticamente)
+                # Si detecta números, el origin='1899-12-30' asegura precisión
+                df_sap["DocDate"] = pd.to_datetime(df_sap["DocDate"], errors='coerce')
+                
+                # 2. Extraer solo la fecha (sin horas) para que Streamlit la reconozca bien
+                df_sap["DocDate"] = df_sap["DocDate"].dt.date
+
+            
 
             # --- FORMATEO DE LLAVES (Para que el Merge nunca falle) ---
             # Convertimos a string, quitamos decimales (.0) y espacios
@@ -3599,6 +3605,7 @@ else:
     
    
         
+
 
 
 
