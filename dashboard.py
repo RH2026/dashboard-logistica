@@ -3385,7 +3385,7 @@ else:
     elif st.session_state.pagina == "MControl":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
-        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA (TU DISEÑO ORIGINAL) ---
+        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
         st.markdown("""
             <style>
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
@@ -3415,7 +3415,7 @@ else:
                     text-transform: uppercase; letter-spacing: 1px;
                 }
 
-                div.stButton > button[kind="primary"] {
+                div.stButton > button[kind="primary"], div.stForm submit_button > button {
                     background-color: #00ffa2 !important; color: #0d1117 !important;
                     font-weight: 800 !important; border: none !important;
                     height: 45px !important; border-radius: 10px !important;
@@ -3448,13 +3448,11 @@ else:
 
         # --- 2. ENCABEZADO Y NAVEGACIÓN ---
         c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
-    
         with c1:
             st.markdown("""<div class="header-wrapper"><h1>Matriz de Control</h1><span>NEXION</span></div>""", unsafe_allow_html=True)
-    
         with c2:
             with st.popover("☰", use_container_width=True):
-                paginas = {"TRACKING": "principal", "SEGUIMIENTO": "KPIs", "MCONTROL": "MControl"}
+                paginas = {"TRACKING": "principal", "SEGUIMIENTO": "KPIs", "REPORTE OPS": "Reporte", "MCONTROL": "MControl"}
                 for nombre, v_state in paginas.items():
                     if st.button(nombre, use_container_width=True, key=f"nav_{nombre.lower()}"):
                         st.session_state.pagina = v_state
@@ -3462,7 +3460,7 @@ else:
     
         st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>", unsafe_allow_html=True)
 
-        # --- 3. MOTOR DE DATOS (UNIFICACIÓN) ---
+        # --- 3. MOTOR DE DATOS ---
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
             df_sap_raw = conn.read(worksheet="FACTURACION", ttl=0).copy()
@@ -3498,18 +3496,18 @@ else:
             cols_finales = cols_control + ["Quantity"] + [c for c in cols_sap_render if c not in cols_control]
             df_master = df_master[cols_finales]
 
-            # --- 4. PANEL DE HERRAMIENTAS (FILTROS FUERA DEL FORMULARIO PARA TIEMPO REAL) ---
+            # --- 4. PANEL DE FILTROS (FUERA DEL FORMULARIO - TIEMPO REAL) ---
             v = st.session_state.filtros_version
             st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
             
-            h1, h2, h3, h4, h5 = st.columns(5)
+            h1, h2, h3, h4 = st.columns([1,1,1,1])
             with h1: f_ini = st.date_input("Inicio", value=None, key=f"f_a_{v}")
             with h2: f_fin = st.date_input("Fin", value=None, key=f"f_b_{v}")
             with h3: search_sur = st.text_input("Surtidor (Filtro)", key=f"inp_s_{v}")
             with h4: 
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                btn_borrar = st.button("BORRAR FILTROS", use_container_width=True)
-            # El botón de GUARDAR ahora es un SUBMIT BUTTON del formulario de abajo
+                if st.button("BORRAR FILTROS", use_container_width=True):
+                    st.cache_data.clear(); st.session_state.filtros_version += 1; st.rerun()
             
             s1, s2, s3, s4 = st.columns(4)
             with s1: search_ext = st.text_input("Nombre_Extran", key=f"ext_{v}")
@@ -3531,32 +3529,26 @@ else:
                 col_c = "Nombre_Cliente" if "Nombre_Cliente" in df_f.columns else "Cliente"
                 if col_c in df_f.columns: df_f = df_f[df_f[col_c].astype(str).str.contains(search_cli, case=False, na=False)]
 
-            # --- 6. EDITOR (DENTRO DEL FORMULARIO PARA EVITAR EL PARPADEO) ---
+            # --- 6. FORMULARIO PARA EL EDITOR Y EL BOTÓN DE GUARDADO ---
             with st.form("matriz_form", border=False):
-                # Colocamos el botón de guardar en la posición h5 usando CSS o una columna flotante
-                # Para mantener tu diseño, el botón h5 dispara este form
-                with h5:
-                    st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                    btn_save = st.form_submit_button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
+                # Botón de Guardar como primera línea del formulario
+                btn_save = st.form_submit_button("💾 GUARDAR CAMBIOS EN LA NUBE", type="primary", use_container_width=True)
 
                 df_editado = st.data_editor(
                     df_f,
                     use_container_width=True,
                     num_rows="dynamic",
-                    key=f"ed_v_{v}_fix", 
+                    key=f"ed_v_{v}_final", 
                     hide_index=True,
                     height=550,
                     column_config={
-                        "Fecha": st.column_config.TextColumn("Fecha", help="Escribe manual: DD/MM/AAAA")
+                        "Fecha": st.column_config.TextColumn("Fecha", help="Manual: DD/MM/AAAA")
                     }
                 )
 
-            # --- 7. ACCIONES ---
-            if btn_borrar:
-                st.cache_data.clear(); st.session_state.filtros_version += 1; st.rerun()
-
+            # --- 7. ACCIÓN DE GUARDADO ---
             if btn_save:
-                with st.spinner("Guardando..."):
+                with st.spinner("Sincronizando..."):
                     datos_save = df_editado[cols_control].copy()
                     datos_save = datos_save[datos_save["Factura"].astype(str).str.strip() != ""]
                     conn.update(worksheet="CONTROL_NEXION", data=datos_save)
@@ -3566,8 +3558,9 @@ else:
         except Exception as e:
             st.error(f"⚠️ Error: {e}")
 
-        st.markdown("<br><br><p style='text-align: center; color: #4b5563; font-size: 10px;'>SISTEMA DE GESTIÓN LOGÍSTICA v2.3 - NEXION LIVE</p>", unsafe_allow_html=True)
+        st.markdown("<br><p style='text-align: center; color: #4b5563; font-size: 10px;'>v2.4 - NEXION LIVE</p>", unsafe_allow_html=True)
         
+
 
 
 
