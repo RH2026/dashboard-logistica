@@ -3496,9 +3496,8 @@ else:
                 if col not in df_control.columns: df_control[col] = ""
 
             df_master = pd.merge(df_sap_grouped, df_control[cols_control], on="Factura", how="left")
-            
             for col in ["Fletera", "Surtidor", "Fecha", "Incidencia"]:
-                df_master[col] = df_master[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
+                df_master[col] = df_master[col].fillna("").astype(str)
 
             if "Fecha_Conta" in df_master.columns:
                 df_master["Fecha_Conta"] = pd.to_datetime(df_master["Fecha_Conta"], errors='coerce').dt.date
@@ -3543,25 +3542,23 @@ else:
                 c_cli = "Nombre_Cliente" if "Nombre_Cliente" in df_f.columns else "Cliente"
                 if c_cli in df_f.columns: df_f = df_f[df_f[c_cli].astype(str).str.contains(search_cli, case=False, na=False)]
 
-            # --- 6. EDITOR (SIN PARPADEO Y CON FECHA MANUAL) ---
-            # Para que NO parpadee y NO guarde solo, NO usamos 'on_change'.
-            # La tabla se queda quieta mientras editas.
+            # --- 6. EDITOR (CORREGIDO DEFINITIVO: CERO PARPADEO) ---
+            # Para evitar el autoguardado por celda, NO usamos on_change y usamos una key que no cambia con los inputs.
             df_editado = st.data_editor(
                 df_f,
                 use_container_width=True,
                 num_rows="dynamic",
-                key=f"ed_v_{v}_estatico", 
+                key=f"editor_fijo_{v}", 
                 hide_index=True,
                 height=550,
                 column_config={
-                    "Fecha": st.column_config.TextColumn("Fecha", help="Formato: DD/MM/AAAA")
+                    "Fecha": st.column_config.TextColumn("Fecha", help="Escribe manual: DD/MM/AAAA")
                 }
             )
             
-            # --- 7. GUARDADO (SOLO AL PRESIONAR BOTÓN) ---
+            # --- 7. GUARDADO (SOLO AL PRESIONAR EL BOTÓN) ---
             if btn_save:
-                with st.spinner("Guardando..."):
-                    # Tomamos los datos del editor
+                with st.spinner("Sincronizando..."):
                     datos_save = df_editado[cols_control].copy()
                     datos_save = datos_save[datos_save["Factura"].astype(str).str.strip() != ""]
                     conn.update(worksheet="CONTROL_NEXION", data=datos_save)
@@ -3571,7 +3568,8 @@ else:
         except Exception as e:
             st.error(f"⚠️ Error: {e}")
 
-        st.markdown("<br><br><p style='text-align: center; color: #4b5563; font-size: 10px;'>SISTEMA DE GESTIÓN LOGÍSTICA v2.3 - NEXION LIVE</p>", unsafe_allow_html=True)
+        st.markdown("<br><p style='text-align: center; color: #4b5563; font-size: 10px;'>v2.4 - NEXION LIVE</p>", unsafe_allow_html=True)
+
 
 
 
