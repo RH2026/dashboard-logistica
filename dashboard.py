@@ -3388,22 +3388,19 @@ else:
         # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
         st.markdown("""
             <style>
-                /* 1. CONFIGURACIÓN DE CONTENEDOR Y TABLA */
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
                 
                 div[data-testid="stDataEditor"] div[role="rowgroup"] div[role="row"]:nth-child(even) {
                     background-color: rgba(255, 255, 255, 0.03) !important;
                 }
 
-                /* 2. INPUTS: FONDO GRIS MÁS CLARO Y BORDES ORIGINALES */
                 .stTextInput input, .stDateInput input {
-                    background-color: #2d333b !important; /* Gris más claro que el fondo general */
-                    color: #ffffff !important;           /* Texto blanco para legibilidad */
+                    background-color: #2d333b !important;
+                    color: #ffffff !important;
                     border-radius: 8px !important;
-                    border: 1px solid #444c56 !important; /* Borde sutil que permite ver alertas */
+                    border: 1px solid #444c56 !important;
                 }
                 
-                /* 3. ENCABEZADO ORIGINAL RIGOBERTO */
                 .header-wrapper {
                     display: flex;
                     align-items: baseline;
@@ -3414,18 +3411,17 @@ else:
                     font-size: 22px !important;
                     font-weight: 800;
                     margin: 0;
-                    color: #4b5563; /* Gris original */
+                    color: #4b5563;
                     letter-spacing: -0.8px;
                 }
                 .header-wrapper span {
                     font-size: 14px;
                     font-weight: 300;
-                    color: #ffffff; /* Blanco original */
+                    color: #ffffff;
                     text-transform: uppercase;
                     letter-spacing: 1px;
                 }
 
-                /* 4. BOTONES: ESTILO REDONDEADO LIMPIO */
                 div.stButton > button[kind="primary"] {
                     background-color: #00ffa2 !important;
                     color: #0d1117 !important;
@@ -3443,7 +3439,6 @@ else:
                     border-radius: 10px !important;
                 }
 
-                /* 5. MENÚ NAVEGACIÓN (POPOVER) */
                 div[data-testid="stPopover"] > button {
                     background-color: #1e293b !important;
                     border: 1px solid #334155 !important;
@@ -3455,16 +3450,57 @@ else:
                     border: 1px solid #30363d !important;
                     border-radius: 12px !important;
                 }
-                
             </style>
             """, unsafe_allow_html=True)
 
-        if "filtros_version" not in st.session_state:
-            st.session_state.filtros_version = 0
+        # --- 2. GESTIÓN DE DATOS Y MEMORIA (SESSION STATE) ---
+        # Cargamos de la nube solo si la mochila 'df_master' no existe
+        if "df_master" not in st.session_state:
+            try:
+                conn = st.connection("gsheets", type=GSheetsConnection)
+                
+                # Carga y limpieza inmediata
+                df_sap = conn.read(worksheet="DATOS_SAP").copy()
+                df_sap.columns = df_sap.columns.astype(str).str.strip()
+                
+                df_control = conn.read(worksheet="CONTROL_NEXION").copy()
+                df_control.columns = df_control.columns.astype(str).str.strip()
 
-        # --- 2. ENCABEZADO Y NAVEGACIÓN ---
+                # Protección contra error DocNum
+                if "DocNum" not in df_sap.columns:
+                    st.error("❌ No se encontró la columna 'DocNum' en la hoja DATOS_SAP.")
+                    st.stop()
+                
+                # Formateo de llaves para merge
+                df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+                if "DocNum" not in df_control.columns: df_control["DocNum"] = ""
+                df_control["DocNum"] = df_control["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+
+                # Columnas de la Matriz de Control
+                cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
+                for col in cols_control:
+                    if col not in df_control.columns: df_control[col] = ""
+
+                # Unión Master
+                df_m = pd.merge(df_sap, df_control[cols_control], on="DocNum", how="left")
+                
+                # Formateo de fechas
+                if "DocDate" in df_m.columns:
+                    df_m["DocDate"] = pd.to_datetime(df_m["DocDate"], errors='coerce').dt.date
+                
+                # Limpieza de nulos para filtros
+                for col in ["Fletera", "Surtidor", "Estatus", "Observaciones"]:
+                    df_m[col] = df_m[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
+
+                # Guardar en memoria global
+                cols_sap_restantes = [c for c in df_sap.columns if c != "DocNum"]
+                st.session_state.df_master = df_m[cols_control + cols_sap_restantes]
+            except Exception as e:
+                st.error(f"⚠️ Error de conexión: {e}")
+                st.stop()
+
+        # --- 3. ENCABEZADO Y NAVEGACIÓN ---
         c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
-    
         with c1:
             st.markdown("""
                 <div class="header-wrapper">
@@ -3479,10 +3515,7 @@ else:
         with c2:
             with st.popover("☰", use_container_width=True):
                 st.markdown("<p style='color:#64748b;font-size:10px;font-weight:700;margin-bottom:10px;letter-spacing:1px;'>NAVEGACIÓN</p>", unsafe_allow_html=True)
-                paginas = {
-                    "TRACKING": "principal", "SEGUIMIENTO": "KPIs", "REPORTE OPS": "Reporte",
-                    "HUB LOGISTIC": "HubLogistico", "OTD": "RadarRastreo", "MCONTROL": "MControl"
-                }
+                paginas = {"TRACKING": "principal", "SEGUIMIENTO": "KPIs", "REPORTE OPS": "Reporte", "HUB LOGISTIC": "HubLogistico", "OTD": "RadarRastreo", "MCONTROL": "MControl"}
                 for nombre, v_state in paginas.items():
                     if st.button(nombre, use_container_width=True, key=f"nav_{nombre.lower()}"):
                         st.session_state.pagina = v_state
@@ -3490,115 +3523,73 @@ else:
     
         st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>", unsafe_allow_html=True)
 
-        # --- 3. MOTOR DE DATOS ---
-        try:
-            conn = st.connection("gsheets", type=GSheetsConnection)
-            
-            # Carga y Limpieza Preventiva de Columnas
-            df_sap = conn.read(worksheet="DATOS_SAP").copy()
-            df_sap.columns = df_sap.columns.astype(str).str.strip() # Limpia espacios en nombres de columnas
-            
-            df_control = conn.read(worksheet="CONTROL_NEXION").copy()
-            df_control.columns = df_control.columns.astype(str).str.strip()
+        # --- 4. PANEL DE HERRAMIENTAS Y FILTROS ---
+        if "filtros_version" not in st.session_state: st.session_state.filtros_version = 0
+        v = st.session_state.filtros_version
+        
+        st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
+        
+        h1, h2, h3, h4, h5 = st.columns(5)
+        with h1: f_ini = st.date_input("Inicio", value=None, key=f"f_a_{v}")
+        with h2: f_fin = st.date_input("Fin", value=None, key=f"f_b_{v}")
+        with h3: search_sur = st.text_input("Operador Log.", key=f"inp_s_{v}")
+        with h4: 
+            st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+            if st.button("BORRAR FILTROS", use_container_width=True):
+                st.session_state.filtros_version += 1
+                st.rerun()
+        with h5:
+            st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+            btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
 
-            # --- CORRECCIÓN DE FECHAS ---
-            if "DocDate" in df_sap.columns:
-                # Intentar convertir si vienen como números de Excel o strings
-                df_sap["DocDate"] = pd.to_datetime(df_sap["DocDate"], errors='coerce').dt.date
+        s1, s2, s3, s4 = st.columns(4)
+        with s1: search_flet = st.text_input("Transporte", key=f"inp_f_{v}")
+        with s2: search_doc = st.text_input("Ref. SAP", key=f"inp_d_{v}")
+        with s3: search_code = st.text_input("Cod. Cliente", key=f"inp_c_{v}")
+        with s4: search_name = st.text_input("Razón Social", key=f"inp_n_{v}")
 
-            # --- FORMATEO ROBUSTO DE DocNum ---
-            # Verificamos si la columna existe antes de procesarla para evitar el error DocNum
-            if "DocNum" not in df_sap.columns:
-                st.error("❌ La columna 'DocNum' no se encontró en la hoja DATOS_SAP. Verifica el nombre en el Excel.")
-                st.stop()
-            
-            if "DocNum" not in df_control.columns:
-                df_control["DocNum"] = "" # Crear si no existe en la hoja de control
+        # --- 5. APLICAR FILTROS SOBRE LA MEMORIA ACTUAL ---
+        df_f = st.session_state.df_master.copy()
+        
+        if f_ini: df_f = df_f[df_f["DocDate"] >= f_ini]
+        if f_fin: df_f = df_f[df_f["DocDate"] <= f_fin]
+        if search_sur: df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
+        if search_flet: df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
+        if search_doc: df_f = df_f[df_f["DocNum"].str.contains(search_doc, case=False, na=False)]
+        if search_code: df_f = df_f[df_f["CardCode"].astype(str).str.contains(search_code, case=False, na=False)]
+        
+        t_col = "CardFName" if "CardFName" in df_f.columns else "CardName"
+        if search_name and t_col in df_f.columns:
+            df_f = df_f[df_f[t_col].astype(str).str.contains(search_name, case=False, na=False)]
 
-            # Convertimos a string y limpiamos formatos numéricos (.0)
-            df_sap["DocNum"] = df_sap["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-            df_control["DocNum"] = df_control["DocNum"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+        # --- 6. EDITOR (Sincronización con la mochila) ---
+        df_editado = st.data_editor(
+            df_f,
+            use_container_width=True,
+            num_rows="dynamic",
+            key=f"editor_act_{v}",
+            hide_index=True,
+            height=550
+        )
+        
+        # Sincronizamos la mochila global con lo que escribes en la tabla filtrada
+        st.session_state.df_master.update(df_editado)
 
-            # Asegurar que las columnas de control existan
-            cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
-            for col in cols_control:
-                if col not in df_control.columns:
-                    df_control[col] = ""
-
-            # --- UNIÓN DE DATOS (Merge) ---
-            df_master = pd.merge(df_sap, df_control[cols_control], on="DocNum", how="left")
-            
-            # Rellenar vacíos
-            for col in ["Fletera", "Surtidor", "Estatus", "Observaciones"]:
-                df_master[col] = df_master[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
-
-            # Reordenar: Control primero
-            cols_sap_restantes = [c for c in df_sap.columns if c != "DocNum"]
-            df_master = df_master[cols_control + cols_sap_restantes]
-
-            # --- 4. PANEL DE HERRAMIENTAS ---
-            v = st.session_state.filtros_version
-            st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
-            
-            h1, h2, h3, h4, h5 = st.columns(5)
-            with h1: f_ini = st.date_input("Inicio", value=None, key=f"f_a_{v}")
-            with h2: f_fin = st.date_input("Fin", value=None, key=f"f_b_{v}")
-            with h3: search_sur = st.text_input("Operador Log.", key=f"inp_s_{v}")
-            with h4: 
-                st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                if st.button("BORRAR FILTROS", use_container_width=True, key=f"reset_{v}"):
-                    st.cache_data.clear()
-                    st.session_state.filtros_version += 1
-                    st.rerun()
-            with h5:
-                st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary", key=f"save_{v}")
-
-            s1, s2, s3, s4 = st.columns(4)
-            with s1: search_flet = st.text_input("Transporte", key=f"inp_f_{v}")
-            with s2: search_doc = st.text_input("Ref. SAP", key=f"inp_d_{v}")
-            with s3: search_code = st.text_input("Cod. Cliente", key=f"inp_c_{v}")
-            with s4: search_name = st.text_input("Razón Social", key=f"inp_n_{v}")
-
-            # --- 5. FILTRADO SEGURO ---
-            df_filtrado = df_master.copy()
-            
-            if f_ini: df_filtrado = df_filtrado[df_filtrado["DocDate"] >= f_ini]
-            if f_fin: df_filtrado = df_filtrado[df_filtrado["DocDate"] <= f_fin]
-            if search_sur: df_filtrado = df_filtrado[df_filtrado["Surtidor"].str.contains(search_sur, case=False, na=False)]
-            if search_flet: df_filtrado = df_filtrado[df_filtrado["Fletera"].str.contains(search_flet, case=False, na=False)]
-            if search_doc: df_filtrado = df_filtrado[df_filtrado["DocNum"].str.contains(search_doc, case=False, na=False)]
-            if search_code: df_filtrado = df_filtrado[df_filtrado["CardCode"].astype(str).str.contains(search_code, case=False, na=False)]
-            if search_name:
-                t_col = "CardFName" if "CardFName" in df_filtrado.columns else "CardName"
-                if t_col in df_filtrado.columns:
-                    df_filtrado = df_filtrado[df_filtrado[t_col].astype(str).str.contains(search_name, case=False, na=False)]
-
-            # --- 6. EDITOR ---
-            df_editado = st.data_editor(
-                df_filtrado,
-                use_container_width=True,
-                num_rows="dynamic",
-                key=f"ed_v_{v}_{st.session_state.get('usuario_actual', 'u')}",
-                hide_index=True,
-                height=550
-            )
-            
-            # --- 7. GUARDADO ---
-            if btn_save:
-                with st.spinner("Sincronizando..."):
-                    # Solo guardamos las columnas que pertenecen a la matriz de control
-                    datos_save = df_editado[cols_control].copy()
-                    # Limpiamos filas vacías de DocNum para evitar basura en el Excel
-                    datos_save = datos_save[datos_save["DocNum"].str.strip() != ""]
-                    conn.update(worksheet="CONTROL_NEXION", data=datos_save)
-                    st.toast("✅ GUARDADO CORRECTO")
-                    st.cache_data.clear()
-                    st.session_state.filtros_version += 1
-                    st.rerun()
-
-        except Exception as e:
-            st.error(f"⚠️ Error: {e}")
+        # --- 7. GUARDADO EN GOOGLE SHEETS ---
+        if btn_save:
+            with st.spinner("Sincronizando con Google Sheets..."):
+                cols_control = ["DocNum", "Fletera", "Surtidor", "Estatus", "Observaciones"]
+                datos_save = st.session_state.df_master[cols_control].copy()
+                datos_save = datos_save[datos_save["DocNum"].str.strip() != ""]
+                
+                conn = st.connection("gsheets", type=GSheetsConnection)
+                conn.update(worksheet="CONTROL_NEXION", data=datos_save)
+                
+                st.toast("✅ GUARDADO EXITOSO")
+                st.cache_data.clear()
+                # Borramos la mochila para que la próxima carga traiga datos frescos del Excel
+                del st.session_state.df_master
+                st.rerun()
 
         # --- 8. PIE DE PÁGINA (FUERA DEL BLOQUE TRY) ---
         st.markdown("<br><br>", unsafe_allow_html=True)
