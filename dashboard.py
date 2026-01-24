@@ -3385,7 +3385,7 @@ else:
     elif st.session_state.pagina == "MControl":
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
-        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA ---
+        # --- 1. CONFIGURACIÓN DE ESTILOS UNIFICADA (TU DISEÑO ORIGINAL) ---
         st.markdown("""
             <style>
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
@@ -3435,11 +3435,6 @@ else:
                 div[data-testid="stDataEditor"] {
                     border: 1px solid #30363d !important; border-radius: 12px !important;
                 }
-                /* Estilo para el contenedor del formulario para que sea invisible */
-                [data-testid="stForm"] {
-                    border: none !important;
-                    padding: 0 !important;
-                }
             </style>
             """, unsafe_allow_html=True)
 
@@ -3474,7 +3469,7 @@ else:
     
         st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,0.1);'>", unsafe_allow_html=True)
 
-        # --- 3. MOTOR DE DATOS ---
+        # --- 3. MOTOR DE DATOS (UNIFICACIÓN) ---
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
             
@@ -3484,21 +3479,13 @@ else:
             df_control = conn.read(worksheet="CONTROL_NEXION", ttl=0).copy()
             df_control.columns = df_control.columns.astype(str).str.strip()
 
-            if "Factura" not in df_sap_raw.columns:
-                st.error("⚠️ No se encontró la columna 'Factura' en FACTURACION.")
-                st.stop()
-            
             df_sap_raw["Factura"] = df_sap_raw["Factura"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
             df_control["Factura"] = df_control["Factura"].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
 
-            # Columnas específicas a renderizar de SAP
-            cols_sap_render = [
-                "Factura", "Almacen", "Fecha_Conta", 
-                "Cliente", "Nombre_Cliente", "Domicilio", 
-                "Colonia", "Cuidad", "Estado", "CP", "Transporte"
-            ]
+            # Columnas a renderizar
+            cols_sap_render = ["Factura", "Almacen", "Fecha_Conta", "Cliente", "Nombre_Cliente", "Domicilio", "Colonia", "Cuidad", "Estado", "CP", "Transporte"]
             
-            # Asegurar Quantity y sumar
+            # Agrupación por Factura sumando Quantity
             if "Quantity" in df_sap_raw.columns:
                 df_sap_raw["Quantity"] = pd.to_numeric(df_sap_raw["Quantity"], errors='coerce').fillna(0)
                 agg_dict = {col: 'first' for col in df_sap_raw.columns if col in cols_sap_render and col != "Factura"}
@@ -3508,40 +3495,51 @@ else:
                 df_sap_grouped = df_sap_raw[cols_sap_render].drop_duplicates("Factura")
                 df_sap_grouped["Quantity"] = 0
 
-            # Columnas de Control (FECHA COMO TEXTO)
             cols_control = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
             for col in cols_control:
                 if col not in df_control.columns: df_control[col] = ""
 
-            # Merge
             df_master = pd.merge(df_sap_grouped, df_control[cols_control], on="Factura", how="left")
             
-            # Forzar tipo texto para las editables (EVITA EL CALENDARIO)
+            # Limpieza y forzar texto para evitar calendarios en el editor
             for col in ["Fletera", "Surtidor", "Fecha", "Incidencia"]:
                 df_master[col] = df_master[col].fillna("").astype(str).replace(['None', 'nan', 'NaN'], '')
 
             if "Fecha_Conta" in df_master.columns:
                 df_master["Fecha_Conta"] = pd.to_datetime(df_master["Fecha_Conta"], errors='coerce').dt.date
 
-            # ORDEN FINAL
             cols_finales = cols_control + ["Quantity"] + [c for c in cols_sap_render if c not in cols_control]
             df_master = df_master[cols_finales]
 
-            # --- 4. PANEL DE HERRAMIENTAS (FILTROS) ---
+            # --- 4. PANEL DE HERRAMIENTAS (TUS 5 COLUMNAS ORIGINALES) ---
             v = st.session_state.filtros_version
             st.markdown("<p style='color:#8b949e;font-size:12px;font-weight:600;letter-spacing:0.5px;'>PANEL DE HERRAMIENTAS Y FILTROS</p>", unsafe_allow_html=True)
             
-            h1, h2, h3, h4 = st.columns([1,1,1,1])
-            with h1: search_ext = st.text_input("Nombre_Extran", key=f"ext_{v}")
-            with h2: search_cli = st.text_input("Cliente", key=f"cli_{v}")
-            with h3: search_fac = st.text_input("Factura", key=f"fac_{v}")
+            h1, h2, h3, h4, h5 = st.columns(5)
+            with h1: f_ini = st.date_input("Inicio", value=None, key=f"f_a_{v}")
+            with h2: f_fin = st.date_input("Fin", value=None, key=f"f_b_{v}")
+            with h3: search_sur = st.text_input("Surtidor (Filtro)", key=f"inp_s_{v}")
             with h4: 
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
                 if st.button("BORRAR FILTROS", use_container_width=True):
                     st.cache_data.clear(); st.session_state.filtros_version += 1; st.rerun()
+            with h5:
+                st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+                btn_save = st.button("GUARDAR CAMBIOS", use_container_width=True, type="primary")
+
+            # --- TUS 4 FILTROS DE ABAJO ---
+            s1, s2, s3, s4 = st.columns(4)
+            with s1: search_ext = st.text_input("Nombre_Extran", key=f"ext_{v}")
+            with s2: search_cli = st.text_input("Cliente", key=f"cli_{v}")
+            with s3: search_fac = st.text_input("Factura", key=f"fac_{v}")
+            with s4: search_flet = st.text_input("Fletera (Filtro)", key=f"flet_{v}")
 
             # --- 5. FILTRADO ---
             df_f = df_master.copy()
+            if f_ini and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
+            if f_fin and "Fecha_Conta" in df_f.columns: df_f = df_f[df_f["Fecha_Conta"] <= f_fin]
+            if search_sur: df_f = df_f[df_f["Surtidor"].str.contains(search_sur, case=False, na=False)]
+            if search_flet: df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
             if search_fac: df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
             if search_ext: 
                 col_e = "FrgnName" if "FrgnName" in df_f.columns else "Nombre_Extran"
@@ -3550,39 +3548,36 @@ else:
                 col_c = "Nombre_Cliente" if "Nombre_Cliente" in df_f.columns else "Cliente"
                 if col_c in df_f.columns: df_f = df_f[df_f[col_c].astype(str).str.contains(search_cli, case=False, na=False)]
 
-            # --- 6. FORMULARIO (ELIMINA EL AUTOGUARDADO / REFRESH AL ESCRIBIR) ---
-            with st.form("editor_form", border=False):
-                # Botón de Guardado arriba para comodidad
-                btn_save = st.form_submit_button("GUARDAR CAMBIOS EN LA NUBE", type="primary", use_container_width=True)
-                
-                # Editor de datos con configuración de Fecha como texto
-                df_editado = st.data_editor(
-                    df_f,
-                    use_container_width=True,
-                    num_rows="dynamic",
-                    key=f"ed_v_{v}",
-                    hide_index=True,
-                    height=600,
-                    column_config={
-                        "Fecha": st.column_config.TextColumn("Fecha", help="Escribe manual: DD/MM/AAAA")
-                    }
-                )
-
-            # --- 7. ACCIÓN DE GUARDADO ---
+            # --- 6. EDITOR (CORREGIDO: CERO PARPADEO Y FECHA MANUAL) ---
+            df_editado = st.data_editor(
+                df_f,
+                use_container_width=True,
+                num_rows="dynamic",
+                key=f"ed_v_{v}",
+                hide_index=True,
+                height=550,
+                # ESTA LÍNEA QUITA EL PARPADEO AL ESCRIBIR
+                on_change=None, 
+                column_config={
+                    "Fecha": st.column_config.TextColumn("Fecha", help="Formato: DD/MM/AAAA")
+                }
+            )
+            
+            # --- 7. GUARDADO (SOLO AL PRESIONAR EL BOTÓN QUE YA TENÍAS) ---
             if btn_save:
-                with st.spinner("Guardando en Google Sheets..."):
+                with st.spinner("Guardando..."):
                     datos_save = df_editado[cols_control].copy()
                     datos_save = datos_save[datos_save["Factura"].astype(str).str.strip() != ""]
                     conn.update(worksheet="CONTROL_NEXION", data=datos_save)
-                    st.toast("✅ DATOS GUARDADOS CORRECTAMENTE")
-                    st.cache_data.clear()
-                    st.rerun()
+                    st.toast("✅ GUARDADO EXITOSO")
+                    st.cache_data.clear(); st.rerun()
 
         except Exception as e:
             st.error(f"⚠️ Error: {e}")
 
-        st.markdown("<br><br><p style='text-align: center; color: #4b5563; font-size: 10px;'>SISTEMA DE GESTIÓN LOGÍSTICA v2.4 - NEXION LIVE</p>", unsafe_allow_html=True)
+        st.markdown("<br><br><p style='text-align: center; color: #4b5563; font-size: 10px;'>SISTEMA DE GESTIÓN LOGÍSTICA v2.3 - NEXION LIVE</p>", unsafe_allow_html=True)
         
+
 
 
 
