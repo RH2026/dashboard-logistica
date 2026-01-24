@@ -3488,8 +3488,8 @@ else:
 
             # Columnas específicas a renderizar de SAP
             cols_sap_render = [
-                "Factura", "Referencia", "Pedido", "Almacen", "Fecha_Conta", 
-                "Cliente", "Nombre_Cliente", "FrgnName", "Domicilio", 
+                "Factura", "Referencia", "Almacen", "Fecha_Conta", 
+                "Cliente", "Nombre_Cliente", "Domicilio", 
                 "Colonia", "Cuidad", "Estado", "CP", "Transporte"
             ]
             
@@ -3585,6 +3585,7 @@ else:
 
         st.markdown("<br><br><p style='text-align: center; color: #4b5563; font-size: 10px;'>SISTEMA DE GESTIÓN LOGÍSTICA v2.3 - NEXION LIVE</p>", unsafe_allow_html=True)
         
+
 
 
 
