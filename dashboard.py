@@ -2806,44 +2806,54 @@ else:
         from reportlab.lib.pagesizes import letter
         from streamlit_gsheets import GSheetsConnection
     
+        # --- CONFIGURACIÓN DE ORIGEN DE DATOS ---
+        URL_SHEET = "https://docs.google.com/spreadsheets/d/1olj7u7hICk3c2MlpNbhKgJGr0KTRdf8nWlK54fPNGAg/edit?usp=sharing"
+    
         # --- FUNCIÓN DE LIMPIEZA TÁCTICA ---
         def limpiar_texto(texto):
             if not isinstance(texto, str): return str(texto)
             texto = unicodedata.normalize('NFKD', texto).encode('ascii', 'ignore').decode('utf-8')
             return texto.upper().strip()
     
-        # --- CONEXIÓN A DATOS_SAP (Google Sheets) ---
+        # --- CONEXIÓN A GOOGLE SHEETS ---
         conn = st.connection("gsheets", type=GSheetsConnection)
     
         # --- MOTOR DE RECOMENDACIÓN (Pestaña HISTORIAL) ---
         @st.cache_data(ttl=300)
         def motor_logistico_gsheets():
             try:
-                h = conn.read(spreadsheet="DATOS_SAP", worksheet="HISTORIAL")
+                # Leemos la pestaña de historial usando la URL directa
+                h = conn.read(spreadsheet=URL_SHEET, worksheet="HISTORIAL")
                 h.columns = h.columns.str.strip().str.upper()
-                h['ADDRESS2'] = h['ADDRESS2'].apply(limpiar_texto)
+                
+                # Buscamos las columnas necesarias sin importar variaciones de nombre
+                c_dir = [c for c in h.columns if 'ADDRESS2' in c or 'DIRECCION' in c][0]
                 c_pre = [c for c in h.columns if 'PRECIO' in c][0]
                 c_flet = [c for c in h.columns if 'FLETERA' in c or 'TRANSPORTE' in c][0]
+                
+                h[c_dir] = h[c_dir].apply(limpiar_texto)
                 h[c_pre] = pd.to_numeric(h[c_pre], errors='coerce').fillna(0)
-                mejores = h.loc[h.groupby('ADDRESS2')[c_pre].idxmin()]
-                return mejores.set_index('ADDRESS2')[c_flet].to_dict(), mejores.set_index('ADDRESS2')[c_pre].to_dict()
+                
+                # Filtramos para obtener el flete más barato por dirección
+                mejores = h.loc[h.groupby(c_dir)[c_pre].idxmin()]
+                return mejores.set_index(c_dir)[c_flet].to_dict(), mejores.set_index(c_dir)[c_pre].to_dict()
             except Exception as e:
-                st.error(f"Error en matriz historial: {e}")
+                st.error(f"Error cargando HISTORIAL: {e}")
                 return {}, {}
     
         d_flet, d_price = motor_logistico_gsheets()
     
-        # --- ESTILOS CSS (Tu diseño original) ---
+        # --- ESTILOS CSS (Tu Estilo Pro) ---
         st.markdown("""
             <style>
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
                 .header-wrapper { display: flex; align-items: baseline; gap: 12px; font-family: 'Inter', sans-serif; }
-                .header-wrapper h1 { font-size: 22px !important; font-weight: 800; color: #4b5563; }
-                .header-wrapper span { font-size: 14px; font-weight: 300; color: #ffffff; text-transform: uppercase; }
+                .header-wrapper h1 { font-size: 22px !important; font-weight: 800; color: #4b5563; margin: 0; letter-spacing: -0.8px; }
+                .header-wrapper span { font-size: 14px; font-weight: 300; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; }
             </style>
         """, unsafe_allow_html=True)
     
-        # --- ENCABEZADO Y NAVEGACIÓN ---
+        # --- ENCABEZADO ---
         c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
         with c1:
             st.markdown('<div class="header-wrapper"><h1>LOGISTIC</h1><span>HUB</span></div>', unsafe_allow_html=True)
@@ -2854,71 +2864,84 @@ else:
     
         st.markdown("<hr style='margin: 8px 0 20px 0; border: none; border-top: 1px solid rgba(148, 163, 184, 0.1);'>", unsafe_allow_html=True)
     
-        # --- FILTRADO DE DOCUMENTOS SAP ---
-        with st.spinner("Leyendo DATOS_SAP..."):
-            df_sap = conn.read(spreadsheet="DATOS_SAP", worksheet="DATOS_SAP")
-            df_sap.columns = df_sap.columns.str.strip().str.upper()
-            df_sap['DOCNUM'] = pd.to_numeric(df_sap['DOCNUM'], errors='coerce')
+        # --- LECTURA DE PESTAÑA OPERATIVA ---
+        try:
+            with st.spinner("Sincronizando con Google Sheets..."):
+                df_sap = conn.read(spreadsheet=URL_SHEET, worksheet="DATOS_SAP")
+                df_sap.columns = df_sap.columns.str.strip().str.upper()
+                df_sap['DOCNUM'] = pd.to_numeric(df_sap['DOCNUM'], errors='coerce')
+        except Exception as e:
+            st.error(f"Error al conectar con la pestaña DATOS_SAP: {e}")
+            st.stop()
     
-        st.markdown("### 🔍 Rango de Folios")
-        f1, f2 = st.columns(2)
-        with f1:
+        # --- FILTRO POR RANGO DE FOLIOS ---
+        st.markdown("### 🔍 Selección de Rango Operativo")
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
             doc_inicio = st.number_input("Desde DocNum:", value=int(df_sap['DOCNUM'].min()))
-        with f2:
+        with col_f2:
             doc_fin = st.number_input("Hasta DocNum:", value=int(df_sap['DOCNUM'].max()))
     
-        # --- PROCESAMIENTO MINIMALISTA ---
-        # Solo renderizamos las columnas clave que pediste
-        columnas_base = ['DOCNUM', 'CARDNAME', 'ADDRESS2']
-        df_mini = df_sap[(df_sap['DOCNUM'] >= doc_inicio) & (df_sap['DOCNUM'] <= doc_fin)][columnas_base].copy()
+        # --- PROCESAMIENTO Y RENDERIZADO ---
+        # Seleccionamos solo las columnas que queremos renderizar
+        columnas_limpias = ['DOCNUM', 'CARDNAME', 'ADDRESS2']
+        df_filtrado = df_sap[(df_sap['DOCNUM'] >= doc_inicio) & (df_sap['DOCNUM'] <= doc_fin)][columnas_limpias].copy()
     
-        if not df_mini.empty:
-            df_mini['RECOMENDACION'] = df_mini['ADDRESS2'].apply(lambda x: d_flet.get(limpiar_texto(x), "SIN HISTORIAL"))
-            df_mini['COSTO'] = df_mini['ADDRESS2'].apply(lambda x: d_price.get(limpiar_texto(x), 0.0))
-            df_mini['FECHA_HORA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        if not df_filtrado.empty:
+            # Aplicar lógica de recomendación
+            df_filtrado['RECOMENDACION'] = df_filtrado['ADDRESS2'].apply(lambda x: d_flet.get(limpiar_texto(x), "SIN HISTORIAL"))
+            df_filtrado['COSTO'] = df_filtrado['ADDRESS2'].apply(lambda x: d_price.get(limpiar_texto(x), 0.0))
+            df_filtrado['FECHA_HORA'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     
             modo_edicion = st.toggle("🔓 Activar modo edición")
             
+            # Editor de datos minimalista
             p_editado = st.data_editor(
-                df_mini,
+                df_filtrado,
                 use_container_width=True,
                 column_config={
-                    "DOCNUM": st.column_config.NumberColumn("Folio", disabled=True),
+                    "DOCNUM": st.column_config.NumberColumn("Folio SAP", disabled=True),
                     "CARDNAME": st.column_config.TextColumn("Cliente", disabled=True),
-                    "ADDRESS2": st.column_config.TextColumn("Dirección", disabled=True),
-                    "RECOMENDACION": st.column_config.TextColumn("🚚 RECOMENDACION", disabled=not modo_edicion),
+                    "ADDRESS2": st.column_config.TextColumn("Dirección de Entrega", disabled=True),
+                    "RECOMENDACION": st.column_config.TextColumn("🚚 RECOMENDACIÓN", disabled=not modo_edicion),
                     "COSTO": st.column_config.NumberColumn("💰 COSTO", format="$%.2f", disabled=not modo_edicion),
+                    "FECHA_HORA": st.column_config.TextColumn("Registro", disabled=True)
                 },
-                key="editor_gsheets_v1"
+                key="editor_pro_sheets"
             )
     
-            # --- SECCIÓN DE SELLADO ---
+            # --- SECCIÓN DE ACCIONES Y SELLADO ---
             st.markdown("---")
             with st.expander("⚙️ PANEL DE CALIBRACIÓN DEL SELLO"):
-                col_x, col_y = st.columns(2)
-                ajuste_x = col_x.slider("Eje X", 0, 612, 510)
-                ajuste_y = col_y.slider("Eje Y", 0, 792, 760)
+                cx, cy = st.columns(2)
+                ajuste_x = cx.slider("Eje X", 0, 612, 510)
+                ajuste_y = cy.slider("Eje Y", 0, 792, 760)
     
-            c1, c2 = st.columns(2)
-            with c1:
-                if st.button("Generar PDF con fletera", use_container_width=True):
+            c_act1, c_act2 = st.columns(2)
+            with c_act1:
+                if st.button("Generar PDF para Impresora", use_container_width=True):
                     sellos = p_editado['RECOMENDACION'].tolist()
                     pdf_out = generar_sellos_fisicos(sellos, ajuste_x, ajuste_y)
-                    st.download_button("Descargar Sellos", pdf_out, "Sellos.pdf", "application/pdf", use_container_width=True)
+                    st.download_button("Descargar Sellos Físicos", pdf_out, "Sellos_Fisicos.pdf", "application/pdf", use_container_width=True)
             
-            with c2:
-                pdfs = st.file_uploader("Suba Facturas en PDF", type="pdf", accept_multiple_files=True)
-                if pdfs and st.button("Ejecutar Sellado Digital", use_container_width=True):
-                    mapa = pd.Series(p_editado.RECOMENDACION.values, index=p_editado.DOCNUM.astype(str)).to_dict()
+            with c_act2:
+                pdfs_upload = st.file_uploader("Suba Facturas en PDF", type="pdf", accept_multiple_files=True)
+                if pdfs_upload and st.button("Ejecutar Sellado Digital", use_container_width=True):
+                    # Mapa de DocNum a Fletera
+                    mapa_sellos = pd.Series(p_editado.RECOMENDACION.values, index=p_editado.DOCNUM.astype(str)).to_dict()
                     z_buf = io.BytesIO()
                     with zipfile.ZipFile(z_buf, "a", zipfile.ZIP_DEFLATED) as zf:
-                        for pdf in pdfs:
-                            f_id = next((f for f in mapa.keys() if f in pdf.name), None)
-                            if f_id: zf.writestr(f"SELLADO_{pdf.name}", marcar_pdf_digital(pdf, mapa[f_id], ajuste_x, ajuste_y))
-                    st.download_button("Descargar ZIP", z_buf.getvalue(), "Facturas_Selladas.zip", use_container_width=True)
+                        for pdf_file in pdfs_upload:
+                            # Buscamos si el folio está en el nombre del archivo
+                            f_id = next((f for f in mapa_sellos.keys() if f in pdf_file.name), None)
+                            if f_id:
+                                zf.writestr(f"SELLADO_{pdf_file.name}", marcar_pdf_digital(pdf_file, mapa_sellos[f_id], ajuste_x, ajuste_y))
+                    st.download_button("Descargar Facturas Selladas (ZIP)", z_buf.getvalue(), "Facturas_Digitales.zip", use_container_width=True)
     
         else:
-            st.warning("No hay datos en el rango seleccionado.")
+            st.info("No se encontraron registros en el rango de folios seleccionado.")
+    
+        
     
                 
         st.markdown('</div>', unsafe_allow_html=True)
@@ -3408,6 +3431,7 @@ else:
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
