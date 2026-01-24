@@ -3207,10 +3207,12 @@ else:
     # MAIN 06: MATRIZ DE CONTROL (MControl) - VERSIÓN PRO CON FILTROS
     # ------------------------------------------------------------------
     elif st.session_state.pagina == "MControl":
-    
+
         st.components.v1.html("<script>parent.window.scrollTo(0,0);</script>", height=0)
     
-        # --- 1. ESTILOS (SIN CAMBIOS) ---
+        # =========================================================
+        # 1. ESTILOS (SIN CAMBIOS)
+        # =========================================================
         st.markdown("""
             <style>
                 .block-container { padding-top: 1rem !important; max-width: 95% !important; }
@@ -3280,7 +3282,9 @@ else:
             </style>
         """, unsafe_allow_html=True)
     
-        # --- 2. HEADER ---
+        # =========================================================
+        # 2. HEADER + NAVEGACIÓN
+        # =========================================================
         c1, c2 = st.columns([0.88, 0.12], vertical_alignment="bottom")
     
         with c1:
@@ -3311,63 +3315,75 @@ else:
     
         st.markdown("<hr style='margin:8px 0 20px 0;border:none;border-top:1px solid rgba(148,163,184,.1);'>", unsafe_allow_html=True)
     
-        # --- 3. ESTADO ---
+        # =========================================================
+        # 3. FUNCIÓN DE CARGA (SIEMPRE ACTUALIZADA)
+        # =========================================================
+        def cargar_mcontrol_forzado():
+            conn = st.connection("gsheets", type=GSheetsConnection)
+    
+            df_sap_raw = conn.read(worksheet="FACTURACION").copy()
+            df_control = conn.read(worksheet="CONTROL_NEXION").copy()
+    
+            df_sap_raw.columns = df_sap_raw.columns.astype(str).str.strip()
+            df_control.columns = df_control.columns.astype(str).str.strip()
+    
+            df_sap_raw["Factura"] = df_sap_raw["Factura"].astype(str).str.replace(r"\.0$", "", regex=True)
+            df_control["Factura"] = df_control["Factura"].astype(str).str.replace(r"\.0$", "", regex=True)
+    
+            df_sap_raw["Quantity"] = pd.to_numeric(
+                df_sap_raw.get("Quantity", 0),
+                errors="coerce"
+            ).fillna(0)
+    
+            df_sap = (
+                df_sap_raw
+                .groupby("Factura", as_index=False)
+                .agg({
+                    "Almacen": "first",
+                    "Fecha_Conta": "first",
+                    "Cliente": "first",
+                    "Nombre_Extran": "first",
+                    "Domicilio": "first",
+                    "Colonia": "first",
+                    "Cuidad": "first",
+                    "Estado": "first",
+                    "CP": "first",
+                    "Transporte": "first",
+                    "Quantity": "sum"
+                })
+            )
+    
+            for col in ["Fletera", "Surtidor", "Fecha", "Incidencia"]:
+                if col not in df_control.columns:
+                    df_control[col] = ""
+    
+            df = (
+                df_sap
+                .merge(
+                    df_control[["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]],
+                    on="Factura",
+                    how="left"
+                )
+                .fillna("")
+            )
+    
+            df["Fecha_Conta"] = pd.to_datetime(df["Fecha_Conta"], errors="coerce").dt.date
+            return df
+    
+        # =========================================================
+        # 4. ESTADO
+        # =========================================================
         if "filtros_v" not in st.session_state:
             st.session_state.filtros_v = 0
     
         if "df_master_mcontrol" not in st.session_state:
             st.session_state.df_master_mcontrol = cargar_mcontrol_forzado()
-            
-        # --- 3. CARGA DE DATOS (SIN CACHÉ, CONTROL TOTAL) ---
-        def cargar_mcontrol_forzado():
-            conn = st.connection("gsheets", type=GSheetsConnection)
-        
-            df_sap_raw = conn.read(worksheet="FACTURACION", ttl=0).copy()
-            df_control = conn.read(worksheet="CONTROL_NEXION", ttl=0).copy()
-        
-            df_sap_raw.columns = df_sap_raw.columns.astype(str).str.strip()
-            df_control.columns = df_control.columns.astype(str).str.strip()
-        
-            df_sap_raw["Factura"] = df_sap_raw["Factura"].astype(str).str.replace(r"\.0$", "", regex=True)
-            df_control["Factura"] = df_control["Factura"].astype(str).str.replace(r"\.0$", "", regex=True)
-        
-            cols_sap_render = [
-                "Factura", "Almacen", "Fecha_Conta", "Cliente",
-                "Nombre_Extran", "Domicilio", "Colonia",
-                "Cuidad", "Estado", "CP", "Transporte"
-            ]
-        
-            if "Quantity" in df_sap_raw.columns:
-                df_sap_raw["Quantity"] = pd.to_numeric(df_sap_raw["Quantity"], errors="coerce").fillna(0)
-                agg = {c: "first" for c in cols_sap_render if c != "Factura"}
-                agg["Quantity"] = "sum"
-                df_sap_grouped = df_sap_raw.groupby("Factura", as_index=False).agg(agg)
-            else:
-                df_sap_grouped = df_sap_raw[cols_sap_render].drop_duplicates("Factura")
-                df_sap_grouped["Quantity"] = 0
-        
-            cols_control = ["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]
-            for c in cols_control:
-                if c not in df_control.columns:
-                    df_control[c] = ""
-        
-            df_master = pd.merge(
-                df_sap_grouped,
-                df_control[cols_control],
-                on="Factura",
-                how="left"
-            ).fillna("")
-        
-            if "Fecha_Conta" in df_master.columns:
-                df_master["Fecha_Conta"] = pd.to_datetime(df_master["Fecha_Conta"], errors="coerce").dt.date
-        
-            return df_master
-        
-            
     
-        # --- 5. FILTROS + BOTONES EN LÍNEA ---
+        # =========================================================
+        # 5. FILTROS + BOTONES
+        # =========================================================
         v = st.session_state.filtros_v
-        h1,h2,h3,h4,h5 = st.columns(5)
+        h1, h2, h3, h4, h5 = st.columns(5)
     
         f_ini = h1.date_input("Inicio", None, key=f"f_ini_{v}")
         f_fin = h2.date_input("Fin", None, key=f"f_fin_{v}")
@@ -3375,25 +3391,27 @@ else:
     
         if h4.button("REFRESCAR DATOS", use_container_width=True):
             st.session_state.df_master_mcontrol = cargar_mcontrol_forzado()
-            st.toast("🔄 Datos actualizados desde SAP")
+            st.toast("🔄 Datos actualizados")
             st.rerun()
     
         btn_save = h5.button("GUARDAR", use_container_width=True, type="primary")
     
-        s1,s2,s3,s4,s5 = st.columns(5)
-        search_ext  = s1.text_input("Nombre_Extran", key=f"f_ext_{v}")
-        search_cli  = s2.text_input("Cliente", key=f"f_cli_{v}")
-        search_fac  = s3.text_input("Factura", key=f"f_fac_{v}")
+        s1, s2, s3, s4, s5 = st.columns(5)
+        search_ext = s1.text_input("Nombre_Extran", key=f"f_ext_{v}")
+        search_cli = s2.text_input("Cliente", key=f"f_cli_{v}")
+        search_fac = s3.text_input("Factura", key=f"f_fac_{v}")
         search_flet = s4.text_input("Fletera", key=f"f_flet_{v}")
     
         if s5.button("LIMPIAR", use_container_width=True):
             st.session_state.filtros_v += 1
             st.rerun()
     
-        # --- 5. FILTRADO (NO TOCA EL EDITOR) ---
-        df_base = st.session_state.df_master_mcontrol
+        # =========================================================
+        # 6. FILTRADO
+        # =========================================================
+        df_base = st.session_state.df_master_mcontrol.copy()
         df_f = df_base.copy()
-        
+    
         if f_ini:
             df_f = df_f[df_f["Fecha_Conta"] >= f_ini]
         if f_fin:
@@ -3404,12 +3422,14 @@ else:
             df_f = df_f[df_f["Fletera"].str.contains(search_flet, case=False, na=False)]
         if search_fac:
             df_f = df_f[df_f["Factura"].str.contains(search_fac, case=False, na=False)]
-        if search_ext and "Nombre_Extran" in df_f.columns:
+        if search_ext:
             df_f = df_f[df_f["Nombre_Extran"].str.contains(search_ext, case=False, na=False)]
-        if search_cli and "Cliente" in df_f.columns:
+        if search_cli:
             df_f = df_f[df_f["Cliente"].str.contains(search_cli, case=False, na=False)]
-            
-        # --- 7. EDITOR ---
+    
+        # =========================================================
+        # 7. EDITOR
+        # =========================================================
         df_editado = st.data_editor(
             df_f,
             key="editor_mcontrol_fijo",
@@ -3418,18 +3438,24 @@ else:
             height=550
         )
     
-        # --- 8. GUARDAR ---
+        # =========================================================
+        # 8. GUARDAR
+        # =========================================================
         if btn_save:
-            conn.update("CONTROL_NEXION", df_editado[["Factura","Fletera","Surtidor","Fecha","Incidencia"]])
+            conn = st.connection("gsheets", type=GSheetsConnection)
+            conn.update(
+                worksheet="CONTROL_NEXION",
+                data=df_editado[["Factura", "Fletera", "Surtidor", "Fecha", "Incidencia"]]
+            )
             st.toast("✅ GUARDADO EXITOSO")
-            st.session_state.recargar_mcontrol = True
-            st.session_state.pop("editor_mcontrol_fijo", None)
+            st.session_state.df_master_mcontrol = cargar_mcontrol_forzado()
             st.rerun()
     
         st.markdown(
             "<br><p style='text-align:center;color:#4b5563;font-size:10px;'>v2.4 - NEXION LIVE</p>",
             unsafe_allow_html=True
         )
+
 
 
 
