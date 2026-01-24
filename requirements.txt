@@ -8,3 +8,6 @@ PyGithub
 requests
 plotly
 st-gsheets-connection
+streamlit-gsheets
+reportlab
+PyPDF2
