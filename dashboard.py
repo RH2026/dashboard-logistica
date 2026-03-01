@@ -518,15 +518,19 @@ else:
     
         st.sidebar.markdown("---")
                 
-        # 3. CALENDARIO
-        f_min_data = df["FECHA DE ENVÍO"].min()
-        f_max_data = df["FECHA DE ENVÍO"].max()
-    
+        # 3. CALENDARIO (CORREGIDO)
+        # Convertimos primero a datetime y luego a date nativo de Python
+        f_min_data = pd.to_datetime(df["FECHA DE ENVÍO"]).min().to_pydatetime().date()
+        f_max_data = pd.to_datetime(df["FECHA DE ENVÍO"]).max().to_pydatetime().date()
+        
+        # Inicializamos el estado de la sesión si no existe
         if "fecha_filtro" not in st.session_state:
             st.session_state["fecha_filtro"] = (f_min_data, f_max_data)
-    
+        
+        # Ahora el widget recibirá los formatos correctos
         rango_fechas = st.sidebar.date_input(
             "Fecha de envío",
+            value=st.session_state["fecha_filtro"], # Usamos el valor del session_state
             min_value=f_min_data,
             max_value=f_max_data,
             key="fecha_filtro"
@@ -3605,6 +3609,7 @@ else:
     
    
         
+
 
 
 
